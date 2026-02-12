@@ -6,12 +6,9 @@ use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\Milestone;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -36,10 +33,7 @@ class PlanningProgressPage extends BaseModulePage implements HasTable
         $progress = $totalTasks > 0 ? round(($done / $totalTasks) * 100) : 0;
         $totalMilestones = $r->milestones()->count();
         $completedMilestones = $r->milestones()->where('status', 'completed')->count();
-        $overdueMilestones = $r->milestones()
-            ->where('status', '!=', 'completed')
-            ->where('target_date', '<', now())
-            ->count();
+        $overdueMilestones = $r->milestones()->where('status', '!=', 'completed')->where('target_date', '<', now())->count();
 
         return [
             [
@@ -66,14 +60,6 @@ class PlanningProgressPage extends BaseModulePage implements HasTable
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="' . ($overdueMilestones > 0 ? '#dc2626' : '#059669') . '" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
                 'icon_bg' => $overdueMilestones > 0 ? '#fef2f2' : '#ecfdf5'
             ],
-            [
-                'label' => 'Schedule Health',
-                'value' => $overdueMilestones === 0 ? 'On Track' : ($overdueMilestones <= 2 ? 'At Risk' : 'Delayed'),
-                'sub' => $overdueMilestones === 0 ? 'All milestones on time' : $overdueMilestones . ' milestone(s) overdue',
-                'sub_type' => $overdueMilestones === 0 ? 'success' : 'danger',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="' . ($overdueMilestones === 0 ? '#059669' : '#dc2626') . '" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                'icon_bg' => $overdueMilestones === 0 ? '#ecfdf5' : '#fef2f2'
-            ],
         ];
     }
 
@@ -81,26 +67,12 @@ class PlanningProgressPage extends BaseModulePage implements HasTable
     {
         return [
             Section::make('Milestone Details')->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255)
-                    ->columnSpanFull(),
-                Forms\Components\Select::make('priority')
-                    ->options(Milestone::$priorities)
-                    ->required()
-                    ->default('medium'),
-                Forms\Components\Select::make('status')
-                    ->options(Milestone::$statuses)
-                    ->required()
-                    ->default('pending'),
-                Forms\Components\DatePicker::make('target_date')
-                    ->required()
-                    ->label('Target Date'),
-                Forms\Components\DatePicker::make('actual_date')
-                    ->label('Actual Completion Date'),
-                Forms\Components\Textarea::make('description')
-                    ->rows(3)
-                    ->columnSpanFull(),
+                Forms\Components\TextInput::make('name')->required()->maxLength(255)->columnSpanFull(),
+                Forms\Components\Select::make('priority')->options(Milestone::$priorities)->required()->default('medium'),
+                Forms\Components\Select::make('status')->options(Milestone::$statuses)->required()->default('pending'),
+                Forms\Components\DatePicker::make('target_date')->required()->label('Target Date'),
+                Forms\Components\DatePicker::make('actual_date')->label('Actual Completion Date'),
+                Forms\Components\Textarea::make('description')->rows(3)->columnSpanFull(),
             ])->columns(2),
         ];
     }
@@ -114,25 +86,11 @@ class PlanningProgressPage extends BaseModulePage implements HasTable
             ->query(Milestone::query()->where('cde_project_id', $projectId))
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable()->limit(50),
-                Tables\Columns\TextColumn::make('priority')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'critical' => 'danger',
-                        'high' => 'warning',
-                        'medium' => 'info',
-                        default => 'gray',
-                    }),
-                Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'completed' => 'success',
-                        'in_progress' => 'info',
-                        'delayed' => 'danger',
-                        'cancelled' => 'gray',
-                        default => 'warning',
-                    }),
+                Tables\Columns\TextColumn::make('priority')->badge()->color(fn(string $state) => match ($state) { 'critical' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'}),
+                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $state) => match ($state) { 'completed' => 'success', 'in_progress' => 'info', 'delayed' => 'danger', 'cancelled' => 'gray', default => 'warning'}),
                 Tables\Columns\TextColumn::make('target_date')->date()->sortable()
                     ->color(fn($record) => $record->status !== 'completed' && $record->target_date?->isPast() ? 'danger' : null),
                 Tables\Columns\TextColumn::make('actual_date')->date()->placeholder('—'),
-                Tables\Columns\TextColumn::make('description')->limit(50)->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('target_date', 'asc')
             ->filters([
@@ -140,37 +98,34 @@ class PlanningProgressPage extends BaseModulePage implements HasTable
                 Tables\Filters\SelectFilter::make('priority')->options(Milestone::$priorities),
             ])
             ->headerActions([
-                CreateAction::make()
-                    ->label('New Milestone')
-                    ->icon('heroicon-o-plus')
+                Action::make('create')->label('New Milestone')->icon('heroicon-o-plus')
                     ->schema($this->getMilestoneFormSchema())
-                    ->mutateDataUsing(function (array $data) use ($projectId, $companyId): array {
+                    ->action(function (array $data) use ($projectId, $companyId): void {
                         $data['cde_project_id'] = $projectId;
                         $data['company_id'] = $companyId;
-                        return $data;
+                        Milestone::create($data);
+                        Notification::make()->title('Milestone created')->success()->send();
                     }),
             ])
             ->recordActions([
-                ViewAction::make()
-                    ->schema($this->getMilestoneFormSchema()),
-                EditAction::make()
-                    ->schema($this->getMilestoneFormSchema()),
-                Action::make('complete')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
+                Action::make('view')->icon('heroicon-o-eye')->color('gray')
+                    ->schema($this->getMilestoneFormSchema())
+                    ->fillForm(fn(Milestone $record) => $record->toArray())
+                    ->modalSubmitAction(false),
+                Action::make('edit')->icon('heroicon-o-pencil')
+                    ->schema($this->getMilestoneFormSchema())
+                    ->fillForm(fn(Milestone $record) => $record->toArray())
+                    ->action(function (array $data, Milestone $record): void {
+                        $record->update($data);
+                        Notification::make()->title('Milestone updated')->success()->send();
+                    }),
+                Action::make('complete')->icon('heroicon-o-check-circle')->color('success')->requiresConfirmation()
                     ->visible(fn(Milestone $record) => !in_array($record->status, ['completed', 'cancelled']))
-                    ->action(fn(Milestone $record) => $record->update([
-                        'status' => 'completed',
-                        'actual_date' => now(),
-                    ])),
-                DeleteAction::make(),
+                    ->action(fn(Milestone $record) => $record->update(['status' => 'completed', 'actual_date' => now()])),
+                Action::make('delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                    ->action(fn(Milestone $record) => $record->delete()),
             ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ])
+            ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])])
             ->emptyStateHeading('No Milestones')
             ->emptyStateDescription('No milestones have been created for this project yet.')
             ->emptyStateIcon('heroicon-o-flag');

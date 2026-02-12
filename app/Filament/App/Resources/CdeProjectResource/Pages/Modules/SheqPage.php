@@ -7,12 +7,9 @@ use App\Models\SafetyIncident;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -109,22 +106,33 @@ class SheqPage extends BaseModulePage implements HasTable
                 Tables\Filters\SelectFilter::make('severity')->options(['minor' => 'Minor', 'moderate' => 'Moderate', 'major' => 'Major', 'critical' => 'Critical']),
             ])
             ->headerActions([
-                CreateAction::make()->label('Report Incident')->icon('heroicon-o-plus')
+                Action::make('create')->label('Report Incident')->icon('heroicon-o-plus')
                     ->schema($this->getIncidentFormSchema())
-                    ->mutateDataUsing(function (array $data) use ($projectId, $companyId): array {
+                    ->action(function (array $data) use ($projectId, $companyId): void {
                         $data['cde_project_id'] = $projectId;
                         $data['company_id'] = $companyId;
                         $data['reported_by'] = auth()->id();
-                        return $data;
+                        SafetyIncident::create($data);
+                        Notification::make()->title('Incident reported')->success()->send();
                     }),
             ])
             ->recordActions([
-                ViewAction::make()->schema($this->getIncidentFormSchema()),
-                EditAction::make()->schema($this->getIncidentFormSchema()),
+                Action::make('view')->icon('heroicon-o-eye')->color('gray')
+                    ->schema($this->getIncidentFormSchema())
+                    ->fillForm(fn(SafetyIncident $record) => $record->toArray())
+                    ->modalSubmitAction(false),
+                Action::make('edit')->icon('heroicon-o-pencil')
+                    ->schema($this->getIncidentFormSchema())
+                    ->fillForm(fn(SafetyIncident $record) => $record->toArray())
+                    ->action(function (array $data, SafetyIncident $record): void {
+                        $record->update($data);
+                        Notification::make()->title('Incident updated')->success()->send();
+                    }),
                 Action::make('resolve')->icon('heroicon-o-check-circle')->color('success')->requiresConfirmation()
                     ->visible(fn(SafetyIncident $record) => !in_array($record->status, ['resolved', 'closed']))
                     ->action(fn(SafetyIncident $record) => $record->update(['status' => 'resolved'])),
-                DeleteAction::make(),
+                Action::make('delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                    ->action(fn(SafetyIncident $record) => $record->delete()),
             ])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])])
             ->emptyStateHeading('No Safety Incidents')

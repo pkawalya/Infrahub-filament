@@ -6,12 +6,9 @@ use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\DailySiteLog;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -71,62 +68,25 @@ class FieldManagementPage extends BaseModulePage implements HasTable
         ];
     }
 
-    protected function getDailySiteLogFormSchema(): array
+    protected function getLogFormSchema(): array
     {
         return [
             Section::make('Log Details')->schema([
-                Forms\Components\DatePicker::make('log_date')
-                    ->required()
-                    ->default(now())
-                    ->label('Date'),
-                Forms\Components\Select::make('weather')
-                    ->options(DailySiteLog::$weatherOptions)
-                    ->required(),
-                Forms\Components\TextInput::make('temperature_high')
-                    ->numeric()
-                    ->suffix('°C')
-                    ->label('High Temp'),
-                Forms\Components\TextInput::make('temperature_low')
-                    ->numeric()
-                    ->suffix('°C')
-                    ->label('Low Temp'),
-                Forms\Components\TextInput::make('workers_on_site')
-                    ->numeric()
-                    ->required()
-                    ->default(0)
-                    ->label('Workers on Site'),
-                Forms\Components\TextInput::make('visitors_on_site')
-                    ->numeric()
-                    ->default(0)
-                    ->label('Visitors'),
-                Forms\Components\Select::make('status')
-                    ->options(DailySiteLog::$statuses)
-                    ->required()
-                    ->default('draft'),
+                Forms\Components\DatePicker::make('log_date')->required()->default(now())->label('Date'),
+                Forms\Components\Select::make('weather')->options(DailySiteLog::$weatherOptions)->required(),
+                Forms\Components\TextInput::make('temperature_high')->numeric()->suffix('°C')->label('High Temp'),
+                Forms\Components\TextInput::make('temperature_low')->numeric()->suffix('°C')->label('Low Temp'),
+                Forms\Components\TextInput::make('workers_on_site')->numeric()->required()->default(0)->label('Workers on Site'),
+                Forms\Components\TextInput::make('visitors_on_site')->numeric()->default(0)->label('Visitors'),
+                Forms\Components\Select::make('status')->options(DailySiteLog::$statuses)->required()->default('draft'),
             ])->columns(3),
-
             Section::make('Work Summary')->schema([
-                Forms\Components\Textarea::make('work_performed')
-                    ->rows(3)
-                    ->label('Work Performed')
-                    ->columnSpanFull(),
-                Forms\Components\Textarea::make('materials_received')
-                    ->rows(2)
-                    ->label('Materials Received')
-                    ->columnSpanFull(),
-                Forms\Components\Textarea::make('equipment_used')
-                    ->rows(2)
-                    ->label('Equipment Used')
-                    ->columnSpanFull(),
-                Forms\Components\Textarea::make('delays')
-                    ->rows(2)
-                    ->placeholder('Describe any delays or issues...'),
-                Forms\Components\Textarea::make('safety_incidents')
-                    ->rows(2)
-                    ->placeholder('Report any safety incidents...'),
-                Forms\Components\Textarea::make('notes')
-                    ->rows(2)
-                    ->columnSpanFull(),
+                Forms\Components\Textarea::make('work_performed')->rows(3)->label('Work Performed')->columnSpanFull(),
+                Forms\Components\Textarea::make('materials_received')->rows(2)->columnSpanFull(),
+                Forms\Components\Textarea::make('equipment_used')->rows(2)->columnSpanFull(),
+                Forms\Components\Textarea::make('delays')->rows(2)->placeholder('Describe any delays...'),
+                Forms\Components\Textarea::make('safety_incidents')->rows(2)->placeholder('Report any safety incidents...'),
+                Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
             ])->columns(2),
         ];
     }
@@ -141,58 +101,45 @@ class FieldManagementPage extends BaseModulePage implements HasTable
             ->columns([
                 Tables\Columns\TextColumn::make('log_date')->date()->sortable()->label('Date'),
                 Tables\Columns\TextColumn::make('weather')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'sunny', 'hot' => 'warning',
-                        'rainy', 'stormy' => 'danger',
-                        'cloudy', 'partly_cloudy' => 'gray',
-                        default => 'info',
-                    }),
+                    ->color(fn(string $state) => match ($state) { 'sunny', 'hot' => 'warning', 'rainy', 'stormy' => 'danger', 'cloudy', 'partly_cloudy' => 'gray', default => 'info'}),
                 Tables\Columns\TextColumn::make('workers_on_site')->label('Workers')->sortable(),
                 Tables\Columns\TextColumn::make('work_performed')->limit(60)->label('Work Summary'),
-                Tables\Columns\TextColumn::make('delays')->limit(40)->placeholder('None'),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'approved' => 'success',
-                        'submitted' => 'info',
-                        'rejected' => 'danger',
-                        default => 'gray',
-                    }),
+                    ->color(fn(string $state) => match ($state) { 'approved' => 'success', 'submitted' => 'info', 'rejected' => 'danger', default => 'gray'}),
                 Tables\Columns\TextColumn::make('creator.name')->label('Logged By'),
             ])
             ->defaultSort('log_date', 'desc')
             ->headerActions([
-                CreateAction::make()
-                    ->label('New Daily Log')
-                    ->icon('heroicon-o-plus')
-                    ->schema($this->getDailySiteLogFormSchema())
-                    ->mutateDataUsing(function (array $data) use ($projectId, $companyId): array {
+                Action::make('create')
+                    ->label('New Daily Log')->icon('heroicon-o-plus')
+                    ->schema($this->getLogFormSchema())
+                    ->action(function (array $data) use ($projectId, $companyId): void {
                         $data['cde_project_id'] = $projectId;
                         $data['company_id'] = $companyId;
                         $data['created_by'] = auth()->id();
-                        return $data;
+                        DailySiteLog::create($data);
+                        Notification::make()->title('Daily log created')->success()->send();
                     }),
             ])
             ->recordActions([
-                ViewAction::make()
-                    ->schema($this->getDailySiteLogFormSchema()),
-                EditAction::make()
-                    ->schema($this->getDailySiteLogFormSchema()),
-                Action::make('approve')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
+                Action::make('view')->icon('heroicon-o-eye')->color('gray')
+                    ->schema($this->getLogFormSchema())
+                    ->fillForm(fn(DailySiteLog $record) => $record->toArray())
+                    ->modalSubmitAction(false),
+                Action::make('edit')->icon('heroicon-o-pencil')
+                    ->schema($this->getLogFormSchema())
+                    ->fillForm(fn(DailySiteLog $record) => $record->toArray())
+                    ->action(function (array $data, DailySiteLog $record): void {
+                        $record->update($data);
+                        Notification::make()->title('Daily log updated')->success()->send();
+                    }),
+                Action::make('approve')->icon('heroicon-o-check-circle')->color('success')->requiresConfirmation()
                     ->visible(fn(DailySiteLog $record) => $record->status === 'submitted')
-                    ->action(fn(DailySiteLog $record) => $record->update([
-                        'status' => 'approved',
-                        'approved_by' => auth()->id(),
-                    ])),
-                DeleteAction::make(),
+                    ->action(fn(DailySiteLog $record) => $record->update(['status' => 'approved', 'approved_by' => auth()->id()])),
+                Action::make('delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                    ->action(fn(DailySiteLog $record) => $record->delete()),
             ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ])
+            ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])])
             ->emptyStateHeading('No Daily Logs')
             ->emptyStateDescription('No daily site logs have been recorded for this project yet.')
             ->emptyStateIcon('heroicon-o-document-text');

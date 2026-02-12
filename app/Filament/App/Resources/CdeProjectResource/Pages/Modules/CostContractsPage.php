@@ -5,13 +5,11 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\Contract;
 use App\Support\CurrencyHelper;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -76,7 +74,7 @@ class CostContractsPage extends BaseModulePage implements HasTable
             ])->columns(2),
             Section::make('Financial Details')->schema([
                 Forms\Components\TextInput::make('original_value')->numeric()->prefix('$')->default(0)->label('Original Value'),
-                Forms\Components\TextInput::make('revised_value')->numeric()->prefix('$')->label('Revised Value')->placeholder('Leave empty if unchanged'),
+                Forms\Components\TextInput::make('revised_value')->numeric()->prefix('$')->label('Revised Value'),
             ])->columns(2),
             Section::make('Details')->schema([
                 Forms\Components\Textarea::make('description')->rows(2),
@@ -105,22 +103,32 @@ class CostContractsPage extends BaseModulePage implements HasTable
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(Contract::$statuses),
-                Tables\Filters\SelectFilter::make('type')->options(['main' => 'Main Contract', 'sub' => 'Sub-Contract', 'supply' => 'Supply', 'consultancy' => 'Consultancy', 'service' => 'Service', 'other' => 'Other']),
             ])
             ->headerActions([
-                CreateAction::make()->label('New Contract')->icon('heroicon-o-plus')
+                Action::make('create')->label('New Contract')->icon('heroicon-o-plus')
                     ->schema($this->getContractFormSchema())
-                    ->mutateDataUsing(function (array $data) use ($projectId, $companyId): array {
+                    ->action(function (array $data) use ($projectId, $companyId): void {
                         $data['cde_project_id'] = $projectId;
                         $data['company_id'] = $companyId;
                         $data['created_by'] = auth()->id();
-                        return $data;
+                        Contract::create($data);
+                        Notification::make()->title('Contract created')->success()->send();
                     }),
             ])
             ->recordActions([
-                ViewAction::make()->schema($this->getContractFormSchema()),
-                EditAction::make()->schema($this->getContractFormSchema()),
-                DeleteAction::make(),
+                Action::make('view')->icon('heroicon-o-eye')->color('gray')
+                    ->schema($this->getContractFormSchema())
+                    ->fillForm(fn(Contract $record) => $record->toArray())
+                    ->modalSubmitAction(false),
+                Action::make('edit')->icon('heroicon-o-pencil')
+                    ->schema($this->getContractFormSchema())
+                    ->fillForm(fn(Contract $record) => $record->toArray())
+                    ->action(function (array $data, Contract $record): void {
+                        $record->update($data);
+                        Notification::make()->title('Contract updated')->success()->send();
+                    }),
+                Action::make('delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                    ->action(fn(Contract $record) => $record->delete()),
             ])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])])
             ->emptyStateHeading('No Contracts')

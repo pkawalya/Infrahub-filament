@@ -8,14 +8,10 @@ use App\Models\User;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderType;
 use Filament\Actions\Action;
-use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -37,16 +33,13 @@ class CoreFsmPage extends BaseModulePage implements HasTable
         $companyId = $this->record->company_id;
         $total = WorkOrder::where('company_id', $companyId)->count();
         $open = WorkOrder::where('company_id', $companyId)
-            ->whereNotIn('status', ['completed', 'cancelled'])
-            ->count();
+            ->whereNotIn('status', ['completed', 'cancelled'])->count();
         $urgent = WorkOrder::where('company_id', $companyId)
             ->where('priority', 'urgent')
-            ->whereNotIn('status', ['completed', 'cancelled'])
-            ->count();
+            ->whereNotIn('status', ['completed', 'cancelled'])->count();
         $completedMonth = WorkOrder::where('company_id', $companyId)
             ->where('status', 'completed')
-            ->whereMonth('completed_at', now()->month)
-            ->count();
+            ->whereMonth('completed_at', now()->month)->count();
 
         return [
             [
@@ -86,40 +79,20 @@ class CoreFsmPage extends BaseModulePage implements HasTable
     protected function getWorkOrderFormSchema(): array
     {
         $companyId = $this->record->company_id;
-
         return [
             Section::make('Work Order Details')->schema([
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->maxLength(255)
-                    ->columnSpanFull(),
-                Forms\Components\Select::make('work_order_type_id')
-                    ->label('Type')
-                    ->options(WorkOrderType::where('company_id', $companyId)->pluck('name', 'id'))
-                    ->searchable(),
-                Forms\Components\Select::make('client_id')
-                    ->label('Client')
-                    ->options(Client::where('company_id', $companyId)->where('is_active', true)->pluck('name', 'id'))
-                    ->searchable(),
-                Forms\Components\Select::make('priority')
-                    ->options(WorkOrder::$priorities)
-                    ->required()
-                    ->default('medium'),
-                Forms\Components\Select::make('status')
-                    ->options(WorkOrder::$statuses)
-                    ->required()
-                    ->default('pending'),
-                Forms\Components\Select::make('assigned_to')
-                    ->label('Assign To')
-                    ->options(User::where('company_id', $companyId)->where('is_active', true)->pluck('name', 'id'))
-                    ->searchable(),
+                Forms\Components\TextInput::make('title')->required()->maxLength(255)->columnSpanFull(),
+                Forms\Components\Select::make('work_order_type_id')->label('Type')
+                    ->options(WorkOrderType::where('company_id', $companyId)->pluck('name', 'id'))->searchable(),
+                Forms\Components\Select::make('client_id')->label('Client')
+                    ->options(Client::where('company_id', $companyId)->where('is_active', true)->pluck('name', 'id'))->searchable(),
+                Forms\Components\Select::make('priority')->options(WorkOrder::$priorities)->required()->default('medium'),
+                Forms\Components\Select::make('status')->options(WorkOrder::$statuses)->required()->default('pending'),
+                Forms\Components\Select::make('assigned_to')->label('Assign To')
+                    ->options(User::where('company_id', $companyId)->where('is_active', true)->pluck('name', 'id'))->searchable(),
                 Forms\Components\DatePicker::make('due_date'),
-                Forms\Components\Textarea::make('description')
-                    ->rows(3)
-                    ->columnSpanFull(),
-                Forms\Components\Textarea::make('notes')
-                    ->rows(2)
-                    ->columnSpanFull(),
+                Forms\Components\Textarea::make('description')->rows(3)->columnSpanFull(),
+                Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
             ])->columns(2),
         ];
     }
@@ -134,21 +107,9 @@ class CoreFsmPage extends BaseModulePage implements HasTable
                 Tables\Columns\TextColumn::make('wo_number')->label('WO #')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('title')->searchable()->limit(45),
                 Tables\Columns\TextColumn::make('priority')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'urgent' => 'danger',
-                        'high' => 'warning',
-                        'medium' => 'info',
-                        default => 'gray',
-                    }),
+                    ->color(fn(string $state) => match ($state) { 'urgent' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'}),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'completed' => 'success',
-                        'in_progress' => 'info',
-                        'approved' => 'primary',
-                        'on_hold' => 'warning',
-                        'cancelled' => 'danger',
-                        default => 'gray',
-                    }),
+                    ->color(fn(string $state) => match ($state) { 'completed' => 'success', 'in_progress' => 'info', 'approved' => 'primary', 'on_hold' => 'warning', 'cancelled' => 'danger', default => 'gray'}),
                 Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('Unassigned'),
                 Tables\Columns\TextColumn::make('client.name')->label('Client')->toggleable(),
                 Tables\Columns\TextColumn::make('due_date')->date()->sortable()
@@ -161,29 +122,40 @@ class CoreFsmPage extends BaseModulePage implements HasTable
                 Tables\Filters\SelectFilter::make('priority')->options(WorkOrder::$priorities),
             ])
             ->headerActions([
-                CreateAction::make()
+                Action::make('create')
                     ->label('New Work Order')
                     ->icon('heroicon-o-plus')
                     ->schema($this->getWorkOrderFormSchema())
-                    ->mutateDataUsing(function (array $data) use ($companyId): array {
+                    ->action(function (array $data) use ($companyId): void {
                         $data['company_id'] = $companyId;
                         $data['created_by'] = auth()->id();
                         $data['wo_number'] = 'WO-' . str_pad((string) (WorkOrder::where('company_id', $companyId)->count() + 1), 5, '0', STR_PAD_LEFT);
-                        return $data;
+                        WorkOrder::create($data);
+                        Notification::make()->title('Work Order created')->success()->send();
                     }),
             ])
             ->recordActions([
-                ViewAction::make()
-                    ->schema($this->getWorkOrderFormSchema()),
-                EditAction::make()
-                    ->schema($this->getWorkOrderFormSchema()),
-                DeleteAction::make(),
+                Action::make('view')
+                    ->icon('heroicon-o-eye')
+                    ->color('gray')
+                    ->schema($this->getWorkOrderFormSchema())
+                    ->fillForm(fn(WorkOrder $record) => $record->toArray())
+                    ->modalSubmitAction(false),
+                Action::make('edit')
+                    ->icon('heroicon-o-pencil')
+                    ->schema($this->getWorkOrderFormSchema())
+                    ->fillForm(fn(WorkOrder $record) => $record->toArray())
+                    ->action(function (array $data, WorkOrder $record): void {
+                        $record->update($data);
+                        Notification::make()->title('Work Order updated')->success()->send();
+                    }),
+                Action::make('delete')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(fn(WorkOrder $record) => $record->delete()),
             ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ])
+            ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])])
             ->emptyStateHeading('No Work Orders')
             ->emptyStateDescription('No work orders have been created yet.')
             ->emptyStateIcon('heroicon-o-wrench-screwdriver');

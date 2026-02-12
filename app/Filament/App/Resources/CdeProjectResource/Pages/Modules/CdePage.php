@@ -7,12 +7,9 @@ use App\Models\CdeDocument;
 use App\Models\CdeFolder;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -61,57 +58,21 @@ class CdePage extends BaseModulePage implements HasTable
         ];
     }
 
-    protected function getDocumentFormSchema(): array
+    protected function getDocFormSchema(): array
     {
         $projectId = $this->record->id;
-
         return [
             Section::make('Document Details')->schema([
-                Forms\Components\TextInput::make('document_number')
-                    ->label('Document #')
-                    ->required(),
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Select::make('cde_folder_id')
-                    ->label('Folder')
-                    ->options(CdeFolder::where('cde_project_id', $projectId)->pluck('name', 'id'))
-                    ->searchable()
-                    ->nullable(),
-                Forms\Components\Select::make('discipline')
-                    ->options([
-                        'architecture' => 'Architecture',
-                        'structural' => 'Structural',
-                        'mechanical' => 'Mechanical',
-                        'electrical' => 'Electrical',
-                        'plumbing' => 'Plumbing',
-                        'civil' => 'Civil',
-                        'landscape' => 'Landscape',
-                        'interior' => 'Interior',
-                        'general' => 'General',
-                    ])
-                    ->searchable(),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'wip' => 'Work in Progress',
-                        'shared' => 'Shared',
-                        'published' => 'Published',
-                        'archived' => 'Archived',
-                    ])
-                    ->required()
-                    ->default('wip'),
-                Forms\Components\TextInput::make('revision')
-                    ->default('A')
-                    ->maxLength(10),
-                Forms\Components\TextInput::make('file_type')
-                    ->placeholder('e.g. PDF, DWG, BIM')
-                    ->label('File Type'),
-                Forms\Components\TextInput::make('file_size')
-                    ->numeric()
-                    ->label('File Size (bytes)'),
-                Forms\Components\Textarea::make('description')
-                    ->rows(3)
-                    ->columnSpanFull(),
+                Forms\Components\TextInput::make('document_number')->label('Document #')->required(),
+                Forms\Components\TextInput::make('title')->required()->maxLength(255),
+                Forms\Components\Select::make('cde_folder_id')->label('Folder')
+                    ->options(CdeFolder::where('cde_project_id', $projectId)->pluck('name', 'id'))->searchable()->nullable(),
+                Forms\Components\Select::make('discipline')->options(['architecture' => 'Architecture', 'structural' => 'Structural', 'mechanical' => 'Mechanical', 'electrical' => 'Electrical', 'plumbing' => 'Plumbing', 'civil' => 'Civil', 'landscape' => 'Landscape', 'interior' => 'Interior', 'general' => 'General'])->searchable(),
+                Forms\Components\Select::make('status')->options(['wip' => 'Work in Progress', 'shared' => 'Shared', 'published' => 'Published', 'archived' => 'Archived'])->required()->default('wip'),
+                Forms\Components\TextInput::make('revision')->default('A')->maxLength(10),
+                Forms\Components\TextInput::make('file_type')->placeholder('e.g. PDF, DWG, BIM')->label('File Type'),
+                Forms\Components\TextInput::make('file_size')->numeric()->label('File Size (bytes)'),
+                Forms\Components\Textarea::make('description')->rows(3)->columnSpanFull(),
             ])->columns(2),
         ];
     }
@@ -128,49 +89,45 @@ class CdePage extends BaseModulePage implements HasTable
                 Tables\Columns\TextColumn::make('title')->searchable()->limit(50),
                 Tables\Columns\TextColumn::make('revision')->badge()->color('info'),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'published' => 'success', 'shared' => 'info', 'wip' => 'warning', 'archived' => 'gray', default => 'gray',
-                    }),
+                    ->color(fn(string $state) => match ($state) { 'published' => 'success', 'shared' => 'info', 'wip' => 'warning', 'archived' => 'gray', default => 'gray'}),
                 Tables\Columns\TextColumn::make('discipline'),
                 Tables\Columns\TextColumn::make('file_type'),
                 Tables\Columns\TextColumn::make('updated_at')->dateTime()->sortable(),
             ])
             ->defaultSort('updated_at', 'desc')
             ->headerActions([
-                CreateAction::make()
-                    ->label('New Document')
-                    ->icon('heroicon-o-plus')
-                    ->schema($this->getDocumentFormSchema())
-                    ->mutateDataUsing(function (array $data) use ($projectId, $companyId): array {
+                Action::make('create')->label('New Document')->icon('heroicon-o-plus')
+                    ->schema($this->getDocFormSchema())
+                    ->action(function (array $data) use ($projectId, $companyId): void {
                         $data['cde_project_id'] = $projectId;
                         $data['company_id'] = $companyId;
                         $data['uploaded_by'] = auth()->id();
-                        return $data;
+                        CdeDocument::create($data);
+                        Notification::make()->title('Document created')->success()->send();
                     }),
             ])
             ->recordActions([
-                ViewAction::make()
-                    ->schema($this->getDocumentFormSchema()),
-                EditAction::make()
-                    ->schema($this->getDocumentFormSchema()),
-                Action::make('new_revision')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('info')
-                    ->label('Rev Up')
-                    ->requiresConfirmation()
+                Action::make('view')->icon('heroicon-o-eye')->color('gray')
+                    ->schema($this->getDocFormSchema())
+                    ->fillForm(fn(CdeDocument $record) => $record->toArray())
+                    ->modalSubmitAction(false),
+                Action::make('edit')->icon('heroicon-o-pencil')
+                    ->schema($this->getDocFormSchema())
+                    ->fillForm(fn(CdeDocument $record) => $record->toArray())
+                    ->action(function (array $data, CdeDocument $record): void {
+                        $record->update($data);
+                        Notification::make()->title('Document updated')->success()->send();
+                    }),
+                Action::make('new_revision')->icon('heroicon-o-arrow-path')->color('info')->label('Rev Up')->requiresConfirmation()
                     ->modalDescription('Create a new revision of this document?')
                     ->action(function (CdeDocument $record) {
                         $currentRev = $record->revision ?? 'A';
-                        $nextRev = chr(ord($currentRev) + 1);
-                        $record->update(['revision' => $nextRev]);
+                        $record->update(['revision' => chr(ord($currentRev) + 1)]);
                     }),
-                DeleteAction::make(),
+                Action::make('delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                    ->action(fn(CdeDocument $record) => $record->delete()),
             ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ])
+            ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])])
             ->emptyStateHeading('No Documents')
             ->emptyStateDescription('No documents have been uploaded for this project yet.')
             ->emptyStateIcon('heroicon-o-document');

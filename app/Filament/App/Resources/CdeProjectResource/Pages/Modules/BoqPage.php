@@ -8,12 +8,9 @@ use App\Models\Contract;
 use App\Support\CurrencyHelper;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
-use Filament\Actions\CreateAction;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -99,22 +96,33 @@ class BoqPage extends BaseModulePage implements HasTable
             ])
             ->defaultSort('created_at', 'desc')
             ->headerActions([
-                CreateAction::make()->label('New BOQ')->icon('heroicon-o-plus')
+                Action::make('create')->label('New BOQ')->icon('heroicon-o-plus')
                     ->schema($this->getBoqFormSchema())
-                    ->mutateDataUsing(function (array $data) use ($projectId, $companyId): array {
+                    ->action(function (array $data) use ($projectId, $companyId): void {
                         $data['cde_project_id'] = $projectId;
                         $data['company_id'] = $companyId;
                         $data['created_by'] = auth()->id();
-                        return $data;
+                        Boq::create($data);
+                        Notification::make()->title('BOQ created')->success()->send();
                     }),
             ])
             ->recordActions([
-                ViewAction::make()->schema($this->getBoqFormSchema()),
-                EditAction::make()->schema($this->getBoqFormSchema()),
+                Action::make('view')->icon('heroicon-o-eye')->color('gray')
+                    ->schema($this->getBoqFormSchema())
+                    ->fillForm(fn(Boq $record) => $record->toArray())
+                    ->modalSubmitAction(false),
+                Action::make('edit')->icon('heroicon-o-pencil')
+                    ->schema($this->getBoqFormSchema())
+                    ->fillForm(fn(Boq $record) => $record->toArray())
+                    ->action(function (array $data, Boq $record): void {
+                        $record->update($data);
+                        Notification::make()->title('BOQ updated')->success()->send();
+                    }),
                 Action::make('approve')->icon('heroicon-o-check-circle')->color('success')->requiresConfirmation()
                     ->visible(fn(Boq $record) => $record->status !== 'approved')
                     ->action(fn(Boq $record) => $record->update(['status' => 'approved'])),
-                DeleteAction::make(),
+                Action::make('delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                    ->action(fn(Boq $record) => $record->delete()),
             ])
             ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])])
             ->emptyStateHeading('No BOQs')
