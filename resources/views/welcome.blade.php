@@ -9,8 +9,7 @@
         content="InfraHub is an all-in-one construction project management platform. Manage projects, BOQs, contracts, safety, field ops, and teams — from one powerful dashboard.">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/svg+xml"
-        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230f172a'/><text x='4' y='24' font-size='22' fill='%2338bdf8'>⌂</text></svg>">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('logo/infrahub-icon.svg') }}">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -487,17 +486,7 @@
         <!-- Nav -->
         <nav>
             <a href="/" class="logo">
-                <div class="logo-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 21h18" />
-                        <path d="M5 21V7l7-4 7 4v14" />
-                        <path d="M9 21v-6h6v6" />
-                        <path d="M10 9h4" />
-                        <path d="M10 13h4" />
-                    </svg>
-                </div>
-                <span class="logo-text">Infra<span>Hub</span></span>
+                <img src="{{ asset('logo/infrahub-logo-dark.svg') }}" alt="InfraHub" style="height: 36px;">
             </a>
 
             @if (Route::has('login'))
@@ -648,14 +637,7 @@
         <!-- Footer -->
         <footer>
             <a href="/" class="logo" style="text-decoration:none;">
-                <div class="logo-icon" style="width:32px;height:32px;border-radius:8px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 21h18" />
-                        <path d="M5 21V7l7-4 7 4v14" />
-                    </svg>
-                </div>
-                <span class="logo-text" style="font-size:16px;">Infra<span>Hub</span></span>
+                <img src="{{ asset('logo/infrahub-logo-dark.svg') }}" alt="InfraHub" style="height: 28px;">
             </a>
             <small>© {{ date('Y') }} InfraHub. Built with Laravel & Filament.</small>
         </footer>

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" fill="none">
+  <!-- ══════ ICON MARK (monochrome) ══════ -->
+  <g>
+    <rect x="6" y="10" width="60" height="60" rx="14" fill="#0f172a" opacity="0.04"/>
+
+    <g stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <line x1="16" y1="62" x2="56" y2="62"/>
+
+      <rect x="29" y="22" width="14" height="40" rx="1" fill="#0f172a" opacity="0.05"/>
+      <line x1="29" y1="22" x2="29" y2="62"/>
+      <line x1="43" y1="22" x2="43" y2="62"/>
+      <line x1="29" y1="22" x2="43" y2="22"/>
+
+      <rect x="32" y="27" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.7" stroke="none"/>
+      <rect x="37" y="27" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.7" stroke="none"/>
+      <rect x="32" y="34" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.5" stroke="none"/>
+      <rect x="37" y="34" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.5" stroke="none"/>
+      <rect x="32" y="41" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.35" stroke="none"/>
+      <rect x="37" y="41" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.35" stroke="none"/>
+
+      <rect x="33" y="52" width="6" height="10" rx="1" fill="#0f172a" opacity="0.15" stroke="none"/>
+
+      <line x1="16" y1="38" x2="29" y2="38"/>
+      <line x1="16" y1="38" x2="16" y2="62"/>
+      <rect x="19" y="43" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.3" stroke="none"/>
+      <rect x="24" y="43" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.3" stroke="none"/>
+      <rect x="19" y="50" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.2" stroke="none"/>
+      <rect x="24" y="50" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.2" stroke="none"/>
+
+      <line x1="43" y1="38" x2="56" y2="38"/>
+      <line x1="56" y1="38" x2="56" y2="62"/>
+      <rect x="46" y="43" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.3" stroke="none"/>
+      <rect x="51" y="43" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.3" stroke="none"/>
+      <rect x="46" y="50" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.2" stroke="none"/>
+      <rect x="51" y="50" width="3" height="3" rx="0.5" fill="#0f172a" opacity="0.2" stroke="none"/>
+
+      <line x1="36" y1="12" x2="36" y2="22"/>
+      <circle cx="36" cy="12" r="2" fill="#0f172a" stroke="none"/>
+    </g>
+
+    <circle cx="12" cy="30" r="3" fill="#0f172a" opacity="0.2"/>
+    <circle cx="60" cy="30" r="3" fill="#0f172a" opacity="0.2"/>
+    <line x1="14" y1="31" x2="29" y2="36" stroke="#0f172a" stroke-width="1" opacity="0.12"/>
+    <line x1="58" y1="31" x2="43" y2="36" stroke="#0f172a" stroke-width="1" opacity="0.12"/>
+  </g>
+
+  <!-- ══════ WORDMARK ══════ -->
+  <text x="80" y="52" font-family="Inter, system-ui, -apple-system, sans-serif" font-size="32" font-weight="800" letter-spacing="-1" fill="#0f172a">InfraHub</text>
+</svg>
