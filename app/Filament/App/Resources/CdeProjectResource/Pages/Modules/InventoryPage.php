@@ -3,9 +3,17 @@
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
+use App\Models\PurchaseOrder;
+use App\Support\CurrencyHelper;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
 
-class InventoryPage extends BaseModulePage
+class InventoryPage extends BaseModulePage implements HasTable
 {
+    use InteractsWithTable;
+
     protected static string $moduleCode = 'inventory';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cube';
     protected static ?string $navigationLabel = 'Inventory';
@@ -14,29 +22,74 @@ class InventoryPage extends BaseModulePage
 
     public function getStats(): array
     {
+        $companyId = $this->record->company_id;
+        $totalPOs = PurchaseOrder::where('company_id', $companyId)->count();
+        $pendingPOs = PurchaseOrder::where('company_id', $companyId)
+            ->whereIn('status', ['submitted', 'approved', 'ordered'])
+            ->count();
+        $totalValue = PurchaseOrder::where('company_id', $companyId)->sum('total_amount');
+
         return [
             [
-                'label' => 'Stock Items',
-                'value' => 0,
-                'sub' => 'Total tracked',
-                'primary' => true,
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>'
-            ],
-            [
-                'label' => 'Low Stock',
-                'value' => 0,
-                'sub' => 'Need reorder',
-                'sub_type' => 'danger',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#dc2626" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>',
-                'icon_bg' => '#fef2f2'
-            ],
-            [
                 'label' => 'Purchase Orders',
-                'value' => 0,
-                'sub' => 'Pending',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2563eb" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>',
+                'value' => $totalPOs,
+                'sub' => $pendingPOs . ' pending',
+                'sub_type' => $pendingPOs > 0 ? 'warning' : 'success',
+                'primary' => true,
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>'
+            ],
+            [
+                'label' => 'Total Spend',
+                'value' => CurrencyHelper::format($totalValue, 0),
+                'sub' => 'All purchase orders',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+                'icon_bg' => '#ecfdf5'
+            ],
+            [
+                'label' => 'Awaiting Delivery',
+                'value' => PurchaseOrder::where('company_id', $companyId)
+                    ->whereIn('status', ['ordered', 'partially_received'])
+                    ->count(),
+                'sub' => 'In transit',
+                'sub_type' => 'info',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2563eb" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.079-.481 1.09-1.101.005-.163.009-.364.009-.527V8.284c0-2.152-1.477-4.028-3.567-4.478A36.127 36.127 0 0012 3c-1.21 0-2.403.084-3.567.206-2.09.45-3.567 2.326-3.567 4.478V15.75c0 .63.504 1.126 1.126 1.126H5.25" /></svg>',
                 'icon_bg' => '#eff6ff'
             ],
         ];
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(PurchaseOrder::query()->where('company_id', $this->record->company_id))
+            ->columns([
+                Tables\Columns\TextColumn::make('po_number')->label('PO #')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('supplier.name')->searchable()->label('Supplier'),
+                Tables\Columns\TextColumn::make('status')->badge()
+                    ->color(fn(string $state) => match ($state) {
+                        'received' => 'success',
+                        'ordered' => 'info',
+                        'approved' => 'primary',
+                        'submitted' => 'warning',
+                        'partially_received' => 'warning',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('total_amount')
+                    ->formatStateUsing(CurrencyHelper::formatter())
+                    ->sortable()
+                    ->label('Total'),
+                Tables\Columns\TextColumn::make('order_date')->date()->sortable(),
+                Tables\Columns\TextColumn::make('expected_date')->date()->label('Expected')
+                    ->color(fn($record) => $record->expected_date?->isPast() && !in_array($record->status, ['received', 'cancelled']) ? 'danger' : null),
+                Tables\Columns\TextColumn::make('creator.name')->label('Created By'),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')->options(PurchaseOrder::$statuses),
+            ])
+            ->emptyStateHeading('No Purchase Orders')
+            ->emptyStateDescription('No purchase orders have been created yet.')
+            ->emptyStateIcon('heroicon-o-shopping-cart');
     }
 }

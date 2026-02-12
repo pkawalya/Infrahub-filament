@@ -77,6 +77,18 @@ class CdeProject extends Model
     {
         return $this->hasMany(SafetyIncident::class);
     }
+    public function dailySiteLogs()
+    {
+        return $this->hasMany(DailySiteLog::class);
+    }
+    public function milestones()
+    {
+        return $this->hasMany(Milestone::class);
+    }
+    public function purchaseOrders()
+    {
+        return $this->hasMany(PurchaseOrder::class, 'company_id', 'company_id');
+    }
 
     // ─── Module Access ───────────────────────────────────────────
 

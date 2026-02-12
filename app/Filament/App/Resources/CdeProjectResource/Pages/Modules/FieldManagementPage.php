@@ -3,9 +3,16 @@
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
+use App\Models\DailySiteLog;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
 
-class FieldManagementPage extends BaseModulePage
+class FieldManagementPage extends BaseModulePage implements HasTable
 {
+    use InteractsWithTable;
+
     protected static string $moduleCode = 'field_management';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-map-pin';
     protected static ?string $navigationLabel = 'Field Mgmt';
@@ -15,28 +22,74 @@ class FieldManagementPage extends BaseModulePage
     public function getStats(): array
     {
         $r = $this->record;
+        $total = $r->dailySiteLogs()->count();
+        $today = $r->dailySiteLogs()->whereDate('log_date', today())->exists();
+        $approved = $r->dailySiteLogs()->where('status', 'approved')->count();
+        $workersToday = $r->dailySiteLogs()->whereDate('log_date', today())->sum('workers_on_site');
+
         return [
             [
                 'label' => 'Daily Logs',
-                'value' => 0,
-                'sub' => 'Coming soon',
+                'value' => $total,
+                'sub' => $approved . ' approved',
+                'sub_type' => 'success',
                 'primary' => true,
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>'
             ],
             [
-                'label' => 'Inspections',
-                'value' => 0,
-                'sub' => 'Scheduled',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2563eb" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.746 3.746 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" /></svg>',
-                'icon_bg' => '#eff6ff'
+                'label' => "Today's Log",
+                'value' => $today ? '✓' : '—',
+                'sub' => $today ? 'Submitted' : 'Not yet',
+                'sub_type' => $today ? 'success' : 'warning',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="' . ($today ? '#059669' : '#d97706') . '" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>',
+                'icon_bg' => $today ? '#ecfdf5' : '#fffbeb'
             ],
             [
                 'label' => 'Workers Today',
-                'value' => 0,
+                'value' => $workersToday ?: 0,
                 'sub' => 'On site',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#d97706" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2563eb" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>',
+                'icon_bg' => '#eff6ff'
+            ],
+            [
+                'label' => 'Pending Review',
+                'value' => $r->dailySiteLogs()->where('status', 'submitted')->count(),
+                'sub' => 'Awaiting approval',
+                'sub_type' => 'warning',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#d97706" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
                 'icon_bg' => '#fffbeb'
             ],
         ];
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(DailySiteLog::query()->where('cde_project_id', $this->record->id))
+            ->columns([
+                Tables\Columns\TextColumn::make('log_date')->date()->sortable()->label('Date'),
+                Tables\Columns\TextColumn::make('weather')->badge()
+                    ->color(fn(string $state) => match ($state) {
+                        'sunny', 'hot' => 'warning',
+                        'rainy', 'stormy' => 'danger',
+                        'cloudy', 'partly_cloudy' => 'gray',
+                        default => 'info',
+                    }),
+                Tables\Columns\TextColumn::make('workers_on_site')->label('Workers')->sortable(),
+                Tables\Columns\TextColumn::make('work_performed')->limit(60)->label('Work Summary'),
+                Tables\Columns\TextColumn::make('delays')->limit(40)->placeholder('None'),
+                Tables\Columns\TextColumn::make('status')->badge()
+                    ->color(fn(string $state) => match ($state) {
+                        'approved' => 'success',
+                        'submitted' => 'info',
+                        'rejected' => 'danger',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('creator.name')->label('Logged By'),
+            ])
+            ->defaultSort('log_date', 'desc')
+            ->emptyStateHeading('No Daily Logs')
+            ->emptyStateDescription('No daily site logs have been recorded for this project yet.')
+            ->emptyStateIcon('heroicon-o-document-text');
     }
 }
