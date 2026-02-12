@@ -4,314 +4,660 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Samanga Projects - Modern Project Management</title>
+    <title>InfraHub — Construction Project Management Platform</title>
     <meta name="description"
-        content="Samanga Projects - A powerful project management platform for modern teams. Organize tasks, collaborate, and deliver projects on time.">
+        content="InfraHub is an all-in-one construction project management platform. Manage projects, BOQs, contracts, safety, field ops, and teams — from one powerful dashboard.">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230f172a'/><text x='4' y='24' font-size='22' fill='%2338bdf8'>⌂</text></svg>">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                    colors: {
-                        primary: {
-                            50: '#f0f9ff',
-                            100: '#e0f2fe',
-                            200: '#bae6fd',
-                            300: '#7dd3fc',
-                            400: '#38bdf8',
-                            500: '#0ea5e9',
-                            600: '#0284c7',
-                            700: '#0369a1',
-                            800: '#075985',
-                            900: '#0c4a6e',
-                        },
-                        accent: {
-                            50: '#fdf4ff',
-                            100: '#fae8ff',
-                            200: '#f5d0fe',
-                            300: '#f0abfc',
-                            400: '#e879f9',
-                            500: '#d946ef',
-                            600: '#c026d3',
-                            700: '#a21caf',
-                        }
-                    },
-                }
-            }
-        }
-    </script>
     <style>
-        .gradient-bg {
-            background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 50%, #d946ef 100%);
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        .gradient-text {
-            background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 50%, #d946ef 100%);
+        :root {
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-300: #cbd5e1;
+            --slate-400: #94a3b8;
+            --slate-500: #64748b;
+            --slate-600: #475569;
+            --slate-700: #334155;
+            --slate-800: #1e293b;
+            --slate-900: #0f172a;
+            --slate-950: #020617;
+            --sky-400: #38bdf8;
+            --sky-500: #0ea5e9;
+            --sky-600: #0284c7;
+            --blue-500: #3b82f6;
+            --blue-600: #2563eb;
+            --indigo-500: #6366f1;
+            --indigo-600: #4f46e5;
+            --emerald-400: #34d399;
+            --emerald-500: #10b981;
+            --amber-400: #fbbf24;
+            --amber-500: #f59e0b;
+            --rose-500: #f43f5e;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--slate-950);
+            color: #fff;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        /* --- Background --- */
+        .bg-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image:
+                linear-gradient(rgba(56, 189, 248, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(56, 189, 248, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+        }
+
+        .bg-glow {
+            position: fixed;
+            z-index: 0;
+            width: 600px;
+            height: 600px;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+            pointer-events: none;
+        }
+
+        .bg-glow-1 {
+            top: -200px;
+            right: -100px;
+            background: var(--sky-500);
+        }
+
+        .bg-glow-2 {
+            bottom: -200px;
+            left: -100px;
+            background: var(--indigo-500);
+        }
+
+        .bg-glow-3 {
+            top: 40%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--emerald-500);
+            opacity: 0.08;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- Nav --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--sky-500), var(--indigo-500));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            color: var(--sky-400);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link {
+            color: var(--slate-400);
+            text-decoration: none;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--sky-500), var(--blue-600));
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(14, 165, 233, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(14, 165, 233, 0.4);
+        }
+
+        .btn-ghost {
+            color: var(--slate-300);
+            border: 1px solid var(--slate-700);
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--sky-500);
+            color: #fff;
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        .btn-lg {
+            padding: 16px 32px;
+            font-size: 16px;
+            border-radius: 14px;
+        }
+
+        /* --- Hero --- */
+        .hero {
+            padding: 80px 0 60px;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(56, 189, 248, 0.1);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            padding: 8px 18px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--sky-400);
+            margin-bottom: 28px;
+        }
+
+        .hero-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--emerald-400);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        .hero h1 {
+            font-size: clamp(40px, 6vw, 72px);
+            font-weight: 900;
+            line-height: 1.05;
+            letter-spacing: -2px;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 .gradient {
+            background: linear-gradient(135deg, var(--sky-400) 0%, var(--blue-500) 40%, var(--indigo-500) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
-        .glass-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+        .hero p {
+            font-size: 18px;
+            color: var(--slate-400);
+            max-width: 640px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
         }
 
-        .hero-pattern {
-            background-color: #f8fafc;
-            background-image:
-                radial-gradient(at 100% 0%, rgba(14, 165, 233, 0.1) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, rgba(139, 92, 246, 0.1) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(217, 70, 239, 0.05) 0px, transparent 50%);
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
-        .feature-card:hover {
+        /* --- Stats Bar --- */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--slate-800);
+            border-radius: 16px;
+            overflow: hidden;
+            margin: 80px 0;
+            border: 1px solid var(--slate-800);
+        }
+
+        .stat-item {
+            background: var(--slate-900);
+            padding: 32px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--sky-400), var(--emerald-400));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: var(--slate-500);
+            margin-top: 4px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- Modules --- */
+        .section-title {
+            text-align: center;
+            margin-bottom: 56px;
+        }
+
+        .section-title h2 {
+            font-size: 36px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+        }
+
+        .section-title p {
+            font-size: 16px;
+            color: var(--slate-400);
+            max-width: 560px;
+            margin: 0 auto;
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 20px;
+            margin-bottom: 100px;
+        }
+
+        .module-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--slate-800);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--sky-500), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .module-card:hover {
+            border-color: var(--slate-700);
+            background: rgba(255, 255, 255, 0.04);
             transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
-        .btn-primary {
-            background: linear-gradient(135deg, #0ea5e9 0%, #8b5cf6 100%);
-            transition: all 0.3s ease;
+        .module-card:hover::before {
+            opacity: 1;
         }
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(14, 165, 233, 0.3);
+        .module-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 22px;
         }
 
-        @keyframes float {
+        .module-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
 
-            0%,
-            100% {
-                transform: translateY(0px);
+        .module-card p {
+            font-size: 14px;
+            color: var(--slate-400);
+            line-height: 1.6;
+        }
+
+        /* --- CTA --- */
+        .cta {
+            text-align: center;
+            padding: 80px 40px;
+            margin-bottom: 80px;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.05), rgba(99, 102, 241, 0.05));
+            border: 1px solid var(--slate-800);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--sky-500), transparent);
+        }
+
+        .cta h2 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .cta p {
+            color: var(--slate-400);
+            margin-bottom: 32px;
+            font-size: 16px;
+        }
+
+        /* --- Footer --- */
+        footer {
+            border-top: 1px solid var(--slate-800);
+            padding: 32px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        footer small {
+            color: var(--slate-600);
+            font-size: 13px;
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 768px) {
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
             }
 
-            50% {
-                transform: translateY(-10px);
+            .modules-grid {
+                grid-template-columns: 1fr;
             }
-        }
 
-        .float-animation {
-            animation: float 3s ease-in-out infinite;
+            .hero {
+                padding: 48px 0 40px;
+            }
+
+            footer {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+            }
+
+            .nav-links .nav-link {
+                display: none;
+            }
         }
     </style>
 </head>
 
-<body class="antialiased font-sans hero-pattern min-h-screen">
-    <div class="min-h-screen flex flex-col">
-        <!-- Header -->
-        <header class="w-full py-4 px-6 sm:px-10 lg:px-16">
-            <nav class="max-w-7xl mx-auto flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center shadow-lg">
-                        <svg class="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
-                        </svg>
-                    </div>
-                    <span class="text-xl font-bold text-gray-900">Samanga<span
-                            class="gradient-text">Projects</span></span>
+<body>
+    <div class="bg-grid"></div>
+    <div class="bg-glow bg-glow-1"></div>
+    <div class="bg-glow bg-glow-2"></div>
+    <div class="bg-glow bg-glow-3"></div>
+
+    <div class="container">
+        <!-- Nav -->
+        <nav>
+            <a href="/" class="logo">
+                <div class="logo-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 21h18" />
+                        <path d="M5 21V7l7-4 7 4v14" />
+                        <path d="M9 21v-6h6v6" />
+                        <path d="M10 9h4" />
+                        <path d="M10 13h4" />
+                    </svg>
                 </div>
+                <span class="logo-text">Infra<span>Hub</span></span>
+            </a>
 
-                @if (Route::has('login'))
-                    <div class="flex items-center gap-4">
-                        @auth
-                            <a href="{{ url('/admin') }}"
-                                class="text-gray-600 hover:text-primary-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">Dashboard</a>
-                        @else
-                            <a href="{{ url('/admin/login') }}"
-                                class="text-gray-600 hover:text-primary-600 px-4 py-2 rounded-lg text-sm font-medium transition-colors">Log
-                                in</a>
-                            <a href="{{ url('/admin/login') }}"
-                                class="btn-primary text-white px-5 py-2.5 rounded-lg text-sm font-semibold shadow-md">Get
-                                Started</a>
-                        @endauth
-                    </div>
-                @endif
-            </nav>
-        </header>
-
-        <!-- Hero Section -->
-        <main class="flex-1 flex flex-col items-center justify-center w-full px-6 sm:px-10 py-12 lg:py-20">
-            <div class="max-w-6xl w-full">
-                <!-- Hero Content -->
-                <div class="text-center mb-16">
-                    <div
-                        class="inline-flex items-center gap-2 bg-primary-50 text-primary-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                clip-rule="evenodd" />
-                        </svg>
-                        Trusted by teams worldwide
-                    </div>
-                    <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 mb-6 leading-tight">
-                        Manage Projects with
-                        <span class="gradient-text">Clarity & Precision</span>
-                    </h1>
-                    <p class="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto mb-10 leading-relaxed">
-                        Samanga Projects empowers your team to plan, track, and deliver exceptional work.
-                        From tasks to documents — everything in one beautiful workspace.
-                    </p>
-                    <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                        <a href="/admin"
-                            class="btn-primary text-white font-bold py-4 px-8 rounded-xl text-lg shadow-lg w-full sm:w-auto">
-                            Launch Dashboard
-                            <svg class="w-5 h-5 inline-block ml-2" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                            </svg>
-                        </a>
-                        <a href="#features"
-                            class="text-gray-700 font-semibold py-4 px-8 rounded-xl border-2 border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-all w-full sm:w-auto text-center">
-                            Explore Features
-                        </a>
-                    </div>
+            @if (Route::has('login'))
+                <div class="nav-links">
+                    @auth
+                        <a href="{{ url('/app') }}" class="btn btn-primary">Dashboard</a>
+                    @else
+                        <a href="{{ url('/app/login') }}" class="nav-link">Log in</a>
+                        <a href="{{ url('/app/login') }}" class="btn btn-primary">Get Started</a>
+                    @endauth
                 </div>
+            @endif
+        </nav>
 
-                <!-- Features Grid -->
-                <div id="features" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-                    <!-- Feature 1 -->
-                    <div class="feature-card glass-card p-8 rounded-2xl transition-all duration-300">
-                        <div
-                            class="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg float-animation">
-                            <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path
-                                    d="M9 5H7C5.89543 5 5 5.89543 5 7V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V7C19 5.89543 18.1046 5 17 5H15M9 5C9 6.10457 9.89543 7 11 7H13C14.1046 7 15 6.10457 15 5M9 5C9 3.89543 9.89543 3 11 3H13C14.1046 3 15 3.89543 15 5M12 12H15M12 16H15M9 12H9.01M9 16H9.01" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Task Management</h3>
-                        <p class="text-gray-600 leading-relaxed">Create, assign, and track tasks with powerful Kanban
-                            boards. Set priorities, deadlines, and watch your team excel.</p>
-                    </div>
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                Built for Construction & Infrastructure Teams
+            </div>
+            <h1>
+                Build Smarter with<br>
+                <span class="gradient">InfraHub</span>
+            </h1>
+            <p>
+                The all-in-one construction project management platform.
+                Manage BOQs, contracts, safety, field operations, documents, and teams — from a single powerful
+                dashboard.
+            </p>
+            <div class="hero-actions">
+                <a href="/app/login" class="btn btn-primary btn-lg">
+                    Launch Platform
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </a>
+                <a href="#modules" class="btn btn-ghost btn-lg">
+                    Explore Modules
+                </a>
+            </div>
+        </section>
 
-                    <!-- Feature 2 -->
-                    <div class="feature-card glass-card p-8 rounded-2xl transition-all duration-300">
-                        <div class="w-14 h-14 bg-gradient-to-br from-violet-500 to-purple-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg float-animation"
-                            style="animation-delay: 0.5s">
-                            <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path
-                                    d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Team Collaboration</h3>
-                        <p class="text-gray-600 leading-relaxed">Keep everyone aligned with real-time updates, comments,
-                            and notifications. Collaborate seamlessly across your organization.</p>
-                    </div>
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-number">10+</div>
+                <div class="stat-label">Project Modules</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">∞</div>
+                <div class="stat-label">Multi-Company</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Real-Time Data</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Cloud Based</div>
+            </div>
+        </div>
 
-                    <!-- Feature 3 -->
-                    <div class="feature-card glass-card p-8 rounded-2xl transition-all duration-300">
-                        <div class="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg float-animation"
-                            style="animation-delay: 1s">
-                            <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                <polyline points="14 2 14 8 20 8" />
-                                <line x1="16" y1="13" x2="8" y2="13" />
-                                <line x1="16" y1="17" x2="8" y2="17" />
-                                <polyline points="10 9 9 9 8 9" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Document Management</h3>
-                        <p class="text-gray-600 leading-relaxed">Organize files in folders, track versions, and never
-                            lose important documents. Full audit trail included.</p>
-                    </div>
+        <!-- Modules -->
+        <section id="modules">
+            <div class="section-title">
+                <h2>Everything Your Projects Need</h2>
+                <p>10 integrated modules covering every phase of construction project delivery.</p>
+            </div>
 
-                    <!-- Feature 4 -->
-                    <div class="feature-card glass-card p-8 rounded-2xl transition-all duration-300">
-                        <div class="w-14 h-14 bg-gradient-to-br from-amber-500 to-orange-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg float-animation"
-                            style="animation-delay: 0.3s">
-                            <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                                <line x1="16" y1="2" x2="16" y2="6" />
-                                <line x1="8" y1="2" x2="8" y2="6" />
-                                <line x1="3" y1="10" x2="21" y2="10" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Timeline & Planning</h3>
-                        <p class="text-gray-600 leading-relaxed">Visualize project timelines, track milestones, and plan
-                            sprints with interactive Gantt-style views.</p>
-                    </div>
-
-                    <!-- Feature 5 -->
-                    <div class="feature-card glass-card p-8 rounded-2xl transition-all duration-300">
-                        <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg float-animation"
-                            style="animation-delay: 0.7s">
-                            <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M21.21 15.89A10 10 0 1 1 8 2.83" />
-                                <path d="M22 12A10 10 0 0 0 12 2v10z" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Analytics & Reports</h3>
-                        <p class="text-gray-600 leading-relaxed">Gain insights with progress tracking, team performance
-                            metrics, and customizable project reports.</p>
-                    </div>
-
-                    <!-- Feature 6 -->
-                    <div class="feature-card glass-card p-8 rounded-2xl transition-all duration-300">
-                        <div class="w-14 h-14 bg-gradient-to-br from-indigo-500 to-blue-400 rounded-2xl flex items-center justify-center mb-6 shadow-lg float-animation"
-                            style="animation-delay: 1.2s">
-                            <svg class="w-7 h-7 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-bold text-gray-900 mb-3">Secure & Reliable</h3>
-                        <p class="text-gray-600 leading-relaxed">Enterprise-grade security with role-based access
-                            control. Your data is safe and always available.</p>
-                    </div>
+            <div class="modules-grid">
+                <div class="module-card">
+                    <div class="module-icon" style="background: rgba(56, 189, 248, 0.1);">📋</div>
+                    <h3>Task & Workflow</h3>
+                    <p>Create, assign, and track tasks with priorities, due dates, status tracking, and team
+                        assignments. Monitor progress in real time.</p>
                 </div>
-
-                <!-- CTA Section -->
-                <div class="text-center glass-card rounded-3xl p-10 md:p-14">
-                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Ready to transform your workflow?</h2>
-                    <p class="text-gray-600 mb-8 max-w-2xl mx-auto">Join teams who trust Samanga Projects to deliver
-                        their best work, every time.</p>
-                    <a href="/admin"
-                        class="btn-primary inline-flex items-center text-white font-bold py-4 px-10 rounded-xl text-lg shadow-lg">
-                        Get Started Free
-                        <svg class="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                        </svg>
-                    </a>
+                <div class="module-card">
+                    <div class="module-icon" style="background: rgba(99, 102, 241, 0.1);">📁</div>
+                    <h3>Document Management (CDE)</h3>
+                    <p>Common Data Environment with folder structures, version control, RFIs, submittals, and full
+                        document audit trails.</p>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon" style="background: rgba(16, 185, 129, 0.1);">📊</div>
+                    <h3>BOQ Management</h3>
+                    <p>Bills of Quantities with line items, cost estimation, revisions, and approval workflows. Track
+                        project costing at every stage.</p>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon" style="background: rgba(245, 158, 11, 0.1);">📝</div>
+                    <h3>Cost & Contracts</h3>
+                    <p>Manage contracts, variations, payment applications, and track original vs revised values with
+                        active status monitoring.</p>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon" style="background: rgba(244, 63, 94, 0.1);">🛡️</div>
+                    <h3>SHEQ</h3>
+                    <p>Safety, Health, Environment & Quality. Log incidents, track severity, perform inspections, and
+                        maintain compliance records.</p>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon" style="background: rgba(139, 92, 246, 0.1);">🏗️</div>
+                    <h3>Field Management</h3>
+                    <p>Daily site logs with weather, workforce count, materials received, delays, and work summaries.
+                        Complete site diary system.</p>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon" style="background: rgba(34, 211, 238, 0.1);">📦</div>
+                    <h3>Inventory & Procurement</h3>
+                    <p>Purchase orders, stock tracking, supplier management, and delivery monitoring. Keep materials
+                        flowing to your projects.</p>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon" style="background: rgba(52, 211, 153, 0.1);">🎯</div>
+                    <h3>Planning & Progress</h3>
+                    <p>Milestones, schedule tracking, progress percentages, and schedule health indicators. Know if
+                        you're on track at a glance.</p>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon" style="background: rgba(251, 191, 36, 0.1);">🔧</div>
+                    <h3>Core FSM</h3>
+                    <p>Work orders, service requests, asset management, and invoicing. Manage field service operations
+                        end-to-end.</p>
+                </div>
+                <div class="module-card">
+                    <div class="module-icon" style="background: rgba(59, 130, 246, 0.1);">📈</div>
+                    <h3>Reporting & Dashboards</h3>
+                    <p>Aggregated project analytics with progress tracking, financial summaries, and exportable reports
+                        for stakeholders.</p>
                 </div>
             </div>
-        </main>
+        </section>
+
+        <!-- CTA -->
+        <div class="cta">
+            <h2>Ready to Build Better?</h2>
+            <p>Join construction teams who trust InfraHub to deliver projects on time, on budget, and safely.</p>
+            <a href="/app/login" class="btn btn-primary btn-lg">
+                Start Managing Projects
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+            </a>
+        </div>
 
         <!-- Footer -->
-        <footer class="w-full py-8 px-6 sm:px-10 border-t border-gray-200">
-            <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z" />
-                        </svg>
-                    </div>
-                    <span class="font-semibold text-gray-700">Samanga Projects</span>
+        <footer>
+            <a href="/" class="logo" style="text-decoration:none;">
+                <div class="logo-icon" style="width:32px;height:32px;border-radius:8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 21h18" />
+                        <path d="M5 21V7l7-4 7 4v14" />
+                    </svg>
                 </div>
-                <p class="text-gray-500 text-sm">© {{ date('Y') }} Samanga Projects. Built with Laravel & Filament.</p>
-            </div>
+                <span class="logo-text" style="font-size:16px;">Infra<span>Hub</span></span>
+            </a>
+            <small>© {{ date('Y') }} InfraHub. Built with Laravel & Filament.</small>
         </footer>
     </div>
 </body>
