@@ -85,9 +85,13 @@ class CdeProject extends Model
     {
         return $this->hasMany(Milestone::class);
     }
+    public function workOrders()
+    {
+        return $this->hasMany(WorkOrder::class, 'cde_project_id');
+    }
     public function purchaseOrders()
     {
-        return $this->hasMany(PurchaseOrder::class, 'company_id', 'company_id');
+        return $this->hasMany(PurchaseOrder::class, 'cde_project_id');
     }
 
     // ─── Module Access ───────────────────────────────────────────

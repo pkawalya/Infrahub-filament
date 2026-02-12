@@ -12,6 +12,7 @@ class WorkOrder extends Model
 
     protected $fillable = [
         'company_id',
+        'cde_project_id',
         'wo_number',
         'title',
         'description',
@@ -55,6 +56,10 @@ class WorkOrder extends Model
         'urgent' => 'Urgent',
     ];
 
+    public function cdeProject()
+    {
+        return $this->belongsTo(CdeProject::class, 'cde_project_id');
+    }
     public function type()
     {
         return $this->belongsTo(WorkOrderType::class, 'work_order_type_id');

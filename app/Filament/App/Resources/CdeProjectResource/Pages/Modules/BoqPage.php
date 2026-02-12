@@ -2,131 +2,123 @@
 
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
-use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
+use App\Filament\App\Resources\CdeProjectResource;
 use App\Models\Boq;
+use App\Models\CdeProject;
 use App\Models\Contract;
 use App\Support\CurrencyHelper;
-use Filament\Actions\Action;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
+use Filament\Actions;
 use Filament\Forms;
-use Filament\Notifications\Notification;
+use Filament\Resources\Pages\ManageRelatedRecords;
+use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Contracts\HasTable;
+use Illuminate\Contracts\Support\Htmlable;
 
-class BoqPage extends BaseModulePage implements HasTable
+class BoqPage extends ManageRelatedRecords
 {
-    use InteractsWithTable;
-
-    protected static string $moduleCode = 'boq_management';
+    protected static string $resource = CdeProjectResource::class;
+    protected static string $relationship = 'boqs';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calculator';
     protected static ?string $navigationLabel = 'BOQ';
-    protected static ?string $title = 'BOQ Management';
-    protected string $view = 'filament.app.pages.modules.boq';
+    protected static ?string $title = 'Bill of Quantities';
 
-    public function getStats(): array
+    public static function canAccess(array $parameters = []): bool
     {
-        $r = $this->record;
-        $total = $r->boqs()->count();
-        $approved = $r->boqs()->where('status', 'approved')->count();
-        $totalValue = $r->boqs()->sum('total_value');
-
-        return [
-            [
-                'label' => 'Total BOQs',
-                'value' => $total,
-                'sub' => $approved . ' approved',
-                'sub_type' => 'success',
-                'primary' => true,
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V18zm2.498-6.75h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0012 2.25z" /></svg>'
-            ],
-            [
-                'label' => 'Total Value',
-                'value' => CurrencyHelper::format($totalValue, 0),
-                'sub' => 'All BOQs combined',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                'icon_bg' => '#ecfdf5'
-            ],
-            [
-                'label' => 'Pending',
-                'value' => $r->boqs()->whereNotIn('status', ['approved'])->count(),
-                'sub' => 'Awaiting approval',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#d97706" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                'icon_bg' => '#fffbeb'
-            ],
-        ];
+        $record = $parameters['record'] ?? null;
+        if ($record instanceof CdeProject) {
+            return $record->hasModule('boq_management');
+        }
+        return true;
     }
 
-    protected function getBoqFormSchema(): array
+    public function form(Schema $schema): Schema
     {
-        $projectId = $this->record->id;
-        $companyId = $this->record->company_id;
-        return [
-            Section::make('BOQ Details')->schema([
-                Forms\Components\TextInput::make('boq_number')->label('BOQ Number')->required()
-                    ->default(fn() => 'BOQ-' . str_pad((string) (Boq::where('cde_project_id', $projectId)->count() + 1), 4, '0', STR_PAD_LEFT)),
-                Forms\Components\TextInput::make('name')->required()->maxLength(255),
+        $projectId = $this->getOwnerRecord()->id;
+        return $schema->components([
+            Section::make('BOQ Item Details')->schema([
+                Forms\Components\TextInput::make('item_code')->label('Item Code')
+                    ->default(fn() => 'BOQ-' . str_pad((string) (Boq::where('cde_project_id', $projectId)->count() + 1), 4, '0', STR_PAD_LEFT))
+                    ->required()->maxLength(50),
+                Forms\Components\TextInput::make('description')->required()->maxLength(255),
                 Forms\Components\Select::make('contract_id')->label('Contract')
-                    ->options(Contract::where('company_id', $companyId)->pluck('title', 'id'))->searchable()->nullable(),
-                Forms\Components\Select::make('status')->options(['draft' => 'Draft', 'submitted' => 'Submitted', 'revised' => 'Revised', 'approved' => 'Approved'])->required()->default('draft'),
-                Forms\Components\TextInput::make('total_value')->numeric()->prefix('$')->default(0)->label('Total Value'),
-                Forms\Components\Select::make('currency')->options(['UGX' => 'UGX', 'USD' => 'USD', 'EUR' => 'EUR', 'GBP' => 'GBP'])->default('UGX'),
-                Forms\Components\Textarea::make('description')->rows(3)->columnSpanFull(),
+                    ->options(Contract::where('cde_project_id', $projectId)->pluck('title', 'id'))->searchable()->nullable(),
+                Forms\Components\Select::make('category')->options([
+                    'preliminaries' => 'Preliminaries',
+                    'substructure' => 'Substructure',
+                    'superstructure' => 'Superstructure',
+                    'finishes' => 'Finishes',
+                    'services' => 'Services',
+                    'external_works' => 'External Works',
+                    'other' => 'Other',
+                ])->required()->default('other'),
+                Forms\Components\TextInput::make('unit')->required()->placeholder('e.g. m², m³, kg, nr'),
+                Forms\Components\TextInput::make('quantity')->numeric()->required()->default(0),
+                Forms\Components\TextInput::make('rate')->numeric()->prefix('$')->required()->default(0),
+                Forms\Components\TextInput::make('amount')->numeric()->prefix('$')->default(0),
             ])->columns(2),
-        ];
+            Section::make('Notes')->schema([
+                Forms\Components\Textarea::make('notes')->rows(3)->columnSpanFull(),
+            ])->collapsed(),
+        ]);
     }
 
     public function table(Table $table): Table
     {
-        $projectId = $this->record->id;
-        $companyId = $this->record->company_id;
-
         return $table
-            ->query(Boq::query()->where('cde_project_id', $projectId))
             ->columns([
-                Tables\Columns\TextColumn::make('boq_number')->label('BOQ #')->searchable(),
-                Tables\Columns\TextColumn::make('name')->searchable()->limit(50),
-                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $state) => match ($state) { 'approved' => 'success', 'draft' => 'gray', 'submitted' => 'info', 'revised' => 'warning', default => 'gray'}),
-                Tables\Columns\TextColumn::make('total_value')->formatStateUsing(CurrencyHelper::formatter())->label('Total Value'),
-                Tables\Columns\TextColumn::make('contract.title')->label('Contract')->limit(30),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
+                Tables\Columns\TextColumn::make('item_code')->label('Code')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('description')->searchable()->limit(50),
+                Tables\Columns\TextColumn::make('category')->badge(),
+                Tables\Columns\TextColumn::make('unit'),
+                Tables\Columns\TextColumn::make('quantity')->numeric(2),
+                Tables\Columns\TextColumn::make('rate')->formatStateUsing(CurrencyHelper::formatter()),
+                Tables\Columns\TextColumn::make('amount')->formatStateUsing(CurrencyHelper::formatter()),
+                Tables\Columns\TextColumn::make('contract.title')->label('Contract')->limit(30)->toggleable(),
             ])
-            ->defaultSort('created_at', 'desc')
+            ->defaultSort('item_code', 'asc')
+            ->filters([
+                Tables\Filters\SelectFilter::make('category')->options([
+                    'preliminaries' => 'Preliminaries',
+                    'substructure' => 'Substructure',
+                    'superstructure' => 'Superstructure',
+                    'finishes' => 'Finishes',
+                    'services' => 'Services',
+                    'external_works' => 'External Works',
+                    'other' => 'Other',
+                ]),
+            ])
             ->headerActions([
-                Action::make('create')->label('New BOQ')->icon('heroicon-o-plus')
-                    ->schema($this->getBoqFormSchema())
-                    ->action(function (array $data) use ($projectId, $companyId): void {
-                        $data['cde_project_id'] = $projectId;
-                        $data['company_id'] = $companyId;
+                Actions\CreateAction::make()
+                    ->mutateFormDataUsing(function (array $data): array {
                         $data['created_by'] = auth()->id();
-                        Boq::create($data);
-                        Notification::make()->title('BOQ created')->success()->send();
+                        return $data;
                     }),
             ])
-            ->recordActions([
-                Action::make('view')->icon('heroicon-o-eye')->color('gray')
-                    ->schema($this->getBoqFormSchema())
-                    ->fillForm(fn(Boq $record) => $record->toArray())
-                    ->modalSubmitAction(false),
-                Action::make('edit')->icon('heroicon-o-pencil')
-                    ->schema($this->getBoqFormSchema())
-                    ->fillForm(fn(Boq $record) => $record->toArray())
-                    ->action(function (array $data, Boq $record): void {
-                        $record->update($data);
-                        Notification::make()->title('BOQ updated')->success()->send();
-                    }),
-                Action::make('approve')->icon('heroicon-o-check-circle')->color('success')->requiresConfirmation()
-                    ->visible(fn(Boq $record) => $record->status !== 'approved')
-                    ->action(fn(Boq $record) => $record->update(['status' => 'approved'])),
-                Action::make('delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
-                    ->action(fn(Boq $record) => $record->delete()),
+            ->actions([
+                Actions\ViewAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
-            ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])])
-            ->emptyStateHeading('No BOQs')
-            ->emptyStateDescription('No Bills of Quantities have been created for this project yet.')
-            ->emptyStateIcon('heroicon-o-calculator');
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return static::$title;
+    }
+
+    public function getBreadcrumbs(): array
+    {
+        return [
+            CdeProjectResource::getUrl() => 'Projects',
+            CdeProjectResource::getUrl('view', ['record' => $this->getRecord()]) => $this->getRecord()->name,
+            'BOQ',
+        ];
     }
 }

@@ -12,6 +12,7 @@ class PurchaseOrder extends Model
 
     protected $fillable = [
         'company_id',
+        'cde_project_id',
         'po_number',
         'supplier_id',
         'warehouse_id',
@@ -46,6 +47,10 @@ class PurchaseOrder extends Model
         'cancelled' => 'Cancelled',
     ];
 
+    public function cdeProject()
+    {
+        return $this->belongsTo(CdeProject::class, 'cde_project_id');
+    }
     public function supplier()
     {
         return $this->belongsTo(Supplier::class);
