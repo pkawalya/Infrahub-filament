@@ -104,12 +104,62 @@ class CompanyResource extends Resource
                         Forms\Components\ColorPicker::make('secondary_color'),
                     ])->columns(2),
 
-                    Schemas\Components\Section::make('Locale')->schema([
+                    Schemas\Components\Section::make('Locale & Currency')->schema([
                         Forms\Components\Select::make('timezone')->searchable()
                             ->options(fn() => collect(timezone_identifiers_list())->mapWithKeys(fn($tz) => [$tz => $tz])),
                         Forms\Components\Select::make('currency')
-                            ->options(['USD' => 'USD', 'EUR' => 'EUR', 'GBP' => 'GBP', 'UGX' => 'UGX', 'KES' => 'KES']),
-                        Forms\Components\TextInput::make('currency_symbol')->maxLength(5),
+                            ->options([
+                                'USD' => 'USD - US Dollar',
+                                'EUR' => 'EUR - Euro',
+                                'GBP' => 'GBP - British Pound',
+                                'UGX' => 'UGX - Ugandan Shilling',
+                                'KES' => 'KES - Kenyan Shilling',
+                                'TZS' => 'TZS - Tanzanian Shilling',
+                                'RWF' => 'RWF - Rwandan Franc',
+                                'NGN' => 'NGN - Nigerian Naira',
+                                'ZAR' => 'ZAR - South African Rand',
+                                'GHS' => 'GHS - Ghanaian Cedi',
+                                'ETB' => 'ETB - Ethiopian Birr',
+                                'INR' => 'INR - Indian Rupee',
+                                'AED' => 'AED - UAE Dirham',
+                                'SAR' => 'SAR - Saudi Riyal',
+                                'CAD' => 'CAD - Canadian Dollar',
+                                'AUD' => 'AUD - Australian Dollar',
+                                'CNY' => 'CNY - Chinese Yuan',
+                                'JPY' => 'JPY - Japanese Yen',
+                                'BRL' => 'BRL - Brazilian Real',
+                                'MXN' => 'MXN - Mexican Peso',
+                            ])
+                            ->searchable()
+                            ->live(),
+                        Forms\Components\TextInput::make('currency_symbol')
+                            ->maxLength(10)
+                            ->placeholder('e.g. $, £, UGX, ₦')
+                            ->live(),
+                        Forms\Components\Select::make('currency_position')
+                            ->options([
+                                'before' => 'Before amount (e.g. $100)',
+                                'after' => 'After amount (e.g. 100 UGX)',
+                            ])
+                            ->default('before')
+                            ->live(),
+                        Forms\Components\Toggle::make('currency_space')
+                            ->label('Space between symbol and amount')
+                            ->helperText('e.g. "$ 100" vs "$100"')
+                            ->default(false)
+                            ->live(),
+                        Forms\Components\Placeholder::make('currency_preview')
+                            ->label('Preview')
+                            ->content(function (\Filament\Schemas\Components\Utilities\Get $get): string {
+                                $symbol = $get('currency_symbol') ?: $get('currency') ?: '$';
+                                $position = $get('currency_position') ?: 'before';
+                                $space = $get('currency_space') ? ' ' : '';
+                                $amount = number_format(1500.00, 2);
+
+                                return $position === 'before'
+                                    ? "Preview: {$symbol}{$space}{$amount}"
+                                    : "Preview: {$amount}{$space}{$symbol}";
+                            }),
                     ])->columns(3),
                 ]),
 

@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\AssetResource\Pages;
 use App\Models\Asset;
+use App\Support\CurrencyHelper;
 use Filament\Actions;
 use Filament\Schemas;
 use Filament\Forms;
@@ -37,7 +38,7 @@ class AssetResource extends Resource
                 Forms\Components\Select::make('condition')
                     ->options(['excellent' => 'Excellent', 'good' => 'Good', 'fair' => 'Fair', 'poor' => 'Poor']),
                 Forms\Components\DatePicker::make('purchase_date'),
-                Forms\Components\TextInput::make('purchase_cost')->numeric()->prefix('$'),
+                Forms\Components\TextInput::make('purchase_cost')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix()),
                 Forms\Components\DatePicker::make('warranty_expires_at')->label('Warranty Expires'),
                 Forms\Components\FileUpload::make('image')->image()->directory('assets/images'),
                 Forms\Components\Textarea::make('notes')->rows(3)->columnSpanFull(),

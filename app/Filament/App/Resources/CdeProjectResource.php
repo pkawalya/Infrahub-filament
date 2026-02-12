@@ -16,6 +16,7 @@ use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use App\Support\CurrencyHelper;
 
 class CdeProjectResource extends Resource
 {
@@ -38,7 +39,7 @@ class CdeProjectResource extends Resource
                     ->relationship('manager', 'name')->searchable()->preload()->label('Project Manager'),
                 Forms\Components\Select::make('status')
                     ->options(CdeProject::$statuses)->default('planning'),
-                Forms\Components\TextInput::make('budget')->numeric()->prefix('$'),
+                Forms\Components\TextInput::make('budget')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix()),
                 Forms\Components\DatePicker::make('start_date'),
                 Forms\Components\DatePicker::make('end_date'),
                 Forms\Components\RichEditor::make('description')->columnSpanFull(),
@@ -107,7 +108,7 @@ class CdeProjectResource extends Resource
                     ->badge()
                     ->color('primary')
                     ->suffix(' enabled'),
-                Tables\Columns\TextColumn::make('budget')->money('USD'),
+                Tables\Columns\TextColumn::make('budget')->formatStateUsing(CurrencyHelper::formatter()),
                 Tables\Columns\TextColumn::make('start_date')->date(),
                 Tables\Columns\TextColumn::make('end_date')->date(),
             ])

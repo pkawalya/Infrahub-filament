@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\InvoiceResource\Pages;
 use App\Models\Invoice;
+use App\Support\CurrencyHelper;
 use Filament\Actions;
 use Filament\Schemas;
 use Filament\Forms;
@@ -38,12 +39,12 @@ class InvoiceResource extends Resource
             ])->columns(2),
 
             Schemas\Components\Section::make('Amounts')->schema([
-                Forms\Components\TextInput::make('subtotal')->numeric()->prefix('$')->default(0),
+                Forms\Components\TextInput::make('subtotal')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0),
                 Forms\Components\TextInput::make('tax_rate')->numeric()->suffix('%')->default(0),
-                Forms\Components\TextInput::make('tax_amount')->numeric()->prefix('$')->default(0),
-                Forms\Components\TextInput::make('discount_amount')->numeric()->prefix('$')->default(0),
-                Forms\Components\TextInput::make('total_amount')->numeric()->prefix('$')->default(0),
-                Forms\Components\TextInput::make('amount_paid')->numeric()->prefix('$')->default(0),
+                Forms\Components\TextInput::make('tax_amount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0),
+                Forms\Components\TextInput::make('discount_amount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0),
+                Forms\Components\TextInput::make('total_amount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0),
+                Forms\Components\TextInput::make('amount_paid')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0),
             ])->columns(3),
 
             Schemas\Components\Section::make('Notes')->schema([
@@ -59,8 +60,8 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('invoice_number')->label('Invoice #')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('client.name')->searchable(),
                 Tables\Columns\TextColumn::make('workOrder.wo_number')->label('Work Order'),
-                Tables\Columns\TextColumn::make('total_amount')->money('USD')->sortable(),
-                Tables\Columns\TextColumn::make('amount_paid')->money('USD'),
+                Tables\Columns\TextColumn::make('total_amount')->formatStateUsing(CurrencyHelper::formatter())->sortable(),
+                Tables\Columns\TextColumn::make('amount_paid')->formatStateUsing(CurrencyHelper::formatter()),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state) => match ($state) {

@@ -82,6 +82,10 @@ class AppPanelProvider extends PanelProvider
             )
             ->databaseNotifications()
             ->databaseTransactions()
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::BODY_END,
+                fn() => view('components.loading-overlay'),
+            )
             ->viteTheme('resources/css/filament/app/theme.css');
     }
 }

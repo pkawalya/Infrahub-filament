@@ -30,6 +30,8 @@ class Company extends Model
         'time_format',
         'currency',
         'currency_symbol',
+        'currency_position',
+        'currency_space',
         'subscription_id',
         'billing_cycle',
         'subscription_starts_at',
@@ -57,6 +59,7 @@ class Company extends Model
         'suspended_at' => 'datetime',
         'is_active' => 'boolean',
         'is_trial' => 'boolean',
+        'currency_space' => 'boolean',
         'current_storage_bytes' => 'integer',
     ];
 
@@ -161,5 +164,25 @@ class Company extends Model
     public function scopeActive($q)
     {
         return $q->where('is_active', true);
+    }
+
+    // ─── Currency Formatting ─────────────────────────────────────
+    /**
+     * Format an amount using the company's currency settings.
+     *
+     * Examples: "$100.00", "$ 100.00", "100.00 UGX", "100.00UGX"
+     */
+    public function formatCurrency(float|int $amount, int $decimals = 2): string
+    {
+        $symbol = $this->currency_symbol ?? $this->currency ?? '$';
+        $position = $this->currency_position ?? 'before';
+        $space = $this->currency_space ?? false;
+        $separator = $space ? ' ' : '';
+
+        $formatted = number_format($amount, $decimals);
+
+        return $position === 'before'
+            ? $symbol . $separator . $formatted
+            : $formatted . $separator . $symbol;
     }
 }

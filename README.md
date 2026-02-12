@@ -186,6 +186,40 @@ Access the application:
 
 ---
 
+## Demo / Test Users
+
+After running `php artisan db:seed`, the following users are available for testing.  
+**Default password for all users:** `password`
+
+### Super Admin
+
+| Email | Panel | Role | Capabilities |
+|-------|-------|------|-------------|
+| `admin@infrahub.io` | `/admin` | Super Admin | Full platform access. Manage companies, subscriptions, all users, email templates, UI settings. Can also access `/app`. |
+
+### ACME Facility Services (Sample Company)
+
+| Email | Panel | Role | Capabilities |
+|-------|-------|------|-------------|
+| `admin@acme-fs.com` | `/app` | Company Admin | Manage company users, roles, projects, email templates, UI settings |
+| `sarah@acme-fs.com` | `/app` | Manager | Project management, task oversight, reporting |
+| `john@acme-fs.com` | `/app` | Technician | Field service, work order execution |
+| `mike@acme-fs.com` | `/app` | Member | Day-to-day project work, task completion |
+
+### Quick Start
+
+```bash
+# Seed the database with demo data
+php artisan db:seed
+
+# Or run the specific seeder
+php artisan db:seed --class=SaasFoundationSeeder
+```
+
+> **Tip:** Log in as `admin@infrahub.io` on `/admin` to explore platform management, then switch to `admin@acme-fs.com` on `/app` to see the company experience.
+
+---
+
 ## User Roles & Permissions
 
 ### Role Hierarchy

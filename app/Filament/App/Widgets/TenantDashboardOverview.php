@@ -5,6 +5,7 @@ namespace App\Filament\App\Widgets;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\WorkOrder;
+use App\Support\CurrencyHelper;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -31,7 +32,7 @@ class TenantDashboardOverview extends BaseWidget
                 ->descriptionIcon('heroicon-m-user-group')
                 ->color('info'),
 
-            Stat::make('Revenue This Month', '$' . number_format(
+            Stat::make('Revenue This Month', CurrencyHelper::format(
                 Invoice::where('status', 'paid')
                     ->whereMonth('issue_date', now()->month)
                     ->sum('total_amount'),
