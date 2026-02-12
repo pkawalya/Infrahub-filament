@@ -11,19 +11,7 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 class RolePolicy
 {
     use HandlesAuthorization;
-
-    /**
-     * Super admins and company admins can manage roles.
-     */
-    public function before(AuthUser $user, string $ability): ?bool
-    {
-        if ($user->user_type === 'super_admin' || $user->user_type === 'company_admin') {
-            return true;
-        }
-
-        return null;
-    }
-
+    
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('view_any_role');

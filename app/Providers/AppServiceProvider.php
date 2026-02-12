@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
-use App\Filament\Resources\TicketResource\Pages\EditCommentModal;
+
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
 use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use Filament\Pages\BasePage as Page;
@@ -26,10 +27,21 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Livewire::component('edit-comment-modal', EditCommentModal::class);
+        // ── Admin bypass: super_admin & company_admin skip all policy checks ──
+        Gate::before(function ($user, $ability) {
+            if (in_array($user->user_type, ['super_admin', 'company_admin'])) {
+                return true;
+            }
+        });
+
+        // Livewire components
+        if (class_exists(\App\Filament\Resources\TicketResource\Pages\EditCommentModal::class)) {
+            Livewire::component('edit-comment-modal', \App\Filament\Resources\TicketResource\Pages\EditCommentModal::class);
+        }
+
         FilamentShield::buildPermissionKeyUsing(
             function (string $entity, string $affix, string $subject, string $case, string $separator) {
-                return match(true) {
+                return match (true) {
                     # if `configurePermissionIdentifierUsing()` was used previously, then this needs to be adjusted accordingly
                     is_subclass_of($entity, Resource::class) => Str::of($affix)
                         ->snake()
@@ -49,7 +61,8 @@ class AppServiceProvider extends ServiceProvider
                     is_subclass_of($entity, Widget::class) => Str::of('widget_')
                         ->append(class_basename($entity))
                         ->toString()
-                    };
-            });
+                };
+            }
+        );
     }
 }
