@@ -3,12 +3,16 @@
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
-use App\Models\Task;
-use App\Models\CdeDocument;
 use App\Models\WorkOrder;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
 
-class CoreFsmPage extends BaseModulePage
+class CoreFsmPage extends BaseModulePage implements HasTable
 {
+    use InteractsWithTable;
+
     protected static string $moduleCode = 'core';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';
     protected static ?string $navigationLabel = 'Core FSM';
@@ -17,43 +21,91 @@ class CoreFsmPage extends BaseModulePage
 
     public function getStats(): array
     {
-        $r = $this->record;
-        $totalTasks = $r->tasks()->count();
-        $openTasks = $r->tasks()->whereNotIn('status', ['done', 'cancelled'])->count();
+        $companyId = $this->record->company_id;
+        $total = WorkOrder::where('company_id', $companyId)->count();
+        $open = WorkOrder::where('company_id', $companyId)
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->count();
+        $urgent = WorkOrder::where('company_id', $companyId)
+            ->where('priority', 'urgent')
+            ->whereNotIn('status', ['completed', 'cancelled'])
+            ->count();
+        $completedMonth = WorkOrder::where('company_id', $companyId)
+            ->where('status', 'completed')
+            ->whereMonth('completed_at', now()->month)
+            ->count();
 
         return [
             [
-                'label' => 'Total Tasks',
-                'value' => $totalTasks,
-                'sub' => $openTasks . ' open',
-                'sub_type' => 'neutral',
+                'label' => 'Work Orders',
+                'value' => $total,
+                'sub' => $open . ' open',
+                'sub_type' => $open > 0 ? 'warning' : 'success',
                 'primary' => true,
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" /></svg>'
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.84-3.08a2.003 2.003 0 01-1.08-1.78V7.88c0-.77.44-1.47 1.13-1.8L11.6 2.82a2.003 2.003 0 011.8 0l6.07 3.26c.69.33 1.13 1.03 1.13 1.8v2.43c0 .76-.44 1.46-1.13 1.79l-5.84 3.08a2.003 2.003 0 01-1.8 0z" /></svg>'
             ],
             [
-                'label' => 'Documents',
-                'value' => $r->documents()->count(),
-                'sub' => $r->folders()->count() . ' folders',
-                'sub_type' => 'neutral',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>',
-                'icon_bg' => '#ecfdf5'
-            ],
-            [
-                'label' => 'RFIs',
-                'value' => $r->rfis()->count(),
-                'sub' => 'Requests for info',
-                'sub_type' => 'neutral',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2563eb" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" /></svg>',
-                'icon_bg' => '#eff6ff'
-            ],
-            [
-                'label' => 'Incidents',
-                'value' => $r->safetyIncidents()->count(),
-                'sub' => $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count() . ' open',
-                'sub_type' => $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count() > 0 ? 'danger' : 'success',
+                'label' => 'Urgent',
+                'value' => $urgent,
+                'sub' => $urgent > 0 ? 'Need attention' : 'All clear',
+                'sub_type' => $urgent > 0 ? 'danger' : 'success',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#dc2626" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>',
                 'icon_bg' => '#fef2f2'
             ],
+            [
+                'label' => 'In Progress',
+                'value' => WorkOrder::where('company_id', $companyId)->where('status', 'in_progress')->count(),
+                'sub' => 'Active now',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2563eb" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg>',
+                'icon_bg' => '#eff6ff'
+            ],
+            [
+                'label' => 'Completed',
+                'value' => $completedMonth,
+                'sub' => 'This month',
+                'sub_type' => 'success',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+                'icon_bg' => '#ecfdf5'
+            ],
         ];
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(WorkOrder::query()->where('company_id', $this->record->company_id))
+            ->columns([
+                Tables\Columns\TextColumn::make('wo_number')->label('WO #')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(45),
+                Tables\Columns\TextColumn::make('priority')->badge()
+                    ->color(fn(string $state) => match ($state) {
+                        'urgent' => 'danger',
+                        'high' => 'warning',
+                        'medium' => 'info',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('status')->badge()
+                    ->color(fn(string $state) => match ($state) {
+                        'completed' => 'success',
+                        'in_progress' => 'info',
+                        'approved' => 'primary',
+                        'on_hold' => 'warning',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
+                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('Unassigned'),
+                Tables\Columns\TextColumn::make('client.name')->label('Client')->toggleable(),
+                Tables\Columns\TextColumn::make('due_date')->date()->sortable()
+                    ->color(fn($record) => $record->due_date?->isPast() && !in_array($record->status, ['completed', 'cancelled']) ? 'danger' : null),
+                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')->options(WorkOrder::$statuses),
+                Tables\Filters\SelectFilter::make('priority')->options(WorkOrder::$priorities),
+            ])
+            ->emptyStateHeading('No Work Orders')
+            ->emptyStateDescription('No work orders have been created yet.')
+            ->emptyStateIcon('heroicon-o-wrench-screwdriver');
     }
 }

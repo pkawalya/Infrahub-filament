@@ -248,7 +248,7 @@
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid #f3f4f6;">
                 <span style="font-size: 0.8125rem; color: #6b7280;">Budget</span>
-                <span style="font-size: 0.8125rem; font-weight: 600; color: #111827;">${{ number_format($record->budget ?? 0, 2) }}</span>
+                <span style="font-size: 0.8125rem; font-weight: 600; color: #111827;">{{ \App\Support\CurrencyHelper::format($record->budget ?? 0) }}</span>
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid #f3f4f6;">
                 <span style="font-size: 0.8125rem; color: #6b7280;">Start</span>
