@@ -4,9 +4,15 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\Milestone;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
-use Filament\Schemas;
+use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -71,10 +77,10 @@ class PlanningProgressPage extends BaseModulePage implements HasTable
         ];
     }
 
-    protected function getMilestoneForm(): array
+    protected function getMilestoneFormSchema(): array
     {
         return [
-            Schemas\Components\Section::make('Milestone Details')->schema([
+            Section::make('Milestone Details')->schema([
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255)
@@ -134,22 +140,22 @@ class PlanningProgressPage extends BaseModulePage implements HasTable
                 Tables\Filters\SelectFilter::make('priority')->options(Milestone::$priorities),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('New Milestone')
                     ->icon('heroicon-o-plus')
-                    ->form($this->getMilestoneForm())
-                    ->mutateFormDataUsing(function (array $data) use ($projectId, $companyId): array {
+                    ->schema($this->getMilestoneFormSchema())
+                    ->mutateDataUsing(function (array $data) use ($projectId, $companyId): array {
                         $data['cde_project_id'] = $projectId;
                         $data['company_id'] = $companyId;
                         return $data;
                     }),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->form($this->getMilestoneForm()),
-                Tables\Actions\EditAction::make()
-                    ->form($this->getMilestoneForm()),
-                Tables\Actions\Action::make('complete')
+            ->recordActions([
+                ViewAction::make()
+                    ->schema($this->getMilestoneFormSchema()),
+                EditAction::make()
+                    ->schema($this->getMilestoneFormSchema()),
+                Action::make('complete')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
@@ -158,10 +164,12 @@ class PlanningProgressPage extends BaseModulePage implements HasTable
                         'status' => 'completed',
                         'actual_date' => now(),
                     ])),
-                Tables\Actions\DeleteAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
             ])
             ->emptyStateHeading('No Milestones')
             ->emptyStateDescription('No milestones have been created for this project yet.')

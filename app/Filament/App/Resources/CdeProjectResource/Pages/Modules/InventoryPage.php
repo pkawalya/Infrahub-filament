@@ -6,9 +6,14 @@ use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\PurchaseOrder;
 use App\Models\Supplier;
 use App\Support\CurrencyHelper;
-use Filament\Actions;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
-use Filament\Schemas;
+use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -62,12 +67,12 @@ class InventoryPage extends BaseModulePage implements HasTable
         ];
     }
 
-    protected function getPurchaseOrderForm(): array
+    protected function getPurchaseOrderFormSchema(): array
     {
         $companyId = $this->record->company_id;
 
         return [
-            Schemas\Components\Section::make('Order Details')->schema([
+            Section::make('Order Details')->schema([
                 Forms\Components\TextInput::make('po_number')
                     ->label('PO Number')
                     ->required()
@@ -90,7 +95,7 @@ class InventoryPage extends BaseModulePage implements HasTable
                     ->label('Received Date'),
             ])->columns(3),
 
-            Schemas\Components\Section::make('Amounts')->schema([
+            Section::make('Amounts')->schema([
                 Forms\Components\TextInput::make('subtotal')
                     ->numeric()
                     ->prefix('$')
@@ -113,7 +118,7 @@ class InventoryPage extends BaseModulePage implements HasTable
                     ->label('Total'),
             ])->columns(4),
 
-            Schemas\Components\Section::make('Notes')->schema([
+            Section::make('Notes')->schema([
                 Forms\Components\Textarea::make('notes')
                     ->rows(3)
                     ->columnSpanFull(),
@@ -154,25 +159,27 @@ class InventoryPage extends BaseModulePage implements HasTable
                 Tables\Filters\SelectFilter::make('status')->options(PurchaseOrder::$statuses),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('New Purchase Order')
                     ->icon('heroicon-o-plus')
-                    ->form($this->getPurchaseOrderForm())
-                    ->mutateFormDataUsing(function (array $data) use ($companyId): array {
+                    ->schema($this->getPurchaseOrderFormSchema())
+                    ->mutateDataUsing(function (array $data) use ($companyId): array {
                         $data['company_id'] = $companyId;
                         $data['created_by'] = auth()->id();
                         return $data;
                     }),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->form($this->getPurchaseOrderForm()),
-                Tables\Actions\EditAction::make()
-                    ->form($this->getPurchaseOrderForm()),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                ViewAction::make()
+                    ->schema($this->getPurchaseOrderFormSchema()),
+                EditAction::make()
+                    ->schema($this->getPurchaseOrderFormSchema()),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
             ])
             ->emptyStateHeading('No Purchase Orders')
             ->emptyStateDescription('No purchase orders have been created yet.')

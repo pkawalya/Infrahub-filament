@@ -5,9 +5,15 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\CdeDocument;
 use App\Models\CdeFolder;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
-use Filament\Schemas;
+use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -55,12 +61,12 @@ class CdePage extends BaseModulePage implements HasTable
         ];
     }
 
-    protected function getDocumentForm(): array
+    protected function getDocumentFormSchema(): array
     {
         $projectId = $this->record->id;
 
         return [
-            Schemas\Components\Section::make('Document Details')->schema([
+            Section::make('Document Details')->schema([
                 Forms\Components\TextInput::make('document_number')
                     ->label('Document #')
                     ->required(),
@@ -131,23 +137,23 @@ class CdePage extends BaseModulePage implements HasTable
             ])
             ->defaultSort('updated_at', 'desc')
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('New Document')
                     ->icon('heroicon-o-plus')
-                    ->form($this->getDocumentForm())
-                    ->mutateFormDataUsing(function (array $data) use ($projectId, $companyId): array {
+                    ->schema($this->getDocumentFormSchema())
+                    ->mutateDataUsing(function (array $data) use ($projectId, $companyId): array {
                         $data['cde_project_id'] = $projectId;
                         $data['company_id'] = $companyId;
                         $data['uploaded_by'] = auth()->id();
                         return $data;
                     }),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->form($this->getDocumentForm()),
-                Tables\Actions\EditAction::make()
-                    ->form($this->getDocumentForm()),
-                Tables\Actions\Action::make('new_revision')
+            ->recordActions([
+                ViewAction::make()
+                    ->schema($this->getDocumentFormSchema()),
+                EditAction::make()
+                    ->schema($this->getDocumentFormSchema()),
+                Action::make('new_revision')
                     ->icon('heroicon-o-arrow-path')
                     ->color('info')
                     ->label('Rev Up')
@@ -155,14 +161,15 @@ class CdePage extends BaseModulePage implements HasTable
                     ->modalDescription('Create a new revision of this document?')
                     ->action(function (CdeDocument $record) {
                         $currentRev = $record->revision ?? 'A';
-                        // Increment letter revision: A -> B, B -> C, etc.
                         $nextRev = chr(ord($currentRev) + 1);
                         $record->update(['revision' => $nextRev]);
                     }),
-                Tables\Actions\DeleteAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
             ])
             ->emptyStateHeading('No Documents')
             ->emptyStateDescription('No documents have been uploaded for this project yet.')

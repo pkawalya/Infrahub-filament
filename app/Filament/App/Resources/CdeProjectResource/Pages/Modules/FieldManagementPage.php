@@ -4,9 +4,15 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\DailySiteLog;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
-use Filament\Schemas;
+use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -65,10 +71,10 @@ class FieldManagementPage extends BaseModulePage implements HasTable
         ];
     }
 
-    protected function getDailySiteLogForm(): array
+    protected function getDailySiteLogFormSchema(): array
     {
         return [
-            Schemas\Components\Section::make('Log Details')->schema([
+            Section::make('Log Details')->schema([
                 Forms\Components\DatePicker::make('log_date')
                     ->required()
                     ->default(now())
@@ -99,7 +105,7 @@ class FieldManagementPage extends BaseModulePage implements HasTable
                     ->default('draft'),
             ])->columns(3),
 
-            Schemas\Components\Section::make('Work Summary')->schema([
+            Section::make('Work Summary')->schema([
                 Forms\Components\Textarea::make('work_performed')
                     ->rows(3)
                     ->label('Work Performed')
@@ -155,23 +161,23 @@ class FieldManagementPage extends BaseModulePage implements HasTable
             ])
             ->defaultSort('log_date', 'desc')
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('New Daily Log')
                     ->icon('heroicon-o-plus')
-                    ->form($this->getDailySiteLogForm())
-                    ->mutateFormDataUsing(function (array $data) use ($projectId, $companyId): array {
+                    ->schema($this->getDailySiteLogFormSchema())
+                    ->mutateDataUsing(function (array $data) use ($projectId, $companyId): array {
                         $data['cde_project_id'] = $projectId;
                         $data['company_id'] = $companyId;
                         $data['created_by'] = auth()->id();
                         return $data;
                     }),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->form($this->getDailySiteLogForm()),
-                Tables\Actions\EditAction::make()
-                    ->form($this->getDailySiteLogForm()),
-                Tables\Actions\Action::make('approve')
+            ->recordActions([
+                ViewAction::make()
+                    ->schema($this->getDailySiteLogFormSchema()),
+                EditAction::make()
+                    ->schema($this->getDailySiteLogFormSchema()),
+                Action::make('approve')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
@@ -180,10 +186,12 @@ class FieldManagementPage extends BaseModulePage implements HasTable
                         'status' => 'approved',
                         'approved_by' => auth()->id(),
                     ])),
-                Tables\Actions\DeleteAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
             ])
             ->emptyStateHeading('No Daily Logs')
             ->emptyStateDescription('No daily site logs have been recorded for this project yet.')

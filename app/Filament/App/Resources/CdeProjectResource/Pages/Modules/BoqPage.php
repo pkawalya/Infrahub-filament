@@ -6,8 +6,15 @@ use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\Boq;
 use App\Models\Contract;
 use App\Support\CurrencyHelper;
+use Filament\Actions\Action;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
-use Filament\Schemas;
+use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -37,7 +44,7 @@ class BoqPage extends BaseModulePage implements HasTable
                 'sub' => $approved . ' approved',
                 'sub_type' => 'success',
                 'primary' => true,
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V18zm2.498-6.75h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V18zm2.504-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V18zm2.498-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0012 2.25z" /></svg>'
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V18zm2.498-6.75h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0012 2.25z" /></svg>'
             ],
             [
                 'label' => 'Total Value',
@@ -56,45 +63,21 @@ class BoqPage extends BaseModulePage implements HasTable
         ];
     }
 
-    protected function getBoqForm(): array
+    protected function getBoqFormSchema(): array
     {
         $projectId = $this->record->id;
         $companyId = $this->record->company_id;
-
         return [
-            Schemas\Components\Section::make('BOQ Details')->schema([
-                Forms\Components\TextInput::make('boq_number')
-                    ->label('BOQ Number')
-                    ->required()
+            Section::make('BOQ Details')->schema([
+                Forms\Components\TextInput::make('boq_number')->label('BOQ Number')->required()
                     ->default(fn() => 'BOQ-' . str_pad((string) (Boq::where('cde_project_id', $projectId)->count() + 1), 4, '0', STR_PAD_LEFT)),
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Select::make('contract_id')
-                    ->label('Contract')
-                    ->options(Contract::where('company_id', $companyId)->pluck('title', 'id'))
-                    ->searchable()
-                    ->nullable(),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'draft' => 'Draft',
-                        'submitted' => 'Submitted',
-                        'revised' => 'Revised',
-                        'approved' => 'Approved',
-                    ])
-                    ->required()
-                    ->default('draft'),
-                Forms\Components\TextInput::make('total_value')
-                    ->numeric()
-                    ->prefix('$')
-                    ->default(0)
-                    ->label('Total Value'),
-                Forms\Components\Select::make('currency')
-                    ->options(['UGX' => 'UGX', 'USD' => 'USD', 'EUR' => 'EUR', 'GBP' => 'GBP'])
-                    ->default('UGX'),
-                Forms\Components\Textarea::make('description')
-                    ->rows(3)
-                    ->columnSpanFull(),
+                Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                Forms\Components\Select::make('contract_id')->label('Contract')
+                    ->options(Contract::where('company_id', $companyId)->pluck('title', 'id'))->searchable()->nullable(),
+                Forms\Components\Select::make('status')->options(['draft' => 'Draft', 'submitted' => 'Submitted', 'revised' => 'Revised', 'approved' => 'Approved'])->required()->default('draft'),
+                Forms\Components\TextInput::make('total_value')->numeric()->prefix('$')->default(0)->label('Total Value'),
+                Forms\Components\Select::make('currency')->options(['UGX' => 'UGX', 'USD' => 'USD', 'EUR' => 'EUR', 'GBP' => 'GBP'])->default('UGX'),
+                Forms\Components\Textarea::make('description')->rows(3)->columnSpanFull(),
             ])->columns(2),
         ];
     }
@@ -109,41 +92,31 @@ class BoqPage extends BaseModulePage implements HasTable
             ->columns([
                 Tables\Columns\TextColumn::make('boq_number')->label('BOQ #')->searchable(),
                 Tables\Columns\TextColumn::make('name')->searchable()->limit(50),
-                Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) { 'approved' => 'success', 'draft' => 'gray', 'submitted' => 'info', 'revised' => 'warning', default => 'gray'}),
+                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $state) => match ($state) { 'approved' => 'success', 'draft' => 'gray', 'submitted' => 'info', 'revised' => 'warning', default => 'gray'}),
                 Tables\Columns\TextColumn::make('total_value')->formatStateUsing(CurrencyHelper::formatter())->label('Total Value'),
                 Tables\Columns\TextColumn::make('contract.title')->label('Contract')->limit(30),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->headerActions([
-                Tables\Actions\CreateAction::make()
-                    ->label('New BOQ')
-                    ->icon('heroicon-o-plus')
-                    ->form($this->getBoqForm())
-                    ->mutateFormDataUsing(function (array $data) use ($projectId, $companyId): array {
+                CreateAction::make()->label('New BOQ')->icon('heroicon-o-plus')
+                    ->schema($this->getBoqFormSchema())
+                    ->mutateDataUsing(function (array $data) use ($projectId, $companyId): array {
                         $data['cde_project_id'] = $projectId;
                         $data['company_id'] = $companyId;
                         $data['created_by'] = auth()->id();
                         return $data;
                     }),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->form($this->getBoqForm()),
-                Tables\Actions\EditAction::make()
-                    ->form($this->getBoqForm()),
-                Tables\Actions\Action::make('approve')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
-                    ->requiresConfirmation()
+            ->recordActions([
+                ViewAction::make()->schema($this->getBoqFormSchema()),
+                EditAction::make()->schema($this->getBoqFormSchema()),
+                Action::make('approve')->icon('heroicon-o-check-circle')->color('success')->requiresConfirmation()
                     ->visible(fn(Boq $record) => $record->status !== 'approved')
                     ->action(fn(Boq $record) => $record->update(['status' => 'approved'])),
-                Tables\Actions\DeleteAction::make(),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-            ])
+            ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])])
             ->emptyStateHeading('No BOQs')
             ->emptyStateDescription('No Bills of Quantities have been created for this project yet.')
             ->emptyStateIcon('heroicon-o-calculator');

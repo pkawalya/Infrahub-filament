@@ -5,8 +5,14 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\Contract;
 use App\Support\CurrencyHelper;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
-use Filament\Schemas;
+use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -55,61 +61,27 @@ class CostContractsPage extends BaseModulePage implements HasTable
         ];
     }
 
-    protected function getContractForm(): array
+    protected function getContractFormSchema(): array
     {
         $projectId = $this->record->id;
-
         return [
-            Schemas\Components\Section::make('Contract Information')->schema([
-                Forms\Components\TextInput::make('contract_number')
-                    ->label('Contract #')
-                    ->required()
+            Section::make('Contract Information')->schema([
+                Forms\Components\TextInput::make('contract_number')->label('Contract #')->required()
                     ->default(fn() => 'CON-' . str_pad((string) (Contract::where('cde_project_id', $projectId)->count() + 1), 4, '0', STR_PAD_LEFT)),
-                Forms\Components\TextInput::make('title')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\Select::make('type')
-                    ->options([
-                        'main' => 'Main Contract',
-                        'sub' => 'Sub-Contract',
-                        'supply' => 'Supply Contract',
-                        'consultancy' => 'Consultancy',
-                        'service' => 'Service Agreement',
-                        'other' => 'Other',
-                    ])
-                    ->required(),
-                Forms\Components\Select::make('status')
-                    ->options(Contract::$statuses)
-                    ->required()
-                    ->default('draft'),
-                Forms\Components\DatePicker::make('start_date')
-                    ->required(),
+                Forms\Components\TextInput::make('title')->required()->maxLength(255),
+                Forms\Components\Select::make('type')->options(['main' => 'Main Contract', 'sub' => 'Sub-Contract', 'supply' => 'Supply Contract', 'consultancy' => 'Consultancy', 'service' => 'Service Agreement', 'other' => 'Other'])->required(),
+                Forms\Components\Select::make('status')->options(Contract::$statuses)->required()->default('draft'),
+                Forms\Components\DatePicker::make('start_date')->required(),
                 Forms\Components\DatePicker::make('end_date'),
             ])->columns(2),
-
-            Schemas\Components\Section::make('Financial Details')->schema([
-                Forms\Components\TextInput::make('original_value')
-                    ->numeric()
-                    ->prefix('$')
-                    ->default(0)
-                    ->label('Original Value'),
-                Forms\Components\TextInput::make('revised_value')
-                    ->numeric()
-                    ->prefix('$')
-                    ->label('Revised Value')
-                    ->placeholder('Leave empty if unchanged'),
+            Section::make('Financial Details')->schema([
+                Forms\Components\TextInput::make('original_value')->numeric()->prefix('$')->default(0)->label('Original Value'),
+                Forms\Components\TextInput::make('revised_value')->numeric()->prefix('$')->label('Revised Value')->placeholder('Leave empty if unchanged'),
             ])->columns(2),
-
-            Schemas\Components\Section::make('Details')->schema([
-                Forms\Components\Textarea::make('description')
-                    ->rows(2),
-                Forms\Components\Textarea::make('scope')
-                    ->rows(2)
-                    ->label('Scope of Work'),
-                Forms\Components\Textarea::make('terms')
-                    ->rows(2)
-                    ->label('Terms & Conditions')
-                    ->columnSpanFull(),
+            Section::make('Details')->schema([
+                Forms\Components\Textarea::make('description')->rows(2),
+                Forms\Components\Textarea::make('scope')->rows(2)->label('Scope of Work'),
+                Forms\Components\Textarea::make('terms')->rows(2)->label('Terms & Conditions')->columnSpanFull(),
             ])->columns(2)->collapsed(),
         ];
     }
@@ -125,8 +97,7 @@ class CostContractsPage extends BaseModulePage implements HasTable
                 Tables\Columns\TextColumn::make('contract_number')->label('Contract #')->searchable(),
                 Tables\Columns\TextColumn::make('title')->searchable()->limit(50),
                 Tables\Columns\TextColumn::make('type')->badge(),
-                Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) { 'active' => 'success', 'draft' => 'gray', 'completed' => 'info', 'terminated' => 'danger', 'suspended' => 'warning', default => 'gray'}),
+                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $state) => match ($state) { 'active' => 'success', 'draft' => 'gray', 'completed' => 'info', 'terminated' => 'danger', 'suspended' => 'warning', default => 'gray'}),
                 Tables\Columns\TextColumn::make('original_value')->formatStateUsing(CurrencyHelper::formatter())->label('Value'),
                 Tables\Columns\TextColumn::make('start_date')->date(),
                 Tables\Columns\TextColumn::make('end_date')->date(),
@@ -134,37 +105,24 @@ class CostContractsPage extends BaseModulePage implements HasTable
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(Contract::$statuses),
-                Tables\Filters\SelectFilter::make('type')->options([
-                    'main' => 'Main Contract',
-                    'sub' => 'Sub-Contract',
-                    'supply' => 'Supply Contract',
-                    'consultancy' => 'Consultancy',
-                    'service' => 'Service Agreement',
-                    'other' => 'Other',
-                ]),
+                Tables\Filters\SelectFilter::make('type')->options(['main' => 'Main Contract', 'sub' => 'Sub-Contract', 'supply' => 'Supply', 'consultancy' => 'Consultancy', 'service' => 'Service', 'other' => 'Other']),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
-                    ->label('New Contract')
-                    ->icon('heroicon-o-plus')
-                    ->form($this->getContractForm())
-                    ->mutateFormDataUsing(function (array $data) use ($projectId, $companyId): array {
+                CreateAction::make()->label('New Contract')->icon('heroicon-o-plus')
+                    ->schema($this->getContractFormSchema())
+                    ->mutateDataUsing(function (array $data) use ($projectId, $companyId): array {
                         $data['cde_project_id'] = $projectId;
                         $data['company_id'] = $companyId;
                         $data['created_by'] = auth()->id();
                         return $data;
                     }),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->form($this->getContractForm()),
-                Tables\Actions\EditAction::make()
-                    ->form($this->getContractForm()),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                ViewAction::make()->schema($this->getContractFormSchema()),
+                EditAction::make()->schema($this->getContractFormSchema()),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
-            ])
+            ->toolbarActions([BulkActionGroup::make([DeleteBulkAction::make()])])
             ->emptyStateHeading('No Contracts')
             ->emptyStateDescription('No contracts have been created for this project yet.')
             ->emptyStateIcon('heroicon-o-document-text');

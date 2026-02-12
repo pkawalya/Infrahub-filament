@@ -7,9 +7,16 @@ use App\Models\Client;
 use App\Models\User;
 use App\Models\WorkOrder;
 use App\Models\WorkOrderType;
-use Filament\Actions;
+use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms;
-use Filament\Schemas;
+use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -76,12 +83,12 @@ class CoreFsmPage extends BaseModulePage implements HasTable
         ];
     }
 
-    protected function getWorkOrderForm(): array
+    protected function getWorkOrderFormSchema(): array
     {
         $companyId = $this->record->company_id;
 
         return [
-            Schemas\Components\Section::make('Work Order Details')->schema([
+            Section::make('Work Order Details')->schema([
                 Forms\Components\TextInput::make('title')
                     ->required()
                     ->maxLength(255)
@@ -154,26 +161,28 @@ class CoreFsmPage extends BaseModulePage implements HasTable
                 Tables\Filters\SelectFilter::make('priority')->options(WorkOrder::$priorities),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make()
+                CreateAction::make()
                     ->label('New Work Order')
                     ->icon('heroicon-o-plus')
-                    ->form($this->getWorkOrderForm())
-                    ->mutateFormDataUsing(function (array $data) use ($companyId): array {
+                    ->schema($this->getWorkOrderFormSchema())
+                    ->mutateDataUsing(function (array $data) use ($companyId): array {
                         $data['company_id'] = $companyId;
                         $data['created_by'] = auth()->id();
                         $data['wo_number'] = 'WO-' . str_pad((string) (WorkOrder::where('company_id', $companyId)->count() + 1), 5, '0', STR_PAD_LEFT);
                         return $data;
                     }),
             ])
-            ->actions([
-                Tables\Actions\ViewAction::make()
-                    ->form($this->getWorkOrderForm()),
-                Tables\Actions\EditAction::make()
-                    ->form($this->getWorkOrderForm()),
-                Tables\Actions\DeleteAction::make(),
+            ->recordActions([
+                ViewAction::make()
+                    ->schema($this->getWorkOrderFormSchema()),
+                EditAction::make()
+                    ->schema($this->getWorkOrderFormSchema()),
+                DeleteAction::make(),
             ])
-            ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
             ])
             ->emptyStateHeading('No Work Orders')
             ->emptyStateDescription('No work orders have been created yet.')
