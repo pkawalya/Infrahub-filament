@@ -4,7 +4,10 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\Boq;
+use App\Models\Contract;
 use App\Support\CurrencyHelper;
+use Filament\Forms;
+use Filament\Schemas;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -53,10 +56,56 @@ class BoqPage extends BaseModulePage implements HasTable
         ];
     }
 
+    protected function getBoqForm(): array
+    {
+        $projectId = $this->record->id;
+        $companyId = $this->record->company_id;
+
+        return [
+            Schemas\Components\Section::make('BOQ Details')->schema([
+                Forms\Components\TextInput::make('boq_number')
+                    ->label('BOQ Number')
+                    ->required()
+                    ->default(fn() => 'BOQ-' . str_pad((string) (Boq::where('cde_project_id', $projectId)->count() + 1), 4, '0', STR_PAD_LEFT)),
+                Forms\Components\TextInput::make('name')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\Select::make('contract_id')
+                    ->label('Contract')
+                    ->options(Contract::where('company_id', $companyId)->pluck('title', 'id'))
+                    ->searchable()
+                    ->nullable(),
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'draft' => 'Draft',
+                        'submitted' => 'Submitted',
+                        'revised' => 'Revised',
+                        'approved' => 'Approved',
+                    ])
+                    ->required()
+                    ->default('draft'),
+                Forms\Components\TextInput::make('total_value')
+                    ->numeric()
+                    ->prefix('$')
+                    ->default(0)
+                    ->label('Total Value'),
+                Forms\Components\Select::make('currency')
+                    ->options(['UGX' => 'UGX', 'USD' => 'USD', 'EUR' => 'EUR', 'GBP' => 'GBP'])
+                    ->default('UGX'),
+                Forms\Components\Textarea::make('description')
+                    ->rows(3)
+                    ->columnSpanFull(),
+            ])->columns(2),
+        ];
+    }
+
     public function table(Table $table): Table
     {
+        $projectId = $this->record->id;
+        $companyId = $this->record->company_id;
+
         return $table
-            ->query(Boq::query()->where('cde_project_id', $this->record->id))
+            ->query(Boq::query()->where('cde_project_id', $projectId))
             ->columns([
                 Tables\Columns\TextColumn::make('boq_number')->label('BOQ #')->searchable(),
                 Tables\Columns\TextColumn::make('name')->searchable()->limit(50),
@@ -67,6 +116,34 @@ class BoqPage extends BaseModulePage implements HasTable
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
+            ->headerActions([
+                Tables\Actions\CreateAction::make()
+                    ->label('New BOQ')
+                    ->icon('heroicon-o-plus')
+                    ->form($this->getBoqForm())
+                    ->mutateFormDataUsing(function (array $data) use ($projectId, $companyId): array {
+                        $data['cde_project_id'] = $projectId;
+                        $data['company_id'] = $companyId;
+                        $data['created_by'] = auth()->id();
+                        return $data;
+                    }),
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->form($this->getBoqForm()),
+                Tables\Actions\EditAction::make()
+                    ->form($this->getBoqForm()),
+                Tables\Actions\Action::make('approve')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn(Boq $record) => $record->status !== 'approved')
+                    ->action(fn(Boq $record) => $record->update(['status' => 'approved'])),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
+            ])
             ->emptyStateHeading('No BOQs')
             ->emptyStateDescription('No Bills of Quantities have been created for this project yet.')
             ->emptyStateIcon('heroicon-o-calculator');

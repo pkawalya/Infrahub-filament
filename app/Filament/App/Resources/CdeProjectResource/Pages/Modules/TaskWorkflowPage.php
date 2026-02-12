@@ -4,6 +4,9 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\Task;
+use App\Models\User;
+use Filament\Forms;
+use Filament\Schemas;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -62,22 +65,117 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable
         ];
     }
 
+    protected function getTaskForm(): array
+    {
+        $companyId = $this->record->company_id;
+
+        return [
+            Schemas\Components\Section::make('Task Details')->schema([
+                Forms\Components\TextInput::make('title')
+                    ->required()
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+                Forms\Components\Select::make('priority')
+                    ->options([
+                        'low' => 'Low',
+                        'medium' => 'Medium',
+                        'high' => 'High',
+                        'urgent' => 'Urgent',
+                    ])
+                    ->required()
+                    ->default('medium'),
+                Forms\Components\Select::make('status')
+                    ->options(Task::$statuses)
+                    ->required()
+                    ->default('to_do'),
+                Forms\Components\Select::make('assigned_to')
+                    ->label('Assign To')
+                    ->options(User::where('company_id', $companyId)->where('is_active', true)->pluck('name', 'id'))
+                    ->searchable(),
+                Forms\Components\DatePicker::make('due_date'),
+                Forms\Components\TextInput::make('estimated_hours')
+                    ->numeric()
+                    ->suffix('hrs')
+                    ->label('Estimated Hours'),
+                Forms\Components\TextInput::make('actual_hours')
+                    ->numeric()
+                    ->suffix('hrs')
+                    ->label('Actual Hours'),
+                Forms\Components\TextInput::make('progress_percent')
+                    ->numeric()
+                    ->suffix('%')
+                    ->default(0)
+                    ->minValue(0)
+                    ->maxValue(100)
+                    ->label('Progress'),
+                Forms\Components\Textarea::make('description')
+                    ->rows(3)
+                    ->columnSpanFull(),
+            ])->columns(2),
+        ];
+    }
+
     public function table(Table $table): Table
     {
+        $projectId = $this->record->id;
+        $companyId = $this->record->company_id;
+
         return $table
-            ->query(Task::query()->where('cde_project_id', $this->record->id))
+            ->query(Task::query()->where('cde_project_id', $projectId))
             ->columns([
                 Tables\Columns\TextColumn::make('title')->searchable()->limit(50),
                 Tables\Columns\TextColumn::make('priority')->badge()
                     ->color(fn(string $state) => match ($state) { 'urgent' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'}),
                 Tables\Columns\TextColumn::make('status')->badge()
                     ->color(fn(string $state) => match ($state) { 'done' => 'success', 'in_progress' => 'info', 'review' => 'warning', 'blocked' => 'danger', default => 'gray'}),
-                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To'),
-                Tables\Columns\TextColumn::make('due_date')->date(),
+                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('Unassigned'),
+                Tables\Columns\TextColumn::make('due_date')->date()
+                    ->color(fn($record) => $record->due_date?->isPast() && !in_array($record->status, ['done', 'cancelled']) ? 'danger' : null),
                 Tables\Columns\TextColumn::make('progress_percent')->label('Progress')->suffix('%'),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
+                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')->options(Task::$statuses),
+                Tables\Filters\SelectFilter::make('priority')->options([
+                    'low' => 'Low',
+                    'medium' => 'Medium',
+                    'high' => 'High',
+                    'urgent' => 'Urgent',
+                ]),
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make()
+                    ->label('New Task')
+                    ->icon('heroicon-o-plus')
+                    ->form($this->getTaskForm())
+                    ->mutateFormDataUsing(function (array $data) use ($projectId, $companyId): array {
+                        $data['cde_project_id'] = $projectId;
+                        $data['company_id'] = $companyId;
+                        $data['created_by'] = auth()->id();
+                        return $data;
+                    }),
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->form($this->getTaskForm()),
+                Tables\Actions\EditAction::make()
+                    ->form($this->getTaskForm()),
+                Tables\Actions\Action::make('mark_done')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->label('Done')
+                    ->requiresConfirmation()
+                    ->visible(fn(Task $record) => !in_array($record->status, ['done', 'cancelled']))
+                    ->action(fn(Task $record) => $record->update([
+                        'status' => 'done',
+                        'progress_percent' => 100,
+                    ])),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
+            ])
             ->emptyStateHeading('No Tasks')
             ->emptyStateDescription('No tasks have been created for this project yet.')
             ->emptyStateIcon('heroicon-o-clipboard-document-check');

@@ -3,7 +3,13 @@
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
+use App\Models\Client;
+use App\Models\User;
 use App\Models\WorkOrder;
+use App\Models\WorkOrderType;
+use Filament\Actions;
+use Filament\Forms;
+use Filament\Schemas;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -70,10 +76,53 @@ class CoreFsmPage extends BaseModulePage implements HasTable
         ];
     }
 
+    protected function getWorkOrderForm(): array
+    {
+        $companyId = $this->record->company_id;
+
+        return [
+            Schemas\Components\Section::make('Work Order Details')->schema([
+                Forms\Components\TextInput::make('title')
+                    ->required()
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+                Forms\Components\Select::make('work_order_type_id')
+                    ->label('Type')
+                    ->options(WorkOrderType::where('company_id', $companyId)->pluck('name', 'id'))
+                    ->searchable(),
+                Forms\Components\Select::make('client_id')
+                    ->label('Client')
+                    ->options(Client::where('company_id', $companyId)->where('is_active', true)->pluck('name', 'id'))
+                    ->searchable(),
+                Forms\Components\Select::make('priority')
+                    ->options(WorkOrder::$priorities)
+                    ->required()
+                    ->default('medium'),
+                Forms\Components\Select::make('status')
+                    ->options(WorkOrder::$statuses)
+                    ->required()
+                    ->default('pending'),
+                Forms\Components\Select::make('assigned_to')
+                    ->label('Assign To')
+                    ->options(User::where('company_id', $companyId)->where('is_active', true)->pluck('name', 'id'))
+                    ->searchable(),
+                Forms\Components\DatePicker::make('due_date'),
+                Forms\Components\Textarea::make('description')
+                    ->rows(3)
+                    ->columnSpanFull(),
+                Forms\Components\Textarea::make('notes')
+                    ->rows(2)
+                    ->columnSpanFull(),
+            ])->columns(2),
+        ];
+    }
+
     public function table(Table $table): Table
     {
+        $companyId = $this->record->company_id;
+
         return $table
-            ->query(WorkOrder::query()->where('company_id', $this->record->company_id))
+            ->query(WorkOrder::query()->where('company_id', $companyId))
             ->columns([
                 Tables\Columns\TextColumn::make('wo_number')->label('WO #')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('title')->searchable()->limit(45),
@@ -103,6 +152,28 @@ class CoreFsmPage extends BaseModulePage implements HasTable
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(WorkOrder::$statuses),
                 Tables\Filters\SelectFilter::make('priority')->options(WorkOrder::$priorities),
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make()
+                    ->label('New Work Order')
+                    ->icon('heroicon-o-plus')
+                    ->form($this->getWorkOrderForm())
+                    ->mutateFormDataUsing(function (array $data) use ($companyId): array {
+                        $data['company_id'] = $companyId;
+                        $data['created_by'] = auth()->id();
+                        $data['wo_number'] = 'WO-' . str_pad((string) (WorkOrder::where('company_id', $companyId)->count() + 1), 5, '0', STR_PAD_LEFT);
+                        return $data;
+                    }),
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->form($this->getWorkOrderForm()),
+                Tables\Actions\EditAction::make()
+                    ->form($this->getWorkOrderForm()),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
             ])
             ->emptyStateHeading('No Work Orders')
             ->emptyStateDescription('No work orders have been created yet.')

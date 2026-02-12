@@ -4,6 +4,10 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\CdeDocument;
+use App\Models\CdeFolder;
+use Filament\Actions;
+use Filament\Forms;
+use Filament\Schemas;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -51,10 +55,68 @@ class CdePage extends BaseModulePage implements HasTable
         ];
     }
 
+    protected function getDocumentForm(): array
+    {
+        $projectId = $this->record->id;
+
+        return [
+            Schemas\Components\Section::make('Document Details')->schema([
+                Forms\Components\TextInput::make('document_number')
+                    ->label('Document #')
+                    ->required(),
+                Forms\Components\TextInput::make('title')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\Select::make('cde_folder_id')
+                    ->label('Folder')
+                    ->options(CdeFolder::where('cde_project_id', $projectId)->pluck('name', 'id'))
+                    ->searchable()
+                    ->nullable(),
+                Forms\Components\Select::make('discipline')
+                    ->options([
+                        'architecture' => 'Architecture',
+                        'structural' => 'Structural',
+                        'mechanical' => 'Mechanical',
+                        'electrical' => 'Electrical',
+                        'plumbing' => 'Plumbing',
+                        'civil' => 'Civil',
+                        'landscape' => 'Landscape',
+                        'interior' => 'Interior',
+                        'general' => 'General',
+                    ])
+                    ->searchable(),
+                Forms\Components\Select::make('status')
+                    ->options([
+                        'wip' => 'Work in Progress',
+                        'shared' => 'Shared',
+                        'published' => 'Published',
+                        'archived' => 'Archived',
+                    ])
+                    ->required()
+                    ->default('wip'),
+                Forms\Components\TextInput::make('revision')
+                    ->default('A')
+                    ->maxLength(10),
+                Forms\Components\TextInput::make('file_type')
+                    ->placeholder('e.g. PDF, DWG, BIM')
+                    ->label('File Type'),
+                Forms\Components\TextInput::make('file_size')
+                    ->numeric()
+                    ->label('File Size (bytes)'),
+                Forms\Components\Textarea::make('description')
+                    ->rows(3)
+                    ->columnSpanFull(),
+            ])->columns(2),
+        ];
+    }
+
     public function table(Table $table): Table
     {
+        $projectId = $this->record->id;
+        $companyId = $this->record->company_id;
+
         return $table
-            ->query(CdeDocument::query()->where('cde_project_id', $this->record->id))
+            ->query(CdeDocument::query()->where('cde_project_id', $projectId))
             ->columns([
                 Tables\Columns\TextColumn::make('document_number')->label('Doc #')->searchable(),
                 Tables\Columns\TextColumn::make('title')->searchable()->limit(50),
@@ -68,6 +130,40 @@ class CdePage extends BaseModulePage implements HasTable
                 Tables\Columns\TextColumn::make('updated_at')->dateTime()->sortable(),
             ])
             ->defaultSort('updated_at', 'desc')
+            ->headerActions([
+                Tables\Actions\CreateAction::make()
+                    ->label('New Document')
+                    ->icon('heroicon-o-plus')
+                    ->form($this->getDocumentForm())
+                    ->mutateFormDataUsing(function (array $data) use ($projectId, $companyId): array {
+                        $data['cde_project_id'] = $projectId;
+                        $data['company_id'] = $companyId;
+                        $data['uploaded_by'] = auth()->id();
+                        return $data;
+                    }),
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->form($this->getDocumentForm()),
+                Tables\Actions\EditAction::make()
+                    ->form($this->getDocumentForm()),
+                Tables\Actions\Action::make('new_revision')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('info')
+                    ->label('Rev Up')
+                    ->requiresConfirmation()
+                    ->modalDescription('Create a new revision of this document?')
+                    ->action(function (CdeDocument $record) {
+                        $currentRev = $record->revision ?? 'A';
+                        // Increment letter revision: A -> B, B -> C, etc.
+                        $nextRev = chr(ord($currentRev) + 1);
+                        $record->update(['revision' => $nextRev]);
+                    }),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
+            ])
             ->emptyStateHeading('No Documents')
             ->emptyStateDescription('No documents have been uploaded for this project yet.')
             ->emptyStateIcon('heroicon-o-document');

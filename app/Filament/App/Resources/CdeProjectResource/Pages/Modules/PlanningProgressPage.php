@@ -4,6 +4,9 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\Milestone;
+use Filament\Actions;
+use Filament\Forms;
+use Filament\Schemas;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -68,10 +71,41 @@ class PlanningProgressPage extends BaseModulePage implements HasTable
         ];
     }
 
+    protected function getMilestoneForm(): array
+    {
+        return [
+            Schemas\Components\Section::make('Milestone Details')->schema([
+                Forms\Components\TextInput::make('name')
+                    ->required()
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+                Forms\Components\Select::make('priority')
+                    ->options(Milestone::$priorities)
+                    ->required()
+                    ->default('medium'),
+                Forms\Components\Select::make('status')
+                    ->options(Milestone::$statuses)
+                    ->required()
+                    ->default('pending'),
+                Forms\Components\DatePicker::make('target_date')
+                    ->required()
+                    ->label('Target Date'),
+                Forms\Components\DatePicker::make('actual_date')
+                    ->label('Actual Completion Date'),
+                Forms\Components\Textarea::make('description')
+                    ->rows(3)
+                    ->columnSpanFull(),
+            ])->columns(2),
+        ];
+    }
+
     public function table(Table $table): Table
     {
+        $projectId = $this->record->id;
+        $companyId = $this->record->company_id;
+
         return $table
-            ->query(Milestone::query()->where('cde_project_id', $this->record->id))
+            ->query(Milestone::query()->where('cde_project_id', $projectId))
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable()->limit(50),
                 Tables\Columns\TextColumn::make('priority')->badge()
@@ -98,6 +132,36 @@ class PlanningProgressPage extends BaseModulePage implements HasTable
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(Milestone::$statuses),
                 Tables\Filters\SelectFilter::make('priority')->options(Milestone::$priorities),
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make()
+                    ->label('New Milestone')
+                    ->icon('heroicon-o-plus')
+                    ->form($this->getMilestoneForm())
+                    ->mutateFormDataUsing(function (array $data) use ($projectId, $companyId): array {
+                        $data['cde_project_id'] = $projectId;
+                        $data['company_id'] = $companyId;
+                        return $data;
+                    }),
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->form($this->getMilestoneForm()),
+                Tables\Actions\EditAction::make()
+                    ->form($this->getMilestoneForm()),
+                Tables\Actions\Action::make('complete')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->visible(fn(Milestone $record) => !in_array($record->status, ['completed', 'cancelled']))
+                    ->action(fn(Milestone $record) => $record->update([
+                        'status' => 'completed',
+                        'actual_date' => now(),
+                    ])),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
             ])
             ->emptyStateHeading('No Milestones')
             ->emptyStateDescription('No milestones have been created for this project yet.')

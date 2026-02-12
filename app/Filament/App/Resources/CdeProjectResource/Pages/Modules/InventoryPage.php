@@ -4,7 +4,11 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\PurchaseOrder;
+use App\Models\Supplier;
 use App\Support\CurrencyHelper;
+use Filament\Actions;
+use Filament\Forms;
+use Filament\Schemas;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
@@ -58,10 +62,71 @@ class InventoryPage extends BaseModulePage implements HasTable
         ];
     }
 
+    protected function getPurchaseOrderForm(): array
+    {
+        $companyId = $this->record->company_id;
+
+        return [
+            Schemas\Components\Section::make('Order Details')->schema([
+                Forms\Components\TextInput::make('po_number')
+                    ->label('PO Number')
+                    ->required()
+                    ->default(fn() => 'PO-' . str_pad((string) (PurchaseOrder::where('company_id', $companyId)->count() + 1), 5, '0', STR_PAD_LEFT)),
+                Forms\Components\Select::make('supplier_id')
+                    ->label('Supplier')
+                    ->options(Supplier::where('company_id', $companyId)->pluck('name', 'id'))
+                    ->searchable()
+                    ->required(),
+                Forms\Components\Select::make('status')
+                    ->options(PurchaseOrder::$statuses)
+                    ->required()
+                    ->default('draft'),
+                Forms\Components\DatePicker::make('order_date')
+                    ->required()
+                    ->default(now()),
+                Forms\Components\DatePicker::make('expected_date')
+                    ->label('Expected Delivery'),
+                Forms\Components\DatePicker::make('received_date')
+                    ->label('Received Date'),
+            ])->columns(3),
+
+            Schemas\Components\Section::make('Amounts')->schema([
+                Forms\Components\TextInput::make('subtotal')
+                    ->numeric()
+                    ->prefix('$')
+                    ->default(0),
+                Forms\Components\TextInput::make('tax_amount')
+                    ->numeric()
+                    ->prefix('$')
+                    ->default(0)
+                    ->label('Tax'),
+                Forms\Components\TextInput::make('shipping_cost')
+                    ->numeric()
+                    ->prefix('$')
+                    ->default(0)
+                    ->label('Shipping'),
+                Forms\Components\TextInput::make('total_amount')
+                    ->numeric()
+                    ->prefix('$')
+                    ->default(0)
+                    ->required()
+                    ->label('Total'),
+            ])->columns(4),
+
+            Schemas\Components\Section::make('Notes')->schema([
+                Forms\Components\Textarea::make('notes')
+                    ->rows(3)
+                    ->columnSpanFull(),
+            ])->collapsed(),
+        ];
+    }
+
     public function table(Table $table): Table
     {
+        $companyId = $this->record->company_id;
+
         return $table
-            ->query(PurchaseOrder::query()->where('company_id', $this->record->company_id))
+            ->query(PurchaseOrder::query()->where('company_id', $companyId))
             ->columns([
                 Tables\Columns\TextColumn::make('po_number')->label('PO #')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('supplier.name')->searchable()->label('Supplier'),
@@ -87,6 +152,27 @@ class InventoryPage extends BaseModulePage implements HasTable
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(PurchaseOrder::$statuses),
+            ])
+            ->headerActions([
+                Tables\Actions\CreateAction::make()
+                    ->label('New Purchase Order')
+                    ->icon('heroicon-o-plus')
+                    ->form($this->getPurchaseOrderForm())
+                    ->mutateFormDataUsing(function (array $data) use ($companyId): array {
+                        $data['company_id'] = $companyId;
+                        $data['created_by'] = auth()->id();
+                        return $data;
+                    }),
+            ])
+            ->actions([
+                Tables\Actions\ViewAction::make()
+                    ->form($this->getPurchaseOrderForm()),
+                Tables\Actions\EditAction::make()
+                    ->form($this->getPurchaseOrderForm()),
+                Tables\Actions\DeleteAction::make(),
+            ])
+            ->bulkActions([
+                Tables\Actions\DeleteBulkAction::make(),
             ])
             ->emptyStateHeading('No Purchase Orders')
             ->emptyStateDescription('No purchase orders have been created yet.')
