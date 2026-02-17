@@ -4,6 +4,9 @@
 
 set -e
 
+# Allow Composer to run as root (typical for VPS deployments)
+export COMPOSER_ALLOW_SUPERUSER=1
+
 APP_DIR="/var/www/infrahub.click"
 LOG_FILE="/var/log/infrahub-deploy.log"
 
@@ -40,11 +43,11 @@ chmod -R 775 storage bootstrap/cache
 echo "🔄 Restarting queue workers..." >> "$LOG_FILE"
 php artisan queue:restart 2>&1 >> "$LOG_FILE" || true
 
-# Restart PHP-FPM to clear opcache
-echo "🔁 Restarting PHP-FPM..." >> "$LOG_FILE"
+# Restart PHP-FPM and Apache
+echo "🔁 Restarting services..." >> "$LOG_FILE"
 systemctl restart php8.3-fpm 2>&1 >> "$LOG_FILE" || \
-systemctl restart php8.2-fpm 2>&1 >> "$LOG_FILE" || \
-systemctl restart php-fpm 2>&1 >> "$LOG_FILE" || true
+systemctl restart php8.2-fpm 2>&1 >> "$LOG_FILE" || true
+systemctl reload apache2 2>&1 >> "$LOG_FILE" || true
 
 echo "✅ Deployment complete at $(date)" >> "$LOG_FILE"
 echo "" >> "$LOG_FILE"
