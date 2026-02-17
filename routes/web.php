@@ -15,6 +15,10 @@ Route::get('/get-started', [OnboardingController::class, 'show'])->name('onboard
 Route::post('/get-started', [OnboardingController::class, 'store'])->name('onboarding.store');
 Route::get('/get-started/success', [OnboardingController::class, 'success'])->name('onboarding.success');
 
+// Schedule a Call
+Route::get('/schedule-call', [\App\Http\Controllers\AppointmentController::class, 'create'])->name('schedule-call');
+Route::post('/schedule-call', [\App\Http\Controllers\AppointmentController::class, 'store'])->name('schedule-call.store');
+
 // Google Authentication Routes
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback'])->name('auth.google.callback');

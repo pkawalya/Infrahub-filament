@@ -582,7 +582,7 @@
             </a>
 
             <div class="nav-links">
-                <a href="/get-started" class="nav-link">Schedule a Call</a>
+                <a href="/schedule-call" class="nav-link">Schedule a Call</a>
                 <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"
                     aria-label="Toggle theme">
                     <span class="icon-moon">🌙</span>
@@ -722,7 +722,7 @@
         <div class="cta">
             <h2>Ready to Build Better?</h2>
             <p>Start your 14-day free trial. No credit card required. Onboard your team in minutes.</p>
-            <a href="/get-started" class="btn btn-primary btn-lg">
+            <a href="/schedule-call" class="btn btn-primary btn-lg">
                 Schedule a Call
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
