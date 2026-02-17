@@ -582,12 +582,14 @@
             </a>
 
             <div class="nav-links">
+                <a href="/get-started" class="nav-link">Schedule a Call</a>
                 <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"
                     aria-label="Toggle theme">
                     <span class="icon-moon">🌙</span>
                     <span class="icon-sun">☀️</span>
                 </button>
                 @auth
+                    <a href="{{ url('/admin') }}" class="nav-link">Super Admin</a>
                     <a href="{{ url('/app') }}" class="btn btn-primary">Dashboard</a>
                 @else
                     <a href="{{ url('/app/login') }}" class="nav-link">Log in</a>
