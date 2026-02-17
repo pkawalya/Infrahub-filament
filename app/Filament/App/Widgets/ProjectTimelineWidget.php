@@ -60,10 +60,58 @@ class ProjectTimelineWidget extends Widget
             $leftPercent = round(($timelineStart->diffInDays($start) / $totalDays) * 100, 2);
             $widthPercent = round(($start->diffInDays($end) / $totalDays) * 100, 2);
 
-            // Calculate progress (elapsed time vs total)
-            $elapsed = $start->diffInDays(now());
             $totalProjectDays = $start->diffInDays($end) ?: 1;
-            $progress = $start->isFuture() ? 0 : min(100, round(($elapsed / $totalProjectDays) * 100));
+
+            // Expected progress — where it should be based on elapsed calendar time
+            if ($start->isFuture()) {
+                $expectedProgress = 0;
+            } elseif (now()->gte($end)) {
+                $expectedProgress = 100;
+            } else {
+                $elapsed = $start->diffInDays(now());
+                $expectedProgress = min(100, round(($elapsed / $totalProjectDays) * 100));
+            }
+
+            // Actual progress — compute from milestones or status
+            $milestoneCount = Milestone::where('cde_project_id', $project->id)->count();
+            $completedMilestones = Milestone::where('cde_project_id', $project->id)
+                ->where('status', 'completed')->count();
+
+            if ($project->status === 'completed') {
+                $actualProgress = 100;
+            } elseif ($project->status === 'planning') {
+                $actualProgress = min(5, $expectedProgress);
+            } elseif ($project->status === 'on_hold' || $project->status === 'cancelled') {
+                // Frozen at whatever point they stopped
+                $actualProgress = $milestoneCount > 0
+                    ? round(($completedMilestones / $milestoneCount) * 100)
+                    : max(0, $expectedProgress - 15);
+            } elseif ($milestoneCount > 0) {
+                // Use milestone completion ratio
+                $actualProgress = round(($completedMilestones / $milestoneCount) * 100);
+            } else {
+                // No milestones — use elapsed time as a proxy
+                $actualProgress = $expectedProgress;
+            }
+
+            // Variance: positive = ahead, negative = behind
+            $variance = $actualProgress - $expectedProgress;
+            if ($project->status === 'completed') {
+                $varianceLabel = 'Complete';
+                $varianceColor = '#10b981';
+            } elseif ($project->status === 'on_hold') {
+                $varianceLabel = 'On Hold';
+                $varianceColor = '#f59e0b';
+            } elseif (abs($variance) <= 5) {
+                $varianceLabel = 'On Track';
+                $varianceColor = '#10b981';
+            } elseif ($variance > 0) {
+                $varianceLabel = abs($variance) . '% Ahead';
+                $varianceColor = '#3b82f6';
+            } else {
+                $varianceLabel = abs($variance) . '% Behind';
+                $varianceColor = '#ef4444';
+            }
 
             // Get milestones for this project
             $milestones = Milestone::where('cde_project_id', $project->id)
@@ -99,7 +147,11 @@ class ProjectTimelineWidget extends Widget
                 'endDate' => $end->format('M d, Y'),
                 'leftPercent' => max(0, $leftPercent),
                 'widthPercent' => max(1, $widthPercent),
-                'progress' => $progress,
+                'progress' => $actualProgress,
+                'expectedProgress' => $expectedProgress,
+                'variance' => $variance,
+                'varianceLabel' => $varianceLabel,
+                'varianceColor' => $varianceColor,
                 'color' => $statusColors[$project->status] ?? '#6366f1',
                 'milestones' => $milestones,
                 'url' => route('filament.app.resources.cde-projects.view', $project),

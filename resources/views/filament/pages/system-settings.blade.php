@@ -135,7 +135,7 @@
                         : 'hover:scale-[1.03] hover:shadow-lg shadow-sm' }}"
                                             title="{{ strip_tags($labels[$key] ?? $key) }}"
                                         >
-                                            <div class="aspect-[16/10] w-full" style="background: {{ $gradient }};"></div>
+                                            <div class="w-full" style="padding-bottom: 62.5%; background: {{ $gradient }};"></div>
 
                                             @if($current === $key)
                                                 <div class="absolute inset-0 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
