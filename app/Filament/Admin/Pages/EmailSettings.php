@@ -86,12 +86,13 @@ class EmailSettings extends Page implements HasForms
                         Select::make('mail_encryption')
                             ->label('Encryption')
                             ->options([
-                                'tls' => 'TLS (Recommended)',
-                                'ssl' => 'SSL',
-                                'null' => 'None',
+                                'auto' => 'Auto (Recommended for port 587)',
+                                'smtps' => 'SSL/TLS (Port 465)',
+                                'none' => 'None',
                             ])
-                            ->default('tls')
-                            ->required(),
+                            ->default('auto')
+                            ->required()
+                            ->helperText('Auto = STARTTLS on port 587 (Gmail, Outlook)'),
                     ])
                     ->columns(2),
 
@@ -135,6 +136,13 @@ class EmailSettings extends Page implements HasForms
         $data = $this->form->getState();
 
         try {
+            // Map encryption to Symfony Mailer scheme
+            $scheme = match ($data['mail_encryption']) {
+                'smtps' => 'smtps',
+                'none' => 'smtp',
+                default => null, // auto = let Symfony handle STARTTLS
+            };
+
             // Temporarily override mail config
             config([
                 'mail.default' => $data['mail_mailer'],
@@ -142,21 +150,26 @@ class EmailSettings extends Page implements HasForms
                 'mail.mailers.smtp.port' => (int) $data['mail_port'],
                 'mail.mailers.smtp.username' => $data['mail_username'],
                 'mail.mailers.smtp.password' => $data['mail_password'],
-                'mail.mailers.smtp.encryption' => $data['mail_encryption'] === 'null' ? null : $data['mail_encryption'],
+                'mail.mailers.smtp.scheme' => $scheme,
                 'mail.from.address' => $data['mail_from_address'],
                 'mail.from.name' => $data['mail_from_name'],
             ]);
 
             $userEmail = auth()->user()->email;
+            $userName = auth()->user()->name ?? 'Admin';
 
-            Mail::raw(
-                "This is a test email from InfraHub.\n\nIf you're reading this, your SMTP settings are configured correctly!\n\nSent at: " . now()->format('Y-m-d H:i:s'),
-                function ($message) use ($userEmail, $data) {
-                    $message->to($userEmail)
-                        ->subject('InfraHub - Test Email ✅')
-                        ->from($data['mail_from_address'], $data['mail_from_name']);
-                }
-            );
+            Mail::send('emails.test-email', [
+                'recipientName' => $userName,
+                'smtpHost' => $data['mail_host'],
+                'smtpPort' => $data['mail_port'],
+                'fromAddress' => $data['mail_from_address'],
+                'sentAt' => now()->format('M d, Y \a\t H:i:s'),
+                'settingsUrl' => url('/admin/email-settings'),
+            ], function ($message) use ($userEmail, $data) {
+                $message->to($userEmail)
+                    ->subject('InfraHub - Email Configuration Test ✅')
+                    ->from($data['mail_from_address'], $data['mail_from_name']);
+            });
 
             Notification::make()
                 ->title('Test Email Sent! ✅')

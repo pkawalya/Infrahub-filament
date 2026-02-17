@@ -15,7 +15,7 @@ class EmailSettingsSeeder extends Seeder
             'mail_port' => '587',
             'mail_username' => 'appcellon@gmail.com',
             'mail_password' => 'elch ocax mkfk jssf',
-            'mail_encryption' => 'tls',
+            'mail_encryption' => 'auto',
             'mail_from_address' => 'appcellon@gmail.com',
             'mail_from_name' => 'InfraHub',
         ];
