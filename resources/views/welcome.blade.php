@@ -581,20 +581,19 @@
                     style="height: 44px; border-radius: 12px;">
             </a>
 
-            @if (Route::has('login'))
-                <div class="nav-links">
-                    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
-                        <span class="icon-moon">🌙</span>
-                        <span class="icon-sun">☀️</span>
-                    </button>
-                    @auth
-                        <a href="{{ url('/app') }}" class="btn btn-primary">Dashboard</a>
-                    @else
-                        <a href="{{ url('/app/login') }}" class="nav-link">Log in</a>
-                        <a href="{{ url('/get-started') }}" class="btn btn-primary">Get Started Free</a>
-                    @endauth
-                </div>
-            @endif
+            <div class="nav-links">
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"
+                    aria-label="Toggle theme">
+                    <span class="icon-moon">🌙</span>
+                    <span class="icon-sun">☀️</span>
+                </button>
+                @auth
+                    <a href="{{ url('/app') }}" class="btn btn-primary">Dashboard</a>
+                @else
+                    <a href="{{ url('/app/login') }}" class="nav-link">Log in</a>
+                    <a href="{{ url('/get-started') }}" class="btn btn-primary">Get Started</a>
+                @endauth
+            </div>
         </nav>
 
         <!-- Hero -->
@@ -614,7 +613,7 @@
             </p>
             <div class="hero-actions">
                 <a href="/get-started" class="btn btn-primary btn-lg">
-                    Get Started Free
+                    Get Started
                     <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M13 7l5 5m0 0l-5 5m5-5H6" />
