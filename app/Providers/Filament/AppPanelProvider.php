@@ -47,7 +47,7 @@ class AppPanelProvider extends PanelProvider
             ->darkModeBrandLogo(asset('logo/infrahub-logo-new.png'))
             ->brandLogoHeight('2.5rem')
             ->spa()
-            ->sidebarCollapsibleOnDesktop()
+            ->topNavigation()
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')
             ->pages([
