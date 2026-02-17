@@ -3,7 +3,9 @@
 namespace App\Filament\Admin\Pages;
 
 use App\Models\Setting;
-use Filament\Forms;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Schemas\Schema;
@@ -40,20 +42,20 @@ class AddonPricing extends Page implements HasForms
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Per-Unit Addon Pricing')
+                Section::make('Per-Unit Addon Pricing')
                     ->description('Set the prices that companies will pay for resources beyond their plan limits. These prices are displayed on the Upgrade page.')
                     ->schema([
-                        Forms\Components\TextInput::make('addon_currency')
+                        TextInput::make('addon_currency')
                             ->label('Currency Code')
                             ->placeholder('USD')
                             ->maxLength(3)
                             ->required(),
-                        Forms\Components\TextInput::make('addon_currency_symbol')
+                        TextInput::make('addon_currency_symbol')
                             ->label('Currency Symbol')
                             ->placeholder('$')
                             ->maxLength(5)
                             ->required(),
-                        Forms\Components\Select::make('addon_billing_cycle')
+                        Select::make('addon_billing_cycle')
                             ->label('Billing Cycle')
                             ->options([
                                 'monthly' => 'Per Month',
@@ -63,9 +65,9 @@ class AddonPricing extends Page implements HasForms
                             ->required(),
                     ])->columns(3),
 
-                Forms\Components\Section::make('Resource Prices')
+                Section::make('Resource Prices')
                     ->schema([
-                        Forms\Components\TextInput::make('price_per_extra_user')
+                        TextInput::make('price_per_extra_user')
                             ->label('Price per Extra User')
                             ->numeric()
                             ->prefix(fn($get) => $get('addon_currency_symbol') ?: '$')
@@ -78,7 +80,7 @@ class AddonPricing extends Page implements HasForms
                             ->step(0.01)
                             ->required()
                             ->helperText('Charged for each additional user beyond the plan limit'),
-                        Forms\Components\TextInput::make('price_per_extra_project')
+                        TextInput::make('price_per_extra_project')
                             ->label('Price per Extra Project')
                             ->numeric()
                             ->prefix(fn($get) => $get('addon_currency_symbol') ?: '$')
@@ -91,7 +93,7 @@ class AddonPricing extends Page implements HasForms
                             ->step(0.01)
                             ->required()
                             ->helperText('Charged for each additional project beyond the plan limit'),
-                        Forms\Components\TextInput::make('price_per_extra_gb')
+                        TextInput::make('price_per_extra_gb')
                             ->label('Price per Extra GB of Storage')
                             ->numeric()
                             ->prefix(fn($get) => $get('addon_currency_symbol') ?: '$')
