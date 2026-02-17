@@ -41,6 +41,7 @@ class AppPanelProvider extends PanelProvider
                 'warning' => Color::Amber,
             ])
             ->font('Inter')
+            ->darkMode(true)
             ->brandName('InfraHub')
             ->brandLogo(asset('logo/infrahub-logo-new.png'))
             ->darkModeBrandLogo(asset('logo/infrahub-logo-new.png'))
