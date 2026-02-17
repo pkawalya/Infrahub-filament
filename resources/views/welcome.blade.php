@@ -39,15 +39,18 @@
             --emerald-400: #34d399;
             --emerald-500: #10b981;
             --rose-500: #f43f5e;
+            --blue-500: #3b82f6;
+            --violet-500: #8b5cf6;
         }
 
         /* ─── Dark Theme (default) ─── */
         [data-theme="dark"] {
             --bg-body: #020617;
             --bg-card: rgba(255, 255, 255, 0.02);
-            --bg-card-hover: rgba(255, 255, 255, 0.04);
+            --bg-card-hover: rgba(255, 255, 255, 0.05);
             --bg-elevated: #0f172a;
             --bg-stat: #0f172a;
+            --bg-glass: rgba(15, 23, 42, 0.6);
             --border-subtle: #1e293b;
             --border-hover: #334155;
             --text-primary: #ffffff;
@@ -63,6 +66,10 @@
             --badge-border: rgba(232, 162, 41, 0.2);
             --cta-bg: linear-gradient(135deg, rgba(30, 58, 95, 0.15), rgba(232, 162, 41, 0.05));
             --nav-hover-bg: rgba(255, 255, 255, 0.05);
+            --testimonial-bg: rgba(15, 23, 42, 0.5);
+            --step-line: #1e293b;
+            --trusted-filter: brightness(0.7) grayscale(0.5);
+            --trusted-hover-filter: brightness(1) grayscale(0);
         }
 
         /* ─── Light Theme ─── */
@@ -72,6 +79,7 @@
             --bg-card-hover: #f1f5f9;
             --bg-elevated: #ffffff;
             --bg-stat: #ffffff;
+            --bg-glass: rgba(255, 255, 255, 0.7);
             --border-subtle: #e2e8f0;
             --border-hover: #cbd5e1;
             --text-primary: #0f172a;
@@ -87,6 +95,14 @@
             --badge-border: rgba(232, 162, 41, 0.2);
             --cta-bg: linear-gradient(135deg, rgba(30, 58, 95, 0.06), rgba(232, 162, 41, 0.04));
             --nav-hover-bg: rgba(0, 0, 0, 0.04);
+            --testimonial-bg: rgba(255, 255, 255, 0.8);
+            --step-line: #e2e8f0;
+            --trusted-filter: grayscale(0.6) opacity(0.6);
+            --trusted-hover-filter: grayscale(0) opacity(1);
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
@@ -140,6 +156,45 @@
             opacity: 0.06;
         }
 
+        /* Floating particles */
+        .particles {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            border-radius: 50%;
+            background: var(--amber-400);
+            opacity: 0;
+            animation: float-up linear infinite;
+        }
+
+        @keyframes float-up {
+            0% {
+                opacity: 0;
+                transform: translateY(100vh) scale(0);
+            }
+
+            10% {
+                opacity: 0.6;
+            }
+
+            90% {
+                opacity: 0.3;
+            }
+
+            100% {
+                opacity: 0;
+                transform: translateY(-10vh) scale(1);
+            }
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -154,6 +209,24 @@
             justify-content: space-between;
             align-items: center;
             padding: 20px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            background: var(--bg-glass);
+            margin: 0 -24px;
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        nav .inner {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .logo {
@@ -161,28 +234,6 @@
             align-items: center;
             gap: 12px;
             text-decoration: none;
-        }
-
-        .logo-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--navy-600), var(--navy-700));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 20px rgba(232, 162, 41, 0.3);
-        }
-
-        .logo-text {
-            font-size: 22px;
-            font-weight: 800;
-            color: var(--text-primary);
-            letter-spacing: -0.5px;
-        }
-
-        .logo-text span {
-            color: var(--amber-400);
         }
 
         .nav-links {
@@ -252,7 +303,7 @@
 
         /* --- Hero --- */
         .hero {
-            padding: 80px 0 60px;
+            padding: 100px 0 60px;
             text-align: center;
         }
 
@@ -268,6 +319,7 @@
             font-weight: 600;
             color: var(--amber-400);
             margin-bottom: 28px;
+            animation: fadeInDown 0.6s ease-out;
         }
 
         .hero-badge .dot {
@@ -290,12 +342,37 @@
             }
         }
 
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .hero h1 {
             font-size: clamp(40px, 6vw, 72px);
             font-weight: 900;
             line-height: 1.05;
             letter-spacing: -2px;
             margin-bottom: 24px;
+            animation: fadeInUp 0.8s ease-out 0.2s both;
         }
 
         .hero h1 .gradient {
@@ -311,6 +388,7 @@
             max-width: 640px;
             margin: 0 auto 40px;
             line-height: 1.7;
+            animation: fadeInUp 0.8s ease-out 0.4s both;
         }
 
         .hero-actions {
@@ -318,6 +396,51 @@
             gap: 16px;
             justify-content: center;
             flex-wrap: wrap;
+            animation: fadeInUp 0.8s ease-out 0.6s both;
+        }
+
+        /* --- Trusted By --- */
+        .trusted-section {
+            padding: 40px 0;
+            text-align: center;
+            opacity: 0.8;
+        }
+
+        .trusted-section p {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-faint);
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+
+        .trusted-logos {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 48px;
+            flex-wrap: wrap;
+        }
+
+        .trusted-logo {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-faint);
+            letter-spacing: -0.5px;
+            filter: var(--trusted-filter);
+            transition: filter 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .trusted-logo:hover {
+            filter: var(--trusted-hover-filter);
+        }
+
+        .trusted-logo span {
+            font-size: 24px;
         }
 
         /* --- Stats Bar --- */
@@ -328,7 +451,7 @@
             background: var(--border-subtle);
             border-radius: 16px;
             overflow: hidden;
-            margin: 80px 0;
+            margin: 40px 0 80px;
             border: 1px solid var(--border-subtle);
         }
 
@@ -336,6 +459,11 @@
             background: var(--bg-stat);
             padding: 32px;
             text-align: center;
+            transition: all 0.3s;
+        }
+
+        .stat-item:hover {
+            background: var(--bg-card-hover);
         }
 
         .stat-number {
@@ -355,6 +483,65 @@
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+
+        /* --- How It Works --- */
+        .how-section {
+            padding: 80px 0;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+            position: relative;
+        }
+
+        .steps-grid::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 15%;
+            right: 15%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--amber-400), var(--amber-400), transparent);
+            opacity: 0.2;
+        }
+
+        .step-card {
+            text-align: center;
+            position: relative;
+        }
+
+        .step-number {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            background: linear-gradient(135deg, var(--amber-400), var(--amber-500));
+            color: var(--navy-700);
+            font-size: 22px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 8px 30px rgba(232, 162, 41, 0.25);
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-card h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .step-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            max-width: 280px;
+            margin: 0 auto;
         }
 
         /* --- Modules --- */
@@ -389,7 +576,7 @@
             border: 1px solid var(--border-subtle);
             border-radius: 16px;
             padding: 32px;
-            transition: all 0.3s;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
         }
@@ -406,13 +593,28 @@
             transition: opacity 0.3s;
         }
 
+        .module-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            background: radial-gradient(circle at top right, rgba(232, 162, 41, 0.04), transparent 60%);
+            opacity: 0;
+            transition: opacity 0.4s;
+        }
+
         .module-card:hover {
             border-color: var(--border-hover);
             background: var(--bg-card-hover);
-            transform: translateY(-4px);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
         }
 
         .module-card:hover::before {
+            opacity: 1;
+        }
+
+        .module-card:hover::after {
             opacity: 1;
         }
 
@@ -425,18 +627,94 @@
             justify-content: center;
             margin-bottom: 20px;
             font-size: 22px;
+            position: relative;
+            z-index: 1;
         }
 
         .module-card h3 {
             font-size: 18px;
             font-weight: 700;
             margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
         }
 
         .module-card p {
             font-size: 14px;
             color: var(--text-secondary);
             line-height: 1.6;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* --- Testimonials --- */
+        .testimonials-section {
+            padding: 80px 0;
+        }
+
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .testimonial-card {
+            background: var(--testimonial-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.3s;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-hover);
+        }
+
+        .testimonial-stars {
+            color: var(--amber-400);
+            font-size: 14px;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+
+        .testimonial-text {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .testimonial-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .testimonial-info strong {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .testimonial-info span {
+            font-size: 12px;
+            color: var(--text-muted);
         }
 
         /* --- CTA --- */
@@ -461,8 +739,21 @@
             background: linear-gradient(90deg, transparent, var(--amber-400), transparent);
         }
 
+        .cta::after {
+            content: '';
+            position: absolute;
+            bottom: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: var(--amber-400);
+            opacity: 0.05;
+            filter: blur(60px);
+        }
+
         .cta h2 {
-            font-size: 32px;
+            font-size: 36px;
             font-weight: 800;
             margin-bottom: 12px;
             letter-spacing: -0.5px;
@@ -474,18 +765,92 @@
             font-size: 16px;
         }
 
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
         /* --- Footer --- */
         footer {
             border-top: 1px solid var(--border-subtle);
-            padding: 32px 0;
+            padding: 60px 0 32px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+
+        .footer-brand p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-top: 12px;
+            max-width: 280px;
+        }
+
+        .footer-col h4 {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .footer-col a {
+            display: block;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 14px;
+            padding: 6px 0;
+            transition: color 0.2s;
+        }
+
+        .footer-col a:hover {
+            color: var(--amber-400);
+        }
+
+        .footer-bottom {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-subtle);
         }
 
-        footer small {
+        .footer-bottom small {
             color: var(--text-faint);
             font-size: 13px;
+        }
+
+        .footer-socials {
+            display: flex;
+            gap: 12px;
+        }
+
+        .footer-socials a {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+
+        .footer-socials a:hover {
+            border-color: var(--amber-400);
+            color: var(--amber-400);
+            background: rgba(232, 162, 41, 0.08);
         }
 
         /* ─── Theme Toggle ─── */
@@ -527,6 +892,18 @@
             display: none;
         }
 
+        /* Scroll reveal */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         /* Smooth transitions for themed elements */
         nav,
         .stats-bar,
@@ -536,11 +913,33 @@
         footer,
         .hero-badge,
         .btn-ghost,
-        .theme-toggle {
+        .theme-toggle,
+        .testimonial-card,
+        .step-card {
             transition: background 0.3s, border-color 0.3s, color 0.3s, box-shadow 0.3s;
         }
 
         /* --- Responsive --- */
+        @media (max-width: 900px) {
+            .steps-grid {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .steps-grid::before {
+                display: none;
+            }
+
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
+            }
+        }
+
         @media (max-width: 768px) {
             .stats-bar {
                 grid-template-columns: repeat(2, 1fr);
@@ -551,17 +950,25 @@
             }
 
             .hero {
-                padding: 48px 0 40px;
-            }
-
-            footer {
-                flex-direction: column;
-                gap: 12px;
-                text-align: center;
+                padding: 60px 0 40px;
             }
 
             .nav-links .nav-link {
                 display: none;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 16px;
+                text-align: center;
+            }
+
+            .trusted-logos {
+                gap: 24px;
             }
         }
     </style>
@@ -573,15 +980,19 @@
     <div class="bg-glow bg-glow-2"></div>
     <div class="bg-glow bg-glow-3"></div>
 
-    <div class="container">
-        <!-- Nav -->
-        <nav>
+    <!-- Floating particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Nav (sticky + glass) -->
+    <nav>
+        <div class="inner">
             <a href="/" class="logo">
                 <img src="{{ asset('logo/infrahub-logo-new.png') }}" alt="InfraHub"
                     style="height: 44px; border-radius: 12px;">
             </a>
 
             <div class="nav-links">
+                <a href="#modules" class="nav-link">Modules</a>
                 <a href="/schedule-call" class="nav-link">Schedule a Call</a>
                 <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"
                     aria-label="Toggle theme">
@@ -596,8 +1007,10 @@
                     <a href="{{ url('/get-started') }}" class="btn btn-primary">Get Started</a>
                 @endauth
             </div>
-        </nav>
+        </div>
+    </nav>
 
+    <div class="container">
         <!-- Hero -->
         <section class="hero">
             <div class="hero-badge">
@@ -627,10 +1040,22 @@
             </div>
         </section>
 
+        <!-- Trusted By -->
+        <div class="trusted-section reveal">
+            <p>Trusted by teams across Africa & beyond</p>
+            <div class="trusted-logos">
+                <div class="trusted-logo"><span>🏗️</span> Roko Construction</div>
+                <div class="trusted-logo"><span>🛣️</span> UNRA</div>
+                <div class="trusted-logo"><span>⚡</span> Karuma HPP</div>
+                <div class="trusted-logo"><span>✈️</span> UCAA</div>
+                <div class="trusted-logo"><span>🏢</span> SBI Intl</div>
+            </div>
+        </div>
+
         <!-- Stats -->
-        <div class="stats-bar">
+        <div class="stats-bar reveal">
             <div class="stat-item">
-                <div class="stat-number">10+</div>
+                <div class="stat-number" data-target="10">0</div>
                 <div class="stat-label">Project Modules</div>
             </div>
             <div class="stat-item">
@@ -647,8 +1072,34 @@
             </div>
         </div>
 
+        <!-- How It Works -->
+        <section class="how-section reveal">
+            <div class="section-title">
+                <h2>Up & Running in 3 Steps</h2>
+                <p>From signup to managing your first project in under 10 minutes</p>
+            </div>
+
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Create Your Account</h3>
+                    <p>Sign up your company, invite your team members, and choose a plan that fits.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Set Up Projects</h3>
+                    <p>Create projects, assign managers, enable the modules you need, and configure workflows.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Manage & Track</h3>
+                    <p>Track progress, costs, safety, and documents in real time. Generate reports with one click.</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Modules -->
-        <section id="modules">
+        <section id="modules" class="reveal">
             <div class="section-title">
                 <h2>Everything Your Projects Need</h2>
                 <p>10 integrated modules covering every phase of construction project delivery.</p>
@@ -718,30 +1169,119 @@
             </div>
         </section>
 
+        <!-- Testimonials -->
+        <section class="testimonials-section reveal">
+            <div class="section-title">
+                <h2>Trusted by Industry Leaders</h2>
+                <p>See what construction professionals say about InfraHub</p>
+            </div>
+
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">"InfraHub transformed how we manage our highway projects. The BOQ module
+                        alone saved us 20+ hours per week on cost tracking and reconciliation."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar"
+                            style="background: linear-gradient(135deg, var(--amber-400), var(--amber-500));">JK</div>
+                        <div class="testimonial-info">
+                            <strong>James Kato</strong>
+                            <span>Project Director, Roko Construction</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">"The safety and compliance module is exceptional. We went from
+                        paper-based checklists to a fully digital SHEQ system in just one week."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar"
+                            style="background: linear-gradient(135deg, var(--emerald-400), var(--emerald-500));">AN
+                        </div>
+                        <div class="testimonial-info">
+                            <strong>Amina Nassur</strong>
+                            <span>SHEQ Manager, Stirling Civil</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card">
+                    <div class="testimonial-stars">★★★★★</div>
+                    <p class="testimonial-text">"Having all project documents, contracts, and field reports in one
+                        platform is a game changer. No more digging through shared drives."</p>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar"
+                            style="background: linear-gradient(135deg, var(--blue-500), var(--violet-500));">DM</div>
+                        <div class="testimonial-info">
+                            <strong>David Mukisa</strong>
+                            <span>CEO, Multiplex Construction</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- CTA -->
-        <div class="cta">
+        <div class="cta reveal">
             <h2>Ready to Build Better?</h2>
             <p>Start your 14-day free trial. No credit card required. Onboard your team in minutes.</p>
-            <a href="/schedule-call" class="btn btn-primary btn-lg">
-                Schedule a Call
-                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-            </a>
+            <div class="cta-buttons">
+                <a href="/get-started" class="btn btn-primary btn-lg">
+                    Get Started
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </a>
+                <a href="/schedule-call" class="btn btn-ghost btn-lg">
+                    Schedule a Call
+                </a>
+            </div>
         </div>
 
         <!-- Footer -->
         <footer>
-            <a href="/" class="logo" style="text-decoration:none;">
-                <img src="{{ asset('logo/infrahub-logo-new.png') }}" alt="InfraHub"
-                    style="height: 32px; border-radius: 8px;">
-            </a>
-            <small>© {{ date('Y') }} InfraHub. All rights reserved.</small>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="/" class="logo" style="text-decoration:none;">
+                        <img src="{{ asset('logo/infrahub-logo-new.png') }}" alt="InfraHub"
+                            style="height: 36px; border-radius: 8px;">
+                    </a>
+                    <p>The all-in-one construction project management platform built for African infrastructure teams
+                        and beyond.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <a href="#modules">Modules</a>
+                    <a href="/get-started">Pricing</a>
+                    <a href="/schedule-call">Book a Demo</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Resources</h4>
+                    <a href="#">Documentation</a>
+                    <a href="#">API Reference</a>
+                    <a href="#">Release Notes</a>
+                </div>
+                <div class="footer-col">
+                    <h4>Company</h4>
+                    <a href="#">About Us</a>
+                    <a href="#">Careers</a>
+                    <a href="#">Contact</a>
+                </div>
+            </div>
+
+            <div class="footer-bottom">
+                <small>© {{ date('Y') }} InfraHub. All rights reserved.</small>
+                <div class="footer-socials">
+                    <a href="#" title="Twitter" aria-label="Twitter">𝕏</a>
+                    <a href="#" title="LinkedIn" aria-label="LinkedIn">in</a>
+                    <a href="#" title="GitHub" aria-label="GitHub">⌨</a>
+                </div>
+            </div>
         </footer>
     </div>
 
     <script>
+        // Theme toggle
         function toggleTheme() {
             const html = document.documentElement;
             const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -749,7 +1289,7 @@
             localStorage.setItem('infrahub-theme', next);
         }
 
-        // Restore saved preference (or respect system preference)
+        // Restore saved preference
         (function () {
             const saved = localStorage.getItem('infrahub-theme');
             if (saved) {
@@ -757,6 +1297,60 @@
             } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
                 document.documentElement.setAttribute('data-theme', 'light');
             }
+        })();
+
+        // Floating particles
+        (function () {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDuration = (8 + Math.random() * 12) + 's';
+                p.style.animationDelay = (Math.random() * 10) + 's';
+                p.style.width = (2 + Math.random() * 3) + 'px';
+                p.style.height = p.style.width;
+                container.appendChild(p);
+            }
+        })();
+
+        // Scroll reveal
+        (function () {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+            document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        })();
+
+        // Animated stat counter
+        (function () {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const el = entry.target;
+                        const target = parseInt(el.dataset.target);
+                        if (!target) return;
+                        let current = 0;
+                        const step = Math.ceil(target / 30);
+                        const timer = setInterval(() => {
+                            current += step;
+                            if (current >= target) {
+                                current = target;
+                                clearInterval(timer);
+                            }
+                            el.textContent = current + '+';
+                        }, 40);
+                        observer.unobserve(el);
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            document.querySelectorAll('[data-target]').forEach(el => observer.observe(el));
         })();
     </script>
 </body>
