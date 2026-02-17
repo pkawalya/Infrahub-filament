@@ -528,7 +528,7 @@
                             $purposeLabel = \App\Models\Transmittal::$purposes[$tr->purpose] ?? $tr->purpose;
                         @endphp
                         <div
-                            style="display:flex; align-items:center; gap:16px; padding:14px 18px; border-radius:10px; background:var(--gray-50, rgba(255,255,255,0.02)); border:1px solid var(--gray-200, rgba(255,255,255,0.06));">
+                            style="display:flex; align-items:center; gap:16px; padding:14px 18px; border-radius:10px; background:var(--gray-50, #f9fafb); border:1px solid var(--gray-200, #e5e7eb);">
                             <div
                                 style="flex-shrink:0; width:40px; height:40px; border-radius:10px; background:rgba(139,92,246,0.08); display:flex; align-items:center; justify-content:center;">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"

@@ -4,7 +4,9 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\CdeActivityLog;
+use App\Models\Task;
 use App\Support\CurrencyHelper;
+use Carbon\Carbon;
 
 class ReportingPage extends BaseModulePage
 {
@@ -58,6 +60,60 @@ class ReportingPage extends BaseModulePage
     }
 
     /**
+     * Get task status breakdown for the project.
+     */
+    public function getTaskBreakdown(): array
+    {
+        $r = $this->record;
+        $statuses = ['todo' => 0, 'in_progress' => 0, 'review' => 0, 'done' => 0, 'blocked' => 0];
+        $tasks = $r->tasks()->selectRaw('status, count(*) as cnt')->groupBy('status')->pluck('cnt', 'status');
+
+        foreach ($tasks as $status => $count) {
+            $statuses[$status] = $count;
+        }
+
+        return $statuses;
+    }
+
+    /**
+     * Get milestone progress overview.
+     */
+    public function getMilestoneOverview(): array
+    {
+        $milestones = $this->record->milestones()
+            ->orderBy('target_date')
+            ->limit(20)
+            ->get(['title', 'target_date', 'actual_date', 'status']);
+
+        return $milestones->map(fn($m) => [
+            'title' => $m->title,
+            'target' => $m->target_date?->format('M d'),
+            'actual' => $m->actual_date?->format('M d'),
+            'status' => $m->status,
+            'is_late' => $m->target_date && !$m->actual_date && $m->target_date->isPast(),
+        ])->toArray();
+    }
+
+    /**
+     * Get module-by-module record counts (project health summary).
+     */
+    public function getModuleSummary(): array
+    {
+        $r = $this->record;
+
+        return [
+            ['module' => 'Tasks', 'icon' => '📋', 'total' => $r->tasks()->count(), 'open' => $r->tasks()->whereNotIn('status', ['done'])->count()],
+            ['module' => 'Documents', 'icon' => '📁', 'total' => $r->documents()->count(), 'open' => $r->documents()->where('status', 'draft')->count()],
+            ['module' => 'RFIs', 'icon' => '❓', 'total' => $r->rfis()->count(), 'open' => $r->rfis()->whereIn('status', ['open', 'submitted'])->count()],
+            ['module' => 'Contracts', 'icon' => '📝', 'total' => $r->contracts()->count(), 'open' => $r->contracts()->where('status', 'active')->count()],
+            ['module' => 'Work Orders', 'icon' => '🔧', 'total' => $r->workOrders()->count(), 'open' => $r->workOrders()->whereNotIn('status', ['completed', 'closed', 'cancelled'])->count()],
+            ['module' => 'Safety Incidents', 'icon' => '🛡️', 'total' => $r->safetyIncidents()->count(), 'open' => $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count()],
+            ['module' => 'Daily Logs', 'icon' => '📊', 'total' => $r->dailySiteLogs()->count(), 'open' => null],
+            ['module' => 'Milestones', 'icon' => '🎯', 'total' => $r->milestones()->count(), 'open' => $r->milestones()->whereIn('status', ['pending', 'in_progress'])->count()],
+        ];
+    }
+
+    /**
      * Get recent activity logs for the project.
      */
     public function getActivityLogs(): \Illuminate\Support\Collection
@@ -69,4 +125,3 @@ class ReportingPage extends BaseModulePage
             ->get();
     }
 }
-

@@ -14,7 +14,6 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Components\Section;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Tables\Table;
@@ -30,13 +29,11 @@ use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Http\UploadedFile;
-use Livewire\WithFileUploads;
 
 class ProjectDocuments extends Page implements HasForms, HasTable
 {
     use InteractsWithForms;
     use InteractsWithTable;
-    use WithFileUploads;
 
     protected string $view = 'filament.pages.project-documents';
 

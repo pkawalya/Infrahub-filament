@@ -8,7 +8,7 @@ use Filament\Auth\Pages\Register as BaseRegister;
 use Filament\Auth\Http\Responses\Contracts\RegistrationResponse;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Wizard;
+use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Schema;
 use Filament\Support\Enums\Width;
 use Illuminate\Support\Facades\Hash;
