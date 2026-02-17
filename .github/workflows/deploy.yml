@@ -1,0 +1,59 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script_stop: true
+          script: |
+            set -e
+
+            echo "🚀 Starting deployment..."
+            cd /var/www/infrahub.click
+
+            # Pull latest changes
+            echo "📥 Pulling latest code..."
+            git pull origin main
+
+            # Install/update dependencies (no dev packages in production)
+            echo "📦 Installing dependencies..."
+            composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+
+            # Run database migrations
+            echo "🗄️ Running migrations..."
+            php artisan migrate --force
+
+            # Clear and rebuild caches
+            echo "⚡ Optimizing..."
+            php artisan optimize:clear
+            php artisan optimize
+            php artisan icons:cache
+
+            # Set proper permissions
+            echo "🔒 Setting permissions..."
+            chown -R www-data:www-data storage bootstrap/cache
+            chmod -R 775 storage bootstrap/cache
+
+            # Restart queue workers if running
+            echo "🔄 Restarting queue workers..."
+            php artisan queue:restart || true
+
+            # Restart PHP-FPM to clear opcache
+            echo "🔁 Restarting PHP-FPM..."
+            systemctl restart php8.3-fpm || systemctl restart php8.2-fpm || systemctl restart php-fpm || true
+
+            echo "✅ Deployment complete!"
