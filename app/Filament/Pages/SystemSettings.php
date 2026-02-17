@@ -2,10 +2,8 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Forms\Components\Radio;
+use Filament\Forms\Components\Hidden;
 use Filament\Schemas\Components\Section;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
@@ -16,7 +14,6 @@ use UnitEnum;
 use Filament\Support\Icons\Heroicon;
 use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
-use Filament\Actions\Action;
 use App\Models\Setting;
 use App\Support\ColorPalette;
 
@@ -45,42 +42,11 @@ class SystemSettings extends Page implements HasForms
     {
         return $schema
             ->components([
-                Section::make('Navigation Layout')
-                    ->description('Choose your preferred navigation style')
-                    ->icon('heroicon-o-bars-3')
-                    ->schema([
-                        Radio::make('navigation_style')
-                            ->label('Layout Style')
-                            ->options([
-                                'sidebar' => 'Sidebar Navigation',
-                                'top' => 'Top Navigation',
-                            ])
-                            ->descriptions([
-                                'sidebar' => 'Classic sidebar layout (recommended for desktop)',
-                                'top' => 'Modern top navigation bar (great for tablets)',
-                            ])
-                            ->inline(false)
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function ($state) {
-                                $this->updateNavigationStyle($state);
-                            }),
-                    ]),
-
-                Section::make('🎨 Color Theme')
-                    ->description('Pick a primary accent color for your entire interface. Changes apply instantly.')
-                    ->icon('heroicon-o-swatch')
-                    ->schema([
-                        Select::make('panel_color')
-                            ->label('Primary Color')
-                            ->options(ColorPalette::options())
-                            ->searchable()
-                            ->required()
-                            ->live()
-                            ->afterStateUpdated(function ($state) {
-                                $this->updateColorTheme($state);
-                            }),
-                    ]),
+                // Hidden fields — actual UI is in the Blade view
+                Hidden::make('navigation_style')->live()
+                    ->afterStateUpdated(fn($state) => $this->updateNavigationStyle($state)),
+                Hidden::make('panel_color')->live()
+                    ->afterStateUpdated(fn($state) => $this->updateColorTheme($state)),
             ])
             ->statePath('data');
     }
@@ -94,8 +60,8 @@ class SystemSettings extends Page implements HasForms
         Notification::make()
             ->title('Navigation Updated')
             ->body($style === 'top'
-                ? 'Top navigation preference saved. Reload to apply.'
-                : 'Sidebar navigation preference saved.')
+                ? 'Switched to top navigation. Reloading...'
+                : 'Switched to sidebar navigation. Reloading...')
             ->success()
             ->send();
     }
@@ -112,7 +78,7 @@ class SystemSettings extends Page implements HasForms
 
         Notification::make()
             ->title('Color Theme Updated')
-            ->body("Primary color changed to {$label}. Reload to see full effect.")
+            ->body("Changed to {$label}. Reloading...")
             ->success()
             ->send();
     }
