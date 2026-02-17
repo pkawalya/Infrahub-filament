@@ -10,7 +10,7 @@ class CompanyStatusChart extends ChartWidget
     protected ?string $heading = 'Company Status Distribution';
     protected static ?int $sort = 6;
     protected int|string|array $columnSpan = 1;
-    protected static ?string $maxHeight = '280px';
+    protected ?string $maxHeight = '280px';
 
     protected function getData(): array
     {

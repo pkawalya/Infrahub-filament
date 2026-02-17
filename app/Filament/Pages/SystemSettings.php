@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use Filament\Forms\Components\Radio;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\ViewField;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Forms\Contracts\HasForms;
@@ -24,7 +25,7 @@ class SystemSettings extends Page implements HasForms
     use InteractsWithForms;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::Cog6Tooth;
-    protected static string | UnitEnum | null $navigationGroup = 'Settings';
+    protected static string|UnitEnum|null $navigationGroup = 'Settings';
     protected static ?string $title = 'UI Settings';
     protected string $view = 'filament.pages.system-settings';
 
@@ -66,13 +67,14 @@ class SystemSettings extends Page implements HasForms
                             }),
                     ]),
 
-                Section::make('Color Theme')
-                    ->description('Personalize your interface colors')
+                Section::make('🎨 Color Theme')
+                    ->description('Pick a primary accent color for your entire interface. Changes apply instantly.')
                     ->icon('heroicon-o-swatch')
                     ->schema([
                         Select::make('panel_color')
                             ->label('Primary Color')
                             ->options(ColorPalette::options())
+                            ->searchable()
                             ->required()
                             ->live()
                             ->afterStateUpdated(function ($state) {
@@ -106,9 +108,11 @@ class SystemSettings extends Page implements HasForms
 
         $this->dispatch('color-theme-updated', color: $color);
 
+        $label = ColorPalette::options()[$color] ?? $color;
+
         Notification::make()
             ->title('Color Theme Updated')
-            ->body("Primary color changed to {$color}.")
+            ->body("Primary color changed to {$label}. Reload to see full effect.")
             ->success()
             ->send();
     }
@@ -127,7 +131,7 @@ class SystemSettings extends Page implements HasForms
 
         Notification::make()
             ->title('Settings Saved Successfully')
-            ->body('Preferences saved. Reloading to apply layout...')
+            ->body('Preferences saved. Reloading to apply...')
             ->success()
             ->send();
 

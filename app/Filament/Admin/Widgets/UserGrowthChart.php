@@ -11,7 +11,7 @@ class UserGrowthChart extends ChartWidget
     protected ?string $heading = 'Growth Over Last 6 Months';
     protected static ?int $sort = 3;
     protected int|string|array $columnSpan = 1;
-    protected static ?string $maxHeight = '280px';
+    protected ?string $maxHeight = '280px';
 
     protected function getData(): array
     {

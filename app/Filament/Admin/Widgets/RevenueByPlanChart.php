@@ -11,7 +11,7 @@ class RevenueByPlanChart extends ChartWidget
     protected ?string $heading = 'Revenue Breakdown by Plan';
     protected static ?int $sort = 5;
     protected int|string|array $columnSpan = 1;
-    protected static ?string $maxHeight = '280px';
+    protected ?string $maxHeight = '280px';
 
     protected function getData(): array
     {
