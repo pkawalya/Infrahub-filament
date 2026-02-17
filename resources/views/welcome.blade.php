@@ -736,7 +736,7 @@
                 <img src="{{ asset('logo/infrahub-logo-new.png') }}" alt="InfraHub"
                     style="height: 32px; border-radius: 8px;">
             </a>
-            <small>© {{ date('Y') }} InfraHub. Built with Laravel & Filament.</small>
+            <small>© {{ date('Y') }} InfraHub. All rights reserved.</small>
         </footer>
     </div>
 
