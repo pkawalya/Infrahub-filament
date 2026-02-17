@@ -2,9 +2,9 @@
 
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
-use App\Filament\App\Resources\CdeProjectResource;
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\Contract;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Support\CurrencyHelper;
 use Filament\Actions\Action;
@@ -23,19 +23,29 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
     use InteractsWithTable, InteractsWithForms;
 
     protected static string $moduleCode = 'cost_contracts';
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-currency-dollar';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationLabel = 'Contracts';
     protected static ?string $title = 'Cost & Contract Management';
     protected string $view = 'filament.app.pages.modules.cost-contracts';
 
+    private function pid(): int
+    {
+        return $this->record->id;
+    }
+    private function cid(): int
+    {
+        return $this->record->company_id;
+    }
+
     public function getStats(): array
     {
-        $pid = $this->record->id;
-        $total = Contract::where('cde_project_id', $pid)->count();
-        $totalValue = Contract::where('cde_project_id', $pid)->sum('original_value');
-        $revisedValue = Contract::where('cde_project_id', $pid)->sum('revised_value');
-        $active = Contract::where('cde_project_id', $pid)->where('status', 'active')->count();
-        $variance = $revisedValue > 0 ? $revisedValue - $totalValue : 0;
+        $pid = $this->pid();
+        $base = Contract::where('cde_project_id', $pid);
+        $total = (clone $base)->count();
+        $active = (clone $base)->where('status', 'active')->count();
+        $origVal = (clone $base)->sum('original_value');
+        $revisedVal = (clone $base)->sum('revised_value');
+        $paid = (clone $base)->sum('amount_paid');
 
         return [
             [
@@ -48,67 +58,88 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
             ],
             [
                 'label' => 'Original Value',
-                'value' => CurrencyHelper::format($totalValue, 0),
+                'value' => CurrencyHelper::format($origVal, 0),
                 'sub' => 'Contract sum',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                'icon_bg' => '#ecfdf5'
+                'sub_type' => 'neutral',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#6366f1" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+                'icon_bg' => '#eef2ff'
             ],
             [
-                'label' => 'Variance',
-                'value' => CurrencyHelper::format(abs($variance), 0),
-                'sub' => $variance >= 0 ? 'Over budget' : 'Under budget',
-                'sub_type' => $variance > 0 ? 'danger' : 'success',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2563eb" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>',
-                'icon_bg' => '#eff6ff'
+                'label' => 'Revised Value',
+                'value' => CurrencyHelper::format($revisedVal, 0),
+                'sub' => $revisedVal > $origVal ? 'Exceeded original' : 'Within budget',
+                'sub_type' => $revisedVal > $origVal ? 'danger' : 'success',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#d97706" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>',
+                'icon_bg' => '#fffbeb'
             ],
+            [
+                'label' => 'Amount Paid',
+                'value' => CurrencyHelper::format($paid, 0),
+                'sub' => $revisedVal > 0 ? round(($paid / $revisedVal) * 100) . '% of revised' : 'No contracts',
+                'sub_type' => 'info',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>',
+                'icon_bg' => '#ecfdf5'
+            ],
+        ];
+    }
+
+    private function contractFormSchema(bool $isCreate = false): array
+    {
+        $cid = $this->cid();
+        return [
+            Section::make('Contract Details')->schema([
+                Forms\Components\TextInput::make('contract_number')->label('Contract #')
+                    ->default(fn() => $isCreate ? 'CON-' . str_pad((string) (Contract::where('cde_project_id', $this->pid())->count() + 1), 4, '0', STR_PAD_LEFT) : null)
+                    ->required()->maxLength(50),
+                Forms\Components\TextInput::make('title')->required()->maxLength(255)->columnSpanFull(),
+                Forms\Components\Select::make('vendor_id')->label('Vendor / Contractor')
+                    ->options(fn() => Vendor::where('company_id', $cid)->where('is_active', true)->pluck('name', 'id'))
+                    ->searchable()->preload()->nullable()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                        Forms\Components\TextInput::make('email')->email(),
+                        Forms\Components\TextInput::make('phone')->tel(),
+                        Forms\Components\TextInput::make('contact_person')->maxLength(255),
+                    ])
+                    ->createOptionUsing(fn(array $data) => Vendor::create(array_merge($data, ['company_id' => $cid, 'is_active' => true]))->id),
+                Forms\Components\Select::make('type')->options([
+                    'main' => 'Main Contract',
+                    'sub' => 'Sub-Contract',
+                    'supply' => 'Supply Only',
+                    'labour' => 'Labour Only',
+                    'professional' => 'Professional Services',
+                    'other' => 'Other',
+                ])->required()->default('main'),
+                Forms\Components\Select::make('status')->options(Contract::$statuses)->required()->default($isCreate ? 'draft' : null),
+                Forms\Components\DatePicker::make('start_date'),
+                Forms\Components\DatePicker::make('end_date'),
+            ])->columns(2),
+            Section::make('Financial Details')->schema([
+                Forms\Components\TextInput::make('original_value')->label('Original Value')->numeric()->prefix('$')->required()->default(0),
+                Forms\Components\TextInput::make('revised_value')->label('Revised Value')->numeric()->prefix('$')->default(0),
+                Forms\Components\TextInput::make('amount_paid')->label('Amount Paid')->numeric()->prefix('$')->default(0)->visible(!$isCreate),
+                Forms\Components\TextInput::make('retainage_percent')->label('Retainage (%)')->numeric()->suffix('%')->default(0),
+            ])->columns(2),
+            Section::make('Scope & Description')->schema([
+                Forms\Components\RichEditor::make('description')->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList'])->columnSpanFull(),
+                Forms\Components\Textarea::make('scope_of_work')->label('Scope of Work')->rows(3)->columnSpanFull(),
+            ])->collapsed(!$isCreate),
         ];
     }
 
     protected function getHeaderActions(): array
     {
-        $companyId = $this->record->company_id;
-        $projectId = $this->record->id;
-
         return [
             Action::make('createContract')
-                ->label('New Contract')
-                ->icon('heroicon-o-plus-circle')
-                ->color('primary')
-                ->modalWidth('3xl')
-                ->schema([
-                    Section::make('Contract Information')->schema([
-                        Forms\Components\TextInput::make('contract_number')
-                            ->default(fn() => 'CON-' . str_pad((string) (Contract::where('cde_project_id', $projectId)->count() + 1), 4, '0', STR_PAD_LEFT))
-                            ->required()->maxLength(50),
-                        Forms\Components\TextInput::make('title')->required()->maxLength(255),
-                        Forms\Components\Select::make('vendor_id')->label('Vendor / Contractor')
-                            ->options(Vendor::where('company_id', $companyId)->pluck('name', 'id'))->searchable(),
-                        Forms\Components\Select::make('type')->options([
-                            'main' => 'Main Contract',
-                            'sub' => 'Sub-Contract',
-                            'supply' => 'Supply',
-                            'consultancy' => 'Consultancy',
-                            'service' => 'Service',
-                            'other' => 'Other',
-                        ])->required(),
-                        Forms\Components\Select::make('status')->options(Contract::$statuses)->required()->default('draft'),
-                        Forms\Components\DatePicker::make('start_date')->required(),
-                        Forms\Components\DatePicker::make('end_date'),
-                    ])->columns(2),
-                    Section::make('Financial Details')->schema([
-                        Forms\Components\TextInput::make('original_value')->numeric()->prefix('$')->required()->default(0),
-                        Forms\Components\TextInput::make('revised_value')->numeric()->prefix('$'),
-                    ])->columns(2),
-                    Section::make('Scope & Terms')->schema([
-                        Forms\Components\Textarea::make('description')->rows(3)->columnSpanFull(),
-                        Forms\Components\Textarea::make('scope')->label('Scope of Work')->rows(3)->columnSpanFull(),
-                        Forms\Components\Textarea::make('terms')->label('Terms & Conditions')->rows(3)->columnSpanFull(),
-                    ])->collapsed(),
-                ])
-                ->action(function (array $data) use ($companyId, $projectId): void {
-                    $data['company_id'] = $companyId;
-                    $data['cde_project_id'] = $projectId;
+                ->label('New Contract')->icon('heroicon-o-plus-circle')->color('primary')
+                ->modalWidth('4xl')
+                ->schema($this->contractFormSchema(isCreate: true))
+                ->action(function (array $data): void {
+                    $data['company_id'] = $this->cid();
+                    $data['cde_project_id'] = $this->pid();
                     $data['created_by'] = auth()->id();
+                    if (empty($data['revised_value']))
+                        $data['revised_value'] = $data['original_value'];
                     Contract::create($data);
                     Notification::make()->title('Contract created')->success()->send();
                 }),
@@ -117,107 +148,71 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
 
     public function table(Table $table): Table
     {
-        $projectId = $this->record->id;
-
         return $table
-            ->query(Contract::query()->where('cde_project_id', $projectId)->with(['vendor']))
+            ->query(Contract::query()->where('cde_project_id', $this->pid())->with(['vendor', 'creator']))
             ->columns([
                 Tables\Columns\TextColumn::make('contract_number')->label('Contract #')->searchable()->sortable()->weight('bold')
-                    ->icon('heroicon-o-document-text'),
-                Tables\Columns\TextColumn::make('title')->searchable()->limit(45),
-                Tables\Columns\TextColumn::make('vendor.name')->label('Vendor')->placeholder('—'),
+                    ->icon('heroicon-o-document-text')->copyable(),
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(Contract $record) => $record->title),
+                Tables\Columns\TextColumn::make('vendor.name')->label('Vendor')->placeholder('—')->searchable(),
                 Tables\Columns\TextColumn::make('type')->badge()->color('info'),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) { 'active' => 'success', 'draft' => 'gray', 'completed' => 'info', 'terminated' => 'danger', 'suspended' => 'warning', default => 'gray'}),
-                Tables\Columns\TextColumn::make('original_value')->formatStateUsing(CurrencyHelper::formatter())->label('Original'),
-                Tables\Columns\TextColumn::make('revised_value')->formatStateUsing(CurrencyHelper::formatter())->label('Revised')->placeholder('—'),
-                Tables\Columns\TextColumn::make('start_date')->date(),
-                Tables\Columns\TextColumn::make('end_date')->date()
-                    ->color(fn($record) => $record->end_date?->isPast() && $record->status === 'active' ? 'danger' : null),
+                    ->color(fn(string $state) => match ($state) { 'active' => 'success', 'completed' => 'primary', 'draft' => 'gray', 'terminated' => 'danger', 'suspended' => 'warning', default => 'gray'})->sortable(),
+                Tables\Columns\TextColumn::make('original_value')->label('Original')->money('USD')->sortable(),
+                Tables\Columns\TextColumn::make('revised_value')->label('Revised')->money('USD')->sortable()
+                    ->color(fn(Contract $record) => ($record->revised_value ?? 0) > ($record->original_value ?? 0) ? 'danger' : null),
+                Tables\Columns\TextColumn::make('amount_paid')->label('Paid')->money('USD')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('payment_progress')->label('% Paid')
+                    ->state(fn(Contract $record) => $record->revised_value > 0 ? round(($record->amount_paid / $record->revised_value) * 100) . '%' : '—')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('start_date')->date()->sortable()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('end_date')->date()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('status')->options(Contract::$statuses),
+                Tables\Filters\SelectFilter::make('status')->options(Contract::$statuses)->multiple(),
                 Tables\Filters\SelectFilter::make('type')->options([
-                    'main' => 'Main Contract',
+                    'main' => 'Main',
                     'sub' => 'Sub-Contract',
                     'supply' => 'Supply',
-                    'consultancy' => 'Consultancy',
-                    'service' => 'Service',
+                    'labour' => 'Labour',
+                    'professional' => 'Professional',
                 ]),
+                Tables\Filters\SelectFilter::make('vendor_id')->label('Vendor')
+                    ->options(fn() => Vendor::where('company_id', $this->cid())->pluck('name', 'id')),
             ])
-            ->actions([
-                \Filament\Actions\Action::make('view')
-                    ->icon('heroicon-o-eye')
-                    ->color('gray')
-                    ->modalWidth('3xl')
+            ->recordActions([
+                \Filament\Actions\ActionGroup::make([
+                \Filament\Actions\Action::make('recordPayment')
+                    ->label('Payment')->icon('heroicon-o-banknotes')->color('success')
                     ->schema([
-                        Section::make('Contract Info')->schema([
-                            Forms\Components\TextInput::make('contract_number')->disabled(),
-                            Forms\Components\TextInput::make('title')->disabled(),
-                            Forms\Components\TextInput::make('type')->disabled(),
-                            Forms\Components\TextInput::make('status')->disabled(),
-                            Forms\Components\TextInput::make('start_date')->disabled(),
-                            Forms\Components\TextInput::make('end_date')->disabled(),
-                            Forms\Components\TextInput::make('original_value')->disabled()->prefix('$'),
-                            Forms\Components\TextInput::make('revised_value')->disabled()->prefix('$'),
-                        ])->columns(2),
-                        Section::make('Scope & Terms')->schema([
-                            Forms\Components\Textarea::make('description')->disabled()->rows(2)->columnSpanFull(),
-                            Forms\Components\Textarea::make('scope')->disabled()->rows(2)->columnSpanFull(),
-                            Forms\Components\Textarea::make('terms')->disabled()->rows(2)->columnSpanFull(),
-                        ]),
+                        Forms\Components\TextInput::make('payment_amount')->label('Payment Amount')
+                            ->numeric()->prefix('$')->required(),
+                        Forms\Components\Textarea::make('payment_note')->label('Note')->rows(2),
                     ])
-                    ->fillForm(fn(Contract $record) => $record->toArray())
-                    ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
-
-                \Filament\Actions\Action::make('variation')
-                    ->label('Variation')
-                    ->icon('heroicon-o-adjustments-horizontal')
-                    ->color('warning')
-                    ->schema([
-                        Forms\Components\TextInput::make('revised_value')->label('Revised Contract Value')->numeric()->prefix('$')->required(),
-                        Forms\Components\Textarea::make('variation_note')->label('Variation Reason')->rows(2),
-                    ])
-                    ->fillForm(fn(Contract $record) => ['revised_value' => $record->revised_value ?? $record->original_value])
+                    ->fillForm(fn(Contract $record) => ['payment_amount' => 0])
                     ->action(function (array $data, Contract $record): void {
-                        $desc = $record->description ? $record->description . "\n" : '';
-                        $desc .= '[Variation ' . now()->format('M d Y') . '] ' . ($data['variation_note'] ?? 'Value revised');
-                        $record->update(['revised_value' => $data['revised_value'], 'description' => $desc]);
-                        Notification::make()->title('Contract variation applied')->success()->send();
+                        $newPaid = ($record->amount_paid ?? 0) + $data['payment_amount'];
+                        $notes = $record->description ? $record->description . "\n" : '';
+                        $notes .= '[Payment ' . now()->format('M d') . ' — $' . number_format($data['payment_amount'], 2) . ']';
+                        if (!empty($data['payment_note']))
+                            $notes .= ' ' . $data['payment_note'];
+                        $record->update(['amount_paid' => $newPaid, 'description' => $notes]);
+                        Notification::make()->title('Payment of ' . CurrencyHelper::format($data['payment_amount']) . ' recorded. Total paid: ' . CurrencyHelper::format($newPaid))->success()->send();
+                    }),
+
+                \Filament\Actions\Action::make('updateStatus')
+                    ->label('Status')->icon('heroicon-o-arrow-path')->color('warning')
+                    ->schema([Forms\Components\Select::make('status')->options(Contract::$statuses)->required()])
+                    ->fillForm(fn(Contract $record) => ['status' => $record->status])
+                    ->action(function (array $data, Contract $record): void {
+                        $record->update($data);
+                        Notification::make()->title('Status → ' . Contract::$statuses[$data['status']])->success()->send();
                     }),
 
                 \Filament\Actions\Action::make('edit')
-                    ->icon('heroicon-o-pencil')
-                    ->modalWidth('3xl')
-                    ->schema([
-                        Section::make('Contract Info')->schema([
-                            Forms\Components\TextInput::make('contract_number')->required(),
-                            Forms\Components\TextInput::make('title')->required(),
-                            Forms\Components\Select::make('vendor_id')
-                                ->options(fn() => Vendor::where('company_id', $this->record->company_id)->pluck('name', 'id'))->searchable(),
-                            Forms\Components\Select::make('type')->options([
-                                'main' => 'Main Contract',
-                                'sub' => 'Sub-Contract',
-                                'supply' => 'Supply',
-                                'consultancy' => 'Consultancy',
-                                'service' => 'Service',
-                                'other' => 'Other',
-                            ])->required(),
-                            Forms\Components\Select::make('status')->options(Contract::$statuses)->required(),
-                            Forms\Components\DatePicker::make('start_date'),
-                            Forms\Components\DatePicker::make('end_date'),
-                        ])->columns(2),
-                        Section::make('Financial')->schema([
-                            Forms\Components\TextInput::make('original_value')->numeric()->prefix('$'),
-                            Forms\Components\TextInput::make('revised_value')->numeric()->prefix('$'),
-                        ])->columns(2),
-                        Section::make('Scope & Terms')->schema([
-                            Forms\Components\Textarea::make('description')->rows(2)->columnSpanFull(),
-                            Forms\Components\Textarea::make('scope')->rows(2)->columnSpanFull(),
-                            Forms\Components\Textarea::make('terms')->rows(2)->columnSpanFull(),
-                        ])->collapsed(),
-                    ])
+                    ->icon('heroicon-o-pencil')->modalWidth('4xl')
+                    ->schema($this->contractFormSchema())
                     ->fillForm(fn(Contract $record) => $record->toArray())
                     ->action(function (array $data, Contract $record): void {
                         $record->update($data);
@@ -225,18 +220,25 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                     }),
 
                 \Filament\Actions\Action::make('delete')
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->requiresConfirmation()
+                    ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
                     ->action(fn(Contract $record) => $record->delete()),
+                ]),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\BulkAction::make('bulkStatus')->label('Update Status')->icon('heroicon-o-arrow-path')
+                        ->schema([Forms\Components\Select::make('status')->options(Contract::$statuses)->required()])
+                        ->action(function (array $data, $records): void {
+                            foreach ($records as $r)
+                                $record->update($data);
+                            Notification::make()->title($records->count() . ' contracts updated')->success()->send();
+                        })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->emptyStateHeading('No Contracts')
-            ->emptyStateDescription('Create contracts to manage project costs.')
-            ->emptyStateIcon('heroicon-o-currency-dollar');
+            ->emptyStateDescription('Create contracts to track costs and payments.')
+            ->emptyStateIcon('heroicon-o-banknotes')
+            ->striped()->paginated([10, 25, 50]);
     }
 }

@@ -54,19 +54,33 @@ class MembersRelationManager extends RelationManager
                 AttachAction::make()
                     ->preloadRecordSelect()
                     ->recordSelectSearchColumns(['name', 'email'])
-                    ->recordSelect(fn (Select $select) => $select
-                        ->createOptionForm(fn (Schema $form) => UserResource::form($form)
-                            ->model(User::class)
-                        )
-                        ->createOptionUsing(function (array $data, Schema $form) {
-                            $user = User::create($data);
-                            $form->model($user)->saveRelationships();
+                    ->recordSelect(
+                        fn(Select $select) => $select
+                            ->createOptionForm(
+                                fn(Schema $form) => UserResource::form($form)
+                                    ->model(User::class)
+                            )
+                            ->createOptionUsing(function (array $data, Schema $form) {
+                                $company = auth()->user()?->company;
+                                if ($company && !$company->canAddUser()) {
+                                    \Filament\Notifications\Notification::make()
+                                        ->danger()
+                                        ->title('User limit reached')
+                                        ->body("Your plan allows a maximum of {$company->max_users} users. Upgrade to add more.")
+                                        ->persistent()
+                                        ->send();
+                                    return null;
+                                }
 
-                            return $user->id;
-                        })
-                        ->createOptionAction(fn (Action $action) => $action
-                            ->modalWidth('lg')
-                        )
+                                $user = User::create($data);
+                                $form->model($user)->saveRelationships();
+
+                                return $user->id;
+                            })
+                            ->createOptionAction(
+                                fn(Action $action) => $action
+                                    ->modalWidth('lg')
+                            )
                     )
                     ->label('Add Member')
                     ->after(function (Model $record) {

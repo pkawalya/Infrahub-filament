@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\SafetyIncidentResource\Pages;
 use App\Models\SafetyIncident;
 use Filament\Actions;
+use Filament\Infolists;
 use Filament\Schemas;
 use Filament\Forms;
 use Filament\Schemas\Schema;
@@ -19,6 +20,65 @@ class SafetyIncidentResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'SHEQ';
     protected static ?int $navigationSort = 1;
     protected static bool $shouldRegisterNavigation = false;
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->schema([
+            Schemas\Components\Section::make('Incident Details')->schema([
+                Infolists\Components\TextEntry::make('incident_number')
+                    ->label('Incident #')
+                    ->icon('heroicon-o-hashtag')
+                    ->copyable(),
+                Infolists\Components\TextEntry::make('title')
+                    ->icon('heroicon-o-exclamation-triangle'),
+                Infolists\Components\TextEntry::make('project.name')
+                    ->label('Project')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('type')
+                    ->badge(),
+                Infolists\Components\TextEntry::make('severity')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'critical' => 'danger', 'high' => 'warning',
+                        'medium' => 'info', default => 'gray',
+                    }),
+                Infolists\Components\TextEntry::make('status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'closed' => 'success', 'resolved' => 'info',
+                        'investigating' => 'warning', default => 'gray',
+                    }),
+                Infolists\Components\TextEntry::make('location')
+                    ->icon('heroicon-o-map-pin')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('incident_date')
+                    ->dateTime()
+                    ->icon('heroicon-o-calendar'),
+            ])->columns(2),
+
+            Schemas\Components\Section::make('Description')->schema([
+                Infolists\Components\TextEntry::make('description')
+                    ->html()
+                    ->columnSpanFull()
+                    ->placeholder('No description provided.'),
+            ])->collapsible(),
+
+            Schemas\Components\Section::make('Root Cause Analysis')->schema([
+                Infolists\Components\TextEntry::make('root_cause')
+                    ->label('Root Cause')
+                    ->html()
+                    ->columnSpanFull()
+                    ->placeholder('Root cause analysis not yet completed.'),
+            ])->collapsible(),
+
+            Schemas\Components\Section::make('Corrective Actions')->schema([
+                Infolists\Components\TextEntry::make('corrective_action')
+                    ->html()
+                    ->columnSpanFull()
+                    ->placeholder('No corrective actions documented.'),
+            ])->collapsible(),
+        ]);
+    }
 
     public static function form(Schema $schema): Schema
     {

@@ -57,6 +57,25 @@ class Setting extends Model
             ],
         );
     }
+    public static function getValue(string $key, mixed $default = null): mixed
+    {
+        try {
+            $model = new static();
+            if (!Schema::hasTable($model->getTable())) {
+                return $default;
+            }
+
+            $value = static::query()
+                ->where('key', $key)
+                ->whereNull('user_id')
+                ->value('value');
+
+            return $value ?? $default;
+        } catch (\Throwable $e) {
+            return $default;
+        }
+    }
+
     public static function setValue(string $key, mixed $value, ?string $group = null): void
     {
         static::query()->updateOrCreate(

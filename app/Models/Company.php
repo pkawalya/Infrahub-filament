@@ -39,6 +39,9 @@ class Company extends Model
         'max_users',
         'max_projects',
         'max_storage_gb',
+        'extra_users',
+        'extra_projects',
+        'extra_storage_gb',
         'current_storage_bytes',
         'is_active',
         'is_trial',
@@ -139,9 +142,72 @@ class Company extends Model
         return $this->is_trial && $this->trial_ends_at?->isFuture();
     }
 
+    // ─── Effective Limits (plan base + extras) ────────────────────
+    public function getEffectiveMaxUsers(): int
+    {
+        return ($this->max_users ?? 0) + ($this->extra_users ?? 0);
+    }
+
+    public function getEffectiveMaxProjects(): int
+    {
+        return ($this->max_projects ?? 0) + ($this->extra_projects ?? 0);
+    }
+
+    public function getEffectiveMaxStorageGb(): int
+    {
+        return ($this->max_storage_gb ?? 0) + ($this->extra_storage_gb ?? 0);
+    }
+
     public function canAddUser(): bool
     {
-        return $this->users()->count() < $this->max_users;
+        $limit = $this->getEffectiveMaxUsers();
+        return !$limit || $this->users()->count() < $limit;
+    }
+
+    public function canAddProject(): bool
+    {
+        $limit = $this->getEffectiveMaxProjects();
+        return !$limit || $this->projects()->count() < $limit;
+    }
+
+    public function canAddStorage(int $additionalBytes = 0): bool
+    {
+        $limit = $this->getEffectiveMaxStorageGb();
+        if (!$limit)
+            return true;
+
+        $maxBytes = $limit * 1024 * 1024 * 1024;
+        return ($this->current_storage_bytes + $additionalBytes) < $maxBytes;
+    }
+
+    public function getRemainingUsers(): int
+    {
+        return max(0, $this->getEffectiveMaxUsers() - $this->users()->count());
+    }
+
+    public function getRemainingProjects(): int
+    {
+        return max(0, $this->getEffectiveMaxProjects() - $this->projects()->count());
+    }
+
+    /**
+     * Apply a subscription plan, updating base limits from the plan.
+     * Keeps extra addons intact.
+     */
+    public function applyPlan(Subscription $plan, string $billingCycle = 'monthly'): void
+    {
+        $this->update([
+            'subscription_id' => $plan->id,
+            'billing_cycle' => $billingCycle,
+            'max_users' => $plan->max_users,
+            'max_projects' => $plan->max_projects,
+            'max_storage_gb' => $plan->max_storage_gb,
+            'subscription_starts_at' => now(),
+            'subscription_expires_at' => $billingCycle === 'yearly' ? now()->addYear() : now()->addMonth(),
+            'is_trial' => false,
+        ]);
+
+        $this->syncModulesFromSubscription();
     }
 
     // ─── Actions ─────────────────────────────────────────────────

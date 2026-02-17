@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
+use App\Models\CdeActivityLog;
 use App\Support\CurrencyHelper;
 
 class ReportingPage extends BaseModulePage
@@ -55,4 +56,17 @@ class ReportingPage extends BaseModulePage
             ],
         ];
     }
+
+    /**
+     * Get recent activity logs for the project.
+     */
+    public function getActivityLogs(): \Illuminate\Support\Collection
+    {
+        return CdeActivityLog::where('company_id', $this->record->company_id)
+            ->with('user')
+            ->latest()
+            ->limit(50)
+            ->get();
+    }
 }
+

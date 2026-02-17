@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infrahub - Implementation Plans</title>
+    <meta name="description" content="Construction Management System Implementation Plans and Documentation">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-card-hover: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(59, 130, 246, 0.08) 0%, transparent 40%);
+            animation: rotate 60s linear infinite;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Header */
+        header {
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 45px;
+            height: 45px;
+            background: var(--gradient-3);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-text span {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-meta {
+            text-align: right;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        /* Main Content */
+        main {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, #64748b 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 1.125rem;
+            max-width: 700px;
+            margin: 0 auto 2rem;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Module Grid */
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--gradient-3);
+            border-radius: 2px;
+        }
+
+        .module-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 4rem;
+        }
+
+        .module-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.75rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--gradient-3);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .module-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-4px);
+            border-color: rgba(99, 102, 241, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .module-card:hover::before {
+            opacity: 1;
+        }
+
+        .module-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .module-number {
+            width: 48px;
+            height: 48px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .module-title h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .module-meta {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-critical {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+        }
+
+        .badge-high {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+        }
+
+        .badge-medium {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+        }
+
+        .module-description {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 1.25rem;
+            line-height: 1.6;
+        }
+
+        .module-stats {
+            display: flex;
+            justify-content: space-between;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .module-stat {
+            text-align: center;
+        }
+
+        .module-stat-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .module-stat-label {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        /* Quick Links */
+        .quick-links {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .quick-links h3 {
+            font-size: 1.125rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .links-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .quick-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+        }
+
+        .quick-link:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+        }
+
+        .quick-link-icon {
+            font-size: 1.25rem;
+        }
+
+        /* Timeline */
+        .timeline-section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .timeline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .timeline-phase {
+            flex: 1;
+            min-width: 200px;
+            padding: 1.25rem;
+            background: rgba(99, 102, 241, 0.05);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .phase-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .phase-number {
+            width: 28px;
+            height: 28px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .phase-title {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .phase-duration {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .phase-modules {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            border-top: 1px solid var(--border);
+            margin-top: 4rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+
+            .header-meta {
+                text-align: center;
+            }
+
+            .hero h2 {
+                font-size: 1.75rem;
+            }
+
+            .stats {
+                gap: 1.5rem;
+            }
+
+            .module-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-animation"></div>
+
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🏗️</div>
+                <div class="logo-text">
+                    <h1>Infrahub</h1>
+                    <span>Construction Management System</span>
+                </div>
+            </div>
+            <div class="header-meta">
+                <div>Version 2.0</div>
+                <div>February 2026</div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h2>Implementation Plans</h2>
+            <p>Comprehensive documentation for building a world-class construction management platform combining CDE
+                capabilities with field-to-finance execution.</p>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-value">10</div>
+                    <div class="stat-label">Modules</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">356</div>
+                    <div class="stat-label">Requirements</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value">52-72</div>
+                    <div class="stat-label">Weeks</div>
+                </div>
+            </div>
+        </section>
+
+        <h2 class="section-title">Module Documentation</h2>
+        <div class="module-grid">
+            <a href="implementation-plans/00-overview.md" class="module-card" target="_blank">
+                <div class="module-header">
+                    <div class="module-number">📋</div>
+                    <div class="module-title">
+                        <h3>Overview & Index</h3>
+                        <div class="module-meta">
+                            <span class="badge badge-critical">Start Here</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="module-description">Master overview document with module index, recommended implementation
+                    order, architecture diagram, and effort estimations.</p>
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="module-stat-value">All</div>
+                        <div class="module-stat-label">Modules</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">Index</div>
+                        <div class="module-stat-label">Type</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">—</div>
+                        <div class="module-stat-label">Duration</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="implementation-plans/01-system-wide-requirements.md" class="module-card" target="_blank">
+                <div class="module-header">
+                    <div class="module-number">01</div>
+                    <div class="module-title">
+                        <h3>System-Wide Requirements</h3>
+                        <div class="module-meta">
+                            <span class="badge badge-critical">Critical</span>
+                            <span class="badge badge-high">High Complexity</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="module-description">Core architecture, performance standards, security infrastructure, offline
+                    sync, and multi-language support.</p>
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="module-stat-value">15</div>
+                        <div class="module-stat-label">Requirements</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">4-6</div>
+                        <div class="module-stat-label">Weeks</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">Phase 1</div>
+                        <div class="module-stat-label">Priority</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="implementation-plans/02-cde-module.md" class="module-card" target="_blank">
+                <div class="module-header">
+                    <div class="module-number">02</div>
+                    <div class="module-title">
+                        <h3>Common Data Environment (CDE)</h3>
+                        <div class="module-meta">
+                            <span class="badge badge-critical">Critical</span>
+                            <span class="badge badge-critical">Very High Complexity</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="module-description">Document management, version control, markups, transmittals, workflows,
+                    and ISO 19650 compliance.</p>
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="module-stat-value">76</div>
+                        <div class="module-stat-label">Requirements</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">8-12</div>
+                        <div class="module-stat-label">Weeks</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">Phase 2</div>
+                        <div class="module-stat-label">Priority</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="implementation-plans/03-field-management-module.md" class="module-card" target="_blank">
+                <div class="module-header">
+                    <div class="module-number">03</div>
+                    <div class="module-title">
+                        <h3>Project Execution & Field Management</h3>
+                        <div class="module-meta">
+                            <span class="badge badge-critical">Critical</span>
+                            <span class="badge badge-high">High Complexity</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="module-description">Daily logs, inspections, safety observations, NCRs, RFIs, submittals, and
+                    offline mobile support.</p>
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="module-stat-value">58</div>
+                        <div class="module-stat-label">Requirements</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">6-8</div>
+                        <div class="module-stat-label">Weeks</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">Phase 3</div>
+                        <div class="module-stat-label">Priority</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="implementation-plans/04-task-workflow-module.md" class="module-card" target="_blank">
+                <div class="module-header">
+                    <div class="module-number">04</div>
+                    <div class="module-title">
+                        <h3>Task & Workflow Engine</h3>
+                        <div class="module-meta">
+                            <span class="badge badge-high">High</span>
+                            <span class="badge badge-medium">Medium Complexity</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="module-description">Task management, role-based assignments, escalation rules, and
+                    multi-channel notifications.</p>
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="module-stat-value">24</div>
+                        <div class="module-stat-label">Requirements</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">4-6</div>
+                        <div class="module-stat-label">Weeks</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">Phase 2</div>
+                        <div class="module-stat-label">Priority</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="implementation-plans/05-cost-contracts-module.md" class="module-card" target="_blank">
+                <div class="module-header">
+                    <div class="module-number">05</div>
+                    <div class="module-title">
+                        <h3>Cost, Contracts & Commercials</h3>
+                        <div class="module-meta">
+                            <span class="badge badge-high">High</span>
+                            <span class="badge badge-critical">Very High Complexity</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="module-description">Budgets, cost tracking, contracts, change orders, payment applications,
+                    and claims management.</p>
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="module-stat-value">65</div>
+                        <div class="module-stat-label">Requirements</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">8-10</div>
+                        <div class="module-stat-label">Weeks</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">Phase 4</div>
+                        <div class="module-stat-label">Priority</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="implementation-plans/06-planning-progress-module.md" class="module-card" target="_blank">
+                <div class="module-header">
+                    <div class="module-number">06</div>
+                    <div class="module-title">
+                        <h3>Planning & Progress Control</h3>
+                        <div class="module-meta">
+                            <span class="badge badge-high">High</span>
+                            <span class="badge badge-high">High Complexity</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="module-description">Scheduling, Gantt charts, milestones, look-ahead planning, and progress
+                    tracking with earned value.</p>
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="module-stat-value">27</div>
+                        <div class="module-stat-label">Requirements</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">6-8</div>
+                        <div class="module-stat-label">Weeks</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">Phase 3</div>
+                        <div class="module-stat-label">Priority</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="implementation-plans/07-reporting-dashboards-module.md" class="module-card" target="_blank">
+                <div class="module-header">
+                    <div class="module-number">07</div>
+                    <div class="module-title">
+                        <h3>Reporting & Dashboards</h3>
+                        <div class="module-meta">
+                            <span class="badge badge-medium">Medium</span>
+                            <span class="badge badge-medium">Medium Complexity</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="module-description">Real-time dashboards, custom report builder, scheduled reports, and
+                    AIA/OSHA templates.</p>
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="module-stat-value">37</div>
+                        <div class="module-stat-label">Requirements</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">4-6</div>
+                        <div class="module-stat-label">Weeks</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">Phase 5</div>
+                        <div class="module-stat-label">Priority</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="implementation-plans/08-user-access-module.md" class="module-card" target="_blank">
+                <div class="module-header">
+                    <div class="module-number">08</div>
+                    <div class="module-title">
+                        <h3>User & Access Management</h3>
+                        <div class="module-meta">
+                            <span class="badge badge-critical">Critical</span>
+                            <span class="badge badge-medium">Medium Complexity</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="module-description">Multi-project support, role-based access control, 2FA authentication, and
+                    activity logging.</p>
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="module-stat-value">31</div>
+                        <div class="module-stat-label">Requirements</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">3-4</div>
+                        <div class="module-stat-label">Weeks</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">Phase 1</div>
+                        <div class="module-stat-label">Priority</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="implementation-plans/09-integration-module.md" class="module-card" target="_blank">
+                <div class="module-header">
+                    <div class="module-number">09</div>
+                    <div class="module-title">
+                        <h3>Integration & Interoperability</h3>
+                        <div class="module-meta">
+                            <span class="badge badge-medium">Medium</span>
+                            <span class="badge badge-high">High Complexity</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="module-description">RESTful API, OAuth 2.0, webhooks, third-party integrations, and bulk
+                    import/export.</p>
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="module-stat-value">13</div>
+                        <div class="module-stat-label">Requirements</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">4-6</div>
+                        <div class="module-stat-label">Weeks</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">Phase 5</div>
+                        <div class="module-stat-label">Priority</div>
+                    </div>
+                </div>
+            </a>
+
+            <a href="implementation-plans/10-compliance-module.md" class="module-card" target="_blank">
+                <div class="module-header">
+                    <div class="module-number">10</div>
+                    <div class="module-title">
+                        <h3>Compliance & Standards</h3>
+                        <div class="module-meta">
+                            <span class="badge badge-medium">Medium</span>
+                            <span class="badge badge-medium">Medium Complexity</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="module-description">ISO 19650, BIM workflows, GDPR/CCPA compliance, SOC 2, and ISO 27001
+                    security standards.</p>
+                <div class="module-stats">
+                    <div class="module-stat">
+                        <div class="module-stat-value">10</div>
+                        <div class="module-stat-label">Requirements</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">2-3</div>
+                        <div class="module-stat-label">Weeks</div>
+                    </div>
+                    <div class="module-stat">
+                        <div class="module-stat-value">Phase 5</div>
+                        <div class="module-stat-label">Priority</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="quick-links">
+            <h3>📁 Quick Links</h3>
+            <div class="links-grid">
+                <a href="/app" class="quick-link">
+                    <span class="quick-link-icon">🚀</span>
+                    <span>Launch App Panel</span>
+                </a>
+                <a href="/admin" class="quick-link">
+                    <span class="quick-link-icon">⚙️</span>
+                    <span>Launch Admin Panel</span>
+                </a>
+                <a href="requirements.txt" class="quick-link" target="_blank">
+                    <span class="quick-link-icon">📄</span>
+                    <span>Original Requirements</span>
+                </a>
+                <a href="Construction Management System - Requirements Document.pdf" class="quick-link" target="_blank">
+                    <span class="quick-link-icon">📕</span>
+                    <span>Requirements PDF</span>
+                </a>
+                <a href="implementation-plans/00-overview.md" class="quick-link" target="_blank">
+                    <span class="quick-link-icon">🗺️</span>
+                    <span>Architecture Overview</span>
+                </a>
+                <a href="implementation-plans/" class="quick-link" target="_blank">
+                    <span class="quick-link-icon">📂</span>
+                    <span>All Plan Files</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="timeline-section">
+            <h3 class="section-title">Implementation Timeline</h3>
+            <div class="timeline">
+                <div class="timeline-phase">
+                    <div class="phase-header">
+                        <div class="phase-number">1</div>
+                        <div class="phase-title">Foundation</div>
+                    </div>
+                    <div class="phase-duration">Weeks 1-10</div>
+                    <div class="phase-modules">System-Wide + User Access</div>
+                </div>
+                <div class="timeline-phase">
+                    <div class="phase-header">
+                        <div class="phase-number">2</div>
+                        <div class="phase-title">Core Platform</div>
+                    </div>
+                    <div class="phase-duration">Weeks 11-26</div>
+                    <div class="phase-modules">CDE + Task Engine</div>
+                </div>
+                <div class="timeline-phase">
+                    <div class="phase-header">
+                        <div class="phase-number">3</div>
+                        <div class="phase-title">Field Operations</div>
+                    </div>
+                    <div class="phase-duration">Weeks 27-38</div>
+                    <div class="phase-modules">Field Mgmt + Planning</div>
+                </div>
+                <div class="timeline-phase">
+                    <div class="phase-header">
+                        <div class="phase-number">4</div>
+                        <div class="phase-title">Financial</div>
+                    </div>
+                    <div class="phase-duration">Weeks 39-52</div>
+                    <div class="phase-modules">Cost & Contracts</div>
+                </div>
+                <div class="timeline-phase">
+                    <div class="phase-header">
+                        <div class="phase-number">5</div>
+                        <div class="phase-title">Intelligence</div>
+                    </div>
+                    <div class="phase-duration">Weeks 53-64</div>
+                    <div class="phase-modules">Reports + Integration + Compliance</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Infrahub Construction Management System &copy; 2026 | Implementation Documentation</p>
+    </footer>
+</body>
+
+</html>

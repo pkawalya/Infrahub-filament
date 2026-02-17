@@ -7,6 +7,7 @@ use App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 use App\Models\CdeProject;
 use App\Models\Module;
 use Filament\Actions;
+use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Filament\Pages\Enums\SubNavigationPosition;
 use Filament\Resources\Pages\Page;
@@ -25,7 +26,7 @@ class CdeProjectResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Projects';
     protected static ?string $label = 'Project';
     protected static ?int $navigationSort = 1;
-    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Top;
+    protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
 
     public static function form(Schema $schema): Schema
     {
@@ -113,6 +114,7 @@ class CdeProjectResource extends Resource
                 Tables\Columns\TextColumn::make('end_date')->date(),
             ])
             ->defaultSort('created_at', 'desc')
+            ->recordUrl(fn(CdeProject $record) => static::getUrl('view', ['record' => $record]))
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(CdeProject::$statuses),
             ])
@@ -122,7 +124,8 @@ class CdeProjectResource extends Resource
 
     /**
      * Build the sub-navigation that appears when viewing a project record.
-     * Only shows module tabs for modules enabled on this specific project.
+     * Modules are grouped into logical categories using NavigationGroups.
+     * Only shows modules that are enabled on this specific project.
      */
     public static function getRecordSubNavigation(Page $page): array
     {
@@ -134,42 +137,90 @@ class CdeProjectResource extends Resource
 
         $enabledModules = $record->getEnabledModules();
 
-        // Map of module_code => [page class, label, icon, sort]
-        $modulePages = [
-            'core' => ['class' => Modules\CoreFsmPage::class, 'label' => 'Core FSM', 'icon' => 'heroicon-o-wrench-screwdriver', 'sort' => 2],
-            'cde' => ['class' => Modules\CdePage::class, 'label' => 'Documents', 'icon' => 'heroicon-o-folder-open', 'sort' => 3],
-            'task_workflow' => ['class' => Modules\TaskWorkflowPage::class, 'label' => 'Tasks', 'icon' => 'heroicon-o-clipboard-document-check', 'sort' => 4],
-            'field_management' => ['class' => Modules\FieldManagementPage::class, 'label' => 'Field Mgmt', 'icon' => 'heroicon-o-map-pin', 'sort' => 5],
-            'inventory' => ['class' => Modules\InventoryPage::class, 'label' => 'Inventory', 'icon' => 'heroicon-o-cube', 'sort' => 6],
-            'cost_contracts' => ['class' => Modules\CostContractsPage::class, 'label' => 'Contracts', 'icon' => 'heroicon-o-currency-dollar', 'sort' => 7],
-            'planning_progress' => ['class' => Modules\PlanningProgressPage::class, 'label' => 'Planning', 'icon' => 'heroicon-o-calendar-days', 'sort' => 8],
-            'boq_management' => ['class' => Modules\BoqPage::class, 'label' => 'BOQ', 'icon' => 'heroicon-o-calculator', 'sort' => 9],
-            'sheq' => ['class' => Modules\SheqPage::class, 'label' => 'SHEQ', 'icon' => 'heroicon-o-shield-check', 'sort' => 10],
-            'reporting' => ['class' => Modules\ReportingPage::class, 'label' => 'Reports', 'icon' => 'heroicon-o-chart-bar', 'sort' => 11],
+        // Helper to build a NavigationItem for a module if enabled
+        $makeItem = function (string $code, string $label, string $icon, string $pageClass) use ($page, $record, $enabledModules): ?NavigationItem {
+            if (!in_array($code, $enabledModules)) {
+                return null;
+            }
+            $routeName = self::moduleCodeToRouteName($code);
+            return NavigationItem::make($label)
+                ->icon($icon)
+                ->isActiveWhen(fn() => $page instanceof $pageClass)
+                ->url(static::getUrl($routeName, ['record' => $record]));
+        };
+
+        // ── Define grouped modules ──────────────────────────────
+        $groups = [
+            'Operations' => [
+                'icon' => 'heroicon-o-wrench-screwdriver',
+                'items' => [
+                    $makeItem('core', 'Work Orders', 'heroicon-o-wrench-screwdriver', Modules\CoreFsmPage::class),
+                    $makeItem('task_workflow', 'Tasks', 'heroicon-o-clipboard-document-check', Modules\TaskWorkflowPage::class),
+                    $makeItem('planning_progress', 'Planning', 'heroicon-o-calendar-days', Modules\PlanningProgressPage::class),
+                ],
+            ],
+            'Site' => [
+                'icon' => 'heroicon-o-map-pin',
+                'items' => [
+                    $makeItem('field_management', 'Field Logs', 'heroicon-o-map-pin', Modules\FieldManagementPage::class),
+                    $makeItem('inventory', 'Inventory', 'heroicon-o-cube', Modules\InventoryPage::class),
+                    $makeItem('sheq', 'SHEQ', 'heroicon-o-shield-check', Modules\SheqPage::class),
+                ],
+            ],
+            'Commercial' => [
+                'icon' => 'heroicon-o-banknotes',
+                'items' => [
+                    $makeItem('cost_contracts', 'Contracts', 'heroicon-o-currency-dollar', Modules\CostContractsPage::class),
+                    $makeItem('boq_management', 'BOQ', 'heroicon-o-calculator', Modules\BoqPage::class),
+                ],
+            ],
+            'Information' => [
+                'icon' => 'heroicon-o-document-text',
+                'items' => [
+                    $makeItem('cde', 'Documents', 'heroicon-o-folder-open', Modules\CdePage::class),
+                    in_array('cde', $enabledModules)
+                    ? NavigationItem::make('RFIs & Submittals')
+                        ->icon('heroicon-o-question-mark-circle')
+                        ->isActiveWhen(fn() => $page instanceof Modules\RfiSubmittalPage)
+                        ->url(static::getUrl('module-rfi-submittals', ['record' => $record]))
+                    : null,
+                    $makeItem('reporting', 'Reports', 'heroicon-o-chart-bar', Modules\ReportingPage::class),
+                ],
+            ],
         ];
 
+        // ── Build navigation array ──────────────────────────────
         $nav = [];
 
-        // Always show the Overview tab
+        // Always show the Overview tab first
         $nav[] = NavigationItem::make('Overview')
             ->icon('heroicon-o-home')
             ->isActiveWhen(fn() => $page instanceof Pages\ViewCdeProject)
             ->url(static::getUrl('view', ['record' => $record]))
             ->sort(1);
 
-        // Add module tabs only for enabled modules
-        foreach ($modulePages as $code => $config) {
-            if (in_array($code, $enabledModules)) {
-                $routeName = self::moduleCodeToRouteName($code);
-                $nav[] = NavigationItem::make($config['label'])
-                    ->icon($config['icon'])
-                    ->isActiveWhen(fn() => $page instanceof $config['class'])
-                    ->url(static::getUrl($routeName, ['record' => $record]))
-                    ->sort($config['sort']);
+        $sort = 2;
+        foreach ($groups as $groupLabel => $groupConfig) {
+            $items = array_filter($groupConfig['items']); // Remove nulls (disabled modules)
+            if (empty($items)) {
+                continue;
             }
+
+            // If only 1 item in group, show it directly (no group wrapper)
+            if (count($items) === 1) {
+                $item = reset($items);
+                $nav[] = $item->sort($sort++);
+                continue;
+            }
+
+            // Multiple items → wrap in NavigationGroup
+            $nav[] = NavigationGroup::make($groupLabel)
+                ->collapsible()
+                ->items(array_values($items));
+            $sort++;
         }
 
-        // Always show Edit tab at the end
+        // Always show Settings tab at the end
         $nav[] = NavigationItem::make('Settings')
             ->icon('heroicon-o-cog-6-tooth')
             ->isActiveWhen(fn() => $page instanceof Pages\EditCdeProject)
@@ -187,6 +238,38 @@ class CdeProjectResource extends Resource
         return 'module-' . str_replace('_', '-', $code);
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        $company = auth()->user()?->company;
+        $count = (int) static::getEloquentQuery()->count();
+
+        if ($company) {
+            $limit = $company->getEffectiveMaxProjects();
+            if ($limit)
+                return "{$count}/{$limit}";
+        }
+
+        return (string) $count;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        $company = auth()->user()?->company;
+        if (!$company)
+            return 'primary';
+
+        $limit = $company->getEffectiveMaxProjects();
+        if (!$limit)
+            return 'primary';
+
+        $count = $company->projects()->count();
+        if ($count >= $limit)
+            return 'danger';
+        if ($count >= $limit * 0.8)
+            return 'warning';
+        return 'primary';
+    }
+
     public static function getPages(): array
     {
         return [
@@ -198,6 +281,7 @@ class CdeProjectResource extends Resource
             // Module pages
             'module-core' => Modules\CoreFsmPage::route('/{record}/core-fsm'),
             'module-cde' => Modules\CdePage::route('/{record}/documents'),
+            'module-rfi-submittals' => Modules\RfiSubmittalPage::route('/{record}/rfi-submittals'),
             'module-task-workflow' => Modules\TaskWorkflowPage::route('/{record}/tasks'),
             'module-field-management' => Modules\FieldManagementPage::route('/{record}/field-management'),
             'module-inventory' => Modules\InventoryPage::route('/{record}/inventory'),

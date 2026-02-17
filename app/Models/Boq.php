@@ -10,6 +10,14 @@ class Boq extends Model
 {
     use SoftDeletes, BelongsToCompany;
 
+    public static array $statuses = [
+        'draft' => 'Draft',
+        'submitted' => 'Submitted',
+        'approved' => 'Approved',
+        'priced' => 'Priced',
+        'final' => 'Final',
+    ];
+
     protected $fillable = [
         'company_id',
         'cde_project_id',

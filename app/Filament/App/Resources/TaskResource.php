@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\TaskResource\Pages;
 use App\Models\Task;
 use Filament\Actions;
+use Filament\Infolists;
 use Filament\Schemas;
 use Filament\Forms;
 use Filament\Schemas\Schema;
@@ -19,6 +20,68 @@ class TaskResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Task & Workflow';
     protected static ?int $navigationSort = 1;
     protected static bool $shouldRegisterNavigation = false;
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->schema([
+            Schemas\Components\Section::make('Task Details')->schema([
+                Infolists\Components\TextEntry::make('title')
+                    ->icon('heroicon-o-clipboard-document-check'),
+                Infolists\Components\TextEntry::make('project.name')
+                    ->label('Project')
+                    ->icon('heroicon-o-building-office')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('workOrder.wo_number')
+                    ->label('Work Order')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('parent.title')
+                    ->label('Parent Task')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('priority')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'urgent' => 'danger', 'high' => 'warning',
+                        'medium' => 'info', default => 'gray',
+                    }),
+                Infolists\Components\TextEntry::make('status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'done' => 'success', 'in_progress' => 'info',
+                        'review' => 'warning', 'blocked' => 'danger', default => 'gray',
+                    }),
+            ])->columns(2),
+
+            Schemas\Components\Section::make('Assignment & Progress')->schema([
+                Infolists\Components\TextEntry::make('assignee.name')
+                    ->label('Assigned To')
+                    ->icon('heroicon-o-user')
+                    ->placeholder('Unassigned'),
+                Infolists\Components\TextEntry::make('due_date')
+                    ->date()
+                    ->icon('heroicon-o-calendar')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('estimated_hours')
+                    ->suffix(' hrs')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('progress_percent')
+                    ->suffix('%')
+                    ->placeholder('0'),
+                Infolists\Components\TextEntry::make('created_at')
+                    ->label('Created')
+                    ->dateTime(),
+                Infolists\Components\TextEntry::make('updated_at')
+                    ->label('Last Updated')
+                    ->dateTime(),
+            ])->columns(3),
+
+            Schemas\Components\Section::make('Description')->schema([
+                Infolists\Components\TextEntry::make('description')
+                    ->html()
+                    ->columnSpanFull()
+                    ->placeholder('No description provided.'),
+            ])->collapsible(),
+        ]);
+    }
 
     public static function form(Schema $schema): Schema
     {

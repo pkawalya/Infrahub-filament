@@ -18,6 +18,7 @@
     $statusLabel = $statusLabels[$record->status] ?? ucfirst($record->status);
 @endphp
 
+@push('styles')
 <style>
     .ov-grid { display: grid; gap: 1rem; }
     .ov-grid-4 { grid-template-columns: repeat(4, 1fr); }
@@ -94,6 +95,7 @@
         .ov-grid-3, .ov-grid-2-1 { grid-template-columns: 1fr; }
     }
 </style>
+@endpush
 
 {{-- ═══ STAT CARDS ═══ --}}
 <div class="ov-grid ov-grid-4">

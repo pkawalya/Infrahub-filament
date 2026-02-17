@@ -7,6 +7,8 @@ use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\CdeDocument;
 use App\Models\CdeFolder;
 use App\Models\CdeProject;
+use App\Models\Transmittal;
+use App\Models\TransmittalItem;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -181,6 +183,64 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                         $this->navigateToFolder($folder?->parent_id);
                     }
                 }),
+
+            Action::make('createTransmittal')
+                ->label('Create Transmittal')
+                ->icon('heroicon-o-paper-airplane')
+                ->color('success')
+                ->modalWidth('3xl')
+                ->schema([
+                    Section::make('Transmittal Details')->schema([
+                        Forms\Components\TextInput::make('transmittal_number')->label('Transmittal #')
+                            ->default(fn() => 'TR-' . str_pad((string) (Transmittal::where('cde_project_id', $this->record->id)->count() + 1), 4, '0', STR_PAD_LEFT))
+                            ->required()->maxLength(50),
+                        Forms\Components\TextInput::make('subject')->required()->maxLength(255)->columnSpanFull(),
+                        Forms\Components\TextInput::make('to_organization')->label('To Organization')->required()->maxLength(255),
+                        Forms\Components\TextInput::make('to_contact')->label('Contact Person')->maxLength(255),
+                        Forms\Components\Select::make('purpose')->options(Transmittal::$purposes)->required()->default('for_information'),
+                        Forms\Components\Textarea::make('description')->label('Cover Note')->rows(3)->columnSpanFull(),
+                    ])->columns(2),
+                    Section::make('Attached Documents')->schema([
+                        Forms\Components\CheckboxList::make('document_ids')
+                            ->label('Select Documents to Transmit')
+                            ->options(
+                                fn() => CdeDocument::where('cde_project_id', $this->record->id)
+                                    ->orderByDesc('created_at')
+                                    ->get()
+                                    ->mapWithKeys(fn($doc) => [$doc->id => "{$doc->document_number} — {$doc->title} (Rev {$doc->revision})"])
+                                    ->toArray()
+                            )
+                            ->searchable()
+                            ->columns(1)
+                            ->columnSpanFull(),
+                    ]),
+                ])
+                ->action(function (array $data): void {
+                    $transmittal = Transmittal::create([
+                        'company_id' => $this->record->company_id,
+                        'cde_project_id' => $this->record->id,
+                        'transmittal_number' => $data['transmittal_number'],
+                        'subject' => $data['subject'],
+                        'description' => $data['description'] ?? null,
+                        'to_organization' => $data['to_organization'],
+                        'to_contact' => $data['to_contact'] ?? null,
+                        'purpose' => $data['purpose'],
+                        'from_user_id' => auth()->id(),
+                        'status' => 'draft',
+                    ]);
+
+                    if (!empty($data['document_ids'])) {
+                        foreach ($data['document_ids'] as $docId) {
+                            TransmittalItem::create([
+                                'transmittal_id' => $transmittal->id,
+                                'cde_document_id' => $docId,
+                                'copies' => 1,
+                            ]);
+                        }
+                    }
+
+                    Notification::make()->title('Transmittal created with ' . count($data['document_ids'] ?? []) . ' document(s)')->success()->send();
+                }),
         ];
     }
 
@@ -210,6 +270,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
         $totalDocs = $p->documents()->count();
         $totalFolders = $p->folders()->count();
         $recentUploads = $p->documents()->where('created_at', '>=', now()->subDays(7))->count();
+        $transmittalCount = Transmittal::where('cde_project_id', $p->id)->count();
 
         return [
             [
@@ -228,6 +289,14 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 'icon_bg' => '#eff6ff'
             ],
             [
+                'label' => 'Transmittals',
+                'value' => $transmittalCount,
+                'sub' => 'File packages',
+                'sub_type' => 'info',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#8b5cf6" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" /></svg>',
+                'icon_bg' => '#f5f3ff'
+            ],
+            [
                 'label' => 'Recent Uploads',
                 'value' => $recentUploads,
                 'sub' => 'Last 7 days',
@@ -236,6 +305,15 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 'icon_bg' => '#ecfdf5'
             ],
         ];
+    }
+
+    public function getTransmittals(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Transmittal::where('cde_project_id', $this->record->id)
+            ->with(['sender:id,name', 'items.document:id,document_number,title'])
+            ->orderByDesc('created_at')
+            ->limit(30)
+            ->get();
     }
 
     // ── Document table ─────────────────────────────────────────────────
@@ -296,132 +374,203 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                     'other' => 'Other',
                 ]),
             ])
-            ->actions([
-                \Filament\Actions\Action::make('download')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->color('success')
-                    ->action(function (CdeDocument $record) {
-                        if ($record->file_path && Storage::disk('public')->exists($record->file_path)) {
-                            return response()->streamDownload(
-                                fn() => print (Storage::disk('public')->get($record->file_path)),
-                                $record->title . '.' . $record->file_type,
-                                ['Content-Type' => Storage::disk('public')->mimeType($record->file_path)]
+            ->recordActions([
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('download')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->color('success')
+                        ->action(function (CdeDocument $record) {
+                            if ($record->file_path && Storage::disk('public')->exists($record->file_path)) {
+                                return response()->streamDownload(
+                                    fn() => print (Storage::disk('public')->get($record->file_path)),
+                                    $record->title . '.' . $record->file_type,
+                                    ['Content-Type' => Storage::disk('public')->mimeType($record->file_path)]
+                                );
+                            }
+                            Notification::make()->title('File not found')->danger()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('revise')
+                        ->label('New Revision')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('warning')
+                        ->schema([
+                            Forms\Components\FileUpload::make('file')
+                                ->label('Updated File')
+                                ->directory('cde-uploads/' . $this->record->id)
+                                ->maxSize(51200)->required(),
+                            Forms\Components\Select::make('revision')->options([
+                                'P01' => 'P01',
+                                'P02' => 'P02',
+                                'P03' => 'P03',
+                                'C01' => 'C01',
+                                'C02' => 'C02',
+                                'C03' => 'C03',
+                                'A' => 'Rev A',
+                                'B' => 'Rev B',
+                                'C' => 'Rev C',
+                            ])->required()->label('New Revision'),
+                            Forms\Components\Select::make('status')->options([
+                                'S0' => 'S0 - WIP',
+                                'S1' => 'S1 - Coordination',
+                                'S2' => 'S2 - Information',
+                                'S3' => 'S3 - Review',
+                                'S4' => 'S4 - Approval',
+                            ])->label('Suitability'),
+                            Forms\Components\Textarea::make('description')->label('Change Notes')->rows(2),
+                        ])
+                        ->action(function (array $data, CdeDocument $record): void {
+                            $filePath = $data['file'];
+                            $fileSize = Storage::disk('public')->exists($filePath) ? Storage::disk('public')->size($filePath) : 0;
+                            $fileType = pathinfo($filePath, PATHINFO_EXTENSION);
+
+                            $record->update([
+                                'file_path' => $filePath,
+                                'file_size' => $fileSize,
+                                'file_type' => $fileType,
+                                'revision' => $data['revision'],
+                                'status' => $data['status'] ?? $record->status,
+                                'description' => $data['description'] ?? $record->description,
+                            ]);
+
+                            Notification::make()->title('Revision uploaded: ' . $data['revision'])->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('editMeta')
+                        ->label('Edit')
+                        ->icon('heroicon-o-pencil')
+                        ->schema([
+                            Forms\Components\TextInput::make('title')->required(),
+                            Forms\Components\TextInput::make('document_number')->required(),
+                            Forms\Components\Select::make('discipline')->options([
+                                'architecture' => 'Architecture',
+                                'structural' => 'Structural',
+                                'mechanical' => 'Mechanical',
+                                'electrical' => 'Electrical',
+                                'civil' => 'Civil',
+                                'other' => 'Other',
+                            ]),
+                            Forms\Components\Select::make('status')->options([
+                                'S0' => 'S0 - WIP',
+                                'S1' => 'S1 - Coordination',
+                                'S2' => 'S2 - Information',
+                                'S3' => 'S3 - Review',
+                                'S4' => 'S4 - Approval',
+                                'S6' => 'S6 - PIM',
+                                'S7' => 'S7 - AIM',
+                            ])->label('Suitability'),
+                            Forms\Components\Textarea::make('description')->rows(2),
+                        ])
+                        ->fillForm(fn(CdeDocument $record) => $record->toArray())
+                        ->action(function (array $data, CdeDocument $record): void {
+                            $record->update($data);
+                            Notification::make()->title('Document updated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('moveToFolder')
+                        ->label('Move')
+                        ->icon('heroicon-o-arrow-right-on-rectangle')
+                        ->color('gray')
+                        ->schema([
+                            Forms\Components\Select::make('cde_folder_id')
+                                ->label('Move to Folder')
+                                ->options(fn() => collect([null => '📁 Root'])->merge(
+                                    CdeFolder::where('cde_project_id', $this->record->id)
+                                        ->orderBy('name')
+                                        ->pluck('name', 'id')
+                                        ->mapWithKeys(fn($name, $id) => [$id => '📁 ' . $name])
+                                ))
+                                ->required(),
+                        ])
+                        ->action(function (array $data, CdeDocument $record): void {
+                            $folderId = $data['cde_folder_id'] === '' ? null : $data['cde_folder_id'];
+                            $record->update(['cde_folder_id' => $folderId]);
+                            Notification::make()->title('Document moved')->success()->send();
+                        }),
+
+                    // ── Document Workflow Actions ──────────────────────────
+                    \Filament\Actions\Action::make('submitForReview')
+                        ->label('Submit for Review')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->color('info')
+                        ->visible(fn(CdeDocument $record) => in_array($record->status, ['wip', 'draft', 'revision', 'S0']))
+                        ->requiresConfirmation()
+                        ->modalHeading('Submit for Review')
+                        ->modalDescription('This document will be submitted for review. The status will change to "Under Review".')
+                        ->action(function (CdeDocument $record): void {
+                            $oldStatus = $record->status;
+                            $record->update(['status' => 'under_review']);
+                            \App\Models\CdeActivityLog::record(
+                                $record,
+                                'submitted',
+                                "Document {$record->document_number} submitted for review",
+                                ['status' => ['from' => $oldStatus, 'to' => 'under_review']],
                             );
-                        }
-                        Notification::make()->title('File not found')->danger()->send();
-                    }),
+                            Notification::make()->title('Document submitted for review')->success()->send();
+                        }),
 
-                \Filament\Actions\Action::make('revise')
-                    ->label('New Revision')
-                    ->icon('heroicon-o-arrow-path')
-                    ->color('warning')
-                    ->schema([
-                        Forms\Components\FileUpload::make('file')
-                            ->label('Updated File')
-                            ->directory('cde-uploads/' . $this->record->id)
-                            ->maxSize(51200)->required(),
-                        Forms\Components\Select::make('revision')->options([
-                            'P01' => 'P01',
-                            'P02' => 'P02',
-                            'P03' => 'P03',
-                            'C01' => 'C01',
-                            'C02' => 'C02',
-                            'C03' => 'C03',
-                            'A' => 'Rev A',
-                            'B' => 'Rev B',
-                            'C' => 'Rev C',
-                        ])->required()->label('New Revision'),
-                        Forms\Components\Select::make('status')->options([
-                            'S0' => 'S0 - WIP',
-                            'S1' => 'S1 - Coordination',
-                            'S2' => 'S2 - Information',
-                            'S3' => 'S3 - Review',
-                            'S4' => 'S4 - Approval',
-                        ])->label('Suitability'),
-                        Forms\Components\Textarea::make('description')->label('Change Notes')->rows(2),
-                    ])
-                    ->action(function (array $data, CdeDocument $record): void {
-                        $filePath = $data['file'];
-                        $fileSize = Storage::disk('public')->exists($filePath) ? Storage::disk('public')->size($filePath) : 0;
-                        $fileType = pathinfo($filePath, PATHINFO_EXTENSION);
+                    \Filament\Actions\Action::make('approveDocument')
+                        ->label('Approve')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->visible(fn(CdeDocument $record) => in_array($record->status, ['under_review', 'S3', 'S4']))
+                        ->schema([
+                            Forms\Components\Textarea::make('comments')
+                                ->label('Approval Comments')
+                                ->rows(2)
+                                ->placeholder('Optional comments...'),
+                        ])
+                        ->action(function (array $data, CdeDocument $record): void {
+                            $record->update(['status' => 'approved']);
+                            $desc = "Document {$record->document_number} approved";
+                            if (!empty($data['comments'])) {
+                                $desc .= ": {$data['comments']}";
+                            }
+                            \App\Models\CdeActivityLog::record(
+                                $record,
+                                'approved',
+                                $desc,
+                                ['status' => ['from' => 'under_review', 'to' => 'approved']],
+                            );
+                            Notification::make()->title('Document approved')->success()->send();
+                        }),
 
-                        $record->update([
-                            'file_path' => $filePath,
-                            'file_size' => $fileSize,
-                            'file_type' => $fileType,
-                            'revision' => $data['revision'],
-                            'status' => $data['status'] ?? $record->status,
-                            'description' => $data['description'] ?? $record->description,
-                        ]);
+                    \Filament\Actions\Action::make('rejectDocument')
+                        ->label('Reject / Revise')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->visible(fn(CdeDocument $record) => in_array($record->status, ['under_review', 'S3', 'S4']))
+                        ->schema([
+                            Forms\Components\Textarea::make('reason')
+                                ->label('Rejection Reason')
+                                ->rows(3)
+                                ->required(),
+                        ])
+                        ->action(function (array $data, CdeDocument $record): void {
+                            $record->update(['status' => 'revision']);
+                            \App\Models\CdeActivityLog::record(
+                                $record,
+                                'rejected',
+                                "Document {$record->document_number} rejected: {$data['reason']}",
+                                ['status' => ['from' => 'under_review', 'to' => 'revision'], 'reason' => $data['reason']],
+                            );
+                            Notification::make()->title('Document sent back for revision')->warning()->send();
+                        }),
 
-                        Notification::make()->title('Revision uploaded: ' . $data['revision'])->success()->send();
-                    }),
-
-                \Filament\Actions\Action::make('editMeta')
-                    ->label('Edit')
-                    ->icon('heroicon-o-pencil')
-                    ->schema([
-                        Forms\Components\TextInput::make('title')->required(),
-                        Forms\Components\TextInput::make('document_number')->required(),
-                        Forms\Components\Select::make('discipline')->options([
-                            'architecture' => 'Architecture',
-                            'structural' => 'Structural',
-                            'mechanical' => 'Mechanical',
-                            'electrical' => 'Electrical',
-                            'civil' => 'Civil',
-                            'other' => 'Other',
-                        ]),
-                        Forms\Components\Select::make('status')->options([
-                            'S0' => 'S0 - WIP',
-                            'S1' => 'S1 - Coordination',
-                            'S2' => 'S2 - Information',
-                            'S3' => 'S3 - Review',
-                            'S4' => 'S4 - Approval',
-                            'S6' => 'S6 - PIM',
-                            'S7' => 'S7 - AIM',
-                        ])->label('Suitability'),
-                        Forms\Components\Textarea::make('description')->rows(2),
-                    ])
-                    ->fillForm(fn(CdeDocument $record) => $record->toArray())
-                    ->action(function (array $data, CdeDocument $record): void {
-                        $record->update($data);
-                        Notification::make()->title('Document updated')->success()->send();
-                    }),
-
-                \Filament\Actions\Action::make('moveToFolder')
-                    ->label('Move')
-                    ->icon('heroicon-o-arrow-right-on-rectangle')
-                    ->color('gray')
-                    ->schema([
-                        Forms\Components\Select::make('cde_folder_id')
-                            ->label('Move to Folder')
-                            ->options(fn() => collect([null => '📁 Root'])->merge(
-                                CdeFolder::where('cde_project_id', $this->record->id)
-                                    ->orderBy('name')
-                                    ->pluck('name', 'id')
-                                    ->mapWithKeys(fn($name, $id) => [$id => '📁 ' . $name])
-                            ))
-                            ->required(),
-                    ])
-                    ->action(function (array $data, CdeDocument $record): void {
-                        $folderId = $data['cde_folder_id'] === '' ? null : $data['cde_folder_id'];
-                        $record->update(['cde_folder_id' => $folderId]);
-                        Notification::make()->title('Document moved')->success()->send();
-                    }),
-
-                \Filament\Actions\Action::make('delete')
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->requiresConfirmation()
-                    ->action(function (CdeDocument $record): void {
-                        if ($record->file_path && Storage::disk('public')->exists($record->file_path)) {
-                            Storage::disk('public')->delete($record->file_path);
-                        }
-                        $record->delete();
-                        Notification::make()->title('Document deleted')->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('delete')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->action(function (CdeDocument $record): void {
+                            if ($record->file_path && Storage::disk('public')->exists($record->file_path)) {
+                                Storage::disk('public')->delete($record->file_path);
+                            }
+                            $record->delete();
+                            Notification::make()->title('Document deleted')->success()->send();
+                        }),
+                ]),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),

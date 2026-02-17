@@ -6,3 +6,123 @@
 /*
  * InfraHub Tenant App Panel Theme
  */
+
+/* ── Narrower main sidebar ──────────────────────────── */
+.fi-sidebar.fi-main-sidebar {
+    width: 13rem !important;
+    min-width: 13rem !important;
+}
+
+/* ── Reduce padding between main sidebar and content ── */
+.fi-main {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+}
+
+/* ── Reduce gap between sub-nav sidebar and page content */
+.fi-page-has-sub-navigation .fi-page-main {
+    gap: 1rem !important;
+}
+
+/* ── Narrower sub-navigation sidebar (module pages) ─── */
+.fi-page-sub-navigation-sidebar-ctn {
+    width: 11rem !important;
+    min-width: 11rem !important;
+    flex-shrink: 0;
+}
+
+.fi-page-sub-navigation-sidebar {
+    gap: 1rem !important;
+}
+
+.fi-page-sub-navigation-sidebar-ctn .fi-sidebar-item-label {
+    font-size: 0.8125rem !important;
+}
+
+.fi-page-sub-navigation-sidebar-ctn .fi-sidebar-group-label {
+    font-size: 0.75rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    opacity: 0.7;
+}
+
+/* ── Compact table styling ──────────────────────────── */
+
+/* Row vertical spacing: target the text wrapper (source of py-4 default) */
+.fi-ta-text:not(.fi-inline) {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+    font-size: 0.8125rem !important;
+    line-height: 1.375rem !important;
+}
+
+/* Match spacing on action & checkbox cells (also default py-4) */
+.fi-ta-cell:has(.fi-ta-actions),
+.fi-ta-cell:has(.fi-ta-record-checkbox),
+.fi-ta-cell.fi-ta-selection-cell {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}
+
+/* Compact header cells */
+.fi-ta-header-cell {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    font-size: 0.75rem !important;
+}
+
+/* Smaller badges in tables */
+.fi-ta-cell .fi-badge {
+    font-size: 0.6875rem !important;
+    padding: 0.125rem 0.5rem !important;
+}
+
+/* Compact action buttons */
+.fi-ta-actions {
+    gap: 0.25rem !important;
+}
+
+.fi-ta-actions .fi-icon-btn {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+}
+
+/* Sticky actions column on the right */
+.fi-ta-cell:last-of-type:has(.fi-ta-actions) {
+    position: sticky !important;
+    right: 0 !important;
+    z-index: 5;
+    background-color: white !important;
+    box-shadow: -2px 0 4px -2px rgba(0, 0, 0, 0.06);
+}
+
+.dark .fi-ta-cell:last-of-type:has(.fi-ta-actions) {
+    background-color: rgb(17 24 39) !important;
+}
+
+.fi-ta-row.fi-striped .fi-ta-cell:last-of-type:has(.fi-ta-actions) {
+    background-color: rgb(249 250 251) !important;
+}
+
+.dark .fi-ta-row.fi-striped .fi-ta-cell:last-of-type:has(.fi-ta-actions) {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+.fi-ta-header-cell:last-of-type {
+    position: sticky !important;
+    right: 0 !important;
+    z-index: 6;
+    background-color: white !important;
+}
+
+.dark .fi-ta-header-cell:last-of-type {
+    background-color: rgb(17 24 39) !important;
+}
+
+/* Reduce footer/pagination padding */
+.fi-ta-content+div {
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+}

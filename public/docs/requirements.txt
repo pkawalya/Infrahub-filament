@@ -1,0 +1,973 @@
+
+2. SYSTEM-WIDE REQUIREMENTS
+2.1 Platform Architecture
+REQ-SYS-001: The system shall provide web-based access through modern browsers (Chrome, Firefox, Safari, Edge) without requiring plugins.
+REQ-SYS-002: The system shall provide native mobile applications for Android devices.
+REQ-SYS-003: The system shall support offline functionality with automatic synchronization when connectivity is restored.
+REQ-SYS-004: The system shall maintain data consistency across all access points (web, mobile, offline).
+REQ-SYS-005: The system shall support multi-language interfaces for international deployments.
+2.2 Performance Requirements
+REQ-SYS-006: The system shall support concurrent access by unlimited users without performance degradation.
+REQ-SYS-007: Page load times shall not exceed 3 seconds under normal network conditions.
+REQ-SYS-008: Mobile app synchronization shall complete within 5 minutes for typical daily field data.
+REQ-SYS-009: The system shall support projects with up to 1 million documents without performance impact.
+REQ-SYS-010: Real-time dashboard updates shall reflect changes within 30 seconds.
+2.3 Data Security & Privacy
+REQ-SYS-011: All data transmission shall be encrypted using TLS 1.3 or higher.
+REQ-SYS-012: All data at rest shall be encrypted using AES-256 or equivalent.
+REQ-SYS-013: The system shall maintain comprehensive audit logs for all data access and modifications.
+REQ-SYS-014: Audit logs shall be immutable and retained for a minimum of 7 years.
+REQ-SYS-015: The system shall support GDPR, CCPA, and other relevant data protection regulations.
+3. COMMON DATA ENVIRONMENT (CDE) MODULE
+3.1 Document & Drawing Management
+3.1.1 Central Repository
+REQ-CDE-001: The system shall provide a centralized, cloud-based document repository accessible to all authorized project participants.
+REQ-CDE-002: The system shall support storage of all common file formats including:
+CAD drawings (DWG, DXF, DGN)
+Documents (PDF, DOC, DOCX, XLS, XLSX, PPT)
+Images (JPG, PNG, TIFF, BMP)
+Models (IFC, RVT, NWD, NWC)
+Videos (MP4, AVI, MOV)
+REQ-CDE-003: Individual file size limits shall be minimum 2GB per file.
+REQ-CDE-004: Total project storage shall scale to accommodate projects of any size.
+3.1.2 Folder Structure & Organization
+REQ-CDE-005: The system shall support hierarchical folder structures configurable by:
+Project
+Discipline (Architectural, Structural, MEP, Civil, etc.)
+Document type
+Contract package
+Custom taxonomies
+REQ-CDE-006: The system shall support multiple folder structure templates that can be applied to new projects.
+REQ-CDE-007: The system shall allow folder structures to be modified during project execution without breaking links.
+REQ-CDE-008: The system shall support bulk folder creation and copying between projects.
+3.1.3 Drawing Registers
+REQ-CDE-009: The system shall maintain automated drawing registers with metadata including:
+Drawing number
+Drawing title
+Discipline
+Revision number
+Issue date
+Status
+Author/originator
+Scale
+File format
+REQ-CDE-010: Drawing registers shall be automatically updated when new drawings are uploaded or revised.
+REQ-CDE-011: The system shall support custom drawing numbering conventions per project or organization.
+REQ-CDE-012: Drawing registers shall be exportable to Excel, PDF, and other standard formats.
+3.1.4 Version Control & Comparison
+REQ-CDE-013: The system shall automatically version all documents, creating new versions on each update.
+REQ-CDE-014: The system shall retain all previous versions with full metadata and content.
+REQ-CDE-015: Users shall be able to view any previous version without overwriting the current version.
+REQ-CDE-016: The system shall provide a side-by-side comparison of document versions.
+REQ-CDE-017: For drawings, the system shall provide visual markup showing differences between versions.
+REQ-CDE-018: The system shall prevent accidental overwriting of documents by concurrent users.
+REQ-CDE-019: The system shall support check-out/check-in functionality for controlled editing.
+REQ-CDE-020: Version history shall include metadata: who, when, what changed, and why (if provided).
+3.1.5 Markups & Annotations
+REQ-CDE-021: The system shall provide built-in markup tools for PDFs and drawings without requiring external software.
+REQ-CDE-022: Markup tools shall include:
+Text annotations and comments
+Cloud/callout shapes
+Arrows and lines
+Highlighting
+Stamps (approved, rejected, custom)
+Measurement tools
+Freehand drawing
+REQ-CDE-023: Markups shall be saved as separate layers that can be toggled on/off.
+REQ-CDE-024: Multiple users shall be able to add markups to the same document simultaneously.
+REQ-CDE-025: Each markup shall be attributed to the user who created it with timestamp.
+REQ-CDE-026: Markups shall be exportable as a flattened PDF or as XML for import to CAD systems.
+REQ-CDE-027: The system shall support markup sets that can be applied to multiple drawings.
+3.1.6 File Transmittals
+REQ-CDE-028: The system shall support creation of document transmittals for formal document exchange.
+REQ-CDE-029: Transmittals shall include:
+Transmittal number (auto-generated or manual)
+From/To organizations and individuals
+Subject and description
+Document list with purpose codes
+Required actions
+Response due dates
+REQ-CDE-030: The system shall support standard transmittal templates per organization or project.
+REQ-CDE-031: Recipients shall receive notifications of new transmittals via email and in-app.
+REQ-CDE-032: Recipients shall be able to respond to transmittals directly within the system.
+REQ-CDE-033: Transmittal status shall be tracked (sent, received, acknowledged, responded).
+REQ-CDE-034: The system shall maintain a complete transmittal register with search and filter capabilities.
+3.1.7 Access Control & Permissions
+REQ-CDE-035: The system shall support granular permission controls at folder, document, and field levels.
+REQ-CDE-036: Permission levels shall include minimum:
+No access
+View only
+Download
+Comment/markup
+Upload
+Edit
+Delete
+Manage permissions
+REQ-CDE-037: Permissions shall be assignable by:
+Individual users
+User roles
+Organizations
+Project teams
+REQ-CDE-038: The system shall support temporary access grants with automatic expiration.
+REQ-CDE-039: Permission changes shall be logged in the audit trail.
+REQ-CDE-040: Users shall only see folders and documents they have permission to access.
+3.1.8 ISO 19650 Compliance
+REQ-CDE-041: The system shall implement the ISO 19650 information management workflow with distinct containers:
+Work in Progress (WIP)
+Shared
+Published
+Archive
+REQ-CDE-042: Document status transitions shall follow ISO 19650 defined workflows.
+REQ-CDE-043: The system shall enforce suitability codes according to ISO 19650 standards.
+REQ-CDE-044: The system shall maintain the Common Data Environment (CDE) as defined in ISO 19650.
+REQ-CDE-045: The system shall support ISO 19650 Level 2 and Level 3 (BIM Level 2 and 3) requirements.
+REQ-CDE-046: The system shall generate ISO 19650 compliant naming conventions and metadata.
+3.1.9 Audit Trail
+REQ-CDE-047: The system shall log all document activities including:
+Uploads
+Downloads
+Views
+Edits
+Deletions
+Permission changes
+Status changes
+Transmittal actions
+REQ-CDE-048: Audit logs shall capture: user, timestamp, action, affected items, and source (IP/device).
+REQ-CDE-049: Audit trails shall be searchable and filterable by date range, user, action type, and document.
+REQ-CDE-050: Audit logs shall be exportable for compliance and legal purposes.
+REQ-CDE-051: The system shall prevent users from modifying or deleting audit log entries.
+3.2 Document Workflows
+3.2.1 Review & Approval Process
+REQ-CDE-052: The system shall support configurable multi-step review and approval workflows.
+REQ-CDE-053: Workflows shall support both sequential (step-by-step) and parallel (simultaneous) approval paths.
+REQ-CDE-054: Workflow steps shall include:
+Review and comment
+Revise and resubmit
+Approve
+Reject
+Conditional approval
+Information only
+REQ-CDE-055: Each workflow step shall allow comments and attachments.
+REQ-CDE-056: The system shall support workflow templates that can be applied to document types or folders.
+REQ-CDE-057: Workflows shall support conditional routing based on document attributes or previous responses.
+REQ-CDE-058: Users shall be able to delegate workflow tasks to other users.
+REQ-CDE-059: The system shall maintain complete workflow history for each document.
+3.2.2 SLA Tracking
+REQ-CDE-060: The system shall support Service Level Agreement (SLA) tracking for workflow steps.
+REQ-CDE-061: SLA targets shall be configurable by:
+Workflow type
+Document type
+Priority level
+Organization or role
+REQ-CDE-062: The system shall calculate and display time remaining for each workflow task.
+REQ-CDE-063: SLA compliance metrics shall be visible on dashboards and reports.
+REQ-CDE-064: The system shall identify overdue and at-risk workflow tasks.
+REQ-CDE-065: SLA performance shall be tracked by user, team, and organization.
+3.2.3 Automated Reminders
+REQ-CDE-066: The system shall automatically send reminders for pending workflow tasks.
+REQ-CDE-067: Reminder frequency shall be configurable (daily, every 2 days, weekly, etc.).
+REQ-CDE-068: Reminders shall escalate to supervisors or alternate users if tasks remain incomplete.
+REQ-CDE-069: Users shall receive reminders via email, in-app notifications, and optionally SMS.
+REQ-CDE-070: The system shall send advance warnings before SLA deadlines are breached.
+3.2.4 Status Tagging
+REQ-CDE-071: The system shall support standard document status tags including:
+Work in Progress (WIP)
+Shared (for review/collaboration)
+Published (approved for use)
+Archived (superseded/obsolete)
+REQ-CDE-072: The system shall support custom status tags per project or organization.
+REQ-CDE-073: Status changes shall be controlled by workflow completion or manual override with permissions.
+REQ-CDE-074: Document lists and searches shall be filterable by status.
+REQ-CDE-075: Status changes shall trigger notifications to relevant stakeholders.
+REQ-CDE-076: Only the latest "Published" version shall be visible to field users unless they specifically request historical versions.
+4. PROJECT EXECUTION & FIELD MANAGEMENT MODULE
+4.1 Daily Site Operations
+4.1.1 Daily Logs
+REQ-FIELD-001: The system shall provide mobile-optimized daily log entry forms.
+REQ-FIELD-002: Daily logs shall capture:
+Date and weather conditions
+Manpower by trade and hours worked
+Equipment on site and hours operated
+Work activities and locations
+Visitors and deliveries
+Progress achieved
+Issues and delays
+Safety observations
+Photos and videos
+REQ-FIELD-003: Daily logs shall support offline entry with automatic sync when online.
+REQ-FIELD-004: The system shall support multiple daily logs per project (by supervisor, area, or trade).
+REQ-FIELD-005: Daily logs shall be time-stamped and locked after submission to prevent alteration.
+REQ-FIELD-006: Historical daily logs shall be searchable and viewable by authorized users.
+REQ-FIELD-007: The system shall generate summary reports from daily log data across date ranges.
+4.1.2 Weather Tracking
+REQ-FIELD-008: The system shall allow manual entry of weather conditions including:
+Temperature (high/low)
+Precipitation type and amount
+Wind speed and direction
+General conditions (clear, cloudy, rainy, etc.)
+REQ-FIELD-009: The system shall optionally integrate with weather data services to auto-populate conditions based on location.
+REQ-FIELD-010: Weather data shall be associated with daily logs and available for reporting.
+REQ-FIELD-011: Weather history shall be exportable for claims and delay analysis.
+4.1.3 Manpower & Equipment Logs
+REQ-FIELD-012: The system shall maintain manpower logs capturing:
+Trade/classification
+Number of workers
+Hours worked (regular, overtime)
+Tasks performed
+Associated cost codes
+REQ-FIELD-013: The system shall maintain equipment logs capturing:
+Equipment type and ID
+Hours operated
+Operator
+Tasks performed
+Fuel consumption
+Maintenance alerts
+REQ-FIELD-014: Manpower and equipment data shall integrate with cost tracking modules.
+REQ-FIELD-015: The system shall support crew composition templates for recurring work teams.
+4.1.4 Site Photos & Videos
+REQ-FIELD-016: The mobile app shall provide direct camera access for capturing photos and videos.
+REQ-FIELD-017: Photos and videos shall automatically capture metadata:
+GPS location
+Timestamp
+The user who captured
+Device information
+REQ-FIELD-018: Users shall be able to add descriptions, tags, and location references to photos/videos.
+REQ-FIELD-019: Photos and videos shall be organized by:
+Date
+Location/area
+Activity type
+User
+Custom tags
+REQ-FIELD-020: The system shall support photo markup and annotation.
+REQ-FIELD-021: Photos and videos shall be linkable to inspections, tasks, RFIs, and other records.
+REQ-FIELD-022: The system shall support time-lapse photo sequences of construction progress.
+4.1.5 Offline Functionality
+REQ-FIELD-023: The mobile app shall allow all daily logging functions to work fully offline.
+REQ-FIELD-024: Offline data shall be stored securely on the device with encryption.
+REQ-FIELD-025: Upon reconnection, the app shall automatically synchronize offline data to the server.
+REQ-FIELD-026: The system shall detect and resolve conflicts if multiple users edit the same records offline.
+REQ-FIELD-027: Users shall receive confirmation when offline data has been successfully synchronized.
+REQ-FIELD-028: The system shall allow selective sync (e.g., sync logs first, then photos) for bandwidth management.
+4.2 Quality & Safety Management
+4.2.1 Inspections & Checklists
+REQ-QS-001: The system shall provide customizable inspection templates and checklists.
+REQ-QS-002: Inspection templates shall support:
+Multiple question types (yes/no, pass/fail, numeric, text, dropdown, multiple choice)
+Conditional questions based on previous answers
+Required vs optional fields
+Photo requirements
+Signature capture
+GPS location capture
+REQ-QS-003: The system shall support inspection scheduling and assignment.
+REQ-QS-004: Inspections shall be performable offline on mobile devices.
+REQ-QS-005: Inspection results shall automatically calculate pass/fail status based on defined criteria.
+REQ-QS-006: Failed inspections shall automatically generate tasks or NCRs for resolution.
+REQ-QS-007: The system shall maintain inspection history linked to locations, activities, and contracts.
+REQ-QS-008: Inspection reports shall be automatically generated and distributable via the system.
+4.2.2 Non-Conformance Reports (NCRs), Defects & Snag Lists
+REQ-QS-009: The system shall support creation and management of non-conformance reports (NCRs), defects, and snag items.
+REQ-QS-010: NCR/Defect records shall capture:
+Description and location
+Severity/priority
+Responsible party
+Due date
+Associated costs
+Photos and attachments
+Root cause
+Corrective actions
+Status
+REQ-QS-011: NCRs/Defects shall support workflow routing for review and approval.
+REQ-QS-012: The system shall track NCR/Defect status (open, in progress, resolved, verified, closed).
+REQ-QS-013: NCRs/Defects shall be linkable to inspections, drawings, specifications, and contracts.
+REQ-QS-014: The system shall generate snag lists by location, trade, or package.
+REQ-QS-015: Snag lists shall be exportable and suitable for handover documentation.
+REQ-QS-016: The system shall track NCR/Defect metrics (count, resolution time, repeat occurrences).
+4.2.3 Safety Observations & Incidents
+REQ-QS-017: The system shall support safety observation reporting including:
+Safe behaviors (positive observations)
+Unsafe conditions
+Unsafe acts
+Near misses
+Hazards
+REQ-QS-018: Safety observations shall capture:
+Type and category
+Location
+Personnel involved
+Photos
+Immediate actions taken
+Follow-up required
+REQ-QS-019: The system shall support incident reporting for:
+Injuries (first aid, medical treatment, lost time)
+Property damage
+Environmental incidents
+Security breaches
+REQ-QS-020: Incident reports shall capture:
+Date, time, and location
+Personnel involved
+Witnesses
+Description of incident
+Injuries sustained
+Treatment provided
+Property damage description
+Photos and diagrams
+Immediate response actions
+REQ-QS-021: Incident reports shall trigger notifications to safety managers and designated personnel.
+REQ-QS-022: The system shall support injury classification per OSHA or local regulatory standards.
+4.2.4 Root Cause & Corrective Actions
+REQ-QS-023: The system shall support root cause analysis workflows for NCRs and incidents.
+REQ-QS-024: Root cause analysis shall include:
+5 Whys methodology
+Fishbone/Ishikawa diagrams
+Failure mode categorization
+Contributing factors
+REQ-QS-025: The system shall support corrective and preventive action (CAPA) tracking.
+REQ-QS-026: Corrective actions shall include:
+Description of action
+Responsible party
+Due date
+Implementation status
+Verification method
+Effectiveness review
+REQ-QS-027: The system shall link corrective actions to the originating NCR or incident.
+REQ-QS-028: The system shall track repeat issues and patterns requiring systemic changes.
+4.3 RFIs & Submittals
+4.3.1 RFI Management
+REQ-RFI-001: The system shall provide request for information (RFI) creation, tracking, and management.
+REQ-RFI-002: RFI records shall capture:
+RFI number (auto-generated or manual)
+Subject and description
+Drawing/specification references
+Cost impact (yes/no/unknown)
+Schedule impact (yes/no/unknown)
+Priority
+Requested by
+Assigned to
+Required response date
+Attachments and photos
+REQ-RFI-003: RFIs shall support workflow routing for review and response.
+REQ-RFI-004: The system shall track RFI status (draft, submitted, under review, answered, closed).
+REQ-RFI-005: RFI responses shall capture:
+Response description
+Attachments and sketches
+Cost implications
+Schedule implications
+Responder and date
+REQ-RFI-006: RFIs shall be linkable to drawings, specifications, submittals, and change orders.
+REQ-RFI-007: The system shall maintain an RFI register with search and filter capabilities.
+REQ-RFI-008: The system shall track RFI metrics (response time, open count, cost/schedule impacts).
+REQ-RFI-009: RFI responses shall be automatically distributed to relevant stakeholders.
+4.3.2 Submittals
+REQ-SUB-001: The system shall provide submittal creation, tracking, and management.
+REQ-SUB-002: Submittal records shall capture:
+Submittal number
+Specification section reference
+Type (shop drawings, product data, samples, etc.)
+Description
+Submitted by
+Required action (review, approval, etc.)
+Required response date
+Status
+Attachments
+REQ-SUB-003: The system shall maintain a submittal register/log.
+REQ-SUB-004: Submittals shall support workflow routing for review and approval.
+REQ-SUB-005: Submittal responses shall include:
+Action taken (approved, approved as noted, revise and resubmit, rejected)
+Comments
+Marked-up documents
+Responder and date
+REQ-SUB-006: The system shall track submittal status through multiple review cycles if needed.
+REQ-SUB-007: Submittals shall be linkable to drawings, specifications, contracts, and RFIs.
+REQ-SUB-008: The system shall track submittal metrics (response time, approval rate, revision cycles).
+4.3.3 Linking to Project Information
+REQ-RFI-010: RFIs shall be linkable to specific drawings with location markup.
+REQ-RFI-011: RFIs shall be linkable to specification sections and contract documents.
+REQ-SUB-009: Submittals shall be linkable to specification sections and related drawings.
+REQ-SUB-010: When viewing drawings or specifications, users shall see all related RFIs and submittals.
+REQ-RFI-012: The system shall display RFI/submittal markers on drawing views showing their locations.
+4.3.4 Response Time Tracking
+REQ-RFI-013: The system shall track time elapsed from RFI submission to response.
+REQ-RFI-014: The system shall identify overdue RFIs based on required response dates.
+REQ-SUB-011: The system shall track time elapsed from submittal submission to response.
+REQ-SUB-012: The system shall identify overdue submittals based on required response dates.
+REQ-RFI-015: Response time metrics shall be available on dashboards and reports by project, responder, and time period.
+5. TASK & WORKFLOW ENGINE MODULE
+5.1 Task Management
+REQ-TASK-001: The system shall provide comprehensive task creation and management capabilities.
+REQ-TASK-002: Task records shall capture:
+Title and description
+Assigned to (user or role)
+Created by
+Priority (low, normal, high, critical)
+Due date
+Status (not started, in progress, completed, on hold, cancelled)
+% complete
+Actual start and finish dates
+Estimated hours
+Actual hours
+Location/area
+Cost code
+Tags/categories
+REQ-TASK-003: Tasks shall support file attachments and links to project documents.
+REQ-TASK-004: Tasks shall be linkable to:
+Documents and drawings
+RFIs
+Submittals
+Inspections
+NCRs/Defects
+Contracts
+Schedule activities
+Cost codes
+REQ-TASK-005: The system shall support task dependencies (predecessor/successor relationships).
+REQ-TASK-006: The system shall support parent-child task hierarchies (subtasks).
+REQ-TASK-007: The system shall support recurring tasks (daily, weekly, monthly, custom).
+REQ-TASK-008: Tasks shall be viewable in multiple formats:
+List view
+Kanban board
+Calendar view
+Gantt chart
+Map view (location-based)
+5.2 Role-Based Assignment
+REQ-TASK-009: Tasks shall be assignable to:
+Individual users
+Roles (e.g., Project Manager, Site Engineer)
+Teams/groups
+Organizations
+REQ-TASK-010: When assigned to a role or team, the system shall notify all members.
+REQ-TASK-011: Team members shall be able to self-assign tasks from their team queue.
+REQ-TASK-012: The system shall support task reassignment with notification to previous and new assignees.
+REQ-TASK-013: The system shall track task workload by user and team for capacity planning.
+5.3 Escalation Rules
+REQ-TASK-014: The system shall support configurable escalation rules based on:
+Time overdue
+Priority level
+Task type
+Assigned user or role
+REQ-TASK-015: Escalations shall automatically reassign tasks or send notifications to:
+Supervisors/managers
+Alternate users
+Project leadership
+REQ-TASK-016: The system shall log all escalations in the task history.
+REQ-TASK-017: Users shall be notified before escalation occurs (configurable warning period).
+REQ-TASK-018: Escalation rules shall be configurable at organization and project levels.
+5.4 Notifications
+REQ-TASK-019: The system shall send notifications for task events including:
+New task assignment
+Task due soon
+Task overdue
+Task status change
+Task comments added
+Task completed
+Task escalation
+REQ-TASK-020: Notifications shall be delivered via:
+Email
+In-app notifications
+Mobile push notifications
+SMS (configurable)
+REQ-TASK-021: Users shall be able to configure notification preferences by event type and delivery method.
+REQ-TASK-022: Notification frequency shall be configurable (immediate, daily digest, etc.).
+REQ-TASK-023: The system shall support @mentions in task comments to notify specific users.
+REQ-TASK-024: Unread notifications shall be visible in a notification center accessible from all system views.
+6. COST, CONTRACTS & COMMERCIALS MODULE
+6.1 Cost Management
+6.1.1 Project Budgets
+REQ-COST-001: The system shall support creation and management of project budgets.
+REQ-COST-002: Budgets shall be structured by:
+Cost codes (hierarchical)
+Contract packages
+Project phases
+Work breakdown structure (WBS)
+Custom categories
+REQ-COST-003: The system shall support multiple budget versions (original, revised, approved).
+REQ-COST-004: Budget line items shall include:
+Cost code
+Description
+Quantity
+Unit of measure
+Unit cost
+Total budgeted cost
+Contingency
+Notes
+REQ-COST-005: The system shall support budget imports from Excel and other systems.
+REQ-COST-006: Budget modifications shall require approval workflow if configured.
+REQ-COST-007: The system shall maintain complete budget change history.
+6.1.2 Cost Codes
+REQ-COST-008: The system shall support hierarchical cost code structures (CSI, custom, or hybrid).
+REQ-COST-009: Cost codes shall be applicable across all cost transactions:
+Budgets
+Commitments
+Change orders
+Invoices
+Time and materials
+Actuals
+REQ-COST-010: The system shall support master cost code libraries that can be applied to multiple projects.
+REQ-COST-011: Cost codes shall support multiple levels of detail (summary to granular).
+REQ-COST-012: Users shall be able to map external cost codes to internal codes for reporting.
+6.1.3 Commitments
+REQ-COST-013: The system shall track commitments (contracts and purchase orders) against budget.
+REQ-COST-014: Commitment records shall capture:
+Commitment number
+Vendor/contractor
+Description
+Cost codes
+Original commitment amount
+Approved change orders
+Pending change orders
+Revised commitment amount
+Invoiced to date
+Retainage held
+Amount remaining
+REQ-COST-015: The system shall prevent commitment creation if budget is insufficient (with override permission).
+REQ-COST-016: Commitments shall be linkable to contracts and subcontracts.
+REQ-COST-017: The system shall track commitment status (draft, approved, in progress, completed, closed).
+6.1.4 Variations / Change Orders
+REQ-COST-018: The system shall support creation and management of change orders for all contract types.
+REQ-COST-019: Change order records shall capture:
+Change order number
+Related contract/commitment
+Description
+Reason for change
+Cost codes
+Amount
+Schedule impact
+Status (draft, pending approval, approved, rejected)
+Approval chain
+Backup documentation
+REQ-COST-020: Change orders shall support multi-level approval workflows.
+REQ-COST-021: The system shall track change order status through approval process.
+REQ-COST-022: Approved change orders shall automatically update commitment and budget values.
+REQ-COST-023: The system shall maintain a change order log/register per project.
+REQ-COST-024: Change orders shall be analyzable by reason code, cost code, and contractor.
+6.1.5 Forecasting
+REQ-COST-025: The system shall provide cost forecasting capabilities.
+REQ-COST-026: Forecasts shall include:
+Committed costs (contracts + approved COs)
+Pending costs (pending COs)
+Estimated cost to complete
+Total forecasted cost at completion
+Variance to budget
+REQ-COST-027: The system shall support multiple forecast scenarios (optimistic, expected, pessimistic).
+REQ-COST-028: Forecasts shall be updatable based on actual progress and trends.
+REQ-COST-029: Forecast assumptions and basis shall be documentable in the system.
+REQ-COST-030: The system shall track forecast accuracy over time against actuals.
+6.1.6 Actual vs Budget Tracking
+REQ-COST-031: The system shall provide real-time actual vs budget reporting by:
+Cost code
+Contract
+Phase
+Time period
+Custom groupings
+REQ-COST-032: Cost reports shall display:
+Original budget
+Revised budget (with approved changes)
+Committed costs
+Actual costs (invoiced and paid)
+Forecasted final cost
+Variance (amount and %)
+Budget remaining
+REQ-COST-033: The system shall provide earned value management (EVM) metrics:
+Planned value (PV)
+Earned value (EV)
+Actual cost (AC)
+Schedule variance (SV)
+Cost variance (CV)
+Schedule performance index (SPI)
+Cost performance index (CPI)
+REQ-COST-034: Cost dashboards shall use color coding to highlight budget issues (green, yellow, red thresholds).
+REQ-COST-035: The system shall provide trend analysis showing cost performance over time.
+6.2 Contract Management
+6.2.1 Main Contracts
+REQ-CONT-001: The system shall support management of main/prime contracts with clients/owners.
+REQ-CONT-002: Contract records shall capture:
+Contract number and title
+Client/owner
+Contract type (lump sum, unit price, cost plus, GMP, etc.)
+Contract value
+Start and end dates
+Retainage percentage
+Payment terms
+Insurance requirements
+Performance bond details
+Contract documents (uploaded files)
+REQ-CONT-003: The system shall support contract amendments and modifications with version control.
+REQ-CONT-004: Contract values shall integrate with project budgets and forecasts.
+REQ-CONT-005: The system shall track contract status (draft, executed, active, completed, closed).
+6.2.2 Subcontracts
+REQ-CONT-006: The system shall support management of subcontracts and purchase orders.
+REQ-CONT-007: Subcontract records shall include all elements of main contracts plus:
+Scope of work description
+Schedule of values
+Insurance certificates
+Bond information
+Licenses and qualifications
+Safety compliance requirements
+REQ-CONT-008: Subcontracts shall be linkable to cost commitments.
+REQ-CONT-009: The system shall support subcontract close-out workflows.
+REQ-CONT-010: The system shall track subcontractor performance metrics for future selection.
+6.2.3 Payment Applications
+REQ-PAY-001: The system shall support creation and processing of payment applications (progress claims).
+REQ-PAY-002: Payment applications shall include:
+Application number and period
+Schedule of values with line items
+Work completed this period
+Stored materials
+Total completed to date
+Retainage held
+Amount due this period
+Change orders included
+Supporting documentation
+REQ-PAY-003: For subcontractor payments, the system shall support review and approval workflow.
+REQ-PAY-004: For owner payments, the system shall generate standard forms (AIA G702/G703 or equivalent).
+REQ-PAY-005: The system shall track payment application status (draft, submitted, under review, approved, paid).
+REQ-PAY-006: Payment history shall be maintained and accessible for all contracts.
+REQ-PAY-007: The system shall reconcile payments against contract values and commitments.
+6.2.4 Retentions (Retainage)
+REQ-PAY-008: The system shall automatically calculate retainage based on contract terms.
+REQ-PAY-009: Retainage rates shall be configurable per contract and may vary by milestone.
+REQ-PAY-010: The system shall track:
+Retainage withheld to date
+Retainage released
+Retainage remaining
+REQ-PAY-011: The system shall support partial or full retainage release upon contract completion or milestones.
+REQ-PAY-012: Retainage release shall require approval workflow.
+6.2.5 Certificates
+REQ-CERT-001: The system shall support upload and tracking of certificates including:
+Insurance certificates
+Payment and performance bonds
+Professional licenses
+Safety certifications
+Quality certifications (ISO, etc.)
+REQ-CERT-002: The system shall track certificate expiration dates.
+REQ-CERT-003: Users shall receive alerts before certificates expire (configurable lead time).
+REQ-CERT-004: Expired certificates shall be highlighted in contractor records and reports.
+REQ-CERT-005: The system shall maintain certificate history for compliance audits.
+6.2.6 Claims Management
+REQ-CLAIM-001: The system shall support creation and tracking of contract claims.
+REQ-CLAIM-002: Claim records shall capture:
+Claim number and title
+Claimant and respondent
+Contract reference
+Basis of claim (delay, disruption, extra work, etc.)
+Amount claimed
+Time extension requested
+Description and supporting narrative
+Documentation (schedules, correspondence, photos, etc.)
+Status (draft, submitted, under review, negotiating, settled, disputed)
+Resolution and outcome
+REQ-CLAIM-003: Claims shall support attachment of supporting documents, schedules, and cost breakdowns.
+REQ-CLAIM-004: The system shall track claim negotiations and responses.
+REQ-CLAIM-005: Claims shall be linkable to related RFIs, change orders, and correspondence.
+REQ-CLAIM-006: The system shall maintain a claims register with search and reporting capabilities.
+
+
+7. PLANNING & PROGRESS CONTROL MODULE
+7.1 Program of Works (Schedule)
+REQ-PLAN-001: The system shall provide integrated scheduling capabilities with Gantt chart visualization.
+REQ-PLAN-002: The system shall support import of schedules from MS Project, Primavera P6, and other scheduling tools.
+REQ-PLAN-003: Schedule activities shall include:
+Activity ID and name
+Duration
+Start and finish dates (planned, actual, forecasted)
+Predecessors and successors
+Calendar and working days
+Resource assignments
+Cost codes
+Location/area
+% complete
+Float/slack
+Critical path indication
+REQ-PLAN-004: The system shall automatically calculate critical path based on activity relationships.
+REQ-PLAN-005: The system shall support multiple schedule baselines (original, approved, current).
+REQ-PLAN-006: Schedule changes shall be tracked with history and comparison to baseline.
+REQ-PLAN-007: The system shall support resource leveling and workload balancing.
+REQ-PLAN-008: Schedules shall be exportable in standard formats (MPP, XER, PDF, Excel).
+7.2 Milestones
+REQ-PLAN-009: The system shall support creation and tracking of project milestones.
+REQ-PLAN-010: Milestones shall include:
+Name and description
+Target date
+Actual date
+Status (not started, in progress, achieved, missed)
+Responsible party
+Dependencies
+REQ-PLAN-011: Milestone achievements shall trigger notifications to stakeholders.
+REQ-PLAN-012: Milestones shall be displayable on project dashboards and timelines.
+REQ-PLAN-013: The system shall track milestone performance (on-time, delayed, early completion).
+7.3 Look-Ahead Planning
+REQ-PLAN-014: The system shall support short-term look-ahead planning (typically 2-6 weeks).
+REQ-PLAN-015: Look-ahead plans shall include:
+Activities planned for the period
+Resource requirements
+Material requirements
+Constraints and dependencies
+Prerequisite completions
+REQ-PLAN-016: Look-ahead plans shall be updateable weekly or per configured period.
+REQ-PLAN-017: The system shall compare look-ahead plans to actual execution for reliability tracking.
+REQ-PLAN-018: Look-ahead plans shall integrate with procurement and resource planning.
+7.4 Progress Tracking
+REQ-PLAN-019: The system shall support multiple methods of progress tracking:
+% complete (manual entry)
+Units completed vs planned
+Start/finish dates
+Earned value
+Physical measurement
+REQ-PLAN-020: Progress updates shall be capturable on mobile devices from the field.
+REQ-PLAN-021: Progress shall be updateable at activity level and roll up to summary levels.
+REQ-PLAN-022: The system shall calculate schedule performance metrics:
+Planned vs actual progress
+Schedule variance
+Activities ahead/on-time/behind
+Critical activities status
+REQ-PLAN-023: Progress shall be visualized through:
+Gantt charts with progress bars
+S-curves (planned vs actual)
+Histograms
+Trend charts
+7.5 Integration with Other Modules
+REQ-PLAN-024: Schedule activities shall be linkable to:
+Cost codes and budgets
+Tasks and workflows
+Inspections and quality records
+Submittals and RFIs
+Progress photos
+REQ-PLAN-025: Cost progress shall be comparable to schedule progress for earned value analysis.
+REQ-PLAN-026: Delays captured in daily logs shall be linkable to schedule activities for impact analysis.
+REQ-PLAN-027: Progress updates shall automatically update related tasks and notifications.
+8. REPORTING & DASHBOARDS MODULE
+8.1 Real-Time Dashboards
+REQ-DASH-001: The system shall provide role-based dashboards with real-time data.
+REQ-DASH-002: Dashboard widgets shall include:
+Key performance indicators (KPIs)
+Charts and graphs
+Data tables
+Maps
+Activity feeds
+Alerts and notifications
+Quick action buttons
+REQ-DASH-003: Users shall be able to customize their dashboards by adding, removing, and arranging widgets.
+8.1.1 Project Health Dashboard
+REQ-DASH-004: Project health dashboards shall display:
+Overall project status (on track, at risk, critical)
+Schedule performance (ahead, on time, behind)
+Cost performance (under budget, on budget, over budget)
+Quality metrics (inspections pass rate, defect trends)
+Safety metrics (incident rate, observations)
+Outstanding items count (RFIs, submittals, tasks)
+Recent activities and updates
+REQ-DASH-005: Health indicators shall use visual cues (colors, icons) for quick assessment.
+REQ-DASH-006: Users shall be able to drill down from summary metrics to detailed data.
+8.1.2 Cost Performance Dashboard
+REQ-DASH-007: Cost dashboards shall display:
+Budget vs actual vs forecast
+Commitments and remaining budget
+Cash flow (projected vs actual)
+Change order summary
+Cost variance by code/package
+Top cost drivers
+Payment status
+REQ-DASH-008: Cost charts shall include:
+Budget consumption curves
+Cost breakdown by category
+Forecast trends
+Variance analysis charts
+8.1.3 Task Status Dashboard
+REQ-DASH-009: Task dashboards shall display:
+Tasks by status (not started, in progress, completed, overdue)
+My tasks and team tasks
+High-priority tasks
+Tasks due soon
+Task completion trends
+Workload by team member
+REQ-DASH-010: Task visualizations shall include Kanban boards, calendars, and lists.
+8.1.4 File Activity Dashboard
+REQ-DASH-011: Document activity dashboards shall display:
+Recently uploaded files
+Pending reviews and approvals
+Overdue workflow tasks
+Most accessed documents
+Storage usage
+Document status distribution
+Transmittal activity
+8.1.5 Compliance Indicators
+REQ-DASH-012: Compliance dashboards shall display:
+ISO 19650 compliance status
+Overdue submittals and RFIs
+Expired certificates
+Incomplete inspections
+Open NCRs and defects
+Safety observation trends
+Audit findings
+REQ-DASH-013: Compliance indicators shall highlight items requiring immediate attention.
+8.2 Custom Reports
+8.2.1 Report Builder
+REQ-REP-001: The system shall provide a custom report builder with drag-and-drop interface.
+REQ-REP-002: Report builder shall support:
+Selection of data sources (documents, tasks, costs, etc.)
+Field selection and ordering
+Filtering and sorting
+Grouping and subtotals
+Calculated fields and formulas
+Charts and visualizations
+Headers, footers, and branding
+REQ-REP-003: Users shall be able to save custom report templates for reuse.
+REQ-REP-004: Report templates shall be shareable across projects and organizations.
+REQ-REP-005: The system shall include a library of pre-built report templates for common needs.
+8.2.2 Export Formats
+REQ-REP-006: Reports shall be exportable in formats including:
+PDF
+Excel (XLSX)
+CSV
+Word (DOCX)
+HTML
+PNG/JPG (for charts)
+REQ-REP-007: Exported reports shall maintain formatting and layout.
+REQ-REP-008: Large reports shall support pagination and sectioning.
+8.2.3 Scheduled Reports
+REQ-REP-009: The system shall support scheduling of recurring reports.
+REQ-REP-010: Scheduled reports shall be configurable for:
+Frequency (daily, weekly, monthly, quarterly)
+Specific dates/times
+Recipients (email distribution list)
+Format preferences
+Filter criteria
+REQ-REP-011: Scheduled reports shall be automatically generated and distributed at specified times.
+REQ-REP-012: Users shall receive confirmation when scheduled reports are sent.
+REQ-REP-013: Failed report generation shall trigger alerts to administrators.
+8.2.4 Government & Client Templates
+REQ-REP-014: The system shall support upload and use of custom report templates provided by clients or regulatory agencies.
+REQ-REP-015: Template mappings shall allow system data to populate specific fields in external templates.
+REQ-REP-016: The system shall include templates for common forms including:
+AIA forms (G702, G703, etc.)
+OSHA forms
+Project status reports
+Progress reports
+Handover documentation
+REQ-REP-017: Template-based reports shall be validatable before submission to ensure completeness.
+9. USER & ACCESS MANAGEMENT MODULE
+9.1 Multi-Project Support
+REQ-USER-001: The system shall support unlimited projects per organization.
+REQ-USER-002: Users shall have access to multiple projects based on their roles and permissions.
+REQ-USER-003: Users shall be able to switch between projects without logging out.
+REQ-USER-004: The system shall provide a project selector accessible from all screens.
+REQ-USER-005: Users shall be able to set a default project that loads upon login.
+REQ-USER-006: Project-specific settings and preferences shall be maintained separately for each project.
+9.2 Role-Based Permissions
+REQ-USER-007: The system shall support flexible, role-based access control (RBAC).
+REQ-USER-008: Standard roles shall include:
+System Administrator
+Organization Administrator
+Project Administrator
+Project Manager
+Site Manager/Supervisor
+Engineer
+QA/QC Manager
+Safety Manager
+Document Controller
+Contractor/Subcontractor
+Consultant
+Client/Owner Representative
+Read-Only User
+REQ-USER-009: Organizations shall be able to create custom roles with specific permission sets.
+REQ-USER-010: Permissions shall be granular, controlling access to:
+Modules and features
+View, create, edit, delete actions
+Approval authorities
+Report access
+Data fields
+Folders and documents
+REQ-USER-011: Users shall be assignable to multiple roles per project.
+REQ-USER-012: Role permissions shall be inheritable and overridable at project level.
+REQ-USER-013: Permission changes shall take effect immediately without requiring user logout.
+9.3 Organization-Level Access
+REQ-USER-014: The system shall support hierarchical organization structures.
+REQ-USER-015: Organization structures shall include:
+Parent company
+Divisions/business units
+Project teams
+Subcontractors
+Consultants
+REQ-USER-016: Users shall inherit base permissions from their organization.
+REQ-USER-017: Organization administrators shall manage users within their organization.
+REQ-USER-018: Inter-organization permissions shall control data sharing between companies on shared projects.
+REQ-USER-019: The system shall support organization-level templates, settings, and standards.
+9.4 Two-Factor Authentication
+REQ-USER-020: The system shall support two-factor authentication (2FA) for enhanced security.
+REQ-USER-021: 2FA methods shall include:
+Authenticator apps (Google Authenticator, Authy, etc.)
+SMS codes
+Email codes
+Hardware tokens (optional)
+REQ-USER-022: Organizations shall be able to mandate 2FA for all users.
+REQ-USER-023: Users shall be able to configure trusted devices to reduce 2FA prompts.
+REQ-USER-024: The system shall provide backup codes for 2FA recovery.
+9.5 Audit & Activity Logs
+REQ-USER-025: The system shall maintain comprehensive activity logs for all user actions.
+REQ-USER-026: Activity logs shall capture:
+User login/logout
+Access attempts (successful and failed)
+Data access (view, download)
+Data modifications (create, edit, delete)
+Permission changes
+Configuration changes
+Report generation
+Export activities
+REQ-USER-027: Activity logs shall include:
+User identity
+Timestamp
+Action type
+Affected resources
+Source (IP address, device type)
+Result (success/failure)
+REQ-USER-028: Activity logs shall be searchable and filterable by user, date range, action type, and resource.
+REQ-USER-029: Activity logs shall be exportable for compliance and security audits.
+REQ-USER-030: Activity logs shall be tamper-proof and immutable.
+REQ-USER-031: Administrators shall receive alerts for suspicious activities (multiple failed logins, unusual access patterns, etc.).
+10. INTEGRATION & INTEROPERABILITY
+10.1 API Access
+REQ-INT-001: The system shall provide a comprehensive RESTful API for external integrations.
+REQ-INT-002: API access shall be secured using API keys and OAuth 2.0 authentication.
+REQ-INT-003: API documentation shall be comprehensive, including endpoints, parameters, responses, and examples.
+REQ-INT-004: The API shall support all major system functions including document management, tasks, costs, and reporting.
+REQ-INT-005: API rate limits shall be configurable per organization and use case.
+10.2 Common Integration Points
+REQ-INT-006: The system shall support integration with:
+Accounting systems (QuickBooks, Sage, SAP, etc.)
+ERP systems
+BIM/CAD software (Autodesk Construction Cloud, Revit, Navisworks, etc.)
+Scheduling tools (MS Project, Primavera P6, etc.)
+Document management systems
+Email systems (Outlook, Gmail)
+Single sign-on (SSO) providers
+REQ-INT-007: Integrations shall support bi-directional data sync where applicable.
+REQ-INT-008: Integration errors shall be logged and alert appropriate users.
+10.3 Data Import/Export
+REQ-INT-009: The system shall support bulk data import via:
+Excel spreadsheets
+CSV files
+XML
+JSON
+REQ-INT-010: Import templates shall be provided for common data types.
+REQ-INT-011: Import processes shall validate data and report errors before committing.
+REQ-INT-012: The system shall support bulk export of all data types in common formats.
+REQ-INT-013: Exports shall include all metadata and relationships.
+
+
+13. COMPLIANCE & STANDARDS
+13.1 Industry Standards
+REQ-COMP-001: The system shall comply with ISO 19650 for information management.
+REQ-COMP-002: The system shall support BIM Level 2 and Level 3 workflows.
+REQ-COMP-003: Cost coding shall support CSI MasterFormat and UniFormat standards.
+REQ-COMP-004: The system shall generate reports compliant with AIA contract document standards.
+13.2 Regional Regulations
+REQ-COMP-005: The system shall comply with data protection regulations applicable in deployment regions including:
+GDPR (European Union)
+CCPA (California, USA)
+PIPEDA (Canada)
+Other regional requirements
+REQ-COMP-006: The system shall support data residency requirements (data stored in specific geographic regions).
+REQ-COMP-007: The system shall support localized formats for dates, numbers, currencies, and measurements.
+13.3 Security Standards
+REQ-COMP-008: The system shall maintain SOC 2 Type II certification for security controls.
+REQ-COMP-009: The system shall comply with ISO 27001 information security standards.
+REQ-COMP-010: Regular security audits and penetration testing shall be conducted (minimum annually).
+
+

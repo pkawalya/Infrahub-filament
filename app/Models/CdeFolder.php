@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CdeFolder extends Model
 {
-    protected $fillable = ['cde_project_id', 'name', 'parent_id', 'description', 'sort_order'];
+    protected $fillable = ['company_id', 'cde_project_id', 'name', 'parent_id', 'description', 'sort_order', 'suitability_code'];
 
     public function project()
     {

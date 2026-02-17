@@ -93,8 +93,29 @@ class CdeProject extends Model
     {
         return $this->hasMany(PurchaseOrder::class, 'cde_project_id');
     }
+    public function submittals()
+    {
+        return $this->hasMany(Submittal::class);
+    }
+    public function transmittals()
+    {
+        return $this->hasMany(Transmittal::class);
+    }
+    public function safetyInspections()
+    {
+        return $this->hasMany(SafetyInspection::class);
+    }
+    public function snagItems()
+    {
+        return $this->hasMany(SnagItem::class);
+    }
+    public function activityLogs()
+    {
+        return $this->morphMany(CdeActivityLog::class, 'loggable');
+    }
 
     // ─── Module Access ───────────────────────────────────────────
+
 
     public function moduleAccess()
     {

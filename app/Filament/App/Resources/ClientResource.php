@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\ClientResource\Pages;
 use App\Models\Client;
 use Filament\Actions;
+use Filament\Infolists;
 use Filament\Schemas;
 use Filament\Forms;
 use Filament\Schemas\Schema;
@@ -18,6 +19,52 @@ class ClientResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
     protected static string|\UnitEnum|null $navigationGroup = 'Company';
     protected static ?int $navigationSort = 1;
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->schema([
+            Schemas\Components\Section::make('Client Information')->schema([
+                Infolists\Components\TextEntry::make('name')
+                    ->icon('heroicon-o-user'),
+                Infolists\Components\TextEntry::make('email')
+                    ->icon('heroicon-o-envelope')
+                    ->copyable()
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('phone')
+                    ->icon('heroicon-o-phone')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('company_name')
+                    ->label('Company')
+                    ->icon('heroicon-o-building-office')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('tax_id')
+                    ->label('Tax ID')
+                    ->placeholder('—'),
+                Infolists\Components\IconEntry::make('is_active')
+                    ->label('Active')
+                    ->boolean(),
+            ])->columns(2),
+
+            Schemas\Components\Section::make('Address')->schema([
+                Infolists\Components\TextEntry::make('address')
+                    ->columnSpanFull()
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('city')->placeholder('—'),
+                Infolists\Components\TextEntry::make('state')->placeholder('—'),
+                Infolists\Components\TextEntry::make('country')->placeholder('—'),
+                Infolists\Components\TextEntry::make('postal_code')->placeholder('—'),
+            ])->columns(2)->collapsible(),
+
+            Schemas\Components\Section::make('Additional Information')->schema([
+                Infolists\Components\TextEntry::make('notes')
+                    ->columnSpanFull()
+                    ->placeholder('No notes.'),
+                Infolists\Components\TextEntry::make('created_at')
+                    ->label('Client Since')
+                    ->dateTime(),
+            ])->collapsible(),
+        ]);
+    }
 
     public static function form(Schema $schema): Schema
     {

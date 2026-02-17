@@ -4,11 +4,12 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource;
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
+use App\Models\Asset;
 use App\Models\Client;
 use App\Models\User;
 use App\Models\WorkOrder;
-use App\Models\WorkOrderTask;
 use App\Models\WorkOrderItem;
+use App\Models\WorkOrderTask;
 use App\Models\WorkOrderType;
 use App\Support\CurrencyHelper;
 use Filament\Actions\Action;
@@ -21,7 +22,6 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Illuminate\Contracts\Support\Htmlable;
 
 class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
 {
@@ -33,29 +33,27 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
     protected static ?string $title = 'Work Order Management';
     protected string $view = 'filament.app.pages.modules.core-fsm';
 
+    /* ───────────────── STAT CARDS ───────────────── */
+
     public function getStats(): array
     {
-        $projectId = $this->record->id;
-        $total = WorkOrder::where('cde_project_id', $projectId)->count();
-        $open = WorkOrder::where('cde_project_id', $projectId)
-            ->whereNotIn('status', ['completed', 'cancelled'])->count();
-        $urgent = WorkOrder::where('cde_project_id', $projectId)
-            ->where('priority', 'urgent')
-            ->whereNotIn('status', ['completed', 'cancelled'])->count();
-        $overdue = WorkOrder::where('cde_project_id', $projectId)
-            ->whereNotIn('status', ['completed', 'cancelled'])
-            ->whereNotNull('due_date')
-            ->where('due_date', '<', now())->count();
-        $completedMonth = WorkOrder::where('cde_project_id', $projectId)
-            ->where('status', 'completed')
-            ->whereMonth('completed_at', now()->month)->count();
+        $pid = $this->record->id;
+        $base = WorkOrder::where('cde_project_id', $pid);
+
+        $total = (clone $base)->count();
+        $open = (clone $base)->whereNotIn('status', ['completed', 'cancelled'])->count();
+        $urgent = (clone $base)->where('priority', 'urgent')->whereNotIn('status', ['completed', 'cancelled'])->count();
+        $overdue = (clone $base)->whereNotIn('status', ['completed', 'cancelled'])->whereNotNull('due_date')->where('due_date', '<', now())->count();
+        $inProg = (clone $base)->where('status', 'in_progress')->count();
+        $compMonth = (clone $base)->where('status', 'completed')->whereMonth('completed_at', now()->month)->whereYear('completed_at', now()->year)->count();
+        $totalCost = (clone $base)->withSum('items', 'amount')->get()->sum('items_sum_amount') ?? 0;
 
         return [
             [
                 'label' => 'Total Work Orders',
                 'value' => $total,
-                'sub' => $open . ' open',
-                'sub_type' => $open > 0 ? 'warning' : 'success',
+                'sub' => $open . ' open · ' . $inProg . ' in progress',
+                'sub_type' => $open > 0 ? 'info' : 'success',
                 'primary' => true,
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085" /></svg>'
             ],
@@ -77,50 +75,196 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
             ],
             [
                 'label' => 'Completed This Month',
-                'value' => $completedMonth,
+                'value' => $compMonth,
                 'sub' => now()->format('F Y'),
                 'sub_type' => 'success',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
                 'icon_bg' => '#ecfdf5'
             ],
+            [
+                'label' => 'Total Cost',
+                'value' => CurrencyHelper::format($totalCost, 0),
+                'sub' => 'Parts & services',
+                'sub_type' => 'neutral',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#6366f1" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+                'icon_bg' => '#eef2ff'
+            ],
         ];
     }
 
+    /* ───────────────── HELPERS ───────────────── */
+
+    private function companyId(): int
+    {
+        return $this->record->company_id;
+    }
+
+    private function projectId(): int
+    {
+        return $this->record->id;
+    }
+
+    private function nextWoNumber(): string
+    {
+        $count = WorkOrder::where('cde_project_id', $this->projectId())->count() + 1;
+        return 'WO-' . str_pad((string) $count, 5, '0', STR_PAD_LEFT);
+    }
+
+    private function teamOptions(): array
+    {
+        return User::where('company_id', $this->companyId())
+            ->where('is_active', true)
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
+    private function clientOptions(): array
+    {
+        return Client::where('company_id', $this->companyId())
+            ->where('is_active', true)
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
+    private function typeOptions(): array
+    {
+        return WorkOrderType::where('company_id', $this->companyId())
+            ->where('is_active', true)
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
+    private function assetOptions(): array
+    {
+        return Asset::where('company_id', $this->companyId())
+            ->pluck('name', 'id')
+            ->toArray();
+    }
+
+    /* ───────────────── FORM SCHEMAS ───────────────── */
+
+    private function woFormSchema(bool $isCreate = false): array
+    {
+        return [
+            Section::make('Work Order Details')->schema([
+                Forms\Components\TextInput::make('wo_number')
+                    ->label('WO Number')
+                    ->default(fn() => $isCreate ? $this->nextWoNumber() : null)
+                    ->required()
+                    ->maxLength(50)
+                    ->unique(table: 'work_orders', column: 'wo_number', ignorable: fn($record) => $record),
+                Forms\Components\TextInput::make('title')
+                    ->required()
+                    ->maxLength(255)
+                    ->columnSpanFull(),
+                Forms\Components\Select::make('work_order_type_id')
+                    ->label('Type')
+                    ->options(fn() => $this->typeOptions())
+                    ->searchable()
+                    ->preload()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')->required()->maxLength(100),
+                        Forms\Components\ColorPicker::make('color'),
+                    ])
+                    ->createOptionUsing(fn(array $data) => WorkOrderType::create(array_merge($data, [
+                        'company_id' => $this->companyId(),
+                        'is_active' => true,
+                    ]))->id),
+                Forms\Components\Select::make('client_id')
+                    ->label('Client')
+                    ->options(fn() => $this->clientOptions())
+                    ->searchable()
+                    ->preload()
+                    ->nullable()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                        Forms\Components\TextInput::make('email')->email()->maxLength(255),
+                        Forms\Components\TextInput::make('phone')->tel()->maxLength(50),
+                        Forms\Components\TextInput::make('company_name')->label('Company Name')->maxLength(255),
+                    ])
+                    ->createOptionUsing(fn(array $data) => Client::create(array_merge($data, [
+                        'company_id' => $this->companyId(),
+                        'is_active' => true,
+                    ]))->id),
+                Forms\Components\Select::make('asset_id')
+                    ->label('Asset / Location')
+                    ->options(fn() => $this->assetOptions())
+                    ->searchable()
+                    ->preload()
+                    ->nullable()
+                    ->createOptionForm([
+                        Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                        Forms\Components\Select::make('category')->options([
+                            'building' => 'Building',
+                            'equipment' => 'Equipment',
+                            'vehicle' => 'Vehicle',
+                            'facility' => 'Facility',
+                            'site' => 'Site / Location',
+                            'other' => 'Other',
+                        ])->required()->searchable()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('custom_category')
+                                    ->label('New Category Name')
+                                    ->required()
+                                    ->maxLength(100),
+                            ])
+                            ->createOptionUsing(fn(array $data) => $data['custom_category']),
+                        Forms\Components\TextInput::make('location')->maxLength(255),
+                        Forms\Components\TextInput::make('serial_number')->label('Serial / ID')->maxLength(100),
+                    ])
+                    ->createOptionUsing(fn(array $data) => Asset::create(array_merge($data, [
+                        'company_id' => $this->companyId(),
+                        'status' => 'active',
+                        'condition' => 'good',
+                    ]))->id),
+                Forms\Components\Select::make('priority')
+                    ->options(WorkOrder::$priorities)
+                    ->required()
+                    ->default('medium'),
+                Forms\Components\Select::make('status')
+                    ->options(WorkOrder::$statuses)
+                    ->required()
+                    ->default($isCreate ? 'pending' : null),
+                Forms\Components\Select::make('assigned_to')
+                    ->label('Assign To')
+                    ->options(fn() => $this->teamOptions())
+                    ->searchable()
+                    ->nullable(),
+                Forms\Components\DatePicker::make('due_date'),
+                Forms\Components\DatePicker::make('preferred_date')
+                    ->label('Preferred Date'),
+                Forms\Components\TimePicker::make('preferred_time')
+                    ->label('Preferred Time'),
+                Forms\Components\TextInput::make('preferred_notes')
+                    ->label('Scheduling Notes')
+                    ->maxLength(255),
+            ])->columns(2),
+
+            Section::make('Description & Notes')->schema([
+                Forms\Components\RichEditor::make('description')
+                    ->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList', 'link'])
+                    ->columnSpanFull(),
+                Forms\Components\Textarea::make('notes')
+                    ->rows(3)
+                    ->columnSpanFull(),
+            ])->collapsed(!$isCreate),
+        ];
+    }
+
+    /* ───────────────── HEADER ACTIONS ───────────────── */
+
     protected function getHeaderActions(): array
     {
-        $companyId = $this->record->company_id;
-        $projectId = $this->record->id;
-
         return [
             Action::make('createWorkOrder')
                 ->label('New Work Order')
                 ->icon('heroicon-o-plus-circle')
                 ->color('primary')
-                ->modalWidth('3xl')
-                ->schema([
-                    Section::make('Work Order Details')->schema([
-                        Forms\Components\TextInput::make('wo_number')->label('WO Number')
-                            ->default(fn() => 'WO-' . str_pad((string) (WorkOrder::where('cde_project_id', $projectId)->count() + 1), 5, '0', STR_PAD_LEFT))
-                            ->required()->maxLength(50),
-                        Forms\Components\TextInput::make('title')->required()->maxLength(255)->columnSpanFull(),
-                        Forms\Components\Select::make('work_order_type_id')->label('Type')
-                            ->options(WorkOrderType::where('company_id', $companyId)->pluck('name', 'id'))->searchable(),
-                        Forms\Components\Select::make('client_id')->label('Client')
-                            ->options(Client::where('company_id', $companyId)->where('is_active', true)->pluck('name', 'id'))->searchable(),
-                        Forms\Components\Select::make('priority')->options(WorkOrder::$priorities)->required()->default('medium'),
-                        Forms\Components\Select::make('status')->options(WorkOrder::$statuses)->required()->default('pending'),
-                        Forms\Components\Select::make('assigned_to')->label('Assign To')
-                            ->options(User::where('company_id', $companyId)->where('is_active', true)->pluck('name', 'id'))->searchable(),
-                        Forms\Components\DatePicker::make('due_date'),
-                    ])->columns(2),
-                    Section::make('Description & Notes')->schema([
-                        Forms\Components\Textarea::make('description')->rows(3)->columnSpanFull(),
-                        Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
-                    ])->collapsed(),
-                ])
-                ->action(function (array $data) use ($companyId, $projectId): void {
-                    $data['company_id'] = $companyId;
-                    $data['cde_project_id'] = $projectId;
+                ->modalWidth('4xl')
+                ->schema($this->woFormSchema(isCreate: true))
+                ->action(function (array $data): void {
+                    $data['company_id'] = $this->companyId();
+                    $data['cde_project_id'] = $this->projectId();
                     $data['created_by'] = auth()->id();
                     WorkOrder::create($data);
                     Notification::make()->title('Work Order created successfully')->success()->send();
@@ -128,65 +272,157 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
+    /* ───────────────── TABLE ───────────────── */
+
     public function table(Table $table): Table
     {
-        $projectId = $this->record->id;
-
         return $table
             ->query(
                 WorkOrder::query()
-                    ->where('cde_project_id', $projectId)
-                    ->with(['assignee', 'client', 'type', 'tasks'])
+                    ->where('cde_project_id', $this->projectId())
+                    ->with(['assignee', 'client', 'type', 'tasks', 'items'])
             )
             ->columns([
-                Tables\Columns\TextColumn::make('wo_number')->label('WO #')->searchable()->sortable()->weight('bold')
-                    ->icon('heroicon-o-wrench-screwdriver'),
-                Tables\Columns\TextColumn::make('title')->searchable()->limit(45),
-                Tables\Columns\TextColumn::make('type.name')->label('Type')->badge()->color('info')->toggleable(),
-                Tables\Columns\TextColumn::make('priority')->badge()
-                    ->color(fn(string $state) => match ($state) { 'urgent' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'}),
-                Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) { 'completed' => 'success', 'in_progress' => 'info', 'approved' => 'primary', 'on_hold' => 'warning', 'cancelled' => 'danger', default => 'gray'}),
-                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('Unassigned'),
-                Tables\Columns\TextColumn::make('client.name')->label('Client')->toggleable(),
-                Tables\Columns\TextColumn::make('due_date')->date()->sortable()
-                    ->color(fn($record) => $record->due_date?->isPast() && !in_array($record->status, ['completed', 'cancelled']) ? 'danger' : null),
-                Tables\Columns\TextColumn::make('created_at')->dateTime('M d, Y')->sortable()->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('wo_number')
+                    ->label('WO #')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold')
+                    ->icon('heroicon-o-wrench-screwdriver')
+                    ->copyable()
+                    ->copyMessage('WO number copied'),
+
+                Tables\Columns\TextColumn::make('title')
+                    ->searchable()
+                    ->limit(40)
+                    ->tooltip(fn(WorkOrder $record) => $record->title),
+
+                Tables\Columns\TextColumn::make('type.name')
+                    ->label('Type')
+                    ->badge()
+                    ->color('info')
+                    ->toggleable()
+                    ->placeholder('—'),
+
+                Tables\Columns\TextColumn::make('priority')
+                    ->badge()
+                    ->color(fn(string $state) => match ($state) {
+                        'urgent' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'
+                    })
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn(string $state) => match ($state) {
+                        'completed' => 'success', 'in_progress' => 'info', 'approved' => 'primary',
+                        'on_hold' => 'warning', 'cancelled' => 'danger', default => 'gray'
+                    })
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('assignee.name')
+                    ->label('Assigned To')
+                    ->placeholder('Unassigned')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('tasks_progress')
+                    ->label('Tasks')
+                    ->state(function (WorkOrder $record) {
+                        $total = $record->tasks->count();
+                        if ($total === 0)
+                            return '—';
+                        $done = $record->tasks->where('is_completed', true)->count();
+                        return $done . '/' . $total;
+                    })
+                    ->color(function (WorkOrder $record) {
+                        $total = $record->tasks->count();
+                        if ($total === 0)
+                            return null;
+                        $done = $record->tasks->where('is_completed', true)->count();
+                        return $done === $total ? 'success' : 'warning';
+                    })
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('items_cost')
+                    ->label('Cost')
+                    ->state(fn(WorkOrder $record) => $record->items->sum('amount'))
+                    ->money('USD')
+                    ->sortable(query: fn($query, $direction) => $query->withSum('items', 'amount')->orderBy('items_sum_amount', $direction))
+                    ->toggleable(),
+
+                Tables\Columns\TextColumn::make('client.name')
+                    ->label('Client')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('due_date')
+                    ->date()
+                    ->sortable()
+                    ->color(fn($record) => $record->due_date?->isPast() && !in_array($record->status, ['completed', 'cancelled']) ? 'danger' : null)
+                    ->description(fn($record) => $record->due_date?->isPast() && !in_array($record->status, ['completed', 'cancelled']) ? 'Overdue' : null),
+
+                Tables\Columns\TextColumn::make('started_at')
+                    ->label('Started')
+                    ->dateTime('M d, H:i')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('completed_at')
+                    ->label('Completed')
+                    ->dateTime('M d, H:i')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime('M d, Y')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('status')->options(WorkOrder::$statuses),
-                Tables\Filters\SelectFilter::make('priority')->options(WorkOrder::$priorities),
-                Tables\Filters\SelectFilter::make('assigned_to')->label('Assigned To')
-                    ->options(fn() => User::where('company_id', $this->record->company_id)->where('is_active', true)->pluck('name', 'id')),
+                Tables\Filters\SelectFilter::make('status')
+                    ->options(WorkOrder::$statuses)
+                    ->multiple(),
+                Tables\Filters\SelectFilter::make('priority')
+                    ->options(WorkOrder::$priorities)
+                    ->multiple(),
+                Tables\Filters\SelectFilter::make('assigned_to')
+                    ->label('Assigned To')
+                    ->options(fn() => $this->teamOptions()),
+                Tables\Filters\SelectFilter::make('work_order_type_id')
+                    ->label('Type')
+                    ->options(fn() => $this->typeOptions()),
+                Tables\Filters\Filter::make('overdue')
+                    ->label('Overdue Only')
+                    ->query(fn($query) => $query->whereNotIn('status', ['completed', 'cancelled'])->whereNotNull('due_date')->where('due_date', '<', now()))
+                    ->toggle(),
+                Tables\Filters\Filter::make('unassigned')
+                    ->label('Unassigned Only')
+                    ->query(fn($query) => $query->whereNull('assigned_to'))
+                    ->toggle(),
             ])
-            ->actions([
+            ->recordActions([
+                \Filament\Actions\ActionGroup::make([
+                // ── View Detail ──
                 \Filament\Actions\Action::make('view')
                     ->icon('heroicon-o-eye')
                     ->color('gray')
-                    ->modalWidth('3xl')
-                    ->schema([
-                        Section::make('Work Order Details')->schema([
-                            Forms\Components\TextInput::make('wo_number')->disabled(),
-                            Forms\Components\TextInput::make('title')->disabled()->columnSpanFull(),
-                            Forms\Components\TextInput::make('priority')->disabled(),
-                            Forms\Components\TextInput::make('status')->disabled(),
-                            Forms\Components\TextInput::make('due_date')->disabled(),
-                            Forms\Components\Textarea::make('description')->disabled()->rows(3)->columnSpanFull(),
-                            Forms\Components\Textarea::make('notes')->disabled()->rows(2)->columnSpanFull(),
-                        ])->columns(2),
-                    ])
-                    ->fillForm(fn(WorkOrder $record) => $record->toArray())
+                    ->modalWidth('5xl')
+                    ->modalHeading(fn(WorkOrder $record) => $record->wo_number . ' — ' . $record->title)
+                    ->schema(fn(WorkOrder $record) => $this->viewModalSchema($record))
+                    ->fillForm(fn(WorkOrder $record) => $this->viewModalData($record))
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Close'),
 
+                // ── Quick Status ──
                 \Filament\Actions\Action::make('updateStatus')
                     ->label('Status')
                     ->icon('heroicon-o-arrow-path')
                     ->color('warning')
                     ->schema([
-                        Forms\Components\Select::make('status')->options(WorkOrder::$statuses)->required(),
-                        Forms\Components\Textarea::make('notes')->label('Status Note')->rows(2),
+                        Forms\Components\Select::make('status')
+                            ->options(WorkOrder::$statuses)
+                            ->required(),
+                        Forms\Components\Textarea::make('status_note')
+                            ->label('Status Note')
+                            ->rows(2)
+                            ->placeholder('Optional note about this status change'),
                     ])
                     ->fillForm(fn(WorkOrder $record) => ['status' => $record->status])
                     ->action(function (array $data, WorkOrder $record): void {
@@ -194,72 +430,379 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
                         if ($data['status'] === 'in_progress' && !$record->started_at) {
                             $updates['started_at'] = now();
                         }
-                        if ($data['status'] === 'completed') {
+                        if ($data['status'] === 'completed' && !$record->completed_at) {
                             $updates['completed_at'] = now();
                         }
-                        if (!empty($data['notes'])) {
-                            $updates['notes'] = ($record->notes ? $record->notes . "\n" : '') . '[' . now()->format('M d H:i') . '] ' . $data['notes'];
+                        if (!empty($data['status_note'])) {
+                            $updates['notes'] = ($record->notes ? $record->notes . "\n" : '')
+                                . '[' . now()->format('M d H:i') . ' — ' . auth()->user()->name . '] '
+                                . $data['status_note'];
                         }
                         $record->update($updates);
-                        Notification::make()->title('Status updated to ' . WorkOrder::$statuses[$data['status']])->success()->send();
+                        Notification::make()
+                            ->title('Status → ' . WorkOrder::$statuses[$data['status']])
+                            ->success()->send();
                     }),
 
-                \Filament\Actions\Action::make('assign')
-                    ->icon('heroicon-o-user-plus')
+                // ── Manage Tasks (Checklist) ──
+                \Filament\Actions\Action::make('manageTasks')
+                    ->label('Tasks')
+                    ->icon('heroicon-o-clipboard-document-check')
                     ->color('info')
+                    ->modalWidth('3xl')
+                    ->modalHeading(fn(WorkOrder $record) => 'Tasks — ' . $record->wo_number)
                     ->schema([
-                        Forms\Components\Select::make('assigned_to')
-                            ->label('Assign To')
-                            ->options(fn() => User::where('company_id', $this->record->company_id)->where('is_active', true)->pluck('name', 'id'))
-                            ->searchable()->required(),
+                        Forms\Components\Repeater::make('tasks')
+                            ->schema([
+                                Forms\Components\TextInput::make('title')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->columnSpan(4),
+                                Forms\Components\Toggle::make('is_completed')
+                                    ->label('Done')
+                                    ->columnSpan(1),
+                                Forms\Components\Textarea::make('description')
+                                    ->rows(1)
+                                    ->columnSpan(5),
+                            ])
+                            ->columns(5)
+                            ->addActionLabel('Add Task')
+                            ->reorderable()
+                            ->collapsible()
+                            ->defaultItems(0)
+                            ->itemLabel(fn(array $state): ?string => ($state['is_completed'] ?? false ? '✅ ' : '⬜ ') . ($state['title'] ?? 'New Task')),
                     ])
-                    ->fillForm(fn(WorkOrder $record) => ['assigned_to' => $record->assigned_to])
+                    ->fillForm(fn(WorkOrder $record) => [
+                        'tasks' => $record->tasks()->orderBy('sort_order')->get()->map(fn($t) => [
+                            'id' => $t->id,
+                            'title' => $t->title,
+                            'description' => $t->description,
+                            'is_completed' => $t->is_completed,
+                        ])->toArray(),
+                    ])
                     ->action(function (array $data, WorkOrder $record): void {
-                        $record->update($data);
-                        Notification::make()->title('Work Order reassigned')->success()->send();
+                        $record->tasks()->delete();
+                        $order = 0;
+                        foreach ($data['tasks'] ?? [] as $task) {
+                            $record->tasks()->create([
+                                'title' => $task['title'],
+                                'description' => $task['description'] ?? null,
+                                'is_completed' => $task['is_completed'] ?? false,
+                                'completed_by' => ($task['is_completed'] ?? false) ? auth()->id() : null,
+                                'completed_at' => ($task['is_completed'] ?? false) ? now() : null,
+                                'sort_order' => $order++,
+                            ]);
+                        }
+                        $total = count($data['tasks'] ?? []);
+                        $done = collect($data['tasks'] ?? [])->where('is_completed', true)->count();
+                        Notification::make()
+                            ->title("Tasks updated ({$done}/{$total} complete)")
+                            ->success()->send();
                     }),
 
+                // ── Manage Items (Parts & Services) ──
+                \Filament\Actions\Action::make('manageItems')
+                    ->label('Items')
+                    ->icon('heroicon-o-shopping-cart')
+                    ->color('success')
+                    ->modalWidth('4xl')
+                    ->modalHeading(fn(WorkOrder $record) => 'Parts & Services — ' . $record->wo_number)
+                    ->schema([
+                        Forms\Components\Repeater::make('items')
+                            ->schema([
+                                Forms\Components\Select::make('type')
+                                    ->options(['part' => 'Part', 'service' => 'Service', 'labour' => 'Labour', 'other' => 'Other'])
+                                    ->required()
+                                    ->default('part')
+                                    ->columnSpan(1),
+                                Forms\Components\TextInput::make('description')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->columnSpan(3),
+                                Forms\Components\TextInput::make('quantity')
+                                    ->numeric()
+                                    ->required()
+                                    ->default(1)
+                                    ->minValue(0.01)
+                                    ->columnSpan(1)
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(fn(Forms\Set $set, Forms\Get $get) => $set('amount', round(($get('quantity') ?? 0) * ($get('unit_price') ?? 0), 2))),
+                                Forms\Components\TextInput::make('unit_price')
+                                    ->label('Unit Price')
+                                    ->numeric()
+                                    ->required()
+                                    ->default(0)
+                                    ->prefix('$')
+                                    ->columnSpan(1)
+                                    ->live(onBlur: true)
+                                    ->afterStateUpdated(fn(Forms\Set $set, Forms\Get $get) => $set('amount', round(($get('quantity') ?? 0) * ($get('unit_price') ?? 0), 2))),
+                                Forms\Components\TextInput::make('amount')
+                                    ->label('Total')
+                                    ->numeric()
+                                    ->prefix('$')
+                                    ->disabled()
+                                    ->dehydrated()
+                                    ->columnSpan(1),
+                            ])
+                            ->columns(7)
+                            ->addActionLabel('Add Item')
+                            ->reorderable()
+                            ->defaultItems(0)
+                            ->itemLabel(fn(array $state): ?string => ($state['description'] ?? 'Item') . ' — $' . number_format($state['amount'] ?? 0, 2)),
+                    ])
+                    ->fillForm(fn(WorkOrder $record) => [
+                        'items' => $record->items->map(fn($i) => [
+                            'type' => $i->type,
+                            'description' => $i->description,
+                            'quantity' => $i->quantity,
+                            'unit_price' => $i->unit_price,
+                            'amount' => $i->amount,
+                        ])->toArray(),
+                    ])
+                    ->action(function (array $data, WorkOrder $record): void {
+                        $record->items()->delete();
+                        foreach ($data['items'] ?? [] as $item) {
+                            $item['amount'] = round(($item['quantity'] ?? 0) * ($item['unit_price'] ?? 0), 2);
+                            $record->items()->create($item);
+                        }
+                        $total = $record->items()->sum('amount');
+                        Notification::make()
+                            ->title('Items updated — Total: ' . CurrencyHelper::format($total))
+                            ->success()->send();
+                    }),
+
+                // ── Edit ──
                 \Filament\Actions\Action::make('edit')
                     ->icon('heroicon-o-pencil')
-                    ->modalWidth('3xl')
-                    ->schema([
-                        Section::make('Details')->schema([
-                            Forms\Components\TextInput::make('wo_number')->required(),
-                            Forms\Components\TextInput::make('title')->required()->columnSpanFull(),
-                            Forms\Components\Select::make('work_order_type_id')->label('Type')
-                                ->options(fn() => WorkOrderType::where('company_id', $this->record->company_id)->pluck('name', 'id'))->searchable(),
-                            Forms\Components\Select::make('client_id')->label('Client')
-                                ->options(fn() => Client::where('company_id', $this->record->company_id)->where('is_active', true)->pluck('name', 'id'))->searchable(),
-                            Forms\Components\Select::make('priority')->options(WorkOrder::$priorities)->required(),
-                            Forms\Components\Select::make('status')->options(WorkOrder::$statuses)->required(),
-                            Forms\Components\Select::make('assigned_to')->label('Assign To')
-                                ->options(fn() => User::where('company_id', $this->record->company_id)->where('is_active', true)->pluck('name', 'id'))->searchable(),
-                            Forms\Components\DatePicker::make('due_date'),
-                        ])->columns(2),
-                        Section::make('Description')->schema([
-                            Forms\Components\Textarea::make('description')->rows(3)->columnSpanFull(),
-                            Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
-                        ])->collapsed(),
-                    ])
+                    ->modalWidth('4xl')
+                    ->schema($this->woFormSchema())
                     ->fillForm(fn(WorkOrder $record) => $record->toArray())
                     ->action(function (array $data, WorkOrder $record): void {
                         $record->update($data);
                         Notification::make()->title('Work Order updated')->success()->send();
                     }),
 
+                // ── Assign ──
+                \Filament\Actions\Action::make('assign')
+                    ->icon('heroicon-o-user-plus')
+                    ->color('info')
+                    ->schema([
+                        Forms\Components\Select::make('assigned_to')
+                            ->label('Assign To')
+                            ->options(fn() => $this->teamOptions())
+                            ->searchable()
+                            ->required(),
+                    ])
+                    ->fillForm(fn(WorkOrder $record) => ['assigned_to' => $record->assigned_to])
+                    ->action(function (array $data, WorkOrder $record): void {
+                        $record->update($data);
+                        $name = User::find($data['assigned_to'])?->name ?? 'Unknown';
+                        Notification::make()->title("Assigned to {$name}")->success()->send();
+                    }),
+
+                // ── Duplicate ──
+                \Filament\Actions\Action::make('duplicate')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->color('gray')
+                    ->requiresConfirmation()
+                    ->modalHeading('Duplicate Work Order')
+                    ->modalDescription('This will create a copy with status set to Pending.')
+                    ->action(function (WorkOrder $record): void {
+                        $new = $record->replicate(['wo_number', 'started_at', 'completed_at']);
+                        $new->wo_number = $this->nextWoNumber();
+                        $new->status = 'pending';
+                        $new->created_by = auth()->id();
+                        $new->save();
+
+                        // Copy tasks
+                        foreach ($record->tasks as $task) {
+                            $new->tasks()->create([
+                                'title' => $task->title,
+                                'description' => $task->description,
+                                'is_completed' => false,
+                                'sort_order' => $task->sort_order,
+                            ]);
+                        }
+
+                        Notification::make()
+                            ->title('Duplicated as ' . $new->wo_number)
+                            ->success()->send();
+                    }),
+
+                // ── Delete ──
                 \Filament\Actions\Action::make('delete')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
                     ->action(fn(WorkOrder $record) => $record->delete()),
+                ]),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 \Filament\Actions\BulkActionGroup::make([
+                    // Bulk Status Update
+                    \Filament\Actions\BulkAction::make('bulkStatus')
+                        ->label('Update Status')
+                        ->icon('heroicon-o-arrow-path')
+                        ->schema([
+                            Forms\Components\Select::make('status')
+                                ->options(WorkOrder::$statuses)
+                                ->required(),
+                        ])
+                        ->action(function (array $data, $records): void {
+                            $updates = ['status' => $data['status']];
+                            if ($data['status'] === 'completed') {
+                                $updates['completed_at'] = now();
+                            }
+                            if ($data['status'] === 'in_progress') {
+                                $updates['started_at'] = now();
+                            }
+                            foreach ($records as $r) {
+                                $record->update($updates);
+                            }
+                            Notification::make()->title($records->count() . ' work orders updated')->success()->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    // Bulk Assign
+                    \Filament\Actions\BulkAction::make('bulkAssign')
+                        ->label('Assign To')
+                        ->icon('heroicon-o-user-plus')
+                        ->schema([
+                            Forms\Components\Select::make('assigned_to')
+                                ->label('Assign To')
+                                ->options(fn() => $this->teamOptions())
+                                ->searchable()
+                                ->required(),
+                        ])
+                        ->action(function (array $data, $records): void {
+                            foreach ($records as $r) {
+                                $record->update(['assigned_to' => $data['assigned_to']]);
+                            }
+                            $name = User::find($data['assigned_to'])?->name ?? 'Unknown';
+                            Notification::make()->title($records->count() . " WOs assigned to {$name}")->success()->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
+                    // Bulk Priority
+                    \Filament\Actions\BulkAction::make('bulkPriority')
+                        ->label('Set Priority')
+                        ->icon('heroicon-o-flag')
+                        ->schema([
+                            Forms\Components\Select::make('priority')
+                                ->options(WorkOrder::$priorities)
+                                ->required(),
+                        ])
+                        ->action(function (array $data, $records): void {
+                            foreach ($records as $r) {
+                                $record->update(['priority' => $data['priority']]);
+                            }
+                            Notification::make()->title($records->count() . ' WOs priority updated')->success()->send();
+                        })
+                        ->deselectRecordsAfterCompletion(),
+
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->emptyStateHeading('No Work Orders')
             ->emptyStateDescription('Create your first work order for this project.')
-            ->emptyStateIcon('heroicon-o-wrench-screwdriver');
+            ->emptyStateIcon('heroicon-o-wrench-screwdriver')
+            ->striped()
+            ->paginated([10, 25, 50, 100]);
+    }
+
+    /* ───────────────── VIEW MODAL HELPERS ───────────────── */
+
+    private function viewModalSchema(WorkOrder $record): array
+    {
+        $tasks = $record->tasks()->orderBy('sort_order')->get();
+        $items = $record->items;
+        $totalCost = $items->sum('amount');
+
+        return [
+            Section::make('Details')->schema([
+                Forms\Components\TextInput::make('wo_number')->label('WO Number')->disabled(),
+                Forms\Components\TextInput::make('type_name')->label('Type')->disabled(),
+                Forms\Components\TextInput::make('priority_label')->label('Priority')->disabled(),
+                Forms\Components\TextInput::make('status_label')->label('Status')->disabled(),
+                Forms\Components\TextInput::make('assignee_name')->label('Assigned To')->disabled(),
+                Forms\Components\TextInput::make('client_name')->label('Client')->disabled(),
+                Forms\Components\TextInput::make('due_date_display')->label('Due Date')->disabled(),
+                Forms\Components\TextInput::make('created_by_name')->label('Created By')->disabled(),
+            ])->columns(2),
+
+            Section::make('Timeline')->schema([
+                Forms\Components\TextInput::make('created_display')->label('Created')->disabled(),
+                Forms\Components\TextInput::make('started_display')->label('Started')->disabled(),
+                Forms\Components\TextInput::make('completed_display')->label('Completed')->disabled(),
+                Forms\Components\TextInput::make('duration_display')->label('Duration')->disabled(),
+            ])->columns(4)->collapsed(!$record->started_at),
+
+            Section::make('Description')->schema([
+                Forms\Components\Textarea::make('description')->disabled()->rows(3)->columnSpanFull(),
+            ])->collapsed(empty($record->description)),
+
+            Section::make("Tasks ({$tasks->where('is_completed', true)->count()}/{$tasks->count()})")->schema([
+                Forms\Components\Placeholder::make('tasks_list')
+                    ->content(function () use ($tasks) {
+                        if ($tasks->isEmpty())
+                            return 'No tasks defined.';
+                        return $tasks->map(
+                            fn($t) =>
+                            ($t->is_completed ? '✅' : '⬜') . ' ' . $t->title
+                            . ($t->description ? ' — ' . $t->description : '')
+                        )->join("\n");
+                    }),
+            ])->collapsed($tasks->isEmpty()),
+
+            Section::make("Items & Costs (" . CurrencyHelper::format($totalCost) . ")")->schema([
+                Forms\Components\Placeholder::make('items_list')
+                    ->content(function () use ($items, $totalCost) {
+                        if ($items->isEmpty())
+                            return 'No items added.';
+                        $lines = $items->map(
+                            fn($i) =>
+                            ucfirst($i->type) . ': ' . $i->description
+                            . ' — ' . $i->quantity . ' × $' . number_format($i->unit_price, 2)
+                            . ' = $' . number_format($i->amount, 2)
+                        );
+                        $lines->push('─────────────────────────');
+                        $lines->push('Total: $' . number_format($totalCost, 2));
+                        return $lines->join("\n");
+                    }),
+            ])->collapsed($items->isEmpty()),
+
+            Section::make('Notes')->schema([
+                Forms\Components\Textarea::make('notes')->disabled()->rows(4)->columnSpanFull(),
+            ])->collapsed(empty($record->notes)),
+        ];
+    }
+
+    private function viewModalData(WorkOrder $record): array
+    {
+        $record->load(['assignee', 'client', 'type', 'creator']);
+
+        $duration = null;
+        if ($record->started_at && $record->completed_at) {
+            $duration = $record->started_at->diffForHumans($record->completed_at, true);
+        } elseif ($record->started_at) {
+            $duration = $record->started_at->diffForHumans(now(), true) . ' (ongoing)';
+        }
+
+        return [
+            'wo_number' => $record->wo_number,
+            'type_name' => $record->type?->name ?? '—',
+            'priority_label' => WorkOrder::$priorities[$record->priority] ?? $record->priority,
+            'status_label' => WorkOrder::$statuses[$record->status] ?? $record->status,
+            'assignee_name' => $record->assignee?->name ?? 'Unassigned',
+            'client_name' => $record->client?->name ?? '—',
+            'due_date_display' => $record->due_date?->format('M d, Y') ?? '—',
+            'created_by_name' => $record->creator?->name ?? '—',
+            'created_display' => $record->created_at?->format('M d, Y H:i'),
+            'started_display' => $record->started_at?->format('M d, Y H:i') ?? '—',
+            'completed_display' => $record->completed_at?->format('M d, Y H:i') ?? '—',
+            'duration_display' => $duration ?? '—',
+            'description' => $record->description ?? '',
+            'notes' => $record->notes ?? '',
+        ];
     }
 }

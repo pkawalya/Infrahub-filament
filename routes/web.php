@@ -3,11 +3,17 @@
 use Illuminate\Support\Facades\Route;
 use App\Livewire\ExternalLogin;
 use App\Livewire\ExternalDashboard;
+use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Auth\GoogleController;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Company Onboarding
+Route::get('/get-started', [OnboardingController::class, 'show'])->name('onboarding');
+Route::post('/get-started', [OnboardingController::class, 'store'])->name('onboarding.store');
+Route::get('/get-started/success', [OnboardingController::class, 'success'])->name('onboarding.success');
 
 // Google Authentication Routes
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');

@@ -6,6 +6,7 @@ use App\Filament\App\Resources\InvoiceResource\Pages;
 use App\Models\Invoice;
 use App\Support\CurrencyHelper;
 use Filament\Actions;
+use Filament\Infolists;
 use Filament\Schemas;
 use Filament\Forms;
 use Filament\Schemas\Schema;
@@ -20,6 +21,65 @@ class InvoiceResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Work Orders';
     protected static ?int $navigationSort = 3;
     protected static bool $shouldRegisterNavigation = false;
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->schema([
+            Schemas\Components\Section::make('Invoice Details')->schema([
+                Infolists\Components\TextEntry::make('invoice_number')
+                    ->label('Invoice #')
+                    ->icon('heroicon-o-hashtag')
+                    ->copyable(),
+                Infolists\Components\TextEntry::make('client.name')
+                    ->label('Client')
+                    ->icon('heroicon-o-user'),
+                Infolists\Components\TextEntry::make('workOrder.wo_number')
+                    ->label('Work Order')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'paid' => 'success', 'sent' => 'info', 'partially_paid' => 'warning',
+                        'overdue' => 'danger', 'cancelled' => 'gray', default => 'gray',
+                    }),
+                Infolists\Components\TextEntry::make('issue_date')
+                    ->date()
+                    ->icon('heroicon-o-calendar'),
+                Infolists\Components\TextEntry::make('due_date')
+                    ->date()
+                    ->placeholder('—'),
+            ])->columns(2),
+
+            Schemas\Components\Section::make('Amounts')->schema([
+                Infolists\Components\TextEntry::make('subtotal')
+                    ->formatStateUsing(CurrencyHelper::formatter()),
+                Infolists\Components\TextEntry::make('tax_rate')
+                    ->suffix('%')
+                    ->placeholder('0'),
+                Infolists\Components\TextEntry::make('tax_amount')
+                    ->formatStateUsing(CurrencyHelper::formatter()),
+                Infolists\Components\TextEntry::make('discount_amount')
+                    ->label('Discount')
+                    ->formatStateUsing(CurrencyHelper::formatter()),
+                Infolists\Components\TextEntry::make('total_amount')
+                    ->label('Total')
+                    ->formatStateUsing(CurrencyHelper::formatter())
+                    ->weight('bold'),
+                Infolists\Components\TextEntry::make('amount_paid')
+                    ->label('Paid')
+                    ->formatStateUsing(CurrencyHelper::formatter()),
+            ])->columns(3),
+
+            Schemas\Components\Section::make('Notes')->schema([
+                Infolists\Components\TextEntry::make('notes')
+                    ->columnSpanFull()
+                    ->placeholder('No notes.'),
+                Infolists\Components\TextEntry::make('created_at')
+                    ->label('Created')
+                    ->dateTime(),
+            ])->collapsible(),
+        ]);
+    }
 
     public static function form(Schema $schema): Schema
     {

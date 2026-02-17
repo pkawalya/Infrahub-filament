@@ -233,6 +233,33 @@ class CompanyUserResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        return (string) static::getEloquentQuery()->count();
+        $company = auth()->user()?->company;
+        $count = (int) static::getEloquentQuery()->count();
+
+        if ($company) {
+            $limit = $company->getEffectiveMaxUsers();
+            if ($limit)
+                return "{$count}/{$limit}";
+        }
+
+        return (string) $count;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        $company = auth()->user()?->company;
+        if (!$company)
+            return 'primary';
+
+        $limit = $company->getEffectiveMaxUsers();
+        if (!$limit)
+            return 'primary';
+
+        $count = $company->users()->count();
+        if ($count >= $limit)
+            return 'danger';
+        if ($count >= $limit * 0.8)
+            return 'warning';
+        return 'primary';
     }
 }

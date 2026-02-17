@@ -32,6 +32,12 @@ class SafetyInspection extends Model
         'findings' => 'array',
     ];
 
+    public static array $statuses = [
+        'scheduled' => 'Scheduled',
+        'in_progress' => 'In Progress',
+        'completed' => 'Completed',
+    ];
+
     public function project()
     {
         return $this->belongsTo(CdeProject::class, 'cde_project_id');
@@ -39,5 +45,9 @@ class SafetyInspection extends Model
     public function inspector()
     {
         return $this->belongsTo(User::class, 'inspector_id');
+    }
+    public function template()
+    {
+        return $this->belongsTo(InspectionTemplate::class, 'inspection_template_id');
     }
 }

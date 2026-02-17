@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\WorkOrderResource\Pages;
 use App\Models\WorkOrder;
 use Filament\Actions;
+use Filament\Infolists;
 use Filament\Schemas;
 use Filament\Forms;
 use Filament\Schemas\Schema;
@@ -19,6 +20,80 @@ class WorkOrderResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Work Orders';
     protected static ?int $navigationSort = 1;
     protected static bool $shouldRegisterNavigation = false;
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->schema([
+            Schemas\Components\Section::make('Work Order Details')->schema([
+                Infolists\Components\TextEntry::make('wo_number')
+                    ->label('WO #')
+                    ->icon('heroicon-o-hashtag')
+                    ->copyable(),
+                Infolists\Components\TextEntry::make('title')
+                    ->icon('heroicon-o-document-text'),
+                Infolists\Components\TextEntry::make('type.name')
+                    ->label('Type')
+                    ->badge(),
+                Infolists\Components\TextEntry::make('priority')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'urgent' => 'danger', 'high' => 'warning',
+                        'medium' => 'info', 'low' => 'gray', default => 'gray',
+                    }),
+                Infolists\Components\TextEntry::make('status')
+                    ->badge()
+                    ->color(fn(string $state): string => match ($state) {
+                        'completed' => 'success', 'in_progress' => 'info',
+                        'on_hold' => 'warning', 'cancelled' => 'danger',
+                        default => 'gray',
+                    }),
+                Infolists\Components\TextEntry::make('client.name')
+                    ->label('Client')
+                    ->icon('heroicon-o-user')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('asset.name')
+                    ->label('Asset')
+                    ->icon('heroicon-o-cube')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('assignee.name')
+                    ->label('Assigned To')
+                    ->icon('heroicon-o-user-circle')
+                    ->placeholder('Unassigned'),
+            ])->columns(2),
+
+            Schemas\Components\Section::make('Schedule')->schema([
+                Infolists\Components\TextEntry::make('due_date')
+                    ->date()
+                    ->icon('heroicon-o-calendar')
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('preferred_date')
+                    ->date()
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('preferred_time')
+                    ->time()
+                    ->placeholder('—'),
+                Infolists\Components\TextEntry::make('started_at')
+                    ->dateTime()
+                    ->placeholder('Not started'),
+                Infolists\Components\TextEntry::make('completed_at')
+                    ->dateTime()
+                    ->placeholder('Not completed'),
+                Infolists\Components\TextEntry::make('created_at')
+                    ->label('Created')
+                    ->dateTime(),
+            ])->columns(3),
+
+            Schemas\Components\Section::make('Description & Notes')->schema([
+                Infolists\Components\TextEntry::make('description')
+                    ->html()
+                    ->columnSpanFull()
+                    ->placeholder('No description provided.'),
+                Infolists\Components\TextEntry::make('notes')
+                    ->columnSpanFull()
+                    ->placeholder('No notes.'),
+            ])->collapsible(),
+        ]);
+    }
 
     public static function form(Schema $schema): Schema
     {

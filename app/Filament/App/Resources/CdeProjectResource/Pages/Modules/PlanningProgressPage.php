@@ -2,9 +2,9 @@
 
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
-use App\Filament\App\Resources\CdeProjectResource;
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\Milestone;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -23,72 +23,91 @@ class PlanningProgressPage extends BaseModulePage implements HasTable, HasForms
     protected static string $moduleCode = 'planning_progress';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
     protected static ?string $navigationLabel = 'Planning';
-    protected static ?string $title = 'Planning & Progress Tracking';
+    protected static ?string $title = 'Planning & Progress — Milestones';
     protected string $view = 'filament.app.pages.modules.planning-progress';
+
+    private function pid(): int
+    {
+        return $this->record->id;
+    }
+    private function cid(): int
+    {
+        return $this->record->company_id;
+    }
 
     public function getStats(): array
     {
-        $pid = $this->record->id;
-        $total = Milestone::where('cde_project_id', $pid)->count();
-        $completed = Milestone::where('cde_project_id', $pid)->where('status', 'completed')->count();
-        $delayed = Milestone::where('cde_project_id', $pid)->where('status', 'delayed')->count();
-        $overdue = Milestone::where('cde_project_id', $pid)
-            ->whereNotIn('status', ['completed', 'cancelled'])
-            ->whereNotNull('target_date')
-            ->where('target_date', '<', now())->count();
-        $progress = $total > 0 ? round(($completed / $total) * 100) : 0;
+        $pid = $this->pid();
+        $base = Milestone::where('cde_project_id', $pid);
+        $total = (clone $base)->count();
+        $completed = (clone $base)->where('status', 'completed')->count();
+        $delayed = (clone $base)->where('status', 'delayed')->count();
+        $upcoming = (clone $base)->whereIn('status', ['pending', 'in_progress'])
+            ->whereNotNull('target_date')->whereBetween('target_date', [now(), now()->addDays(30)])->count();
 
         return [
             [
-                'label' => 'Overall Progress',
-                'value' => $progress . '%',
-                'sub' => $completed . '/' . $total . ' milestones',
-                'sub_type' => $progress >= 70 ? 'success' : ($progress >= 40 ? 'warning' : 'neutral'),
+                'label' => 'Total Milestones',
+                'value' => $total,
+                'sub' => $completed . ' completed',
+                'sub_type' => 'success',
                 'primary' => true,
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>'
-            ],
-            [
-                'label' => 'Delayed',
-                'value' => $delayed,
-                'sub' => $overdue . ' overdue',
-                'sub_type' => $delayed > 0 ? 'danger' : 'success',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#ef4444" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>',
-                'icon_bg' => '#fef2f2'
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0l2.77-.693a9 9 0 016.208.682l.108.054a9 9 0 006.086.71l3.114-.732a48.524 48.524 0 01-.005-10.499l-3.11.732a9 9 0 01-6.085-.711l-.108-.054a9 9 0 00-6.208-.682L3 4.5M3 15V4.5" /></svg>'
             ],
             [
                 'label' => 'Completed',
-                'value' => $completed,
-                'sub' => 'On target',
+                'value' => $total > 0 ? round(($completed / $total) * 100) . '%' : '0%',
+                'sub' => $completed . ' of ' . $total,
                 'sub_type' => 'success',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
                 'icon_bg' => '#ecfdf5'
             ],
+            [
+                'label' => 'Delayed',
+                'value' => $delayed,
+                'sub' => $delayed > 0 ? 'Behind schedule' : 'On track',
+                'sub_type' => $delayed > 0 ? 'danger' : 'success',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#ef4444" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" /></svg>',
+                'icon_bg' => '#fef2f2'
+            ],
+            [
+                'label' => 'Upcoming (30d)',
+                'value' => $upcoming,
+                'sub' => 'Next 30 days',
+                'sub_type' => 'info',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#3b82f6" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" /></svg>',
+                'icon_bg' => '#eff6ff'
+            ],
+        ];
+    }
+
+    private function milestoneFormSchema(bool $isCreate = false): array
+    {
+        return [
+            Section::make('Milestone Details')->schema([
+                Forms\Components\TextInput::make('name')->label('Milestone Name')->required()->maxLength(255)->columnSpanFull(),
+                Forms\Components\Select::make('priority')->options(Milestone::$priorities)->required()->default('medium'),
+                Forms\Components\Select::make('status')->options(Milestone::$statuses)->required()->default($isCreate ? 'pending' : null),
+                Forms\Components\DatePicker::make('target_date')->label('Target Date')->required(),
+                Forms\Components\DatePicker::make('actual_date')->label('Actual Date')->visible(!$isCreate),
+            ])->columns(2),
+            Section::make('Description')->schema([
+                Forms\Components\RichEditor::make('description')
+                    ->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList', 'link'])->columnSpanFull(),
+            ])->collapsed(!$isCreate),
         ];
     }
 
     protected function getHeaderActions(): array
     {
-        $companyId = $this->record->company_id;
-        $projectId = $this->record->id;
-
         return [
             Action::make('createMilestone')
-                ->label('New Milestone')
-                ->icon('heroicon-o-plus-circle')
-                ->color('primary')
-                ->modalWidth('2xl')
-                ->schema([
-                    Section::make('Milestone Details')->schema([
-                        Forms\Components\TextInput::make('name')->required()->maxLength(255)->columnSpanFull(),
-                        Forms\Components\Select::make('status')->options(Milestone::$statuses)->required()->default('pending'),
-                        Forms\Components\Select::make('priority')->options(Milestone::$priorities)->required()->default('medium'),
-                        Forms\Components\DatePicker::make('target_date')->label('Target Date')->required(),
-                        Forms\Components\Textarea::make('description')->rows(3)->columnSpanFull(),
-                    ])->columns(2),
-                ])
-                ->action(function (array $data) use ($companyId, $projectId): void {
-                    $data['company_id'] = $companyId;
-                    $data['cde_project_id'] = $projectId;
+                ->label('New Milestone')->icon('heroicon-o-plus-circle')->color('primary')
+                ->modalWidth('3xl')
+                ->schema($this->milestoneFormSchema(isCreate: true))
+                ->action(function (array $data): void {
+                    $data['company_id'] = $this->cid();
+                    $data['cde_project_id'] = $this->pid();
                     Milestone::create($data);
                     Notification::make()->title('Milestone created')->success()->send();
                 }),
@@ -97,68 +116,72 @@ class PlanningProgressPage extends BaseModulePage implements HasTable, HasForms
 
     public function table(Table $table): Table
     {
-        $projectId = $this->record->id;
-
         return $table
-            ->query(Milestone::query()->where('cde_project_id', $projectId))
+            ->query(Milestone::query()->where('cde_project_id', $this->pid()))
             ->columns([
-                Tables\Columns\TextColumn::make('name')->searchable()->limit(50)->weight('bold')
-                    ->icon('heroicon-o-flag'),
+                Tables\Columns\TextColumn::make('name')->searchable()->sortable()->weight('bold')->limit(50),
                 Tables\Columns\TextColumn::make('priority')->badge()
-                    ->color(fn(string $state) => match ($state) { 'critical' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'}),
+                    ->color(fn(string $state) => match ($state) { 'critical' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'})->sortable(),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) { 'completed' => 'success', 'in_progress' => 'info', 'delayed' => 'danger', 'cancelled' => 'danger', default => 'gray'}),
-                Tables\Columns\TextColumn::make('target_date')->date()->sortable()->label('Target')
-                    ->color(fn($record) => $record->isOverdue() ? 'danger' : null),
-                Tables\Columns\TextColumn::make('actual_date')->date()->label('Actual')->placeholder('—'),
-                Tables\Columns\TextColumn::make('description')->limit(40)->toggleable(),
+                    ->color(fn(string $state) => match ($state) { 'completed' => 'success', 'in_progress' => 'info', 'delayed' => 'danger', 'pending' => 'gray', 'cancelled' => 'gray', default => 'gray'})->sortable(),
+                Tables\Columns\TextColumn::make('target_date')->label('Target')->date()->sortable()
+                    ->color(fn($record) => $record->target_date?->isPast() && !in_array($record->status, ['completed', 'cancelled']) ? 'danger' : null)
+                    ->description(fn($record) => $record->target_date?->isPast() && !in_array($record->status, ['completed', 'cancelled']) ? 'Overdue' : ($record->target_date?->diffForHumans() ?? '')),
+                Tables\Columns\TextColumn::make('actual_date')->label('Actual')->date()->placeholder('—')->sortable(),
+                Tables\Columns\TextColumn::make('variance')->label('Variance')
+                    ->state(function (Milestone $record) {
+                        if (!$record->target_date)
+                            return '—';
+                        $compare = $record->actual_date ?? now();
+                        $diff = $record->target_date->diffInDays($compare, false);
+                        if ($record->status === 'completed' && $record->actual_date) {
+                            return $diff > 0 ? $diff . 'd late' : abs($diff) . 'd early';
+                        }
+                        if (in_array($record->status, ['completed', 'cancelled']))
+                            return '—';
+                        return $record->target_date->isPast() ? abs($diff) . 'd overdue' : $diff . 'd remaining';
+                    })
+                    ->color(function (Milestone $record) {
+                        if (!$record->target_date || in_array($record->status, ['completed', 'cancelled']))
+                            return null;
+                        return $record->target_date->isPast() ? 'danger' : 'success';
+                    }),
+                Tables\Columns\TextColumn::make('created_at')->dateTime('M d, Y')->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('target_date', 'asc')
             ->filters([
-                Tables\Filters\SelectFilter::make('status')->options(Milestone::$statuses),
-                Tables\Filters\SelectFilter::make('priority')->options(Milestone::$priorities),
+                Tables\Filters\SelectFilter::make('status')->options(Milestone::$statuses)->multiple(),
+                Tables\Filters\SelectFilter::make('priority')->options(Milestone::$priorities)->multiple(),
+                Tables\Filters\Filter::make('overdue')->label('Overdue Only')
+                    ->query(fn($q) => $q->whereNotIn('status', ['completed', 'cancelled'])->whereNotNull('target_date')->where('target_date', '<', now()))->toggle(),
+                Tables\Filters\Filter::make('upcoming_30')->label('Next 30 Days')
+                    ->query(fn($q) => $q->whereNotIn('status', ['completed', 'cancelled'])->whereBetween('target_date', [now(), now()->addDays(30)]))->toggle(),
             ])
-            ->actions([
-                \Filament\Actions\Action::make('markComplete')
-                    ->label('Complete')
-                    ->icon('heroicon-o-check-circle')
-                    ->color('success')
+            ->recordActions([
+                \Filament\Actions\ActionGroup::make([
+                \Filament\Actions\Action::make('complete')
+                    ->icon('heroicon-o-check-circle')->color('success')->label('Complete')
                     ->visible(fn(Milestone $record) => !in_array($record->status, ['completed', 'cancelled']))
-                    ->requiresConfirmation()
                     ->schema([
-                        Forms\Components\DatePicker::make('actual_date')->label('Actual Completion Date')->required()->default(now()),
+                        Forms\Components\DatePicker::make('actual_date')->label('Completion Date')->default(now())->required(),
                     ])
                     ->action(function (array $data, Milestone $record): void {
                         $record->update(['status' => 'completed', 'actual_date' => $data['actual_date']]);
                         Notification::make()->title('Milestone completed!')->success()->send();
                     }),
 
-                \Filament\Actions\Action::make('markDelayed')
-                    ->label('Delay')
-                    ->icon('heroicon-o-exclamation-triangle')
-                    ->color('danger')
-                    ->visible(fn(Milestone $record) => !in_array($record->status, ['completed', 'cancelled', 'delayed']))
-                    ->schema([
-                        Forms\Components\DatePicker::make('target_date')->label('New Target Date')->required(),
-                        Forms\Components\Textarea::make('description')->label('Reason for Delay')->rows(2),
-                    ])
-                    ->fillForm(fn(Milestone $record) => ['target_date' => $record->target_date])
+                \Filament\Actions\Action::make('updateStatus')
+                    ->label('Status')->icon('heroicon-o-arrow-path')->color('warning')
+                    ->schema([Forms\Components\Select::make('status')->options(Milestone::$statuses)->required()])
+                    ->fillForm(fn(Milestone $record) => ['status' => $record->status])
                     ->action(function (array $data, Milestone $record): void {
-                        $desc = $record->description ? $record->description . "\n[Delayed " . now()->format('M d') . '] ' . ($data['description'] ?? '') : ($data['description'] ?? '');
-                        $record->update(['status' => 'delayed', 'target_date' => $data['target_date'], 'description' => $desc]);
-                        Notification::make()->title('Milestone marked as delayed')->warning()->send();
+                        $record->update($data);
+                        Notification::make()->title('Status → ' . Milestone::$statuses[$data['status']])->success()->send();
                     }),
 
                 \Filament\Actions\Action::make('edit')
-                    ->icon('heroicon-o-pencil')
-                    ->schema([
-                        Forms\Components\TextInput::make('name')->required()->columnSpanFull(),
-                        Forms\Components\Select::make('status')->options(Milestone::$statuses)->required(),
-                        Forms\Components\Select::make('priority')->options(Milestone::$priorities)->required(),
-                        Forms\Components\DatePicker::make('target_date')->required(),
-                        Forms\Components\DatePicker::make('actual_date'),
-                        Forms\Components\Textarea::make('description')->rows(3)->columnSpanFull(),
-                    ])
+                    ->icon('heroicon-o-pencil')->modalWidth('3xl')
+                    ->schema($this->milestoneFormSchema())
                     ->fillForm(fn(Milestone $record) => $record->toArray())
                     ->action(function (array $data, Milestone $record): void {
                         $record->update($data);
@@ -166,18 +189,25 @@ class PlanningProgressPage extends BaseModulePage implements HasTable, HasForms
                     }),
 
                 \Filament\Actions\Action::make('delete')
-                    ->icon('heroicon-o-trash')
-                    ->color('danger')
-                    ->requiresConfirmation()
+                    ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
                     ->action(fn(Milestone $record) => $record->delete()),
+                ]),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\BulkAction::make('bulkStatus')->label('Update Status')->icon('heroicon-o-arrow-path')
+                        ->schema([Forms\Components\Select::make('status')->options(Milestone::$statuses)->required()])
+                        ->action(function (array $data, $records): void {
+                            foreach ($records as $r)
+                                $record->update($data);
+                            Notification::make()->title($records->count() . ' milestones updated')->success()->send();
+                        })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->emptyStateHeading('No Milestones')
-            ->emptyStateDescription('Create milestones to track project progress.')
-            ->emptyStateIcon('heroicon-o-calendar-days');
+            ->emptyStateDescription('Create milestones to track project progress and deadlines.')
+            ->emptyStateIcon('heroicon-o-calendar-days')
+            ->striped()->paginated([10, 25, 50]);
     }
 }
