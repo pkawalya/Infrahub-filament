@@ -127,7 +127,7 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 24px;
+            padding: 0 40px;
             position: relative;
             z-index: 1;
         }
@@ -232,7 +232,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 60px;
-            padding: 60px 0 80px;
+            padding: 60px 0 100px;
             align-items: start;
         }
 
@@ -311,7 +311,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
             border-radius: 20px;
-            padding: 40px;
+            padding: 48px;
             position: relative;
             overflow: hidden;
         }
@@ -341,7 +341,7 @@
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 20px;
         }
 
         .form-group {
@@ -420,7 +420,7 @@
         }
 
         .form-submit {
-            margin-top: 24px;
+            margin-top: 28px;
             grid-column: span 2;
         }
 
@@ -487,10 +487,13 @@
 
         /* --- Responsive --- */
         @media (max-width: 900px) {
+            .container {
+                padding: 0 32px;
+            }
             .page-content {
                 grid-template-columns: 1fr;
                 gap: 40px;
-                padding: 40px 0 60px;
+                padding: 40px 0 80px;
             }
             .info-col h1 {
                 font-size: 32px;
@@ -498,6 +501,9 @@
         }
 
         @media (max-width: 600px) {
+            .container {
+                padding: 0 20px;
+            }
             .form-grid {
                 grid-template-columns: 1fr;
             }
@@ -510,7 +516,7 @@
                 grid-template-columns: 1fr;
             }
             .form-card {
-                padding: 24px;
+                padding: 28px;
             }
             .nav-links .nav-link {
                 display: none;
