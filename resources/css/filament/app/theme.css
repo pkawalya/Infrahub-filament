@@ -264,6 +264,31 @@ body.dark .fi-body {
     }
 }
 
+@keyframes ray-rotate {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+@keyframes ray-shimmer {
+    0% {
+        opacity: 0.35;
+    }
+
+    50% {
+        opacity: 0.55;
+    }
+
+    100% {
+        opacity: 0.35;
+    }
+}
+
+/* Ambient glow orbs */
 body.dark::after {
     content: '';
     position: fixed;
@@ -288,6 +313,99 @@ body.dark::before {
     z-index: -1;
     pointer-events: none;
     animation: aconex-pulse 18s infinite ease-in-out reverse;
+}
+
+/* ── Light Rays (Aconex diagonal streaks) ──────── */
+.dark .fi-body::before {
+    content: '';
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 200vmax;
+    height: 200vmax;
+    transform: translate(-50%, -50%);
+    z-index: -2;
+    pointer-events: none;
+    background: conic-gradient(from 0deg,
+            transparent 0deg,
+            rgba(139, 92, 246, 0.03) 2deg,
+            transparent 5deg,
+            transparent 30deg,
+            rgba(0, 243, 255, 0.025) 32deg,
+            transparent 35deg,
+            transparent 60deg,
+            rgba(139, 92, 246, 0.02) 62deg,
+            transparent 65deg,
+            transparent 90deg,
+            rgba(255, 255, 255, 0.015) 91deg,
+            transparent 93deg,
+            transparent 120deg,
+            rgba(0, 243, 255, 0.02) 122deg,
+            transparent 125deg,
+            transparent 150deg,
+            rgba(139, 92, 246, 0.025) 152deg,
+            transparent 155deg,
+            transparent 180deg,
+            rgba(255, 255, 255, 0.018) 181deg,
+            transparent 183deg,
+            transparent 210deg,
+            rgba(0, 243, 255, 0.02) 212deg,
+            transparent 215deg,
+            transparent 240deg,
+            rgba(139, 92, 246, 0.015) 242deg,
+            transparent 245deg,
+            transparent 270deg,
+            rgba(255, 255, 255, 0.02) 271deg,
+            transparent 273deg,
+            transparent 300deg,
+            rgba(0, 243, 255, 0.025) 302deg,
+            transparent 305deg,
+            transparent 330deg,
+            rgba(139, 92, 246, 0.02) 332deg,
+            transparent 335deg,
+            transparent 360deg);
+    animation: ray-rotate 120s linear infinite, ray-shimmer 8s ease-in-out infinite;
+}
+
+/* Secondary rays layer — slightly offset for depth */
+.dark .fi-body::after {
+    content: '';
+    position: fixed;
+    top: 40%;
+    left: 60%;
+    width: 180vmax;
+    height: 180vmax;
+    transform: translate(-50%, -50%);
+    z-index: -2;
+    pointer-events: none;
+    background: conic-gradient(from 15deg,
+            transparent 0deg,
+            rgba(255, 255, 255, 0.012) 3deg,
+            transparent 6deg,
+            transparent 45deg,
+            rgba(139, 92, 246, 0.018) 47deg,
+            transparent 50deg,
+            transparent 90deg,
+            rgba(0, 243, 255, 0.015) 92deg,
+            transparent 95deg,
+            transparent 135deg,
+            rgba(255, 255, 255, 0.01) 137deg,
+            transparent 140deg,
+            transparent 180deg,
+            rgba(139, 92, 246, 0.015) 182deg,
+            transparent 185deg,
+            transparent 225deg,
+            rgba(0, 243, 255, 0.012) 227deg,
+            transparent 230deg,
+            transparent 270deg,
+            rgba(255, 255, 255, 0.015) 272deg,
+            transparent 275deg,
+            transparent 315deg,
+            rgba(139, 92, 246, 0.01) 317deg,
+            transparent 320deg,
+            transparent 360deg);
+    animation: ray-rotate 180s linear infinite reverse, ray-shimmer 12s ease-in-out infinite 4s;
+    opacity: 0.6;
 }
 
 /* ── Generic App Module Stat Cards ──────── */

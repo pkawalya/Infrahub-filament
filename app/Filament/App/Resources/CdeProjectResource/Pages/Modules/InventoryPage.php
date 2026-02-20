@@ -174,8 +174,7 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                             $subtotal = $record->items()->sum('total_price');
                             $record->update(['subtotal' => $subtotal, 'total_amount' => $subtotal + ($record->tax_amount ?? 0) + ($record->shipping_cost ?? 0)]);
                             Notification::make()->title('Item added — $' . number_format($data['total_price'], 2))->success()->send();
-                        })
-                        ->createAnother(true),
+                        }),
 
                     \Filament\Actions\Action::make('editItem')
                         ->label('Edit Item')->icon('heroicon-o-pencil-square')->color('info')

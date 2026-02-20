@@ -465,8 +465,7 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
                                 'sort_order' => ($record->tasks()->max('sort_order') ?? 0) + 1,
                             ]);
                             Notification::make()->title('Task added — ' . $data['title'])->success()->send();
-                        })
-                        ->createAnother(true),
+                        }),
 
                     // ── Toggle Task Status ──
                     \Filament\Actions\Action::make('toggleTask')
@@ -533,8 +532,7 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
                             $record->items()->create($data);
                             $total = $record->items()->sum('amount');
                             Notification::make()->title('Item added — $' . number_format($data['amount'], 2) . ' (Total: ' . CurrencyHelper::format($total) . ')')->success()->send();
-                        })
-                        ->createAnother(true),
+                        }),
 
                     // ── Edit Item ──
                     \Filament\Actions\Action::make('editItem')
