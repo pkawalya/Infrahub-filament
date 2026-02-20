@@ -18,7 +18,7 @@ class AddonPricing extends Page implements HasForms
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-currency-dollar';
     protected static ?string $navigationLabel = 'Addon Pricing';
-    protected static string|\UnitEnum|null $navigationGroup = 'Platform Settings';
+    protected static string|\UnitEnum|null $navigationGroup = 'Subscription & Billing';
     protected static ?int $navigationSort = 5;
     protected static ?string $title = 'Addon Pricing';
     protected static ?string $slug = 'addon-pricing';
