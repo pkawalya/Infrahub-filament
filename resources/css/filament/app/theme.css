@@ -126,3 +126,79 @@
     padding-top: 0.5rem !important;
     padding-bottom: 0.5rem !important;
 }
+
+/* ── Dashboard Stat Cards ──────────────────────────── */
+
+/* Give each card a glass-like elevated feel */
+.fi-wi-stats-overview-stat {
+    border-radius: 1rem !important;
+    border: 1px solid rgba(99, 102, 241, 0.08) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden;
+    position: relative;
+}
+
+.fi-wi-stats-overview-stat:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.15) !important;
+}
+
+.dark .fi-wi-stats-overview-stat:hover {
+    box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Primary stat (Active Projects) — indigo accent */
+.fi-wi-stats-overview-stat:nth-child(1) {
+    border-left: 4px solid #6366f1 !important;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), transparent) !important;
+}
+
+.dark .fi-wi-stats-overview-stat:nth-child(1) {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), transparent) !important;
+}
+
+/* Success/danger stat (Open Tasks) — emerald/red accent */
+.fi-wi-stats-overview-stat:nth-child(2) {
+    border-left: 4px solid #10b981 !important;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.04), transparent) !important;
+}
+
+.dark .fi-wi-stats-overview-stat:nth-child(2) {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), transparent) !important;
+}
+
+/* Info stat (Work Orders) — sky accent */
+.fi-wi-stats-overview-stat:nth-child(3) {
+    border-left: 4px solid #0ea5e9 !important;
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.04), transparent) !important;
+}
+
+.dark .fi-wi-stats-overview-stat:nth-child(3) {
+    background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), transparent) !important;
+}
+
+/* Warning stat (Revenue) — amber accent */
+.fi-wi-stats-overview-stat:nth-child(4) {
+    border-left: 4px solid #f59e0b !important;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.04), transparent) !important;
+}
+
+.dark .fi-wi-stats-overview-stat:nth-child(4) {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), transparent) !important;
+}
+
+/* Make stat values bigger and bolder */
+.fi-wi-stats-overview-stat-value {
+    font-size: 1.75rem !important;
+    font-weight: 800 !important;
+    letter-spacing: -0.03em !important;
+}
+
+/* Subtle sparkline chart enhancement */
+.fi-wi-stats-overview-stat-chart {
+    opacity: 0.85;
+}
+
+.fi-wi-stats-overview-stat:hover .fi-wi-stats-overview-stat-chart {
+    opacity: 1;
+}
