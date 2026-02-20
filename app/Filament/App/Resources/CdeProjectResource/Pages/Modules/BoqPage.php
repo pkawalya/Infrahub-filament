@@ -207,9 +207,9 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                 fn($i) =>
                 ($i->is_variation ? '🔸 ' : '') .
                 $i->item_code . '  |  ' . $i->description .
-                '  |  ' . number_format($i->quantity, 2) . ' ' . $i->unit .
-                '  ×  $' . number_format($i->unit_rate, 2) .
-                '  =  $' . number_format($i->amount, 2) .
+                '  |  ' . number_format((float) $i->quantity, 2) . ' ' . $i->unit .
+                '  ×  $' . number_format((float) $i->unit_rate, 2) .
+                '  =  $' . number_format((float) $i->amount, 2) .
                 ($i->quantity_completed > 0 ? '  (' . round(($i->quantity_completed / max($i->quantity, 0.01)) * 100) . '% done)' : '')
             );
 
@@ -315,7 +315,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                         ->modalWidth('xl')
                         ->modalHeading(fn(Boq $record) => 'Add Item — ' . $record->boq_number)
                         ->schema([
-                            Forms\Components\Grid::make(3)->schema([
+                            \Filament\Schemas\Components\Grid::make(3)->schema([
                                 Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
                                 Forms\Components\TextInput::make('description')->required()->columnSpan(2),
                                 Forms\Components\TextInput::make('unit')->required()->maxLength(10),
@@ -344,7 +344,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                                 ->options(fn(Boq $record) => $record->items->mapWithKeys(fn($i) =>
                                     [$i->id => $i->item_code . ' — ' . \Illuminate\Support\Str::limit($i->description, 50) . ' ($' . number_format((float) $i->amount, 2) . ')']))
                                 ->required()->searchable()->live()
-                                ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                ->afterStateUpdated(function ($state, \Filament\Schemas\Components\Utilities\Set $set) {
                                     if ($item = BoqItem::find($state)) {
                                         $set('item_code', $item->item_code);
                                         $set('description', $item->description);
@@ -355,7 +355,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                                         $set('remarks', $item->remarks);
                                     }
                                 }),
-                            Forms\Components\Grid::make(3)->schema([
+                            \Filament\Schemas\Components\Grid::make(3)->schema([
                                 Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
                                 Forms\Components\TextInput::make('description')->required()->columnSpan(2),
                                 Forms\Components\TextInput::make('unit')->required()->maxLength(10),
@@ -443,7 +443,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                                         ' (' . number_format((float) $i->quantity_completed, 1) . '/' . number_format((float) $i->quantity, 1) . ' ' . $i->unit . ')',
                                 ]))
                                 ->required()->searchable()->live()
-                                ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                ->afterStateUpdated(function ($state, \Filament\Schemas\Components\Utilities\Set $set) {
                                     if ($item = BoqItem::find($state)) {
                                         $set('total_qty', number_format((float) $item->quantity, 2) . ' ' . $item->unit);
                                         $set('quantity_completed', $item->quantity_completed);
@@ -468,7 +468,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                         ->modalWidth('xl')
                         ->modalHeading(fn(Boq $record) => 'Add Variation — ' . $record->boq_number)
                         ->schema([
-                            Forms\Components\Grid::make(3)->schema([
+                            \Filament\Schemas\Components\Grid::make(3)->schema([
                                 Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
                                 Forms\Components\TextInput::make('description')->required()->columnSpan(2),
                                 Forms\Components\TextInput::make('unit')->required()->maxLength(10),
