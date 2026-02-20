@@ -33,12 +33,12 @@ class AppPanelProvider extends PanelProvider
             ->emailVerification()
             ->profile()
             ->colors([
-                'primary' => Color::Blue,
-                'danger' => Color::Rose,
+                'primary' => Color::hex('#00F3FF'),   // Electric Cyan
+                'danger' => Color::hex('#FF2A6D'),    // Neon Pink/Red
                 'gray' => Color::Slate,
-                'info' => Color::Sky,
-                'success' => Color::Emerald,
-                'warning' => Color::Amber,
+                'info' => Color::hex('#8B5CF6'),      // Neon Purple
+                'success' => Color::hex('#05D59E'),   // Matrix Green
+                'warning' => Color::hex('#FFB800'),   // Electric Gold
             ])
             ->font('Inter')
             ->darkMode(true)

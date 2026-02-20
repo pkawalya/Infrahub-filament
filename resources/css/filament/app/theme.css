@@ -127,78 +127,159 @@
     padding-bottom: 0.5rem !important;
 }
 
-/* ── Dashboard Stat Cards ──────────────────────────── */
+/* ── Neon / Dark Matter Aesthetics (Cyberpunk) ──────── */
 
-/* Give each card a glass-like elevated feel */
-.fi-wi-stats-overview-stat {
-    border-radius: 1rem !important;
-    border: 1px solid rgba(99, 102, 241, 0.08) !important;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    overflow: hidden;
-    position: relative;
+/* Base background: Deep dark matter gradient */
+body.dark {
+    background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #09090b 40%, #000000 100%) !important;
+    background-attachment: fixed !important;
+    color: #e2e8f0;
 }
 
-.fi-wi-stats-overview-stat:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.15) !important;
+body.dark .fi-body {
+    background-color: transparent !important;
 }
 
-.dark .fi-wi-stats-overview-stat:hover {
-    box-shadow: 0 8px 25px -5px rgba(99, 102, 241, 0.25) !important;
+/* Glassmorphic Topbar */
+.dark .fi-topbar {
+    background: rgba(9, 9, 11, 0.4) !important;
+    backdrop-filter: blur(16px) !important;
+    -webkit-backdrop-filter: blur(16px) !important;
+    border-bottom: 1px solid rgba(0, 243, 255, 0.1) !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* Primary stat (Active Projects) — indigo accent */
-.fi-wi-stats-overview-stat:nth-child(1) {
-    border-left: 4px solid #6366f1 !important;
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.04), transparent) !important;
+/* Glassmorphic Sidebar / Menu */
+.dark .fi-sidebar {
+    background: rgba(9, 9, 11, 0.5) !important;
+    backdrop-filter: blur(12px) !important;
+    border-right: 1px solid rgba(139, 92, 246, 0.1) !important;
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3) !important;
 }
 
-.dark .fi-wi-stats-overview-stat:nth-child(1) {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), transparent) !important;
+.dark .fi-sidebar-item-active {
+    background: linear-gradient(90deg, rgba(0, 243, 255, 0.1) 0%, transparent 100%) !important;
+    border-left: 3px solid #00F3FF !important;
+    border-radius: 0 !important;
 }
 
-/* Success/danger stat (Open Tasks) — emerald/red accent */
-.fi-wi-stats-overview-stat:nth-child(2) {
-    border-left: 4px solid #10b981 !important;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.04), transparent) !important;
+.dark .fi-sidebar-item-active .fi-sidebar-item-icon {
+    color: #00F3FF !important;
+    filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.6));
 }
 
-.dark .fi-wi-stats-overview-stat:nth-child(2) {
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), transparent) !important;
+/* All Panels / Cards */
+.dark .fi-section,
+.dark .fi-card,
+.dark .fi-ta-content {
+    background: rgba(15, 23, 42, 0.4) !important;
+    backdrop-filter: blur(12px) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
 }
 
-/* Info stat (Work Orders) — sky accent */
-.fi-wi-stats-overview-stat:nth-child(3) {
-    border-left: 4px solid #0ea5e9 !important;
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.04), transparent) !important;
+/* Neon Inputs */
+.dark .fi-input,
+.dark .fi-select-input {
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #00F3FF !important;
+    transition: all 0.3s ease-in-out !important;
 }
 
-.dark .fi-wi-stats-overview-stat:nth-child(3) {
-    background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), transparent) !important;
+.dark .fi-input:focus,
+.dark .fi-select-input:focus {
+    border-color: rgba(0, 243, 255, 0.5) !important;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.2), inset 0 0 8px rgba(0, 243, 255, 0.1) !important;
+    background-color: rgba(0, 243, 255, 0.02) !important;
 }
 
-/* Warning stat (Revenue) — amber accent */
-.fi-wi-stats-overview-stat:nth-child(4) {
-    border-left: 4px solid #f59e0b !important;
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.04), transparent) !important;
+/* Buttons Glow */
+.dark .fi-btn-primary {
+    background: linear-gradient(135deg, rgba(0, 243, 255, 0.8), rgba(0, 160, 255, 0.8)) !important;
+    border: 1px solid #00F3FF !important;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4) !important;
+    color: #000 !important;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease !important;
 }
 
-.dark .fi-wi-stats-overview-stat:nth-child(4) {
-    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), transparent) !important;
+.dark .fi-btn-primary:hover {
+    box-shadow: 0 0 25px rgba(0, 243, 255, 0.7) !important;
+    transform: translateY(-2px);
 }
 
-/* Make stat values bigger and bolder */
-.fi-wi-stats-overview-stat-value {
-    font-size: 1.75rem !important;
-    font-weight: 800 !important;
-    letter-spacing: -0.03em !important;
+/* Modal Window Glassmorphism */
+.dark .fi-modal-window {
+    background: rgba(15, 23, 42, 0.7) !important;
+    backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(0, 243, 255, 0.2) !important;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.8), 0 0 100px rgba(0, 243, 255, 0.1) !important;
 }
 
-/* Subtle sparkline chart enhancement */
-.fi-wi-stats-overview-stat-chart {
-    opacity: 0.85;
+.dark .fi-modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
-.fi-wi-stats-overview-stat:hover .fi-wi-stats-overview-stat-chart {
-    opacity: 1;
+.dark .fi-modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Tables */
+.dark .fi-ta-row:hover {
+    background-color: rgba(0, 243, 255, 0.05) !important;
+}
+
+.dark .fi-ta-header-cell-label {
+    color: #8B5CF6 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Subtle Animated Ambient Accents */
+@keyframes neon-pulse {
+    0% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+
+    100% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+}
+
+body.dark::before {
+    content: '';
+    position: fixed;
+    top: -50%;
+    right: -20%;
+    width: 100vw;
+    height: 100vw;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.07) 0%, transparent 60%);
+    z-index: -1;
+    pointer-events: none;
+    animation: neon-pulse 15s infinite ease-in-out;
+}
+
+body.dark::after {
+    content: '';
+    position: fixed;
+    bottom: -50%;
+    left: -20%;
+    width: 100vw;
+    height: 100vw;
+    background: radial-gradient(circle, rgba(0, 243, 255, 0.05) 0%, transparent 60%);
+    z-index: -1;
+    pointer-events: none;
+    animation: neon-pulse 20s infinite ease-in-out reverse;
 }
