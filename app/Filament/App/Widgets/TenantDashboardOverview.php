@@ -9,14 +9,15 @@ use App\Models\SafetyIncident;
 use App\Models\Task;
 use App\Models\WorkOrder;
 use App\Support\CurrencyHelper;
-use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
+use Filament\Widgets\Widget;
 
-class TenantDashboardOverview extends BaseWidget
+class TenantDashboardOverview extends Widget
 {
+    protected string $view = 'filament.app.widgets.tenant-overview';
     protected int|string|array $columnSpan = 'full';
+    protected static ?int $sort = 1;
 
-    protected function getStats(): array
+    public function getViewData(): array
     {
         $companyId = auth()->user()?->company_id;
 
@@ -39,41 +40,6 @@ class TenantDashboardOverview extends BaseWidget
             ->where('due_date', '<', now())
             ->count();
 
-        // Build sparkline trends (last 6 months)
-        $projectTrend = collect();
-        $taskTrend = collect();
-        $woTrend = collect();
-        $revenueTrend = collect();
-
-        for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $projectTrend->push(
-                CdeProject::where('company_id', $companyId)
-                    ->whereYear('created_at', $date->year)
-                    ->whereMonth('created_at', $date->month)
-                    ->count()
-            );
-            $taskTrend->push(
-                Task::where('company_id', $companyId)
-                    ->whereYear('created_at', $date->year)
-                    ->whereMonth('created_at', $date->month)
-                    ->count()
-            );
-            $woTrend->push(
-                WorkOrder::where('company_id', $companyId)
-                    ->whereYear('created_at', $date->year)
-                    ->whereMonth('created_at', $date->month)
-                    ->count()
-            );
-            $revenueTrend->push(
-                (int) Invoice::where('company_id', $companyId)
-                    ->where('status', 'paid')
-                    ->whereYear('issue_date', $date->year)
-                    ->whereMonth('issue_date', $date->month)
-                    ->sum('total_amount')
-            );
-        }
-
         $monthlyRevenue = Invoice::where('company_id', $companyId)
             ->where('status', 'paid')
             ->whereMonth('issue_date', now()->month)
@@ -90,37 +56,24 @@ class TenantDashboardOverview extends BaseWidget
             : ($monthlyRevenue > 0 ? 100 : 0);
 
         return [
-            Stat::make('Active Projects', $activeProjects)
-                ->description($totalProjects . ' total · ' . ($totalProjects - $activeProjects) . ' other')
-                ->descriptionIcon('heroicon-m-building-office')
-                ->color('primary')
-                ->chart($projectTrend->toArray()),
-
-            Stat::make('Open Tasks', $openTasks)
-                ->description(
-                    $overdueTasks > 0
-                    ? $overdueTasks . ' overdue — action needed'
-                    : '✓ All tasks on track'
-                )
-                ->descriptionIcon($overdueTasks > 0 ? 'heroicon-m-exclamation-triangle' : 'heroicon-m-check-circle')
-                ->color($overdueTasks > 0 ? 'danger' : 'success')
-                ->chart($taskTrend->toArray()),
-
-            Stat::make('Work Orders', $openWO . ' open')
-                ->description($completedWO . ' completed this month')
-                ->descriptionIcon('heroicon-m-wrench-screwdriver')
-                ->color('info')
-                ->chart($woTrend->toArray()),
-
-            Stat::make('Revenue This Month', CurrencyHelper::format($monthlyRevenue, 2))
-                ->description(
-                    $revenueChange >= 0
-                    ? '↑ ' . $revenueChange . '% from last month'
-                    : '↓ ' . abs($revenueChange) . '% from last month'
-                )
-                ->descriptionIcon($revenueChange >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down')
-                ->color($revenueChange >= 0 ? 'success' : 'danger')
-                ->chart($revenueTrend->toArray()),
+            'stats' => [
+                'projects' => [
+                    'active' => $activeProjects,
+                    'total' => $totalProjects,
+                ],
+                'tasks' => [
+                    'open' => $openTasks,
+                    'overdue' => $overdueTasks,
+                ],
+                'workOrders' => [
+                    'open' => $openWO,
+                    'completed' => $completedWO,
+                ],
+                'revenue' => [
+                    'current' => CurrencyHelper::format($monthlyRevenue, 2),
+                    'change' => $revenueChange,
+                ],
+            ],
         ];
     }
 }
