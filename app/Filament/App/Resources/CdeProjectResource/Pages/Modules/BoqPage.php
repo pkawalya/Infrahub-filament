@@ -312,7 +312,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                     /* ── Add Line Item ── */
                     \Filament\Actions\Action::make('addItem')
                         ->label('Add Item')->icon('heroicon-o-plus-circle')->color('info')
-                        ->modalWidth('xl')
+                        ->modalWidth('screen')
                         ->modalHeading(fn(Boq $record) => 'Add Items — ' . $record->boq_number)
                         ->schema([
                             Forms\Components\Repeater::make('items')
@@ -477,7 +477,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                     /* ── Add Variation ── */
                     \Filament\Actions\Action::make('addVariation')
                         ->label('Variation')->icon('heroicon-o-plus')->color('warning')
-                        ->modalWidth('xl')
+                        ->modalWidth('screen')
                         ->modalHeading(fn(Boq $record) => 'Add Variations — ' . $record->boq_number)
                         ->schema([
                             Forms\Components\Repeater::make('items')
