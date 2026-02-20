@@ -331,8 +331,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                             $record->items()->create($data);
                             $record->update(['total_value' => $record->items()->sum('amount')]);
                             Notification::make()->title('Item added — ' . $data['item_code'] . ' ($' . number_format($data['amount'], 2) . ')')->success()->send();
-                        })
-                        ->createAnother(true),
+                        }),
 
                     /* ── Edit Item ── */
                     \Filament\Actions\Action::make('editItem')
