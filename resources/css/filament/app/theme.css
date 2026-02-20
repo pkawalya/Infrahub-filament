@@ -288,34 +288,34 @@ body.dark .fi-body {
     }
 }
 
-/* Ambient glow orbs */
+/* Ambient glow orbs — much brighter */
 body.dark::after {
     content: '';
     position: fixed;
-    top: -30%;
-    left: -10%;
-    width: 80vw;
-    height: 80vw;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 60%);
+    top: -20%;
+    left: -5%;
+    width: 70vw;
+    height: 70vw;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 55%);
     z-index: -1;
     pointer-events: none;
-    animation: aconex-pulse 15s infinite ease-in-out;
+    animation: aconex-pulse 12s infinite ease-in-out;
 }
 
 body.dark::before {
     content: '';
     position: fixed;
-    bottom: -30%;
-    right: -10%;
-    width: 80vw;
-    height: 80vw;
-    background: radial-gradient(circle, rgba(0, 243, 255, 0.05) 0%, transparent 60%);
+    bottom: -20%;
+    right: -5%;
+    width: 70vw;
+    height: 70vw;
+    background: radial-gradient(circle, rgba(0, 243, 255, 0.12) 0%, transparent 55%);
     z-index: -1;
     pointer-events: none;
-    animation: aconex-pulse 18s infinite ease-in-out reverse;
+    animation: aconex-pulse 16s infinite ease-in-out reverse;
 }
 
-/* ── Light Rays (Aconex diagonal streaks) ──────── */
+/* ── Light Rays (Aconex diagonal streaks) — BOLD ──────── */
 .dark .fi-body::before {
     content: '';
     position: fixed;
@@ -328,84 +328,104 @@ body.dark::before {
     pointer-events: none;
     background: conic-gradient(from 0deg,
             transparent 0deg,
-            rgba(139, 92, 246, 0.03) 2deg,
-            transparent 5deg,
-            transparent 30deg,
-            rgba(0, 243, 255, 0.025) 32deg,
-            transparent 35deg,
-            transparent 60deg,
-            rgba(139, 92, 246, 0.02) 62deg,
-            transparent 65deg,
-            transparent 90deg,
-            rgba(255, 255, 255, 0.015) 91deg,
-            transparent 93deg,
-            transparent 120deg,
-            rgba(0, 243, 255, 0.02) 122deg,
-            transparent 125deg,
-            transparent 150deg,
-            rgba(139, 92, 246, 0.025) 152deg,
-            transparent 155deg,
-            transparent 180deg,
-            rgba(255, 255, 255, 0.018) 181deg,
+            rgba(139, 92, 246, 0.1) 1deg,
+            rgba(139, 92, 246, 0.06) 4deg,
+            transparent 7deg,
+            transparent 25deg,
+            rgba(0, 243, 255, 0.08) 26deg,
+            rgba(0, 243, 255, 0.04) 30deg,
+            transparent 33deg,
+            transparent 55deg,
+            rgba(139, 92, 246, 0.07) 56deg,
+            rgba(139, 92, 246, 0.03) 60deg,
+            transparent 63deg,
+            transparent 85deg,
+            rgba(255, 255, 255, 0.06) 86deg,
+            rgba(255, 255, 255, 0.025) 89deg,
+            transparent 92deg,
+            transparent 115deg,
+            rgba(0, 243, 255, 0.08) 116deg,
+            rgba(0, 243, 255, 0.04) 120deg,
+            transparent 123deg,
+            transparent 145deg,
+            rgba(139, 92, 246, 0.09) 146deg,
+            rgba(139, 92, 246, 0.04) 150deg,
+            transparent 153deg,
+            transparent 175deg,
+            rgba(255, 255, 255, 0.07) 176deg,
+            rgba(255, 255, 255, 0.03) 180deg,
             transparent 183deg,
-            transparent 210deg,
-            rgba(0, 243, 255, 0.02) 212deg,
-            transparent 215deg,
-            transparent 240deg,
-            rgba(139, 92, 246, 0.015) 242deg,
-            transparent 245deg,
-            transparent 270deg,
-            rgba(255, 255, 255, 0.02) 271deg,
+            transparent 205deg,
+            rgba(0, 243, 255, 0.07) 206deg,
+            rgba(0, 243, 255, 0.03) 210deg,
+            transparent 213deg,
+            transparent 235deg,
+            rgba(139, 92, 246, 0.06) 236deg,
+            rgba(139, 92, 246, 0.025) 240deg,
+            transparent 243deg,
+            transparent 265deg,
+            rgba(255, 255, 255, 0.08) 266deg,
+            rgba(255, 255, 255, 0.035) 270deg,
             transparent 273deg,
-            transparent 300deg,
-            rgba(0, 243, 255, 0.025) 302deg,
-            transparent 305deg,
-            transparent 330deg,
-            rgba(139, 92, 246, 0.02) 332deg,
-            transparent 335deg,
+            transparent 295deg,
+            rgba(0, 243, 255, 0.09) 296deg,
+            rgba(0, 243, 255, 0.04) 300deg,
+            transparent 303deg,
+            transparent 325deg,
+            rgba(139, 92, 246, 0.07) 326deg,
+            rgba(139, 92, 246, 0.03) 330deg,
+            transparent 333deg,
             transparent 360deg);
-    animation: ray-rotate 120s linear infinite, ray-shimmer 8s ease-in-out infinite;
+    animation: ray-rotate 90s linear infinite, ray-shimmer 6s ease-in-out infinite;
 }
 
-/* Secondary rays layer — slightly offset for depth */
+/* Secondary rays layer — offset for depth, also boosted */
 .dark .fi-body::after {
     content: '';
     position: fixed;
-    top: 40%;
-    left: 60%;
+    top: 35%;
+    left: 65%;
     width: 180vmax;
     height: 180vmax;
     transform: translate(-50%, -50%);
     z-index: -2;
     pointer-events: none;
-    background: conic-gradient(from 15deg,
+    background: conic-gradient(from 18deg,
             transparent 0deg,
-            rgba(255, 255, 255, 0.012) 3deg,
-            transparent 6deg,
-            transparent 45deg,
-            rgba(139, 92, 246, 0.018) 47deg,
-            transparent 50deg,
-            transparent 90deg,
-            rgba(0, 243, 255, 0.015) 92deg,
-            transparent 95deg,
-            transparent 135deg,
-            rgba(255, 255, 255, 0.01) 137deg,
-            transparent 140deg,
-            transparent 180deg,
-            rgba(139, 92, 246, 0.015) 182deg,
-            transparent 185deg,
-            transparent 225deg,
-            rgba(0, 243, 255, 0.012) 227deg,
-            transparent 230deg,
-            transparent 270deg,
-            rgba(255, 255, 255, 0.015) 272deg,
-            transparent 275deg,
-            transparent 315deg,
-            rgba(139, 92, 246, 0.01) 317deg,
-            transparent 320deg,
+            rgba(255, 255, 255, 0.06) 2deg,
+            rgba(255, 255, 255, 0.025) 5deg,
+            transparent 8deg,
+            transparent 40deg,
+            rgba(139, 92, 246, 0.07) 41deg,
+            rgba(139, 92, 246, 0.03) 45deg,
+            transparent 48deg,
+            transparent 80deg,
+            rgba(0, 243, 255, 0.06) 81deg,
+            rgba(0, 243, 255, 0.025) 85deg,
+            transparent 88deg,
+            transparent 130deg,
+            rgba(255, 255, 255, 0.05) 131deg,
+            rgba(255, 255, 255, 0.02) 135deg,
+            transparent 138deg,
+            transparent 175deg,
+            rgba(139, 92, 246, 0.06) 176deg,
+            rgba(139, 92, 246, 0.025) 180deg,
+            transparent 183deg,
+            transparent 220deg,
+            rgba(0, 243, 255, 0.05) 221deg,
+            rgba(0, 243, 255, 0.02) 225deg,
+            transparent 228deg,
+            transparent 265deg,
+            rgba(255, 255, 255, 0.06) 266deg,
+            rgba(255, 255, 255, 0.025) 270deg,
+            transparent 273deg,
+            transparent 310deg,
+            rgba(139, 92, 246, 0.05) 311deg,
+            rgba(139, 92, 246, 0.02) 315deg,
+            transparent 318deg,
             transparent 360deg);
-    animation: ray-rotate 180s linear infinite reverse, ray-shimmer 12s ease-in-out infinite 4s;
-    opacity: 0.6;
+    animation: ray-rotate 150s linear infinite reverse, ray-shimmer 10s ease-in-out infinite 3s;
+    opacity: 0.8;
 }
 
 /* ── Generic App Module Stat Cards ──────── */
