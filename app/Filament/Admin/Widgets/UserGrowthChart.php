@@ -9,7 +9,7 @@ use Filament\Widgets\ChartWidget;
 class UserGrowthChart extends ChartWidget
 {
     protected ?string $heading = 'Growth Over Last 6 Months';
-    protected static ?int $sort = 3;
+    protected static ?int $sort = 2;
     protected int|string|array $columnSpan = 1;
     protected ?string $maxHeight = '280px';
 

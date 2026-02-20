@@ -9,7 +9,7 @@ use Filament\Widgets\ChartWidget;
 class CompaniesByPlanChart extends ChartWidget
 {
     protected ?string $heading = 'Companies by Subscription Plan';
-    protected static ?int $sort = 2;
+    protected static ?int $sort = 3;
     protected int|string|array $columnSpan = 1;
     protected ?string $maxHeight = '280px';
 

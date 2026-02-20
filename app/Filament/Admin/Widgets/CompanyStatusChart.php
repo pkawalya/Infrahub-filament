@@ -8,7 +8,7 @@ use Filament\Widgets\ChartWidget;
 class CompanyStatusChart extends ChartWidget
 {
     protected ?string $heading = 'Company Status Distribution';
-    protected static ?int $sort = 6;
+    protected static ?int $sort = 5;
     protected int|string|array $columnSpan = 1;
     protected ?string $maxHeight = '280px';
 

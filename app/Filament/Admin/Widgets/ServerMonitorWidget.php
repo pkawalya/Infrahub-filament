@@ -10,7 +10,7 @@ class ServerMonitorWidget extends Widget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?int $sort = 0;
+    protected static ?int $sort = 7;
 
     // Poll every 5 seconds for live data
     protected static ?string $pollingInterval = '5s';
