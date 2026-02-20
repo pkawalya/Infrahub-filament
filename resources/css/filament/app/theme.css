@@ -13,10 +13,17 @@
     min-width: 13rem !important;
 }
 
-/* ── Reduce padding between main sidebar and content ── */
-.fi-main {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+/* ── Reduce horizontal padding exclusively in top-nav ── */
+.fi-layout-is-top-navigation .fi-main {
+    padding-left: 2rem !important;
+    padding-right: 2rem !important;
+}
+
+@media (max-width: 1024px) {
+    .fi-layout-is-top-navigation .fi-main {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
 }
 
 /* ── Reduce gap between sub-nav sidebar and page content */
@@ -127,13 +134,13 @@
     padding-bottom: 0.5rem !important;
 }
 
-/* ── Solid Navy Glass Aesthetics ──────── */
+/* ── Oracle Aconex Glow / Glassmorphism ──────── */
 
-/* Base background: Deep professional navy */
+/* Base background: Deep cosmic purple/blue gradient */
 body.dark {
-    background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0f172a 40%, #020617 100%) !important;
+    background: radial-gradient(circle at 50% -20%, #2a1055 0%, #0a0f24 50%, #000000 100%) !important;
     background-attachment: fixed !important;
-    color: #f8fafc;
+    color: #e2e8f0;
 }
 
 body.dark .fi-body {
@@ -142,98 +149,145 @@ body.dark .fi-body {
 
 /* Glassmorphic Topbar */
 .dark .fi-topbar {
-    background: rgba(15, 23, 42, 0.4) !important;
-    backdrop-filter: blur(16px) !important;
-    -webkit-backdrop-filter: blur(16px) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+    background: rgba(10, 15, 36, 0.4) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.3) !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.6), 0 0 20px rgba(139, 92, 246, 0.15) !important;
 }
 
 /* Glassmorphic Sidebar / Menu */
 .dark .fi-sidebar {
-    background: rgba(15, 23, 42, 0.5) !important;
-    backdrop-filter: blur(12px) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
-    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.3) !important;
+    background: rgba(10, 15, 36, 0.5) !important;
+    backdrop-filter: blur(16px) !important;
+    border-right: 1px solid rgba(139, 92, 246, 0.2) !important;
+    box-shadow: 2px 0 25px rgba(0, 0, 0, 0.5) !important;
 }
 
 .dark .fi-sidebar-item-active {
-    background: linear-gradient(90deg, rgba(59, 130, 246, 0.15) 0%, transparent 100%) !important;
-    border-left: 3px solid #3b82f6 !important;
+    background: linear-gradient(90deg, rgba(0, 243, 255, 0.15) 0%, transparent 100%) !important;
+    border-left: 3px solid #00F3FF !important;
     border-radius: 0 !important;
 }
 
 .dark .fi-sidebar-item-active .fi-sidebar-item-icon {
-    color: #3b82f6 !important;
+    color: #00F3FF !important;
+    filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.8));
 }
 
 /* All Panels / Cards */
 .dark .fi-section,
 .dark .fi-card,
 .dark .fi-ta-content {
-    background: rgba(30, 41, 59, 0.4) !important;
-    backdrop-filter: blur(12px) !important;
-    border-radius: 8px !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+    background: rgba(15, 20, 45, 0.45) !important;
+    backdrop-filter: blur(16px) !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(139, 92, 246, 0.25) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(139, 92, 246, 0.05) !important;
 }
 
 /* Inputs */
 .dark .fi-input,
 .dark .fi-select-input {
-    background-color: rgba(15, 23, 42, 0.6) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    color: #f8fafc !important;
-    transition: all 0.2s ease-in-out !important;
+    background-color: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(139, 92, 246, 0.3) !important;
+    color: #00F3FF !important;
+    transition: all 0.3s ease-in-out !important;
 }
 
 .dark .fi-input:focus,
 .dark .fi-select-input:focus {
-    border-color: rgba(59, 130, 246, 0.6) !important;
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.6) !important;
-    background-color: rgba(15, 23, 42, 0.8) !important;
+    border-color: #00F3FF !important;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4), inset 0 0 8px rgba(0, 243, 255, 0.1) !important;
+    background-color: rgba(0, 243, 255, 0.05) !important;
 }
 
 /* Buttons */
 .dark .fi-btn-primary {
-    background: #2563eb !important;
-    border: 1px solid #1d4ed8 !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.8), rgba(59, 130, 246, 0.8)) !important;
+    border: 1px solid #8b5cf6 !important;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.4) !important;
     color: #ffffff !important;
-    font-weight: 600;
-    transition: all 0.2s ease !important;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease !important;
 }
 
 .dark .fi-btn-primary:hover {
-    background: #3b82f6 !important;
-    transform: translateY(-1px);
+    box-shadow: 0 0 25px rgba(139, 92, 246, 0.7) !important;
+    transform: translateY(-2px);
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.9), rgba(96, 165, 250, 0.9)) !important;
 }
 
 /* Modal Window Glassmorphism */
 .dark .fi-modal-window {
-    background: rgba(30, 41, 59, 0.85) !important;
+    background: rgba(15, 20, 45, 0.8) !important;
     backdrop-filter: blur(24px) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
+    border: 1px solid rgba(0, 243, 255, 0.3) !important;
+    box-shadow: 0 0 50px rgba(0, 0, 0, 0.9), 0 0 80px rgba(139, 92, 246, 0.2) !important;
 }
 
 .dark .fi-modal-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.2) !important;
 }
 
 .dark .fi-modal-footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
-    background: rgba(15, 23, 42, 0.4) !important;
+    border-top: 1px solid rgba(139, 92, 246, 0.2) !important;
+    background: rgba(0, 0, 0, 0.3) !important;
 }
 
 /* Tables */
 .dark .fi-ta-row:hover {
-    background-color: rgba(255, 255, 255, 0.03) !important;
+    background-color: rgba(139, 92, 246, 0.1) !important;
 }
 
 .dark .fi-ta-header-cell-label {
-    color: #94a3b8 !important;
-    font-weight: 600;
+    color: #a78bfa !important;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Animated Ambient Glow (Subtle) */
+@keyframes aconex-pulse {
+    0% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+    }
+
+    100% {
+        opacity: 0.4;
+    }
+}
+
+body.dark::after {
+    content: '';
+    position: fixed;
+    top: -30%;
+    left: -10%;
+    width: 80vw;
+    height: 80vw;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, transparent 60%);
+    z-index: -1;
+    pointer-events: none;
+    animation: aconex-pulse 15s infinite ease-in-out;
+}
+
+body.dark::before {
+    content: '';
+    position: fixed;
+    bottom: -30%;
+    right: -10%;
+    width: 80vw;
+    height: 80vw;
+    background: radial-gradient(circle, rgba(0, 243, 255, 0.05) 0%, transparent 60%);
+    z-index: -1;
+    pointer-events: none;
+    animation: aconex-pulse 18s infinite ease-in-out reverse;
 }
 
 /* ── Generic App Module Stat Cards ──────── */
@@ -255,8 +309,10 @@ body.dark .fi-body {
 }
 
 .dark .mod-stat-card {
-    background: rgba(31, 41, 55, .7);
-    border-color: rgba(255, 255, 255, .08);
+    background: rgba(15, 20, 45, 0.45);
+    backdrop-filter: blur(16px);
+    border-color: rgba(139, 92, 246, 0.25);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(139, 92, 246, 0.05);
 }
 
 .mod-stat-card:hover {
@@ -264,10 +320,21 @@ body.dark .fi-body {
     box-shadow: 0 8px 25px -5px rgba(0, 0, 0, .1), 0 4px 10px -5px rgba(0, 0, 0, .05);
 }
 
+.dark .mod-stat-card:hover {
+    border-color: rgba(0, 243, 255, 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(0, 243, 255, 0.15) !important;
+}
+
 .mod-stat-card.primary {
     background: linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #2dd4bf 100%);
     color: white;
     border: none;
+}
+
+.dark .mod-stat-card.primary {
+    background: linear-gradient(135deg, rgba(88, 28, 135, 0.8) 0%, rgba(109, 40, 217, 0.8) 50%, rgba(139, 92, 246, 0.8) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.5);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3) !important;
 }
 
 .mod-stat-card::before {
