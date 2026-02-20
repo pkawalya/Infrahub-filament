@@ -313,24 +313,37 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                     \Filament\Actions\Action::make('addItem')
                         ->label('Add Item')->icon('heroicon-o-plus-circle')->color('info')
                         ->modalWidth('xl')
-                        ->modalHeading(fn(Boq $record) => 'Add Item — ' . $record->boq_number)
+                        ->modalHeading(fn(Boq $record) => 'Add Items — ' . $record->boq_number)
                         ->schema([
-                            \Filament\Schemas\Components\Grid::make(3)->schema([
-                                Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
-                                Forms\Components\TextInput::make('description')->required()->columnSpan(2),
-                                Forms\Components\TextInput::make('unit')->required()->maxLength(10),
-                                Forms\Components\TextInput::make('quantity')->numeric()->required()->default(0),
-                                Forms\Components\TextInput::make('unit_rate')->label('Rate')->numeric()->prefix('$')->required()->default(0),
-                                Forms\Components\Select::make('category')->options(self::$categories)->searchable(),
-                                Forms\Components\Textarea::make('remarks')->rows(1)->columnSpan(2)->placeholder('Notes...'),
-                            ]),
+                            Forms\Components\Repeater::make('items')
+                                ->label('Line Items to Add')
+                                ->addActionLabel('Add Another Item')
+                                ->defaultItems(1)
+                                ->schema([
+                                    \Filament\Schemas\Components\Grid::make(3)->schema([
+                                        Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
+                                        Forms\Components\TextInput::make('description')->required()->columnSpan(2),
+                                        Forms\Components\TextInput::make('unit')->required()->maxLength(10),
+                                        Forms\Components\TextInput::make('quantity')->numeric()->required()->default(0),
+                                        Forms\Components\TextInput::make('unit_rate')->label('Rate')->numeric()->prefix('$')->required()->default(0),
+                                        Forms\Components\Select::make('category')->options(self::$categories)->searchable(),
+                                        Forms\Components\Textarea::make('remarks')->rows(1)->columnSpan(2)->placeholder('Notes...'),
+                                    ]),
+                                ])->collapsible()
                         ])
                         ->action(function (array $data, Boq $record): void {
-                            $data['amount'] = round(($data['quantity'] ?? 0) * ($data['unit_rate'] ?? 0), 2);
-                            $data['sort_order'] = ($record->items()->max('sort_order') ?? 0) + 1;
-                            $record->items()->create($data);
+                            $sortOrder = ($record->items()->max('sort_order') ?? 0);
+                            $count = 0;
+                            $totalAdded = 0;
+                            foreach ($data['items'] ?? [] as $item) {
+                                $item['amount'] = round(($item['quantity'] ?? 0) * ($item['unit_rate'] ?? 0), 2);
+                                $item['sort_order'] = ++$sortOrder;
+                                $record->items()->create($item);
+                                $count++;
+                                $totalAdded += $item['amount'];
+                            }
                             $record->update(['total_value' => $record->items()->sum('amount')]);
-                            Notification::make()->title('Item added — ' . $data['item_code'] . ' ($' . number_format($data['amount'], 2) . ')')->success()->send();
+                            Notification::make()->title("{$count} items added — ($" . number_format($totalAdded, 2) . ")")->success()->send();
                         }),
 
                     /* ── Edit Item ── */
@@ -465,25 +478,38 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                     \Filament\Actions\Action::make('addVariation')
                         ->label('Variation')->icon('heroicon-o-plus')->color('warning')
                         ->modalWidth('xl')
-                        ->modalHeading(fn(Boq $record) => 'Add Variation — ' . $record->boq_number)
+                        ->modalHeading(fn(Boq $record) => 'Add Variations — ' . $record->boq_number)
                         ->schema([
-                            \Filament\Schemas\Components\Grid::make(3)->schema([
-                                Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
-                                Forms\Components\TextInput::make('description')->required()->columnSpan(2),
-                                Forms\Components\TextInput::make('unit')->required()->maxLength(10),
-                                Forms\Components\TextInput::make('quantity')->numeric()->required()->default(0),
-                                Forms\Components\TextInput::make('unit_rate')->label('Rate')->numeric()->prefix('$')->required()->default(0),
-                                Forms\Components\Select::make('category')->options(self::$categories)->searchable(),
-                                Forms\Components\Textarea::make('remarks')->rows(1)->columnSpan(2)->placeholder('Reason for variation...'),
-                            ]),
+                            Forms\Components\Repeater::make('items')
+                                ->label('Variations to Add')
+                                ->addActionLabel('Add Another Variation')
+                                ->defaultItems(1)
+                                ->schema([
+                                    \Filament\Schemas\Components\Grid::make(3)->schema([
+                                        Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
+                                        Forms\Components\TextInput::make('description')->required()->columnSpan(2),
+                                        Forms\Components\TextInput::make('unit')->required()->maxLength(10),
+                                        Forms\Components\TextInput::make('quantity')->numeric()->required()->default(0),
+                                        Forms\Components\TextInput::make('unit_rate')->label('Rate')->numeric()->prefix('$')->required()->default(0),
+                                        Forms\Components\Select::make('category')->options(self::$categories)->searchable(),
+                                        Forms\Components\Textarea::make('remarks')->rows(1)->columnSpan(2)->placeholder('Reason for variation...'),
+                                    ]),
+                                ])->collapsible()
                         ])
                         ->action(function (array $data, Boq $record): void {
-                            $data['amount'] = round(($data['quantity'] ?? 0) * ($data['unit_rate'] ?? 0), 2);
-                            $data['sort_order'] = ($record->items()->max('sort_order') ?? 0) + 1;
-                            $data['is_variation'] = true;
-                            $record->items()->create($data);
+                            $sortOrder = ($record->items()->max('sort_order') ?? 0);
+                            $count = 0;
+                            $totalAdded = 0;
+                            foreach ($data['items'] ?? [] as $item) {
+                                $item['amount'] = round(($item['quantity'] ?? 0) * ($item['unit_rate'] ?? 0), 2);
+                                $item['sort_order'] = ++$sortOrder;
+                                $item['is_variation'] = true;
+                                $record->items()->create($item);
+                                $count++;
+                                $totalAdded += $item['amount'];
+                            }
                             $record->update(['total_value' => $record->items()->sum('amount')]);
-                            Notification::make()->title('Variation added — ' . $data['item_code'] . ' ($' . number_format($data['amount'], 2) . ')')->success()->send();
+                            Notification::make()->title("{$count} variations added — ($" . number_format($totalAdded, 2) . ")")->success()->send();
                         }),
 
                     /* ── Create Revision Snapshot ── */
