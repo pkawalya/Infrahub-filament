@@ -204,12 +204,11 @@ body.dark .fi-body {
     filter: drop-shadow(0 0 6px rgba(139, 92, 246, 0.5));
 }
 
-/* All Panels / Cards — BRIGHT glowing borders */
+/* All Panels / Cards — glowing borders, NO blur mask */
 .dark .fi-section,
 .dark .fi-card,
 .dark .fi-ta-content {
-    background: rgba(12, 16, 40, 0.6) !important;
-    backdrop-filter: blur(16px) !important;
+    background: rgba(15, 20, 50, 0.65) !important;
     border-radius: 12px !important;
     border: 1px solid rgba(139, 92, 246, 0.5) !important;
     box-shadow:
