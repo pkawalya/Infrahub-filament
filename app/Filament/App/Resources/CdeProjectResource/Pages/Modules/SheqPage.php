@@ -213,8 +213,24 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
 
     public function table(Table $table): Table
     {
+        if ($this->activeTab === 'inspections') {
+            return $this->inspectionTable($table->query(
+                SafetyInspection::query()->where('cde_project_id', $this->pid())->with(['inspector', 'template'])
+            ));
+        }
+        if ($this->activeTab === 'snags') {
+            return $this->snagTable($table->query(
+                SnagItem::query()->where('cde_project_id', $this->pid())->with(['reporter', 'assignee'])
+            ));
+        }
+        return $this->incidentTable($table->query(
+            SafetyIncident::query()->where('cde_project_id', $this->pid())->with(['reporter', 'investigator'])
+        ));
+    }
+
+    private function incidentTable(Table $table): Table
+    {
         return $table
-            ->query(SafetyIncident::query()->where('cde_project_id', $this->pid())->with(['reporter', 'investigator']))
             ->columns([
                 Tables\Columns\TextColumn::make('incident_number')->label('Incident #')->searchable()->sortable()->weight('bold')
                     ->icon('heroicon-o-exclamation-triangle')->copyable(),
@@ -242,9 +258,37 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
             ])
             ->recordActions([
                 \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('viewDetail')
+                        ->label('View')->icon('heroicon-o-eye')->color('gray')->modalWidth('3xl')
+                        ->modalHeading(fn(SafetyIncident $record) => $record->incident_number . ' — ' . $record->title)
+                        ->schema(fn(SafetyIncident $record) => [
+                            Forms\Components\Placeholder::make('severity_display')->label('Severity')
+                                ->content(fn() => (self::$severities[$record->severity] ?? $record->severity)),
+                            Forms\Components\Placeholder::make('type_display')->label('Type')
+                                ->content(fn() => (self::$types[$record->type] ?? $record->type)),
+                            Forms\Components\Placeholder::make('status_display')->label('Status')
+                                ->content(SafetyIncident::$statuses[$record->status] ?? $record->status),
+                            Forms\Components\Placeholder::make('date_display')->label('Occurred')
+                                ->content($record->incident_date?->format('M d, Y H:i') ?? '—'),
+                            Forms\Components\Placeholder::make('location_display')->label('Location')
+                                ->content($record->location ?: '—'),
+                            Forms\Components\Placeholder::make('reported_by')->label('Reported By')
+                                ->content($record->reporter?->name ?? '—'),
+                            Forms\Components\Placeholder::make('desc')->label('Description')
+                                ->content(fn() => new \Illuminate\Support\HtmlString($record->description ?: '<em>No description</em>'))
+                                ->columnSpanFull(),
+                            Forms\Components\Placeholder::make('root_cause_display')->label('Root Cause')
+                                ->content($record->root_cause ?: '— Not yet determined')->columnSpanFull(),
+                            Forms\Components\Placeholder::make('corrective_display')->label('Corrective Actions')
+                                ->content($record->corrective_action ?: '— None recorded')->columnSpanFull(),
+                            Forms\Components\Placeholder::make('preventive_display')->label('Preventive Actions')
+                                ->content($record->preventive_action ?: '— None recorded')->columnSpanFull(),
+                        ])
+                        ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
+
                     \Filament\Actions\Action::make('investigate')
                         ->label('Investigate')->icon('heroicon-o-magnifying-glass')->color('warning')
-                        ->visible(fn(SafetyIncident $record) => in_array($record->status, ['reported']))
+                        ->visible(fn(SafetyIncident $record) => $record->status === 'reported')
                         ->schema([
                             Forms\Components\Select::make('investigated_by')->label('Investigator')
                                 ->options(fn() => $this->teamOptions())->searchable()->required()->default(auth()->id()),
@@ -260,7 +304,7 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                         ->visible(fn(SafetyIncident $record) => !in_array($record->status, ['resolved', 'closed']))
                         ->schema([
                             Forms\Components\Textarea::make('root_cause')->label('Root Cause')->rows(3)->required(),
-                            Forms\Components\Textarea::make('corrective_action')->label('Corrective Actions Taken')->rows(3)->required(),
+                            Forms\Components\Textarea::make('corrective_action')->label('Corrective Actions')->rows(3)->required(),
                         ])
                         ->fillForm(fn(SafetyIncident $record) => ['root_cause' => $record->root_cause, 'corrective_action' => $record->corrective_action])
                         ->action(function (array $data, SafetyIncident $record): void {
@@ -271,10 +315,23 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                     \Filament\Actions\Action::make('close')
                         ->label('Close')->icon('heroicon-o-lock-closed')->color('gray')
                         ->visible(fn(SafetyIncident $record) => $record->status === 'resolved')
-                        ->requiresConfirmation()->modalDescription('Mark this incident as closed. It cannot be reopened.')
+                        ->requiresConfirmation()->modalDescription('Mark as closed.')
                         ->action(function (SafetyIncident $record): void {
                             $record->update(['status' => 'closed']);
                             Notification::make()->title('Incident closed')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('preventiveAction')
+                        ->label('Preventive Action')->icon('heroicon-o-shield-check')->color('info')
+                        ->visible(fn(SafetyIncident $record) => in_array($record->status, ['resolved', 'closed']))
+                        ->schema([
+                            Forms\Components\Textarea::make('preventive_action')
+                                ->label('Preventive Actions / Lessons Learned')->rows(4)->required(),
+                        ])
+                        ->fillForm(fn(SafetyIncident $record) => ['preventive_action' => $record->preventive_action])
+                        ->action(function (array $data, SafetyIncident $record): void {
+                            $record->update($data);
+                            Notification::make()->title('Preventive actions recorded')->success()->send();
                         }),
 
                     \Filament\Actions\Action::make('edit')
@@ -296,8 +353,7 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                     \Filament\Actions\BulkAction::make('bulkStatus')->label('Update Status')->icon('heroicon-o-arrow-path')
                         ->schema([Forms\Components\Select::make('status')->options(SafetyIncident::$statuses)->required()])
                         ->action(function (array $data, $records): void {
-                            foreach ($records as $r)
-                                $r->update($data);
+                            foreach ($records as $r) $r->update($data);
                             Notification::make()->title($records->count() . ' incidents updated')->success()->send();
                         })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\DeleteBulkAction::make(),
@@ -306,6 +362,168 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
             ->emptyStateHeading('No Safety Incidents')
             ->emptyStateDescription('Report safety incidents to track workplace safety.')
             ->emptyStateIcon('heroicon-o-shield-check')
+            ->striped()->paginated([10, 25, 50]);
+    }
+
+    /* ── Inspection Table ───────────────────────────── */
+    private function inspectionTable(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('inspection_number')->label('#')->searchable()->sortable()->weight('bold')->copyable(),
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(SafetyInspection $r) => $r->title),
+                Tables\Columns\TextColumn::make('type')->badge()->color('info')
+                    ->formatStateUsing(fn($state) => InspectionTemplate::$types[$state] ?? $state),
+                Tables\Columns\TextColumn::make('status')->badge()
+                    ->color(fn(string $s) => match ($s) { 'completed' => 'success', 'in_progress' => 'warning', default => 'info'})->sortable(),
+                Tables\Columns\TextColumn::make('score')->label('Score')->placeholder('—')->sortable()
+                    ->color(fn($state) => $state >= 80 ? 'success' : ($state >= 50 ? 'warning' : 'danger')),
+                Tables\Columns\TextColumn::make('scheduled_date')->dateTime('M d, Y')->sortable(),
+                Tables\Columns\TextColumn::make('inspector.name')->label('Inspector')->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('location')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->defaultSort('scheduled_date', 'desc')
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')->options(SafetyInspection::$statuses),
+            ])
+            ->recordActions([
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('complete')
+                        ->label('Complete')->icon('heroicon-o-check-circle')->color('success')
+                        ->visible(fn(SafetyInspection $r) => $r->status !== 'completed')
+                        ->schema([
+                            Forms\Components\TextInput::make('score')->label('Score (0-100)')->numeric()->minValue(0)->maxValue(100)->required(),
+                            Forms\Components\Textarea::make('notes')->label('Findings / Notes')->rows(4),
+                        ])
+                        ->fillForm(fn(SafetyInspection $r) => ['score' => $r->score, 'notes' => $r->notes])
+                        ->action(function (array $data, SafetyInspection $record): void {
+                            $record->update(array_merge($data, ['status' => 'completed', 'completed_date' => now()]));
+                            Notification::make()->title('Inspection completed — Score: ' . $data['score'])->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('editInspection')
+                        ->label('Edit')->icon('heroicon-o-pencil')->modalWidth('3xl')
+                        ->schema([
+                            Section::make('Inspection Details')->schema([
+                                Forms\Components\TextInput::make('inspection_number')->label('#')->required(),
+                                Forms\Components\TextInput::make('title')->required()->columnSpanFull(),
+                                Forms\Components\Select::make('type')->options(InspectionTemplate::$types)->searchable(),
+                                Forms\Components\Select::make('status')->options(SafetyInspection::$statuses)->required(),
+                                Forms\Components\DateTimePicker::make('scheduled_date')->required(),
+                                Forms\Components\Select::make('inspector_id')->label('Inspector')
+                                    ->options(fn() => $this->teamOptions())->searchable(),
+                                Forms\Components\TextInput::make('location'),
+                                Forms\Components\TextInput::make('score')->numeric()->minValue(0)->maxValue(100),
+                                Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
+                            ])->columns(2),
+                        ])
+                        ->fillForm(fn(SafetyInspection $r) => $r->toArray())
+                        ->action(function (array $data, SafetyInspection $record): void {
+                            $record->update($data);
+                            Notification::make()->title('Inspection updated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('deleteInspection')
+                        ->label('Delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                        ->action(fn(SafetyInspection $r) => $r->delete()),
+                ]),
+            ])
+            ->emptyStateHeading('No Inspections')
+            ->emptyStateDescription('Use "Schedule Inspection" above to create one.')
+            ->emptyStateIcon('heroicon-o-clipboard-document-check')
+            ->striped()->paginated([10, 25, 50]);
+    }
+
+    /* ── Snag / Defect Table ────────────────────────── */
+    private function snagTable(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('snag_number')->label('Snag #')->searchable()->sortable()->weight('bold')->copyable(),
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(SnagItem $r) => $r->title),
+                Tables\Columns\TextColumn::make('category')->badge()->color('info')
+                    ->formatStateUsing(fn($state) => SnagItem::$categories[$state] ?? $state),
+                Tables\Columns\TextColumn::make('severity')->badge()
+                    ->color(fn(string $s) => match ($s) { 'critical' => 'danger', 'major' => 'warning', default => 'gray'})->sortable(),
+                Tables\Columns\TextColumn::make('status')->badge()
+                    ->color(fn(string $s) => match ($s) { 'open' => 'danger', 'in_progress' => 'info', 'resolved' => 'success', 'verified' => 'success', 'closed' => 'gray', default => 'gray'})->sortable(),
+                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('—'),
+                Tables\Columns\TextColumn::make('due_date')->date('M d, Y')->sortable()
+                    ->color(fn(SnagItem $r) => $r->due_date?->isPast() && !in_array($r->status, ['resolved', 'verified', 'closed']) ? 'danger' : null)
+                    ->placeholder('—'),
+                Tables\Columns\TextColumn::make('trade')->label('Trade')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')->options(SnagItem::$statuses)->multiple(),
+                Tables\Filters\SelectFilter::make('severity')->options(SnagItem::$severities),
+                Tables\Filters\SelectFilter::make('category')->options(SnagItem::$categories),
+                Tables\Filters\Filter::make('overdue')->label('Overdue Only')
+                    ->query(fn($q) => $q->where('due_date', '<', now())->whereNotIn('status', ['resolved', 'verified', 'closed']))->toggle(),
+            ])
+            ->recordActions([
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('resolveSnag')
+                        ->label('Resolve')->icon('heroicon-o-check-circle')->color('success')
+                        ->visible(fn(SnagItem $r) => in_array($r->status, ['open', 'in_progress']))
+                        ->requiresConfirmation()
+                        ->action(function (SnagItem $record): void {
+                            $record->update(['status' => 'resolved', 'resolved_at' => now()]);
+                            Notification::make()->title('Snag resolved')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('verifySnag')
+                        ->label('Verify')->icon('heroicon-o-check-badge')->color('success')
+                        ->visible(fn(SnagItem $r) => $r->status === 'resolved')
+                        ->requiresConfirmation()
+                        ->action(function (SnagItem $record): void {
+                            $record->update(['status' => 'verified']);
+                            Notification::make()->title('Snag verified')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('editSnag')
+                        ->label('Edit')->icon('heroicon-o-pencil')->modalWidth('3xl')
+                        ->schema([
+                            Section::make('Snag / Defect Details')->schema([
+                                Forms\Components\TextInput::make('snag_number')->label('Snag #')->required(),
+                                Forms\Components\TextInput::make('title')->required()->columnSpanFull(),
+                                Forms\Components\Select::make('category')->options(SnagItem::$categories)->searchable(),
+                                Forms\Components\Select::make('severity')->options(SnagItem::$severities)->required(),
+                                Forms\Components\Select::make('status')->options(SnagItem::$statuses)->required(),
+                                Forms\Components\TextInput::make('location'),
+                                Forms\Components\TextInput::make('trade')->label('Trade / Subcontractor'),
+                                Forms\Components\Select::make('assigned_to')->label('Assign To')
+                                    ->options(fn() => $this->teamOptions())->searchable()->nullable(),
+                                Forms\Components\DatePicker::make('due_date'),
+                                Forms\Components\RichEditor::make('description')
+                                    ->toolbarButtons(['bold', 'italic', 'bulletList'])->columnSpanFull(),
+                            ])->columns(2),
+                        ])
+                        ->fillForm(fn(SnagItem $r) => $r->toArray())
+                        ->action(function (array $data, SnagItem $record): void {
+                            $record->update($data);
+                            Notification::make()->title('Snag updated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('deleteSnag')
+                        ->label('Delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                        ->action(fn(SnagItem $r) => $r->delete()),
+                ]),
+            ])
+            ->toolbarActions([
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\BulkAction::make('bulkResolve')->label('Resolve')->icon('heroicon-o-check-circle')->color('success')
+                        ->requiresConfirmation()
+                        ->action(function ($records): void {
+                            foreach ($records as $r) $r->update(['status' => 'resolved', 'resolved_at' => now()]);
+                            Notification::make()->title($records->count() . ' snags resolved')->success()->send();
+                        })->deselectRecordsAfterCompletion(),
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ]),
+            ])
+            ->emptyStateHeading('No Snag Items')
+            ->emptyStateDescription('Use "Report Snag" above to log defects.')
+            ->emptyStateIcon('heroicon-o-bug-ant')
             ->striped()->paginated([10, 25, 50]);
     }
 }

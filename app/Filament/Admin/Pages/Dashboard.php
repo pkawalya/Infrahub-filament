@@ -13,6 +13,7 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
+            Widgets\ServerMonitorWidget::class,
             Widgets\PlatformOverview::class,
             Widgets\CompaniesByPlanChart::class,
             Widgets\UserGrowthChart::class,

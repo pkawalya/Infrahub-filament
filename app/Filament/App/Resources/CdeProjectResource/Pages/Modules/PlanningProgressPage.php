@@ -159,38 +159,96 @@ class PlanningProgressPage extends BaseModulePage implements HasTable, HasForms
             ])
             ->recordActions([
                 \Filament\Actions\ActionGroup::make([
-                \Filament\Actions\Action::make('complete')
-                    ->icon('heroicon-o-check-circle')->color('success')->label('Complete')
-                    ->visible(fn(Milestone $record) => !in_array($record->status, ['completed', 'cancelled']))
-                    ->schema([
-                        Forms\Components\DatePicker::make('actual_date')->label('Completion Date')->default(now())->required(),
-                    ])
-                    ->action(function (array $data, Milestone $record): void {
-                        $record->update(['status' => 'completed', 'actual_date' => $data['actual_date']]);
-                        Notification::make()->title('Milestone completed!')->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('viewDetail')
+                        ->label('View')->icon('heroicon-o-eye')->color('gray')
+                        ->modalWidth('lg')
+                        ->modalHeading(fn(Milestone $record) => $record->name)
+                        ->schema(fn(Milestone $record) => [
+                            Forms\Components\Placeholder::make('status_display')->label('Status')
+                                ->content(Milestone::$statuses[$record->status] ?? $record->status),
+                            Forms\Components\Placeholder::make('priority_display')->label('Priority')
+                                ->content(Milestone::$priorities[$record->priority] ?? $record->priority),
+                            Forms\Components\Placeholder::make('target')->label('Target Date')
+                                ->content($record->target_date?->format('M d, Y') ?? '—'),
+                            Forms\Components\Placeholder::make('actual')->label('Actual Date')
+                                ->content($record->actual_date?->format('M d, Y') ?? '—'),
+                            Forms\Components\Placeholder::make('variance_info')->label('Variance')
+                                ->content(function () use ($record) {
+                                    if (!$record->target_date)
+                                        return '—';
+                                    $compare = $record->actual_date ?? now();
+                                    $diff = $record->target_date->diffInDays($compare, false);
+                                    if ($record->status === 'completed' && $record->actual_date) {
+                                        return $diff > 0 ? $diff . ' days late' : abs($diff) . ' days early';
+                                    }
+                                    return $record->target_date->isPast() ? abs($diff) . ' days overdue' : $diff . ' days remaining';
+                                })
+                                ->columnSpanFull(),
+                            Forms\Components\Placeholder::make('desc')->label('Description')
+                                ->content(fn() => new \Illuminate\Support\HtmlString($record->description ?: '<em>No description</em>'))
+                                ->columnSpanFull(),
+                        ])
+                        ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
 
-                \Filament\Actions\Action::make('updateStatus')
-                    ->label('Status')->icon('heroicon-o-arrow-path')->color('warning')
-                    ->schema([Forms\Components\Select::make('status')->options(Milestone::$statuses)->required()])
-                    ->fillForm(fn(Milestone $record) => ['status' => $record->status])
-                    ->action(function (array $data, Milestone $record): void {
-                        $record->update($data);
-                        Notification::make()->title('Status → ' . Milestone::$statuses[$data['status']])->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('complete')
+                        ->icon('heroicon-o-check-circle')->color('success')->label('Complete')
+                        ->visible(fn(Milestone $record) => !in_array($record->status, ['completed', 'cancelled']))
+                        ->schema([
+                            Forms\Components\DatePicker::make('actual_date')->label('Completion Date')->default(now())->required(),
+                        ])
+                        ->action(function (array $data, Milestone $record): void {
+                            $record->update(['status' => 'completed', 'actual_date' => $data['actual_date']]);
+                            Notification::make()->title('Milestone completed!')->success()->send();
+                        }),
 
-                \Filament\Actions\Action::make('edit')
-                    ->icon('heroicon-o-pencil')->modalWidth('3xl')
-                    ->schema($this->milestoneFormSchema())
-                    ->fillForm(fn(Milestone $record) => $record->toArray())
-                    ->action(function (array $data, Milestone $record): void {
-                        $record->update($data);
-                        Notification::make()->title('Milestone updated')->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('reschedule')
+                        ->label('Reschedule')->icon('heroicon-o-calendar')->color('warning')
+                        ->visible(fn(Milestone $record) => !in_array($record->status, ['completed', 'cancelled']))
+                        ->schema([
+                            Forms\Components\DatePicker::make('new_target_date')->label('New Target Date')->required(),
+                            Forms\Components\Textarea::make('reason')->label('Reason for Reschedule')->rows(2)->required(),
+                        ])
+                        ->fillForm(fn(Milestone $record) => ['new_target_date' => $record->target_date])
+                        ->action(function (array $data, Milestone $record): void {
+                            $oldDate = $record->target_date?->format('M d, Y') ?? '—';
+                            $desc = $record->description ? $record->description . "\n" : '';
+                            $desc .= '[Rescheduled ' . now()->format('M d') . ': ' . $oldDate . ' → ' . \Carbon\Carbon::parse($data['new_target_date'])->format('M d, Y') . '] ' . $data['reason'];
+                            $record->update(['target_date' => $data['new_target_date'], 'description' => $desc]);
+                            Notification::make()->title('Milestone rescheduled')->success()->send();
+                        }),
 
-                \Filament\Actions\Action::make('delete')
-                    ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
-                    ->action(fn(Milestone $record) => $record->delete()),
+                    \Filament\Actions\Action::make('updateStatus')
+                        ->label('Status')->icon('heroicon-o-arrow-path')->color('warning')
+                        ->schema([Forms\Components\Select::make('status')->options(Milestone::$statuses)->required()])
+                        ->fillForm(fn(Milestone $record) => ['status' => $record->status])
+                        ->action(function (array $data, Milestone $record): void {
+                            $record->update($data);
+                            Notification::make()->title('Status → ' . Milestone::$statuses[$data['status']])->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('edit')
+                        ->icon('heroicon-o-pencil')->modalWidth('3xl')
+                        ->schema($this->milestoneFormSchema())
+                        ->fillForm(fn(Milestone $record) => $record->toArray())
+                        ->action(function (array $data, Milestone $record): void {
+                            $record->update($data);
+                            Notification::make()->title('Milestone updated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('duplicate')
+                        ->icon('heroicon-o-document-duplicate')->color('gray')
+                        ->requiresConfirmation()
+                        ->action(function (Milestone $record): void {
+                            $new = $record->replicate(['actual_date']);
+                            $new->status = 'pending';
+                            $new->name = $record->name . ' (Copy)';
+                            $new->save();
+                            Notification::make()->title('Milestone duplicated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('delete')
+                        ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                        ->action(fn(Milestone $record) => $record->delete()),
                 ]),
             ])
             ->toolbarActions([
@@ -199,7 +257,7 @@ class PlanningProgressPage extends BaseModulePage implements HasTable, HasForms
                         ->schema([Forms\Components\Select::make('status')->options(Milestone::$statuses)->required()])
                         ->action(function (array $data, $records): void {
                             foreach ($records as $r)
-                                $record->update($data);
+                                $r->update($data);
                             Notification::make()->title($records->count() . ' milestones updated')->success()->send();
                         })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\DeleteBulkAction::make(),

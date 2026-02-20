@@ -155,68 +155,188 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             ])
             ->recordActions([
                 \Filament\Actions\ActionGroup::make([
-                \Filament\Actions\Action::make('manageItems')
-                    ->label('Items')->icon('heroicon-o-list-bullet')->color('info')->modalWidth('5xl')
-                    ->modalHeading(fn(PurchaseOrder $record) => 'Line Items — ' . $record->po_number)
-                    ->schema([
-                        Forms\Components\Repeater::make('items')->schema([
+                    \Filament\Actions\Action::make('addItem')
+                        ->label('Add Item')->icon('heroicon-o-plus-circle')->color('info')
+                        ->modalWidth('xl')
+                        ->modalHeading(fn(PurchaseOrder $record) => 'Add Item — ' . $record->po_number)
+                        ->schema([
                             Forms\Components\Select::make('product_id')->label('Product')
                                 ->options(fn() => Product::where('company_id', $this->cid())->where('is_active', true)->pluck('name', 'id'))
-                                ->searchable()->nullable()->columnSpan(2),
-                            Forms\Components\TextInput::make('notes')->label('Description')->columnSpan(2),
-                            Forms\Components\TextInput::make('quantity_ordered')->label('Qty Ordered')->numeric()->required()->default(1)->columnSpan(1),
-                            Forms\Components\TextInput::make('quantity_received')->label('Qty Received')->numeric()->default(0)->columnSpan(1),
-                            Forms\Components\TextInput::make('unit_price')->label('Unit Price')->numeric()->prefix('$')->required()->default(0)->columnSpan(1),
-                            Forms\Components\TextInput::make('total_price')->label('Total')->numeric()->prefix('$')->disabled()->dehydrated()->columnSpan(1),
-                        ])->columns(8)->addActionLabel('Add Item')->defaultItems(0)->reorderable()
-                            ->itemLabel(fn(array $state): ?string => ($state['notes'] ?? 'Item') . ' — $' . number_format($state['total_price'] ?? 0, 2)),
-                    ])
-                    ->fillForm(fn(PurchaseOrder $record) => [
-                        'items' => $record->items->map(fn($i) => [
-                            'product_id' => $i->product_id,
-                            'notes' => $i->notes,
-                            'quantity_ordered' => $i->quantity_ordered,
-                            'quantity_received' => $i->quantity_received,
-                            'unit_price' => $i->unit_price,
-                            'total_price' => $i->total_price,
-                        ])->toArray(),
-                    ])
-                    ->action(function (array $data, PurchaseOrder $record): void {
-                        $record->items()->delete();
-                        $subtotal = 0;
-                        foreach ($data['items'] ?? [] as $item) {
-                            $item['total_price'] = round(($item['quantity_ordered'] ?? 0) * ($item['unit_price'] ?? 0), 2);
-                            $subtotal += $item['total_price'];
-                            $record->items()->create($item);
-                        }
-                        $record->update(['subtotal' => $subtotal, 'total_amount' => $subtotal + ($record->tax_amount ?? 0) + ($record->shipping_cost ?? 0)]);
-                        Notification::make()->title('Items updated — Subtotal: ' . CurrencyHelper::format($subtotal))->success()->send();
-                    }),
+                                ->searchable()->nullable(),
+                            Forms\Components\TextInput::make('notes')->label('Description'),
+                            Forms\Components\TextInput::make('quantity_ordered')->label('Qty Ordered')->numeric()->required()->default(1),
+                            Forms\Components\TextInput::make('quantity_received')->label('Qty Received')->numeric()->default(0),
+                            Forms\Components\TextInput::make('unit_price')->label('Unit Price')->numeric()->prefix('$')->required()->default(0),
+                        ])
+                        ->action(function (array $data, PurchaseOrder $record): void {
+                            $data['total_price'] = round(($data['quantity_ordered'] ?? 0) * ($data['unit_price'] ?? 0), 2);
+                            $record->items()->create($data);
+                            $subtotal = $record->items()->sum('total_price');
+                            $record->update(['subtotal' => $subtotal, 'total_amount' => $subtotal + ($record->tax_amount ?? 0) + ($record->shipping_cost ?? 0)]);
+                            Notification::make()->title('Item added — $' . number_format($data['total_price'], 2))->success()->send();
+                        })
+                        ->createAnother(true),
 
-                \Filament\Actions\Action::make('updateStatus')
-                    ->label('Status')->icon('heroicon-o-arrow-path')->color('warning')
-                    ->schema([Forms\Components\Select::make('status')->options(PurchaseOrder::$statuses)->required()])
-                    ->fillForm(fn(PurchaseOrder $record) => ['status' => $record->status])
-                    ->action(function (array $data, PurchaseOrder $record): void {
-                        $updates = ['status' => $data['status']];
-                        if ($data['status'] === 'received')
-                            $updates['received_date'] = now();
-                        $record->update($updates);
-                        Notification::make()->title('Status → ' . PurchaseOrder::$statuses[$data['status']])->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('editItem')
+                        ->label('Edit Item')->icon('heroicon-o-pencil-square')->color('info')
+                        ->modalWidth('xl')
+                        ->modalHeading(fn(PurchaseOrder $record) => 'Edit Item — ' . $record->po_number)
+                        ->schema([
+                            Forms\Components\Select::make('item_id')->label('Select Item')
+                                ->options(fn(PurchaseOrder $record) => $record->items->mapWithKeys(fn($i) =>
+                                    [$i->id => ($i->notes ?: 'Item') . ' — Qty: ' . $i->quantity_ordered . ' ($' . number_format((float) $i->total_price, 2) . ')']))
+                                ->required()->searchable()->live()
+                                ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                    if ($item = \App\Models\PurchaseOrderItem::find($state)) {
+                                        $set('product_id', $item->product_id);
+                                        $set('notes', $item->notes);
+                                        $set('quantity_ordered', $item->quantity_ordered);
+                                        $set('quantity_received', $item->quantity_received);
+                                        $set('unit_price', $item->unit_price);
+                                    }
+                                }),
+                            Forms\Components\Select::make('product_id')->label('Product')
+                                ->options(fn() => Product::where('company_id', $this->cid())->where('is_active', true)->pluck('name', 'id'))
+                                ->searchable()->nullable(),
+                            Forms\Components\TextInput::make('notes')->label('Description'),
+                            Forms\Components\TextInput::make('quantity_ordered')->label('Qty Ordered')->numeric()->required(),
+                            Forms\Components\TextInput::make('quantity_received')->label('Qty Received')->numeric(),
+                            Forms\Components\TextInput::make('unit_price')->label('Unit Price')->numeric()->prefix('$')->required(),
+                        ])
+                        ->action(function (array $data, PurchaseOrder $record): void {
+                            $item = \App\Models\PurchaseOrderItem::where('id', $data['item_id'])->where('purchase_order_id', $record->id)->first();
+                            if (!$item)
+                                return;
+                            unset($data['item_id']);
+                            $data['total_price'] = round(($data['quantity_ordered'] ?? 0) * ($data['unit_price'] ?? 0), 2);
+                            $item->update($data);
+                            $subtotal = $record->items()->sum('total_price');
+                            $record->update(['subtotal' => $subtotal, 'total_amount' => $subtotal + ($record->tax_amount ?? 0) + ($record->shipping_cost ?? 0)]);
+                            Notification::make()->title('Item updated')->success()->send();
+                        }),
 
-                \Filament\Actions\Action::make('edit')
-                    ->icon('heroicon-o-pencil')->modalWidth('4xl')
-                    ->schema($this->poFormSchema())
-                    ->fillForm(fn(PurchaseOrder $record) => $record->toArray())
-                    ->action(function (array $data, PurchaseOrder $record): void {
-                        $record->update($data);
-                        Notification::make()->title('PO updated')->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('deleteItems')
+                        ->label('Delete Items')->icon('heroicon-o-trash')->color('danger')
+                        ->modalHeading(fn(PurchaseOrder $record) => 'Delete Items — ' . $record->po_number)
+                        ->schema([
+                            Forms\Components\CheckboxList::make('item_ids')
+                                ->label('Select items to remove')
+                                ->options(fn(PurchaseOrder $record) => $record->items->mapWithKeys(fn($i) =>
+                                    [$i->id => ($i->notes ?: 'Item') . ' — Qty: ' . $i->quantity_ordered . ' ($' . number_format((float) $i->total_price, 2) . ')']))
+                                ->required()->searchable()->columns(1),
+                        ])
+                        ->action(function (array $data, PurchaseOrder $record): void {
+                            $count = count($data['item_ids']);
+                            \App\Models\PurchaseOrderItem::whereIn('id', $data['item_ids'])->where('purchase_order_id', $record->id)->delete();
+                            $subtotal = $record->items()->sum('total_price');
+                            $record->update(['subtotal' => $subtotal, 'total_amount' => $subtotal + ($record->tax_amount ?? 0) + ($record->shipping_cost ?? 0)]);
+                            Notification::make()->title("{$count} items deleted")->danger()->send();
+                        }),
 
-                \Filament\Actions\Action::make('delete')
-                    ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
-                    ->action(fn(PurchaseOrder $record) => $record->delete()),
+                    \Filament\Actions\Action::make('viewDetail')
+                        ->label('View')->icon('heroicon-o-eye')->color('gray')
+                        ->modalWidth('3xl')
+                        ->modalHeading(fn(PurchaseOrder $record) => $record->po_number . ' — ' . ($record->vendor?->name ?? ''))
+                        ->schema(fn(PurchaseOrder $record) => [
+                            Forms\Components\Placeholder::make('status_display')->label('Status')
+                                ->content(PurchaseOrder::$statuses[$record->status] ?? $record->status),
+                            Forms\Components\Placeholder::make('vendor_display')->label('Vendor')
+                                ->content($record->vendor?->name ?? '—'),
+                            Forms\Components\Placeholder::make('dates_display')->label('Order / Expected')
+                                ->content(($record->order_date?->format('M d, Y') ?? '—') . ' → ' . ($record->expected_date?->format('M d, Y') ?? '—')),
+                            Forms\Components\Placeholder::make('financials')->label('Total')
+                                ->content(fn() => 'Subtotal: $' . number_format((float) $record->subtotal, 2) .
+                                    ' | Tax: $' . number_format((float) $record->tax_amount, 2) .
+                                    ' | Total: $' . number_format((float) $record->total_amount, 2))
+                                ->columnSpanFull(),
+                            Forms\Components\Placeholder::make('items_summary')->label('Items (' . $record->items->count() . ')')
+                                ->content(fn() => $record->items->map(
+                                    fn($i) =>
+                                    '• ' . ($i->notes ?: 'Item') . ' — Qty: ' . $i->quantity_ordered .
+                                    ' (Rcvd: ' . $i->quantity_received . ') — $' . number_format((float) $i->total_price, 2)
+                                )->implode("\n") ?: 'No items')
+                                ->columnSpanFull(),
+                        ])
+                        ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
+
+                    \Filament\Actions\Action::make('receiveItems')
+                        ->label('Receive')->icon('heroicon-o-inbox-arrow-down')->color('success')
+                        ->visible(fn(PurchaseOrder $record) => !in_array($record->status, ['received', 'cancelled']))
+                        ->modalHeading(fn(PurchaseOrder $record) => 'Receive Items — ' . $record->po_number)
+                        ->schema([
+                            Forms\Components\Select::make('item_id')->label('Select Item')
+                                ->options(fn(PurchaseOrder $record) => $record->items->mapWithKeys(fn($i) =>
+                                    [$i->id => ($i->notes ?: 'Item') . ' — Ordered: ' . $i->quantity_ordered . ' / Received: ' . $i->quantity_received]))
+                                ->required()->searchable()->live()
+                                ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                    if ($item = \App\Models\PurchaseOrderItem::find($state)) {
+                                        $set('qty_ordered', $item->quantity_ordered);
+                                        $set('qty_already_received', $item->quantity_received);
+                                    }
+                                }),
+                            Forms\Components\TextInput::make('qty_ordered')->label('Qty Ordered')->disabled(),
+                            Forms\Components\TextInput::make('qty_already_received')->label('Already Received')->disabled(),
+                            Forms\Components\TextInput::make('qty_receiving')->label('Qty Receiving Now')
+                                ->numeric()->required()->minValue(1),
+                        ])
+                        ->action(function (array $data, PurchaseOrder $record): void {
+                            $item = \App\Models\PurchaseOrderItem::where('id', $data['item_id'])->where('purchase_order_id', $record->id)->first();
+                            if (!$item)
+                                return;
+                            $newQty = ($item->quantity_received ?? 0) + ($data['qty_receiving'] ?? 0);
+                            $item->update(['quantity_received' => $newQty]);
+
+                            // Auto-mark as received if all items are fully received
+                            $allReceived = $record->items()->get()->every(fn($i) => $i->quantity_received >= $i->quantity_ordered);
+                            if ($allReceived) {
+                                $record->update(['status' => 'received', 'received_date' => now()]);
+                            }
+                            Notification::make()->title('+' . $data['qty_receiving'] . ' received (Total: ' . $newQty . ')' . ($allReceived ? ' — PO fully received!' : ''))->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('updateStatus')
+                        ->label('Status')->icon('heroicon-o-arrow-path')->color('warning')
+                        ->schema([Forms\Components\Select::make('status')->options(PurchaseOrder::$statuses)->required()])
+                        ->fillForm(fn(PurchaseOrder $record) => ['status' => $record->status])
+                        ->action(function (array $data, PurchaseOrder $record): void {
+                            $updates = ['status' => $data['status']];
+                            if ($data['status'] === 'received')
+                                $updates['received_date'] = now();
+                            $record->update($updates);
+                            Notification::make()->title('Status → ' . PurchaseOrder::$statuses[$data['status']])->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('edit')
+                        ->icon('heroicon-o-pencil')->modalWidth('4xl')
+                        ->schema($this->poFormSchema())
+                        ->fillForm(fn(PurchaseOrder $record) => $record->toArray())
+                        ->action(function (array $data, PurchaseOrder $record): void {
+                            $record->update($data);
+                            Notification::make()->title('PO updated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('duplicate')
+                        ->icon('heroicon-o-document-duplicate')->color('gray')
+                        ->requiresConfirmation()
+                        ->action(function (PurchaseOrder $record): void {
+                            $new = $record->replicate(['received_date']);
+                            $new->po_number = 'PO-' . str_pad((string) (PurchaseOrder::where('cde_project_id', $record->cde_project_id)->count() + 1), 4, '0', STR_PAD_LEFT);
+                            $new->status = 'draft';
+                            $new->created_by = auth()->id();
+                            $new->save();
+                            // Duplicate items too
+                            foreach ($record->items as $item) {
+                                $newItem = $item->replicate();
+                                $newItem->purchase_order_id = $new->id;
+                                $newItem->quantity_received = 0;
+                                $newItem->save();
+                            }
+                            Notification::make()->title('PO duplicated as ' . $new->po_number)->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('delete')
+                        ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                        ->action(fn(PurchaseOrder $record) => $record->delete()),
                 ]),
             ])
             ->toolbarActions([
@@ -225,7 +345,7 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                         ->schema([Forms\Components\Select::make('status')->options(PurchaseOrder::$statuses)->required()])
                         ->action(function (array $data, $records): void {
                             foreach ($records as $r)
-                                $record->update(['status' => $data['status']]);
+                                $r->update(['status' => $data['status']]);
                             Notification::make()->title($records->count() . ' POs updated')->success()->send();
                         })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\DeleteBulkAction::make(),

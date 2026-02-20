@@ -188,53 +188,87 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
             ])
             ->recordActions([
                 \Filament\Actions\ActionGroup::make([
-                \Filament\Actions\Action::make('updateProgress')
-                    ->label('Progress')->icon('heroicon-o-chart-bar')->color('info')
-                    ->schema([
-                        Forms\Components\Select::make('status')->options(Task::$statuses)->required(),
-                        Forms\Components\TextInput::make('progress_percent')->label('Progress (%)')->numeric()->minValue(0)->maxValue(100)->required()->suffix('%'),
-                        Forms\Components\TextInput::make('actual_hours')->label('Hours Worked')->numeric()->suffix('hrs'),
-                    ])
-                    ->fillForm(fn(Task $record) => ['status' => $record->status, 'progress_percent' => $record->progress_percent, 'actual_hours' => $record->actual_hours])
-                    ->action(function (array $data, Task $record): void {
-                        $updates = $data;
-                        if ($data['status'] === 'done') {
-                            $updates['progress_percent'] = 100;
-                            $updates['completed_at'] = now();
-                        }
-                        $record->update($updates);
-                        Notification::make()->title('Progress updated')->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('updateProgress')
+                        ->label('Progress')->icon('heroicon-o-chart-bar')->color('info')
+                        ->schema([
+                            Forms\Components\Select::make('status')->options(Task::$statuses)->required(),
+                            Forms\Components\TextInput::make('progress_percent')->label('Progress (%)')->numeric()->minValue(0)->maxValue(100)->required()->suffix('%'),
+                            Forms\Components\TextInput::make('actual_hours')->label('Hours Worked')->numeric()->suffix('hrs'),
+                        ])
+                        ->fillForm(fn(Task $record) => ['status' => $record->status, 'progress_percent' => $record->progress_percent, 'actual_hours' => $record->actual_hours])
+                        ->action(function (array $data, Task $record): void {
+                            $updates = $data;
+                            if ($data['status'] === 'done') {
+                                $updates['progress_percent'] = 100;
+                                $updates['completed_at'] = now();
+                            }
+                            $record->update($updates);
+                            Notification::make()->title('Progress updated')->success()->send();
+                        }),
 
-                \Filament\Actions\Action::make('edit')
-                    ->icon('heroicon-o-pencil')->modalWidth('3xl')
-                    ->schema($this->taskFormSchema())
-                    ->fillForm(fn(Task $record) => $record->toArray())
-                    ->action(function (array $data, Task $record): void {
-                        if ($data['status'] === 'done' && $record->status !== 'done') {
-                            $data['completed_at'] = now();
-                            $data['progress_percent'] = 100;
-                        }
-                        $record->update($data);
-                        Notification::make()->title('Task updated')->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('assign')
+                        ->label('Assign')->icon('heroicon-o-user-plus')->color('info')
+                        ->schema([
+                            Forms\Components\Select::make('assigned_to')->label('Assign To')
+                                ->options($this->teamOptions())->searchable()->required(),
+                        ])
+                        ->fillForm(fn(Task $record) => ['assigned_to' => $record->assigned_to])
+                        ->action(function (array $data, Task $record): void {
+                            $record->update(['assigned_to' => $data['assigned_to']]);
+                            $name = User::find($data['assigned_to'])?->name ?? 'Unknown';
+                            Notification::make()->title('Assigned to ' . $name)->success()->send();
+                        }),
 
-                \Filament\Actions\Action::make('duplicate')
-                    ->icon('heroicon-o-document-duplicate')->color('gray')
-                    ->requiresConfirmation()
-                    ->action(function (Task $record): void {
-                        $new = $record->replicate(['completed_at']);
-                        $new->status = 'to_do';
-                        $new->progress_percent = 0;
-                        $new->actual_hours = null;
-                        $new->created_by = auth()->id();
-                        $new->save();
-                        Notification::make()->title('Task duplicated')->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('logHours')
+                        ->label('Log Hours')->icon('heroicon-o-clock')->color('success')
+                        ->schema([
+                            Forms\Components\TextInput::make('hours_to_add')->label('Hours to Add')
+                                ->numeric()->required()->minValue(0.25)->step(0.25)->suffix('hrs'),
+                        ])
+                        ->action(function (array $data, Task $record): void {
+                            $newHours = ($record->actual_hours ?? 0) + $data['hours_to_add'];
+                            $record->update(['actual_hours' => round($newHours, 2)]);
+                            Notification::make()->title('+' . $data['hours_to_add'] . 'h logged (Total: ' . $newHours . 'h)')->success()->send();
+                        }),
 
-                \Filament\Actions\Action::make('delete')
-                    ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
-                    ->action(fn(Task $record) => $record->delete()),
+                    \Filament\Actions\Action::make('quickComplete')
+                        ->label('Complete')->icon('heroicon-o-check-circle')->color('success')
+                        ->visible(fn(Task $record) => !in_array($record->status, ['done', 'cancelled']))
+                        ->requiresConfirmation()
+                        ->action(function (Task $record): void {
+                            $record->update(['status' => 'done', 'progress_percent' => 100, 'completed_at' => now()]);
+                            Notification::make()->title('Task completed ✓')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('edit')
+                        ->icon('heroicon-o-pencil')->modalWidth('3xl')
+                        ->schema($this->taskFormSchema())
+                        ->fillForm(fn(Task $record) => $record->toArray())
+                        ->action(function (array $data, Task $record): void {
+                            if ($data['status'] === 'done' && $record->status !== 'done') {
+                                $data['completed_at'] = now();
+                                $data['progress_percent'] = 100;
+                            }
+                            $record->update($data);
+                            Notification::make()->title('Task updated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('duplicate')
+                        ->icon('heroicon-o-document-duplicate')->color('gray')
+                        ->requiresConfirmation()
+                        ->action(function (Task $record): void {
+                            $new = $record->replicate(['completed_at']);
+                            $new->status = 'to_do';
+                            $new->progress_percent = 0;
+                            $new->actual_hours = null;
+                            $new->created_by = auth()->id();
+                            $new->save();
+                            Notification::make()->title('Task duplicated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('delete')
+                        ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                        ->action(fn(Task $record) => $record->delete()),
                 ]),
             ])
             ->toolbarActions([
@@ -248,7 +282,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                                     $u['completed_at'] = now();
                                     $u['progress_percent'] = 100;
                                 }
-                                $record->update($u);
+                                $r->update($u);
                             }
                             Notification::make()->title($records->count() . ' tasks updated')->success()->send();
                         })->deselectRecordsAfterCompletion(),
@@ -256,7 +290,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                         ->schema([Forms\Components\Select::make('priority')->options(['low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'urgent' => 'Urgent'])->required()])
                         ->action(function (array $data, $records): void {
                             foreach ($records as $r)
-                                $record->update(['priority' => $data['priority']]);
+                                $r->update(['priority' => $data['priority']]);
                             Notification::make()->title($records->count() . ' tasks updated')->success()->send();
                         })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\DeleteBulkAction::make(),

@@ -391,6 +391,66 @@
         </div>
     </div>
 
+    {{-- Financial Overview --}}
+    @php $fin = $this->getFinancialSummary(); @endphp
+    <div class="rpt-card" style="margin-bottom: 1rem;">
+        <div class="rpt-card-title">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Financial Overview
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:1rem; margin-bottom:1rem;">
+            <div>
+                <div
+                    style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#9ca3af; font-weight:600;">
+                    Contract Original</div>
+                <div style="font-size:1.25rem; font-weight:700;" class="dark:text-gray-100">
+                    ${{ number_format($fin['contract_original'], 0) }}</div>
+            </div>
+            <div>
+                <div
+                    style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#9ca3af; font-weight:600;">
+                    Contract Revised</div>
+                <div
+                    style="font-size:1.25rem; font-weight:700; color:{{ $fin['variance'] > 0 ? '#ef4444' : '#10b981' }};">
+                    ${{ number_format($fin['contract_revised'], 0) }}
+                    @if($fin['variance'] != 0)
+                        <span
+                            style="font-size:11px;">({{ $fin['variance'] > 0 ? '+' : '' }}${{ number_format($fin['variance'], 0) }})</span>
+                    @endif
+                </div>
+            </div>
+            <div>
+                <div
+                    style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#9ca3af; font-weight:600;">
+                    BOQ Value</div>
+                <div style="font-size:1.25rem; font-weight:700;" class="dark:text-gray-100">
+                    ${{ number_format($fin['boq_value'], 0) }}</div>
+            </div>
+            <div>
+                <div
+                    style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#9ca3af; font-weight:600;">
+                    PO Spend</div>
+                <div style="font-size:1.25rem; font-weight:700;" class="dark:text-gray-100">
+                    ${{ number_format($fin['po_total'], 0) }}</div>
+            </div>
+        </div>
+        {{-- Payment progress bar --}}
+        <div style="font-size:12px; font-weight:600; color:#6b7280; margin-bottom:4px;" class="dark:text-gray-400">
+            Payment Progress — {{ $fin['contract_pct'] }}% paid (${{ number_format($fin['contract_paid'], 0) }} of
+            ${{ number_format($fin['contract_revised'], 0) }})
+        </div>
+        <div class="rpt-bar-track" style="height:20px;">
+            <div class="rpt-bar-fill"
+                style="width: {{ max($fin['contract_pct'], 0) }}%; background: linear-gradient(90deg, #059669, #10b981);">
+                @if($fin['contract_pct'] > 12){{ $fin['contract_pct'] }}%@endif
+            </div>
+        </div>
+    </div>
+
     <div class="rpt-grid-2">
         {{-- Module Summary --}}
         <div class="rpt-card">

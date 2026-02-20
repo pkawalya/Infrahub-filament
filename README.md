@@ -231,7 +231,7 @@ After running `php artisan db:seed`, the following users are available for testi
 | `admin@infrahub.io` | `/admin` | Super Admin | Full platform access. Manage companies, subscriptions, all users, email templates, UI settings. Can also access `/app`. |
 
 ### ACME Facility Services (Sample Company)
-
+                                                                                                                  
 | Email | Panel | Role | Capabilities |
 |-------|-------|------|-------------|
 | `admin@acme-fs.com` | `/app` | Company Admin | Manage company users, roles, projects, email templates, UI settings |

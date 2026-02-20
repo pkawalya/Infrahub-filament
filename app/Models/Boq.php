@@ -28,10 +28,13 @@ class Boq extends Model
         'status',
         'total_value',
         'currency',
+        'notes',
+        'approved_by',
+        'approved_at',
         'created_by',
     ];
 
-    protected $casts = ['total_value' => 'decimal:2'];
+    protected $casts = ['total_value' => 'decimal:2', 'approved_at' => 'datetime'];
 
     public function project()
     {

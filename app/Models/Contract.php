@@ -23,8 +23,11 @@ class Contract extends Model
         'end_date',
         'original_value',
         'revised_value',
+        'amount_paid',
+        'retainage_percent',
         'description',
         'scope',
+        'scope_of_work',
         'terms',
         'created_by',
     ];
@@ -34,6 +37,8 @@ class Contract extends Model
         'end_date' => 'date',
         'original_value' => 'decimal:2',
         'revised_value' => 'decimal:2',
+        'amount_paid' => 'decimal:2',
+        'retainage_percent' => 'decimal:2',
     ];
 
     public static array $statuses = [

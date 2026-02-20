@@ -23,6 +23,7 @@ class SafetyIncident extends Model
         'incident_date',
         'root_cause',
         'corrective_action',
+        'preventive_action',
         'reported_by',
         'investigated_by',
     ];

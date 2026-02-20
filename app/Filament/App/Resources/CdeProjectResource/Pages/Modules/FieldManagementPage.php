@@ -48,6 +48,7 @@ class FieldManagementPage extends BaseModulePage implements HasTable, HasForms
         $thisWeek = (clone $base)->whereBetween('log_date', [now()->startOfWeek(), now()->endOfWeek()])->count();
         $pending = (clone $base)->where('status', 'draft')->count();
         $avgWorkers = $total > 0 ? round((clone $base)->avg('workers_on_site') ?? 0) : 0;
+        $weatherDelays = (clone $base)->whereIn('weather', ['rainy', 'stormy'])->count();
 
         return [
             [
@@ -73,6 +74,14 @@ class FieldManagementPage extends BaseModulePage implements HasTable, HasForms
                 'sub_type' => 'neutral',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#6366f1" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" /></svg>',
                 'icon_bg' => '#eef2ff'
+            ],
+            [
+                'label' => 'Weather Delays',
+                'value' => $weatherDelays,
+                'sub' => 'Rainy/stormy days',
+                'sub_type' => $weatherDelays > 3 ? 'danger' : ($weatherDelays > 0 ? 'warning' : 'success'),
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#d97706" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15a4.5 4.5 0 004.5 4.5H18a3.75 3.75 0 001.332-7.257 3 3 0 00-3.758-3.848 5.25 5.25 0 00-10.233 2.33A4.502 4.502 0 002.25 15z" /></svg>',
+                'icon_bg' => '#fffbeb'
             ],
         ];
     }
@@ -204,9 +213,18 @@ class FieldManagementPage extends BaseModulePage implements HasTable, HasForms
                         ])
                         ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
 
+                    \Filament\Actions\Action::make('submit')
+                        ->label('Submit for Review')->icon('heroicon-o-paper-airplane')->color('info')
+                        ->visible(fn(DailySiteLog $record) => $record->status === 'draft')
+                        ->requiresConfirmation()->modalDescription('Submit this log for management review.')
+                        ->action(function (DailySiteLog $record): void {
+                            $record->update(['status' => 'submitted']);
+                            Notification::make()->title('Log submitted for review')->success()->send();
+                        }),
+
                     \Filament\Actions\Action::make('approve')
                         ->icon('heroicon-o-check-circle')->color('success')
-                        ->visible(fn(DailySiteLog $record) => $record->status !== 'approved')
+                        ->visible(fn(DailySiteLog $record) => in_array($record->status, ['draft', 'submitted']))
                         ->requiresConfirmation()->modalHeading('Approve Daily Log')
                         ->action(function (DailySiteLog $record): void {
                             $record->update(['status' => 'approved', 'approved_by' => auth()->id()]);

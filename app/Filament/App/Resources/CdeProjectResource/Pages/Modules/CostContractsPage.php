@@ -183,45 +183,100 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
             ])
             ->recordActions([
                 \Filament\Actions\ActionGroup::make([
-                \Filament\Actions\Action::make('recordPayment')
-                    ->label('Payment')->icon('heroicon-o-banknotes')->color('success')
-                    ->schema([
-                        Forms\Components\TextInput::make('payment_amount')->label('Payment Amount')
-                            ->numeric()->prefix('$')->required(),
-                        Forms\Components\Textarea::make('payment_note')->label('Note')->rows(2),
-                    ])
-                    ->fillForm(fn(Contract $record) => ['payment_amount' => 0])
-                    ->action(function (array $data, Contract $record): void {
-                        $newPaid = ($record->amount_paid ?? 0) + $data['payment_amount'];
-                        $notes = $record->description ? $record->description . "\n" : '';
-                        $notes .= '[Payment ' . now()->format('M d') . ' — $' . number_format($data['payment_amount'], 2) . ']';
-                        if (!empty($data['payment_note']))
-                            $notes .= ' ' . $data['payment_note'];
-                        $record->update(['amount_paid' => $newPaid, 'description' => $notes]);
-                        Notification::make()->title('Payment of ' . CurrencyHelper::format($data['payment_amount']) . ' recorded. Total paid: ' . CurrencyHelper::format($newPaid))->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('viewDetail')
+                        ->label('View')->icon('heroicon-o-eye')->color('gray')
+                        ->modalWidth('3xl')
+                        ->modalHeading(fn(Contract $record) => $record->contract_number . ' — ' . $record->title)
+                        ->schema(fn(Contract $record) => [
+                            Forms\Components\Placeholder::make('vendor')->label('Vendor')
+                                ->content($record->vendor?->name ?? '—'),
+                            Forms\Components\Placeholder::make('type')->label('Type')
+                                ->content(ucfirst($record->type ?? '—')),
+                            Forms\Components\Placeholder::make('status_display')->label('Status')
+                                ->content(Contract::$statuses[$record->status] ?? $record->status),
+                            Forms\Components\Placeholder::make('dates')->label('Duration')
+                                ->content(($record->start_date?->format('M d, Y') ?? '—') . ' → ' . ($record->end_date?->format('M d, Y') ?? '—')),
+                            Forms\Components\Placeholder::make('financials')->label('Financials')
+                                ->content(fn() => 'Original: ' . CurrencyHelper::format($record->original_value) .
+                                    ' | Revised: ' . CurrencyHelper::format($record->revised_value) .
+                                    ' | Paid: ' . CurrencyHelper::format($record->amount_paid) .
+                                    ' (' . ($record->revised_value > 0 ? round(($record->amount_paid / $record->revised_value) * 100) : 0) . '%)')
+                                ->columnSpanFull(),
+                            Forms\Components\Placeholder::make('scope')->label('Scope of Work')
+                                ->content($record->scope_of_work ?: '—')
+                                ->columnSpanFull(),
+                        ])
+                        ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
 
-                \Filament\Actions\Action::make('updateStatus')
-                    ->label('Status')->icon('heroicon-o-arrow-path')->color('warning')
-                    ->schema([Forms\Components\Select::make('status')->options(Contract::$statuses)->required()])
-                    ->fillForm(fn(Contract $record) => ['status' => $record->status])
-                    ->action(function (array $data, Contract $record): void {
-                        $record->update($data);
-                        Notification::make()->title('Status → ' . Contract::$statuses[$data['status']])->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('recordPayment')
+                        ->label('Payment')->icon('heroicon-o-banknotes')->color('success')
+                        ->schema([
+                            Forms\Components\TextInput::make('payment_amount')->label('Payment Amount')
+                                ->numeric()->prefix('$')->required(),
+                            Forms\Components\Textarea::make('payment_note')->label('Note')->rows(2),
+                        ])
+                        ->fillForm(fn(Contract $record) => ['payment_amount' => 0])
+                        ->action(function (array $data, Contract $record): void {
+                            $newPaid = ($record->amount_paid ?? 0) + $data['payment_amount'];
+                            $notes = $record->description ? $record->description . "\n" : '';
+                            $notes .= '[Payment ' . now()->format('M d') . ' — $' . number_format($data['payment_amount'], 2) . ']';
+                            if (!empty($data['payment_note']))
+                                $notes .= ' ' . $data['payment_note'];
+                            $record->update(['amount_paid' => $newPaid, 'description' => $notes]);
+                            Notification::make()->title('Payment of ' . CurrencyHelper::format($data['payment_amount']) . ' recorded. Total paid: ' . CurrencyHelper::format($newPaid))->success()->send();
+                        }),
 
-                \Filament\Actions\Action::make('edit')
-                    ->icon('heroicon-o-pencil')->modalWidth('4xl')
-                    ->schema($this->contractFormSchema())
-                    ->fillForm(fn(Contract $record) => $record->toArray())
-                    ->action(function (array $data, Contract $record): void {
-                        $record->update($data);
-                        Notification::make()->title('Contract updated')->success()->send();
-                    }),
+                    \Filament\Actions\Action::make('addVariation')
+                        ->label('Variation')->icon('heroicon-o-plus-circle')->color('warning')
+                        ->modalHeading(fn(Contract $record) => 'Add Variation — ' . $record->contract_number)
+                        ->schema([
+                            Forms\Components\TextInput::make('variation_amount')->label('Variation Amount')
+                                ->numeric()->prefix('$')->required()
+                                ->helperText('Positive = addition, negative = deduction'),
+                            Forms\Components\Textarea::make('reason')->label('Reason for Variation')->rows(2)->required(),
+                        ])
+                        ->action(function (array $data, Contract $record): void {
+                            $newRevised = ($record->revised_value ?? $record->original_value ?? 0) + $data['variation_amount'];
+                            $notes = $record->description ? $record->description . "\n" : '';
+                            $notes .= '[Variation ' . now()->format('M d') . ' — ' . ($data['variation_amount'] >= 0 ? '+' : '') . '$' . number_format($data['variation_amount'], 2) . '] ' . $data['reason'];
+                            $record->update(['revised_value' => $newRevised, 'description' => $notes]);
+                            Notification::make()->title('Variation applied. New revised value: ' . CurrencyHelper::format($newRevised))->success()->send();
+                        }),
 
-                \Filament\Actions\Action::make('delete')
-                    ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
-                    ->action(fn(Contract $record) => $record->delete()),
+                    \Filament\Actions\Action::make('updateStatus')
+                        ->label('Status')->icon('heroicon-o-arrow-path')->color('warning')
+                        ->schema([Forms\Components\Select::make('status')->options(Contract::$statuses)->required()])
+                        ->fillForm(fn(Contract $record) => ['status' => $record->status])
+                        ->action(function (array $data, Contract $record): void {
+                            $record->update($data);
+                            Notification::make()->title('Status → ' . Contract::$statuses[$data['status']])->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('edit')
+                        ->icon('heroicon-o-pencil')->modalWidth('4xl')
+                        ->schema($this->contractFormSchema())
+                        ->fillForm(fn(Contract $record) => $record->toArray())
+                        ->action(function (array $data, Contract $record): void {
+                            $record->update($data);
+                            Notification::make()->title('Contract updated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('duplicate')
+                        ->icon('heroicon-o-document-duplicate')->color('gray')
+                        ->requiresConfirmation()
+                        ->action(function (Contract $record): void {
+                            $new = $record->replicate();
+                            $new->contract_number = 'CON-' . str_pad((string) (Contract::where('cde_project_id', $record->cde_project_id)->count() + 1), 4, '0', STR_PAD_LEFT);
+                            $new->status = 'draft';
+                            $new->amount_paid = 0;
+                            $new->created_by = auth()->id();
+                            $new->save();
+                            Notification::make()->title('Contract duplicated as ' . $new->contract_number)->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('delete')
+                        ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                        ->action(fn(Contract $record) => $record->delete()),
                 ]),
             ])
             ->toolbarActions([
@@ -230,7 +285,7 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                         ->schema([Forms\Components\Select::make('status')->options(Contract::$statuses)->required()])
                         ->action(function (array $data, $records): void {
                             foreach ($records as $r)
-                                $record->update($data);
+                                $r->update($data);
                             Notification::make()->title($records->count() . ' contracts updated')->success()->send();
                         })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\DeleteBulkAction::make(),

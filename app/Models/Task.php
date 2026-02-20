@@ -17,17 +17,27 @@ class Task extends Model
         'parent_id',
         'title',
         'description',
+        'type',
         'priority',
         'status',
+        'start_date',
         'due_date',
+        'completed_at',
         'estimated_hours',
         'actual_hours',
         'progress_percent',
+        'sort_order',
         'created_by',
         'assigned_to',
     ];
 
-    protected $casts = ['due_date' => 'date', 'estimated_hours' => 'decimal:2', 'actual_hours' => 'decimal:2'];
+    protected $casts = [
+        'start_date' => 'date',
+        'due_date' => 'date',
+        'completed_at' => 'datetime',
+        'estimated_hours' => 'decimal:2',
+        'actual_hours' => 'decimal:2',
+    ];
 
     public static array $statuses = [
         'to_do' => 'To Do',

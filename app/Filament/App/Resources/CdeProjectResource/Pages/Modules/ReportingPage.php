@@ -114,14 +114,68 @@ class ReportingPage extends BaseModulePage
     }
 
     /**
-     * Get recent activity logs for the project.
+     * Get recent activity logs scoped to this project's records.
      */
     public function getActivityLogs(): \Illuminate\Support\Collection
     {
-        return CdeActivityLog::where('company_id', $this->record->company_id)
+        $pid = $this->record->id;
+
+        // Gather IDs of project-related models for scoping
+        $scopes = [];
+        $modelMap = [
+            \App\Models\Task::class => fn() => $this->record->tasks()->pluck('id'),
+            \App\Models\Contract::class => fn() => $this->record->contracts()->pluck('id'),
+            \App\Models\CdeDocument::class => fn() => $this->record->documents()->pluck('id'),
+            \App\Models\Rfi::class => fn() => $this->record->rfis()->pluck('id'),
+            \App\Models\WorkOrder::class => fn() => $this->record->workOrders()->pluck('id'),
+            \App\Models\SafetyIncident::class => fn() => $this->record->safetyIncidents()->pluck('id'),
+            \App\Models\Boq::class => fn() => $this->record->boqs()->pluck('id'),
+        ];
+
+        $query = CdeActivityLog::where('company_id', $this->record->company_id)
+            ->where(function ($q) use ($modelMap) {
+                foreach ($modelMap as $modelClass => $idsFn) {
+                    $q->orWhere(function ($sub) use ($modelClass, $idsFn) {
+                        $sub->where('loggable_type', $modelClass)
+                            ->whereIn('loggable_id', $idsFn());
+                    });
+                }
+                // Also include logs directly about the project itself
+                $q->orWhere(function ($sub) {
+                    $sub->where('loggable_type', \App\Models\CdeProject::class)
+                        ->where('loggable_id', $this->record->id);
+                });
+            })
             ->with('user')
             ->latest()
             ->limit(50)
             ->get();
+
+        return $query;
+    }
+
+    /**
+     * Get financial overview for the project.
+     */
+    public function getFinancialSummary(): array
+    {
+        $r = $this->record;
+        $contractOriginal = $r->contracts()->sum('original_value');
+        $contractRevised = $r->contracts()->sum('revised_value');
+        $contractPaid = $r->contracts()->sum('amount_paid');
+        $boqValue = $r->boqs()->sum('total_value');
+        $poTotal = $r->purchaseOrders()->sum('total_amount');
+        $poReceived = $r->purchaseOrders()->where('status', 'received')->sum('total_amount');
+
+        return [
+            'contract_original' => $contractOriginal,
+            'contract_revised' => $contractRevised,
+            'contract_paid' => $contractPaid,
+            'contract_pct' => $contractRevised > 0 ? round(($contractPaid / $contractRevised) * 100) : 0,
+            'boq_value' => $boqValue,
+            'po_total' => $poTotal,
+            'po_received' => $poReceived,
+            'variance' => $contractRevised - $contractOriginal,
+        ];
     }
 }
