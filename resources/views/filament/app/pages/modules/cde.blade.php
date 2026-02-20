@@ -2,117 +2,6 @@
 
     @push('styles')
         <style>
-            /* Stat Cards */
-            .cde-stats-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                gap: 1rem;
-                margin-bottom: 1.25rem;
-            }
-
-            .cde-stat-card {
-                position: relative;
-                border-radius: 1rem;
-                padding: 1.25rem 1.5rem;
-                overflow: hidden;
-                transition: transform 250ms cubic-bezier(.4, 0, .2, 1), box-shadow 250ms cubic-bezier(.4, 0, .2, 1);
-            }
-
-            .cde-stat-card:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 25px -5px rgba(0, 0, 0, .1), 0 4px 10px -5px rgba(0, 0, 0, .05);
-            }
-
-            .cde-stat-card.primary {
-                background: linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #2dd4bf 100%);
-                color: white;
-            }
-
-            .cde-stat-card.secondary {
-                background: white;
-                border: 1px solid #e5e7eb;
-            }
-
-            .dark .cde-stat-card.secondary {
-                background: rgba(31, 41, 55, .7);
-                border-color: rgba(255, 255, 255, .08);
-            }
-
-            .cde-stat-card::before {
-                content: '';
-                position: absolute;
-                top: -50%;
-                right: -30%;
-                width: 140px;
-                height: 140px;
-                border-radius: 50%;
-                opacity: 0.08;
-            }
-
-            .cde-stat-card.primary::before {
-                background: white;
-            }
-
-            .cde-stat-card.secondary::before {
-                background: currentColor;
-            }
-
-            .cde-stat-label {
-                font-size: 0.6875rem;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.08em;
-                margin-bottom: 0.25rem;
-            }
-
-            .cde-stat-card.primary .cde-stat-label {
-                color: rgba(255, 255, 255, .7);
-            }
-
-            .cde-stat-card.secondary .cde-stat-label {
-                color: #6b7280;
-            }
-
-            .cde-stat-value {
-                font-size: 2rem;
-                font-weight: 800;
-                line-height: 1.1;
-            }
-
-            .cde-stat-card.secondary .cde-stat-value {
-                color: #111827;
-            }
-
-            .dark .cde-stat-card.secondary .cde-stat-value {
-                color: #f3f4f6;
-            }
-
-            .cde-stat-sub {
-                font-size: 0.75rem;
-                margin-top: 0.25rem;
-                font-weight: 500;
-            }
-
-            .cde-stat-icon-wrap {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                width: 2.75rem;
-                height: 2.75rem;
-                border-radius: 0.75rem;
-                flex-shrink: 0;
-                transition: transform 300ms;
-            }
-
-            .cde-stat-card:hover .cde-stat-icon-wrap {
-                transform: scale(1.1);
-            }
-
-            .cde-stat-card.primary .cde-stat-icon-wrap {
-                background: rgba(255, 255, 255, .15);
-                backdrop-filter: blur(8px);
-            }
-
             /* Breadcrumb */
             .cde-breadcrumb {
                 display: flex;
@@ -394,37 +283,13 @@
     @endpush
 
     {{-- ── Stats Cards ─────────────────────────────────────────────────── --}}
-    @php $stats = $this->getStats(); @endphp
-    <div class="cde-stats-grid">
-        @foreach($stats as $i => $stat)
-            <div class="cde-stat-card {{ $i === 0 ? 'primary' : 'secondary' }}">
-                <div
-                    style="display: flex; align-items: flex-start; justify-content: space-between; position: relative; z-index: 1;">
-                    <div>
-                        <div class="cde-stat-label">{{ $stat['label'] }}</div>
-                        <div class="cde-stat-value">{{ $stat['value'] }}</div>
-                        @if(!empty($stat['sub']))
-                            @php
-                                $subColor = match ($stat['sub_type'] ?? 'neutral') {
-                                    'success' => $i === 0 ? 'rgba(255,255,255,.75)' : '#10b981',
-                                    'danger' => $i === 0 ? '#fca5a5' : '#ef4444',
-                                    'info' => $i === 0 ? 'rgba(255,255,255,.75)' : '#0ea5e9',
-                                    default => $i === 0 ? 'rgba(255,255,255,.6)' : '#6b7280',
-                                };
-                            @endphp
-                            <div class="cde-stat-sub" style="color: {{ $subColor }}">{{ $stat['sub'] }}</div>
-                        @endif
-                    </div>
-                    @if(!empty($stat['icon_svg']))
-                        <div class="cde-stat-icon-wrap"
-                            style="{{ $i !== 0 ? 'background: ' . ($stat['icon_bg'] ?? '#f0f9ff') : '' }}">
-                            {!! $stat['icon_svg'] !!}
-                        </div>
-                    @endif
-                </div>
-            </div>
-        @endforeach
-    </div>
+    @php 
+        $mappedStats = collect($this->getStats())->map(function($stat, $i) {
+            $stat['primary'] = $i === 0;
+            return $stat;
+        })->toArray(); 
+    @endphp
+    @include('filament.app.pages.modules.partials.stat-cards', ['stats' => $mappedStats])
 
     {{-- ── Breadcrumb / Location Bar ────────────────────────────────────── --}}
     <div class="cde-breadcrumb">
