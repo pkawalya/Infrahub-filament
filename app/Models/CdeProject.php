@@ -114,6 +114,21 @@ class CdeProject extends Model
         return $this->morphMany(CdeActivityLog::class, 'loggable');
     }
 
+    public function expenses()
+    {
+        return $this->hasMany(Expense::class, 'cde_project_id');
+    }
+
+    public function invoices()
+    {
+        return $this->hasMany(Invoice::class, 'cde_project_id');
+    }
+
+    public function invoicePayments()
+    {
+        return $this->hasMany(InvoicePayment::class, 'cde_project_id');
+    }
+
     // ─── Module Access ───────────────────────────────────────────
 
 

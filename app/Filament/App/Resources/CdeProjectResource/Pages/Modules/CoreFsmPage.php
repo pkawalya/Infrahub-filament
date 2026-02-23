@@ -23,9 +23,11 @@ use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
+use App\Filament\App\Concerns\ExportsTableCsv;
+
 class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
 {
-    use InteractsWithTable, InteractsWithForms;
+    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
 
     protected static string $moduleCode = 'core';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';
@@ -659,6 +661,20 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
+                $this->exportCsvAction('work_orders', fn() => WorkOrder::query()->where('cde_project_id', $this->projectId())->with(['assignee', 'client', 'type']), [
+                    'wo_number' => 'WO #',
+                    'title' => 'Title',
+                    'type.name' => 'Type',
+                    'priority' => 'Priority',
+                    'status' => 'Status',
+                    'assignee.name' => 'Assigned To',
+                    'client.name' => 'Client',
+                    'due_date' => 'Due Date',
+                    'started_at' => 'Started',
+                    'completed_at' => 'Completed',
+                    'notes' => 'Notes',
+                    'created_at' => 'Created At',
+                ]),
                 \Filament\Actions\BulkActionGroup::make([
                     // Bulk Status Update
                     \Filament\Actions\BulkAction::make('bulkStatus')

@@ -26,6 +26,7 @@ class Task extends Model
         'estimated_hours',
         'actual_hours',
         'progress_percent',
+        'attachments',
         'sort_order',
         'created_by',
         'assigned_to',
@@ -37,6 +38,7 @@ class Task extends Model
         'completed_at' => 'datetime',
         'estimated_hours' => 'decimal:2',
         'actual_hours' => 'decimal:2',
+        'attachments' => 'array',
     ];
 
     public static array $statuses = [

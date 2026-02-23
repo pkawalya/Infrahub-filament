@@ -21,9 +21,11 @@ use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
+use App\Filament\App\Concerns\ExportsTableCsv;
+
 class InventoryPage extends BaseModulePage implements HasTable, HasForms
 {
-    use InteractsWithTable, InteractsWithForms;
+    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
 
     protected static string $moduleCode = 'inventory';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-cube';
@@ -339,6 +341,21 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
+                $this->exportCsvAction('purchase_orders', fn() => PurchaseOrder::query()->where('cde_project_id', $this->pid())->with(['supplier', 'creator']), [
+                    'po_number' => 'PO #',
+                    'supplier.name' => 'Supplier',
+                    'status' => 'Status',
+                    'order_date' => 'Order Date',
+                    'expected_date' => 'Expected Date',
+                    'received_date' => 'Received Date',
+                    'subtotal' => 'Subtotal',
+                    'tax_amount' => 'Tax',
+                    'shipping_cost' => 'Shipping',
+                    'total_amount' => 'Total',
+                    'notes' => 'Notes',
+                    'creator.name' => 'Created By',
+                    'created_at' => 'Created At',
+                ]),
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\BulkAction::make('bulkStatus')->label('Update Status')->icon('heroicon-o-arrow-path')
                         ->schema([Forms\Components\Select::make('status')->options(PurchaseOrder::$statuses)->required()])

@@ -170,6 +170,7 @@ class CdeProjectResource extends Resource
             'Commercial' => [
                 'icon' => 'heroicon-o-banknotes',
                 'items' => [
+                    $makeItem('financials', 'Financials', 'heroicon-o-banknotes', Modules\FinancialsPage::class),
                     $makeItem('cost_contracts', 'Contracts', 'heroicon-o-currency-dollar', Modules\CostContractsPage::class),
                     $makeItem('boq_management', 'BOQ', 'heroicon-o-calculator', Modules\BoqPage::class),
                 ],
@@ -285,6 +286,7 @@ class CdeProjectResource extends Resource
             'module-task-workflow' => Modules\TaskWorkflowPage::route('/{record}/tasks'),
             'module-field-management' => Modules\FieldManagementPage::route('/{record}/field-management'),
             'module-inventory' => Modules\InventoryPage::route('/{record}/inventory'),
+            'module-financials' => Modules\FinancialsPage::route('/{record}/financials'),
             'module-cost-contracts' => Modules\CostContractsPage::route('/{record}/contracts'),
             'module-planning-progress' => Modules\PlanningProgressPage::route('/{record}/planning'),
             'module-boq-management' => Modules\BoqPage::route('/{record}/boq'),

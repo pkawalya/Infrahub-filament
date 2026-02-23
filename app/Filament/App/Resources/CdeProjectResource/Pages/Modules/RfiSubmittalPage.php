@@ -18,9 +18,11 @@ use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
+use App\Filament\App\Concerns\ExportsTableCsv;
+
 class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
 {
-    use InteractsWithTable, InteractsWithForms;
+    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
 
     protected static string $moduleCode = 'cde';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-question-mark-circle';
@@ -370,6 +372,17 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
+                $this->exportCsvAction('rfis', fn() => Rfi::query()->where('cde_project_id', $this->pid()), [
+                    'rfi_number' => 'RFI #',
+                    'subject' => 'Subject',
+                    'priority' => 'Priority',
+                    'status' => 'Status',
+                    'cost_impact' => 'Cost Impact',
+                    'schedule_impact' => 'Schedule Impact',
+                    'due_date' => 'Due Date',
+                    'answered_at' => 'Answered At',
+                    'created_at' => 'Raised At',
+                ]),
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\BulkAction::make('bulk_close')
                         ->label('Close Selected')
@@ -510,6 +523,19 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
                             CdeActivityLog::record($record, 'submitted', "Submittal {$record->submittal_number} Rev {$rev} resubmitted");
                             Notification::make()->title('Submittal resubmitted as Rev ' . $rev)->success()->send();
                         }),
+                ]),
+            ])
+            ->toolbarActions([
+                $this->exportCsvAction('submittals', fn() => Submittal::query()->where('cde_project_id', $this->pid())->with(['reviewer']), [
+                    'submittal_number' => 'Submittal #',
+                    'title' => 'Title',
+                    'type' => 'Type',
+                    'current_revision' => 'Revision',
+                    'status' => 'Status',
+                    'reviewer.name' => 'Reviewer',
+                    'due_date' => 'Due Date',
+                    'reviewed_at' => 'Reviewed At',
+                    'created_at' => 'Submitted At',
                 ]),
             ])
             ->emptyStateHeading('No submittals yet')

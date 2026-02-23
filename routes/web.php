@@ -35,4 +35,10 @@ Route::middleware(['auth'])->group(function () {
         ->name('documents.download');
     Route::get('/documents/{version}/preview', [\App\Http\Controllers\DocumentController::class, 'preview'])
         ->name('documents.preview');
+
+    // Financial Print Routes
+    Route::get('/print/invoice/{invoice}', [\App\Http\Controllers\FinancialPrintController::class, 'printInvoice'])
+        ->name('print.invoice');
+    Route::get('/print/receipt/{payment}', [\App\Http\Controllers\FinancialPrintController::class, 'printReceipt'])
+        ->name('print.receipt');
 });

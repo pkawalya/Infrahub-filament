@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
+use Filament\Auth\MultiFactor\Email\Contracts\HasEmailAuthentication;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasEmailAuthentication
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable, HasPanelShield, HasApiTokens;
@@ -33,6 +34,7 @@ class User extends Authenticatable implements FilamentUser
         'avatar',
         'timezone',
         'is_active',
+        'has_email_authentication',
         'last_login_at',
     ];
 
@@ -45,6 +47,7 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'last_login_at' => 'datetime',
             'is_active' => 'boolean',
+            'has_email_authentication' => 'boolean',
         ];
     }
 
@@ -98,6 +101,17 @@ class User extends Authenticatable implements FilamentUser
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    // ─── Email 2FA (Filament Native) ────────────────────────
+    public function hasEmailAuthentication(): bool
+    {
+        return (bool) $this->has_email_authentication;
+    }
+
+    public function toggleEmailAuthentication(bool $condition): void
+    {
+        $this->update(['has_email_authentication' => $condition]);
     }
 
     public static array $userTypes = [

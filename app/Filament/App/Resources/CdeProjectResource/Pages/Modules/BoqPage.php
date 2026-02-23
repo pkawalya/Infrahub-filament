@@ -19,16 +19,22 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Illuminate\Support\HtmlString;
+
+use App\Filament\App\Concerns\ExportsTableCsv;
 
 class BoqPage extends BaseModulePage implements HasTable, HasForms
 {
-    use InteractsWithTable, InteractsWithForms;
+    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
 
     protected static string $moduleCode = 'boq_management';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calculator';
     protected static ?string $navigationLabel = 'BOQ';
     protected static ?string $title = 'Bill of Quantities';
     protected string $view = 'filament.app.pages.modules.boq';
+
+    // Active sub-tab for viewing items within a BOQ
+    public ?int $expandedBoqId = null;
 
     private function pid(): int
     {
@@ -64,7 +70,6 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
         $itemCount = BoqItem::whereHas('boq', fn($q) => $q->where('cde_project_id', $pid))->count();
         $variationCount = BoqItem::whereHas('boq', fn($q) => $q->where('cde_project_id', $pid))->where('is_variation', true)->count();
 
-        // Overall progress
         $allItems = BoqItem::whereHas('boq', fn($q) => $q->where('cde_project_id', $pid));
         $totalQty = (clone $allItems)->sum('quantity');
         $completedQty = (clone $allItems)->sum('quantity_completed');
@@ -106,7 +111,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
-    /* ══════════════════ CATEGORY SUMMARY (for blade) ══════════════════ */
+    /* ══════════════════ CATEGORY SUMMARY ══════════════════ */
 
     public function getCategorySummary(): array
     {
@@ -137,6 +142,38 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
         return $summary;
     }
 
+    /* ══════════════════ HELPER: Get items for a BOQ (for blade) ══════════════════ */
+
+    public function getBoqItems(int $boqId): array
+    {
+        $boq = Boq::where('id', $boqId)->where('cde_project_id', $this->pid())->first();
+        if (!$boq)
+            return [];
+
+        return $boq->items()->orderBy('category')->orderBy('sort_order')->get()
+            ->map(fn(BoqItem $item) => [
+                'id' => $item->id,
+                'item_code' => $item->item_code,
+                'description' => $item->description,
+                'unit' => $item->unit,
+                'quantity' => number_format((float) $item->quantity, 2),
+                'quantity_completed' => number_format((float) $item->quantity_completed, 2),
+                'unit_rate' => CurrencyHelper::format($item->unit_rate),
+                'amount' => CurrencyHelper::format($item->amount),
+                'amount_raw' => (float) $item->amount,
+                'category' => self::$categories[$item->category] ?? ucfirst($item->category ?? 'Other'),
+                'category_key' => $item->category,
+                'is_variation' => $item->is_variation,
+                'progress_pct' => $item->quantity > 0 ? round(($item->quantity_completed / $item->quantity) * 100) : 0,
+                'remarks' => $item->remarks,
+            ])->toArray();
+    }
+
+    public function toggleBoqExpand(int $boqId): void
+    {
+        $this->expandedBoqId = $this->expandedBoqId === $boqId ? null : $boqId;
+    }
+
     /* ══════════════════ FORM SCHEMAS ══════════════════ */
 
     private function boqFormSchema(bool $isCreate = false): array
@@ -154,8 +191,6 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
             Forms\Components\Textarea::make('description')->rows(2)->columnSpanFull(),
         ];
     }
-
-
 
     /* ══════════════════ HEADER ACTIONS ══════════════════ */
 
@@ -177,25 +212,38 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
-    /* ══════════════════ VIEW DETAIL HELPERS ══════════════════ */
+    /* ══════════════════ VIEW DETAIL ══════════════════ */
 
     private function viewDetailSchema(Boq $record): array
     {
         $items = $record->items()->orderBy('category')->orderBy('sort_order')->get();
         $byCategory = $items->groupBy('category');
+        $record->load(['contract', 'creator']);
+
+        // ── Compact info bar instead of full Section with form fields ──
+        $infoCells = collect([
+            ['BOQ', $record->boq_number],
+            ['Status', Boq::$statuses[$record->status] ?? $record->status],
+            ['Contract', $record->contract?->title ?? '—'],
+            ['Currency', $record->currency],
+            ['By', $record->creator?->name ?? '—'],
+            ['Created', $record->created_at?->format('M d, Y')],
+        ])->map(
+                fn($c) =>
+                '<div style="display:flex;gap:3px;align-items:baseline;">' .
+                '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#9ca3af;">' . $c[0] . '</span>' .
+                '<span style="font-size:11px;font-weight:600;color:#1f2937;">' . e($c[1]) . '</span></div>'
+            )->join('');
 
         $schema = [
-            Section::make('BOQ Information')->schema([
-                Forms\Components\TextInput::make('boq_number')->label('BOQ #')->disabled(),
-                Forms\Components\TextInput::make('status_label')->label('Status')->disabled(),
-                Forms\Components\TextInput::make('contract_name')->label('Contract')->disabled(),
-                Forms\Components\TextInput::make('currency')->disabled(),
-                Forms\Components\TextInput::make('created_by_name')->label('Created By')->disabled(),
-                Forms\Components\TextInput::make('created_display')->label('Created')->disabled(),
-            ])->columns(3),
+            Forms\Components\Placeholder::make('info_bar')
+                ->content(fn() => new HtmlString(
+                    '<div style="display:flex;flex-wrap:wrap;gap:8px 16px;padding:6px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;">' .
+                    $infoCells . '</div>'
+                ))->columnSpanFull(),
         ];
 
-        // Category sections with item tables
+        // ── Category item tables — compact ──
         foreach ($byCategory as $cat => $catItems) {
             $catLabel = self::$categories[$cat] ?? ucfirst(str_replace('_', ' ', $cat ?: 'Uncategorized'));
             $catTotal = $catItems->sum('amount');
@@ -203,44 +251,57 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
             $catCompleted = $catItems->sum('quantity_completed');
             $pct = $catQty > 0 ? round(($catCompleted / $catQty) * 100) : 0;
 
-            $lines = $catItems->map(
-                fn($i) =>
-                ($i->is_variation ? '🔸 ' : '') .
-                $i->item_code . '  |  ' . $i->description .
-                '  |  ' . number_format((float) $i->quantity, 2) . ' ' . $i->unit .
-                '  ×  $' . number_format((float) $i->unit_rate, 2) .
-                '  =  $' . number_format((float) $i->amount, 2) .
-                ($i->quantity_completed > 0 ? '  (' . round(($i->quantity_completed / max($i->quantity, 0.01)) * 100) . '% done)' : '')
-            );
+            $tableHtml = '<table style="width:100%;border-collapse:collapse;font-size:10px;">' .
+                '<thead><tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' .
+                '<th style="text-align:left;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Code</th>' .
+                '<th style="text-align:left;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Description</th>' .
+                '<th style="text-align:center;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Unit</th>' .
+                '<th style="text-align:right;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Qty</th>' .
+                '<th style="text-align:right;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Rate</th>' .
+                '<th style="text-align:right;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Amount</th>' .
+                '<th style="text-align:center;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">%</th>' .
+                '</tr></thead><tbody>';
 
-            $schema[] = Section::make("{$catLabel} — " . CurrencyHelper::format($catTotal) . " ({$pct}% progress)")
+            foreach ($catItems as $i) {
+                $itemPct = $i->quantity > 0 ? round(($i->quantity_completed / $i->quantity) * 100) : 0;
+                $pctColor = $itemPct >= 100 ? '#059669' : ($itemPct >= 50 ? '#2563eb' : '#94a3b8');
+                $tableHtml .= '<tr style="border-bottom:1px solid #f1f5f9;">' .
+                    '<td style="padding:2px 4px;font-family:monospace;font-size:9px;white-space:nowrap;">' . ($i->is_variation ? '🔸' : '') . e($i->item_code) . '</td>' .
+                    '<td style="padding:2px 4px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' . e($i->description) . '">' . e(\Illuminate\Support\Str::limit($i->description, 50)) . '</td>' .
+                    '<td style="text-align:center;padding:2px 4px;font-size:9px;">' . e($i->unit) . '</td>' .
+                    '<td style="text-align:right;padding:2px 4px;font-variant-numeric:tabular-nums;">' . number_format((float) $i->quantity, 2) . '</td>' .
+                    '<td style="text-align:right;padding:2px 4px;font-variant-numeric:tabular-nums;">' . number_format((float) $i->unit_rate, 2) . '</td>' .
+                    '<td style="text-align:right;padding:2px 4px;font-weight:600;font-variant-numeric:tabular-nums;">' . CurrencyHelper::format($i->amount) . '</td>' .
+                    '<td style="text-align:center;padding:2px 4px;color:' . $pctColor . ';font-weight:600;font-size:9px;">' . $itemPct . '%</td>' .
+                    '</tr>';
+            }
+
+            $tableHtml .= '<tr style="background:#f8fafc;font-weight:700;border-top:1px solid #e2e8f0;">' .
+                '<td colspan="5" style="padding:2px 4px;font-size:9px;">Subtotal — ' . $catItems->count() . ' items (' . $pct . '%)</td>' .
+                '<td style="text-align:right;padding:2px 4px;font-size:10px;">' . CurrencyHelper::format($catTotal) . '</td><td></td></tr>';
+            $tableHtml .= '</tbody></table>';
+
+            $schema[] = Section::make("{$catLabel} ({$catItems->count()}) — " . CurrencyHelper::format($catTotal))
                 ->schema([
                     Forms\Components\Placeholder::make('cat_' . ($cat ?: 'uncategorized'))
-                        ->content($lines->join("\n"))
+                        ->content(fn() => new HtmlString($tableHtml))
                         ->columnSpanFull(),
-                ]);
+                ])->collapsible()->collapsed();
         }
 
-        // Grand total
+        // ── Grand total — compact inline ──
         $originalTotal = $items->where('is_variation', false)->sum('amount');
         $variationTotal = $items->where('is_variation', true)->sum('amount');
-        $schema[] = Section::make('Grand Total: ' . CurrencyHelper::format($record->total_value))->schema([
-            Forms\Components\Placeholder::make('grand_summary')
-                ->content(
-                    "Original Value: " . CurrencyHelper::format($originalTotal) . "\n" .
-                    "Variations: " . CurrencyHelper::format($variationTotal) . " (" . $items->where('is_variation', true)->count() . " items)\n" .
-                    "Final Value: " . CurrencyHelper::format($record->total_value) . "\n" .
-                    "Items: " . $items->count() . "  |  Categories: " . $byCategory->count()
-                )->columnSpanFull(),
-        ]);
-
-        // Notes / Description
-        if ($record->description || $record->notes) {
-            $schema[] = Section::make('Notes')->schema([
-                Forms\Components\Textarea::make('description')->disabled()->rows(2)->columnSpanFull(),
-                Forms\Components\Textarea::make('notes')->label('Internal Notes')->disabled()->rows(2)->columnSpanFull(),
-            ])->collapsed();
-        }
+        $schema[] = Forms\Components\Placeholder::make('grand_summary')
+            ->content(fn() => new HtmlString(
+                '<div style="display:flex;gap:16px;padding:6px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;align-items:center;justify-content:space-between;">' .
+                '<div style="display:flex;gap:12px;">' .
+                '<div><span style="font-size:8px;font-weight:700;text-transform:uppercase;color:#6b7280;">Original</span> <span style="font-size:13px;font-weight:800;">' . CurrencyHelper::format($originalTotal) . '</span></div>' .
+                ($variationTotal > 0 ? '<div><span style="font-size:8px;font-weight:700;text-transform:uppercase;color:#6b7280;">Variations</span> <span style="font-size:13px;font-weight:800;color:#d97706;">' . CurrencyHelper::format($variationTotal) . '</span></div>' : '') .
+                '</div>' .
+                '<div><span style="font-size:8px;font-weight:700;text-transform:uppercase;color:#059669;">Grand Total</span> <span style="font-size:15px;font-weight:800;color:#059669;">' . CurrencyHelper::format($record->total_value) . '</span> <span style="font-size:9px;color:#6b7280;">(' . $items->count() . ' items)</span></div>' .
+                '</div>'
+            ))->columnSpanFull();
 
         return $schema;
     }
@@ -260,6 +321,93 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
+    /* ══════════════════════════════════════════════════════════════════════
+       BULK PASTE HELPER — Parses tab or comma-separated data
+       ══════════════════════════════════════════════════════════════════════ */
+    private function parseBulkData(string $rawData): array
+    {
+        $lines = array_filter(array_map('trim', preg_split('/\r?\n/', $rawData)));
+        $parsed = [];
+
+        foreach ($lines as $line) {
+            // Detect delimiter: tab first, then comma
+            $delimiter = str_contains($line, "\t") ? "\t" : ",";
+            $cols = array_map('trim', explode($delimiter, $line));
+
+            // Skip header rows
+            if (
+                count($cols) >= 4 && (
+                    strtolower($cols[0]) === 'code' || strtolower($cols[0]) === 'item_code' ||
+                    strtolower($cols[0]) === '#' || strtolower($cols[0]) === 'item code' ||
+                    strtolower($cols[0]) === 'no' || strtolower($cols[0]) === 'no.'
+                )
+            ) {
+                continue;
+            }
+
+            // Minimum: code, description, unit, qty, rate
+            if (count($cols) < 5)
+                continue;
+
+            $qty = floatval(str_replace(',', '', $cols[3]));
+            $rate = floatval(str_replace(',', '', $cols[4]));
+
+            $parsed[] = [
+                'item_code' => $cols[0],
+                'description' => $cols[1],
+                'unit' => $cols[2],
+                'quantity' => $qty,
+                'unit_rate' => $rate,
+                'amount' => round($qty * $rate, 2),
+                'category' => isset($cols[5]) ? trim($cols[5]) : null,
+                'remarks' => isset($cols[6]) ? trim($cols[6]) : null,
+            ];
+        }
+
+        return $parsed;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       BULK UPLOAD HELPER — Parses uploaded CSV file
+       ══════════════════════════════════════════════════════════════════════ */
+    private function parseCsvFile(string $filePath): array
+    {
+        $fullPath = storage_path('app/public/' . $filePath);
+        if (!file_exists($fullPath)) {
+            return [];
+        }
+
+        $content = file_get_contents($fullPath);
+        // Remove BOM if present
+        $content = preg_replace('/^\xEF\xBB\xBF/', '', $content);
+
+        return $this->parseBulkData($content);
+    }
+
+    /**
+     * Shared logic to insert parsed BOQ items into a BOQ record.
+     */
+    private function insertParsedItems(array $parsed, Boq $record, bool $isVariation = false): void
+    {
+        $sortOrder = ($record->items()->max('sort_order') ?? 0);
+        $totalAdded = 0;
+
+        foreach ($parsed as $item) {
+            $item['sort_order'] = ++$sortOrder;
+            $item['is_variation'] = $isVariation;
+            $record->items()->create($item);
+            $totalAdded += $item['amount'];
+        }
+
+        $record->update(['total_value' => $record->items()->sum('amount')]);
+        $count = count($parsed);
+
+        Notification::make()
+            ->title("✅ {$count} items imported — " . CurrencyHelper::format($totalAdded))
+            ->body('Total BOQ value: ' . CurrencyHelper::format($record->fresh()->total_value))
+            ->success()->send();
+    }
+
     /* ══════════════════ TABLE ══════════════════ */
 
     public function table(Table $table): Table
@@ -272,7 +420,8 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('name')->searchable()->limit(35)->tooltip(fn(Boq $record) => $record->name),
                 Tables\Columns\TextColumn::make('contract.title')->label('Contract')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) { 'approved' => 'success', 'final' => 'primary', 'priced' => 'info', 'submitted' => 'warning', 'draft' => 'gray', default => 'gray'})->sortable(),
+                    ->color(fn(string $state) => match ($state) { 'approved' => 'success', 'final' => 'primary', 'priced' => 'info', 'submitted' => 'warning', 'draft' => 'gray', default => 'gray'})->sortable()
+                    ->formatStateUsing(fn($state) => Boq::$statuses[$state] ?? $state),
                 Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->sortable(),
                 Tables\Columns\TextColumn::make('total_value')->label('Total Value')->money('USD')->sortable(),
                 Tables\Columns\TextColumn::make('progress')
@@ -290,7 +439,6 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                         return $pct >= 100 ? 'success' : ($pct >= 50 ? 'info' : null);
                     }),
                 Tables\Columns\TextColumn::make('revisions_count')->label('Rev.')->counts('revisions')->sortable()->toggleable(),
-                Tables\Columns\TextColumn::make('currency')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('creator.name')->label('Created By')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')->dateTime('M d, Y')->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -309,25 +457,147 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                         ->fillForm(fn(Boq $record) => $this->viewDetailData($record))
                         ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
 
-                    /* ── Add Line Item ── */
-                    \Filament\Actions\Action::make('addItem')
-                        ->label('Add Item')->icon('heroicon-o-plus-circle')->color('info')
+                    /* ═══════════════════════════════════════════
+                       BULK ADD — Spreadsheet Paste (PRIMARY)
+                       ═══════════════════════════════════════════ */
+                    \Filament\Actions\Action::make('bulkPaste')
+                        ->label('Bulk Add (Paste)')->icon('heroicon-o-clipboard-document-list')->color('primary')
+                        ->modalWidth('screen')
+                        ->modalHeading(fn(Boq $record) => '📋 Bulk Paste Items — ' . $record->boq_number)
+                        ->schema([
+                            Forms\Components\Placeholder::make('instructions')
+                                ->content(fn() => new HtmlString(
+                                    '<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:8px 12px;font-size:11px;line-height:1.5;">' .
+                                    '<strong style="color:#1d4ed8;">📋 Paste from Excel / Sheets</strong> — ' .
+                                    'Columns: <code style="background:#dbeafe;padding:1px 4px;border-radius:3px;font-size:10px;">Code | Description | Unit | Qty | Rate | Category? | Remarks?</code><br>' .
+                                    '<span style="color:#6b7280;">Categories: preliminaries, substructure, superstructure, finishes, services, external_works, provisional, dayworks, other</span>' .
+                                    '</div>'
+                                ))->columnSpanFull(),
+
+                            Forms\Components\Textarea::make('bulk_data')
+                                ->label('Paste Data Here')
+                                ->placeholder(
+                                    "A001\tConcrete Grade 25\tm³\t150\t120.00\tsubstructure\n" .
+                                    "A002\tReinforcement Y16\tkg\t5000\t1.85\tsuperstructure\n" .
+                                    "A003\tFormwork to columns\tm²\t400\t35.00\tsuperstructure\n" .
+                                    "A004\tHardcore filling\tm³\t200\t45.00\tsubstructure\n" .
+                                    "A005\tPainting — 2 coats\tm²\t1500\t8.50\tfinishes"
+                                )
+                                ->rows(10)->required()->columnSpanFull()
+                                ->helperText('Select data in Excel → Ctrl+C → Ctrl+V here'),
+
+                            Forms\Components\Toggle::make('is_variation')
+                                ->label('Import as variations?')->inline()
+                                ->default(false),
+                        ])
+                        ->action(function (array $data, Boq $record): void {
+                            $parsed = $this->parseBulkData($data['bulk_data']);
+
+                            if (empty($parsed)) {
+                                Notification::make()->title('No valid items found. Check your data format.')->danger()->send();
+                                return;
+                            }
+
+                            $this->insertParsedItems($parsed, $record, $data['is_variation'] ?? false);
+                        }),
+
+                    /* ═══════════════════════════════════════════
+                       BULK UPLOAD — CSV / Excel File Upload
+                       ═══════════════════════════════════════════ */
+                    \Filament\Actions\Action::make('bulkUpload')
+                        ->label('Bulk Upload (File)')->icon('heroicon-o-arrow-up-tray')->color('success')
+                        ->modalWidth('xl')
+                        ->modalHeading(fn(Boq $record) => '📁 Upload BOQ File — ' . $record->boq_number)
+                        ->schema([
+                            Forms\Components\Placeholder::make('upload_instructions')
+                                ->content(fn() => new HtmlString(
+                                    '<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:8px 12px;font-size:11px;line-height:1.5;">' .
+                                    '<strong style="color:#059669;">📁 Upload a CSV File</strong><br>' .
+                                    'Required columns: <code style="background:#d1fae5;padding:1px 4px;border-radius:3px;font-size:10px;">Code, Description, Unit, Qty, Rate</code><br>' .
+                                    'Optional columns: <code style="background:#d1fae5;padding:1px 4px;border-radius:3px;font-size:10px;">Category, Remarks</code><br>' .
+                                    '<span style="color:#6b7280;">Accepted formats: .csv, .txt — Header rows are auto-skipped</span>' .
+                                    '</div>'
+                                ))->columnSpanFull(),
+
+                            Forms\Components\FileUpload::make('boq_file')
+                                ->label('Select CSV File')
+                                ->acceptedFileTypes(['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel'])
+                                ->directory('boq-uploads/' . now()->format('Y-m'))
+                                ->maxSize(5120) // 5MB
+                                ->required()
+                                ->helperText('Max 5 MB. Supports .csv and .txt files with comma or tab-separated values.'),
+
+                            Forms\Components\Toggle::make('is_variation')
+                                ->label('Import as variations?')->inline()
+                                ->default(false),
+                        ])
+                        ->action(function (array $data, Boq $record): void {
+                            $parsed = $this->parseCsvFile($data['boq_file']);
+
+                            if (empty($parsed)) {
+                                Notification::make()
+                                    ->title('No valid items found in the uploaded file.')
+                                    ->body('Ensure the file has at least 5 columns: Code, Description, Unit, Qty, Rate')
+                                    ->danger()->send();
+                                return;
+                            }
+
+                            $this->insertParsedItems($parsed, $record, $data['is_variation'] ?? false);
+
+                            // Clean up the uploaded file
+                            $fullPath = storage_path('app/public/' . $data['boq_file']);
+                            if (file_exists($fullPath)) {
+                                @unlink($fullPath);
+                            }
+                        }),
+
+                    /* ═══════════════════════════════════════════
+                       QUICK ADD — Single item (fast)
+                       ═══════════════════════════════════════════ */
+                    \Filament\Actions\Action::make('quickAdd')
+                        ->label('Quick Add')->icon('heroicon-o-plus')->color('info')
+                        ->modalWidth('xl')
+                        ->modalHeading(fn(Boq $record) => 'Quick Add Item — ' . $record->boq_number)
+                        ->schema([
+                            \Filament\Schemas\Components\Grid::make(4)->schema([
+                                Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
+                                Forms\Components\TextInput::make('description')->required()->columnSpan(3),
+                            ]),
+                            \Filament\Schemas\Components\Grid::make(4)->schema([
+                                Forms\Components\TextInput::make('unit')->required()->maxLength(10)->default('nr'),
+                                Forms\Components\TextInput::make('quantity')->numeric()->required()->default(1),
+                                Forms\Components\TextInput::make('unit_rate')->label('Rate')->numeric()->prefix('$')->required()->default(0),
+                                Forms\Components\Select::make('category')->options(self::$categories)->searchable()->default('other'),
+                            ]),
+                            Forms\Components\Toggle::make('is_variation')->label('Variation?')->default(false),
+                            Forms\Components\Textarea::make('remarks')->rows(1)->placeholder('Notes...')->columnSpanFull(),
+                        ])
+                        ->action(function (array $data, Boq $record): void {
+                            $data['amount'] = round(($data['quantity'] ?? 0) * ($data['unit_rate'] ?? 0), 2);
+                            $data['sort_order'] = ($record->items()->max('sort_order') ?? 0) + 1;
+                            $record->items()->create($data);
+                            $record->update(['total_value' => $record->items()->sum('amount')]);
+                            Notification::make()->title("Item {$data['item_code']} added — " . CurrencyHelper::format($data['amount']))->success()->send();
+                        }),
+
+                    /* ── Add via Repeater (multi-item form) ── */
+                    \Filament\Actions\Action::make('addItems')
+                        ->label('Add Multiple')->icon('heroicon-o-plus-circle')->color('info')
                         ->modalWidth('screen')
                         ->modalHeading(fn(Boq $record) => 'Add Items — ' . $record->boq_number)
                         ->schema([
                             Forms\Components\Repeater::make('items')
-                                ->label('Line Items to Add')
-                                ->addActionLabel('Add Another Item')
+                                ->label('Line Items')
+                                ->addActionLabel('+ Add Row')
                                 ->defaultItems(1)
                                 ->schema([
-                                    \Filament\Schemas\Components\Grid::make(3)->schema([
+                                    \Filament\Schemas\Components\Grid::make(7)->schema([
                                         Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
                                         Forms\Components\TextInput::make('description')->required()->columnSpan(2),
                                         Forms\Components\TextInput::make('unit')->required()->maxLength(10),
                                         Forms\Components\TextInput::make('quantity')->numeric()->required()->default(0),
-                                        Forms\Components\TextInput::make('unit_rate')->label('Rate')->numeric()->prefix('$')->required()->default(0),
+                                        Forms\Components\TextInput::make('unit_rate')->label('Rate ($)')->numeric()->required()->default(0),
                                         Forms\Components\Select::make('category')->options(self::$categories)->searchable(),
-                                        Forms\Components\Textarea::make('remarks')->rows(1)->columnSpan(2)->placeholder('Notes...'),
                                     ]),
                                 ])->collapsible()
                         ])
@@ -343,176 +613,87 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                                 $totalAdded += $item['amount'];
                             }
                             $record->update(['total_value' => $record->items()->sum('amount')]);
-                            Notification::make()->title("{$count} items added — ($" . number_format($totalAdded, 2) . ")")->success()->send();
-                        }),
-
-                    /* ── Edit Item ── */
-                    \Filament\Actions\Action::make('editItem')
-                        ->label('Edit Item')->icon('heroicon-o-pencil-square')->color('info')
-                        ->modalWidth('xl')
-                        ->modalHeading(fn(Boq $record) => 'Edit Item — ' . $record->boq_number)
-                        ->schema([
-                            Forms\Components\Select::make('item_id')->label('Select Item')
-                                ->options(fn(Boq $record) => $record->items->mapWithKeys(fn($i) =>
-                                    [$i->id => $i->item_code . ' — ' . \Illuminate\Support\Str::limit($i->description, 50) . ' ($' . number_format((float) $i->amount, 2) . ')']))
-                                ->required()->searchable()->live()
-                                ->afterStateUpdated(function ($state, \Filament\Schemas\Components\Utilities\Set $set) {
-                                    if ($item = BoqItem::find($state)) {
-                                        $set('item_code', $item->item_code);
-                                        $set('description', $item->description);
-                                        $set('unit', $item->unit);
-                                        $set('quantity', $item->quantity);
-                                        $set('unit_rate', $item->unit_rate);
-                                        $set('category', $item->category);
-                                        $set('remarks', $item->remarks);
-                                    }
-                                }),
-                            \Filament\Schemas\Components\Grid::make(3)->schema([
-                                Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
-                                Forms\Components\TextInput::make('description')->required()->columnSpan(2),
-                                Forms\Components\TextInput::make('unit')->required()->maxLength(10),
-                                Forms\Components\TextInput::make('quantity')->numeric()->required(),
-                                Forms\Components\TextInput::make('unit_rate')->label('Rate')->numeric()->prefix('$')->required(),
-                                Forms\Components\Select::make('category')->options(self::$categories)->searchable(),
-                                Forms\Components\Textarea::make('remarks')->rows(1)->columnSpan(2)->placeholder('Notes...'),
-                            ]),
-                        ])
-                        ->action(function (array $data, Boq $record): void {
-                            $item = BoqItem::where('id', $data['item_id'])->where('boq_id', $record->id)->first();
-                            if (!$item)
-                                return;
-                            unset($data['item_id']);
-                            $data['amount'] = round(($data['quantity'] ?? 0) * ($data['unit_rate'] ?? 0), 2);
-                            $item->update($data);
-                            $record->update(['total_value' => $record->items()->sum('amount')]);
-                            Notification::make()->title('Item updated — ' . $data['item_code'])->success()->send();
-                        }),
-
-                    /* ── Delete Items ── */
-                    \Filament\Actions\Action::make('deleteItems')
-                        ->label('Delete Items')->icon('heroicon-o-trash')->color('danger')
-                        ->modalHeading(fn(Boq $record) => 'Delete Items — ' . $record->boq_number)
-                        ->schema([
-                            Forms\Components\CheckboxList::make('item_ids')
-                                ->label('Select items to remove')
-                                ->options(fn(Boq $record) => $record->items->mapWithKeys(fn($i) =>
-                                    [$i->id => ($i->is_variation ? '🔸 ' : '') . $i->item_code . ' — ' . \Illuminate\Support\Str::limit($i->description, 40) . ' ($' . number_format((float) $i->amount, 2) . ')']))
-                                ->required()->searchable()->columns(1),
-                        ])
-                        ->action(function (array $data, Boq $record): void {
-                            $count = count($data['item_ids']);
-                            BoqItem::whereIn('id', $data['item_ids'])->where('boq_id', $record->id)->delete();
-                            $record->update(['total_value' => $record->items()->sum('amount')]);
-                            Notification::make()->title("{$count} items deleted")->danger()->send();
-                        }),
-
-                    /* ── Import CSV ── */
-                    \Filament\Actions\Action::make('importItems')
-                        ->label('Import CSV')->icon('heroicon-o-arrow-up-tray')->color('gray')
-                        ->modalWidth('xl')
-                        ->modalHeading(fn(Boq $record) => 'Import Items — ' . $record->boq_number)
-                        ->schema([
-                            Forms\Components\Textarea::make('csv_data')
-                                ->label('Paste CSV Data (one item per line)')
-                                ->helperText('Format: item_code, description, unit, quantity, unit_rate, category')
-                                ->placeholder("A001, Concrete Grade 25, m³, 150, 120.00, substructure\nA002, Reinforcement Y16, kg, 5000, 1.85, superstructure")
-                                ->rows(12)->required()->columnSpanFull(),
-                        ])
-                        ->action(function (array $data, Boq $record): void {
-                            $lines = array_filter(array_map('trim', explode("\n", $data['csv_data'])));
-                            $order = ($record->items()->max('sort_order') ?? 0);
-                            $count = 0;
-                            foreach ($lines as $line) {
-                                $cols = str_getcsv(trim($line));
-                                if (count($cols) < 5)
-                                    continue;
-                                $qty = floatval($cols[3]);
-                                $rate = floatval($cols[4]);
-                                $record->items()->create([
-                                    'item_code' => trim($cols[0]),
-                                    'description' => trim($cols[1]),
-                                    'unit' => trim($cols[2]),
-                                    'quantity' => $qty,
-                                    'unit_rate' => $rate,
-                                    'amount' => round($qty * $rate, 2),
-                                    'category' => isset($cols[5]) ? trim($cols[5]) : null,
-                                    'sort_order' => ++$order,
-                                ]);
-                                $count++;
-                            }
-                            $record->update(['total_value' => $record->items()->sum('amount')]);
-                            Notification::make()->title("{$count} items imported — Total: " . CurrencyHelper::format($record->fresh()->total_value))->success()->send();
-                        }),
-
-                    /* ── Track Progress (per item) ── */
-                    \Filament\Actions\Action::make('trackProgress')
-                        ->label('Progress')->icon('heroicon-o-chart-bar')->color('success')
-                        ->modalHeading(fn(Boq $record) => 'Update Progress — ' . $record->boq_number)
-                        ->schema([
-                            Forms\Components\Select::make('item_id')->label('Select Item')
-                                ->options(fn(Boq $record) => $record->items->mapWithKeys(fn($i) => [
-                                    $i->id => $i->item_code . ' — ' . \Illuminate\Support\Str::limit($i->description, 40) .
-                                        ' (' . number_format((float) $i->quantity_completed, 1) . '/' . number_format((float) $i->quantity, 1) . ' ' . $i->unit . ')',
-                                ]))
-                                ->required()->searchable()->live()
-                                ->afterStateUpdated(function ($state, \Filament\Schemas\Components\Utilities\Set $set) {
-                                    if ($item = BoqItem::find($state)) {
-                                        $set('total_qty', number_format((float) $item->quantity, 2) . ' ' . $item->unit);
-                                        $set('quantity_completed', $item->quantity_completed);
-                                    }
-                                }),
-                            Forms\Components\TextInput::make('total_qty')->label('Total Quantity')->disabled(),
-                            Forms\Components\TextInput::make('quantity_completed')->label('Quantity Completed')->numeric()->required(),
-                        ])
-                        ->action(function (array $data, Boq $record): void {
-                            BoqItem::where('id', $data['item_id'])->where('boq_id', $record->id)
-                                ->update(['quantity_completed' => $data['quantity_completed'] ?? 0]);
-                            $items = $record->items()->get();
-                            $totalQty = $items->sum('quantity');
-                            $completedQty = $items->sum('quantity_completed');
-                            $pct = $totalQty > 0 ? round(($completedQty / $totalQty) * 100) : 0;
-                            Notification::make()->title("Progress updated — {$pct}% overall")->success()->send();
+                            Notification::make()->title("{$count} items added — " . CurrencyHelper::format($totalAdded))->success()->send();
                         }),
 
                     /* ── Add Variation ── */
                     \Filament\Actions\Action::make('addVariation')
                         ->label('Variation')->icon('heroicon-o-plus')->color('warning')
-                        ->modalWidth('screen')
-                        ->modalHeading(fn(Boq $record) => 'Add Variations — ' . $record->boq_number)
+                        ->modalWidth('xl')
+                        ->modalHeading(fn(Boq $record) => 'Add Variation — ' . $record->boq_number)
                         ->schema([
-                            Forms\Components\Repeater::make('items')
-                                ->label('Variations to Add')
-                                ->addActionLabel('Add Another Variation')
-                                ->defaultItems(1)
-                                ->schema([
-                                    \Filament\Schemas\Components\Grid::make(3)->schema([
-                                        Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
-                                        Forms\Components\TextInput::make('description')->required()->columnSpan(2),
-                                        Forms\Components\TextInput::make('unit')->required()->maxLength(10),
-                                        Forms\Components\TextInput::make('quantity')->numeric()->required()->default(0),
-                                        Forms\Components\TextInput::make('unit_rate')->label('Rate')->numeric()->prefix('$')->required()->default(0),
-                                        Forms\Components\Select::make('category')->options(self::$categories)->searchable(),
-                                        Forms\Components\Textarea::make('remarks')->rows(1)->columnSpan(2)->placeholder('Reason for variation...'),
-                                    ]),
-                                ])->collapsible()
+                            \Filament\Schemas\Components\Grid::make(4)->schema([
+                                Forms\Components\TextInput::make('item_code')->required()->maxLength(20),
+                                Forms\Components\TextInput::make('description')->required()->columnSpan(3),
+                            ]),
+                            \Filament\Schemas\Components\Grid::make(4)->schema([
+                                Forms\Components\TextInput::make('unit')->required()->maxLength(10),
+                                Forms\Components\TextInput::make('quantity')->numeric()->required()->default(0),
+                                Forms\Components\TextInput::make('unit_rate')->label('Rate ($)')->numeric()->required()->default(0),
+                                Forms\Components\Select::make('category')->options(self::$categories)->searchable(),
+                            ]),
+                            Forms\Components\Textarea::make('remarks')->rows(2)->placeholder('Reason for variation...')->columnSpanFull(),
                         ])
                         ->action(function (array $data, Boq $record): void {
-                            $sortOrder = ($record->items()->max('sort_order') ?? 0);
-                            $count = 0;
-                            $totalAdded = 0;
-                            foreach ($data['items'] ?? [] as $item) {
-                                $item['amount'] = round(($item['quantity'] ?? 0) * ($item['unit_rate'] ?? 0), 2);
-                                $item['sort_order'] = ++$sortOrder;
-                                $item['is_variation'] = true;
-                                $record->items()->create($item);
-                                $count++;
-                                $totalAdded += $item['amount'];
-                            }
+                            $data['amount'] = round(($data['quantity'] ?? 0) * ($data['unit_rate'] ?? 0), 2);
+                            $data['sort_order'] = ($record->items()->max('sort_order') ?? 0) + 1;
+                            $data['is_variation'] = true;
+                            $record->items()->create($data);
                             $record->update(['total_value' => $record->items()->sum('amount')]);
-                            Notification::make()->title("{$count} variations added — ($" . number_format($totalAdded, 2) . ")")->success()->send();
+                            Notification::make()->title("Variation {$data['item_code']} added — " . CurrencyHelper::format($data['amount']))->success()->send();
                         }),
 
-                    /* ── Create Revision Snapshot ── */
+                    /* ── Track Progress ── */
+                    \Filament\Actions\Action::make('trackProgress')
+                        ->label('Progress')->icon('heroicon-o-chart-bar')->color('success')
+                        ->modalWidth('xl')
+                        ->modalHeading(fn(Boq $record) => 'Update Progress — ' . $record->boq_number)
+                        ->schema([
+                            Forms\Components\Placeholder::make('progress_info')
+                                ->content(fn(Boq $record) => new HtmlString(
+                                    '<div style="background:#ecfdf5;border:1px solid #a7f3d0;border-radius:6px;padding:6px 12px;font-size:11px;">' .
+                                    '<strong>💡 Bulk Progress:</strong> Update completed quantities for multiple items at once.' .
+                                    '</div>'
+                                ))->columnSpanFull(),
+                            Forms\Components\Repeater::make('progress_items')
+                                ->label('Items')
+                                ->addable(false)->deletable(false)->reorderable(false)
+                                ->schema([
+                                    \Filament\Schemas\Components\Grid::make(5)->schema([
+                                        Forms\Components\TextInput::make('item_code')->disabled()->columnSpan(1),
+                                        Forms\Components\TextInput::make('description')->disabled()->columnSpan(2),
+                                        Forms\Components\TextInput::make('total_qty')->label('Total Qty')->disabled()->columnSpan(1),
+                                        Forms\Components\TextInput::make('quantity_completed')->label('Completed')->numeric()->required()->columnSpan(1),
+                                    ]),
+                                    Forms\Components\Hidden::make('item_id'),
+                                ])->columnSpanFull(),
+                        ])
+                        ->fillForm(fn(Boq $record) => [
+                            'progress_items' => $record->items()->orderBy('sort_order')->get()->map(fn($i) => [
+                                'item_id' => $i->id,
+                                'item_code' => $i->item_code,
+                                'description' => \Illuminate\Support\Str::limit($i->description, 40),
+                                'total_qty' => number_format((float) $i->quantity, 2) . ' ' . $i->unit,
+                                'quantity_completed' => $i->quantity_completed,
+                            ])->toArray(),
+                        ])
+                        ->action(function (array $data, Boq $record): void {
+                            $updated = 0;
+                            foreach ($data['progress_items'] ?? [] as $pi) {
+                                if (isset($pi['item_id'])) {
+                                    BoqItem::where('id', $pi['item_id'])->where('boq_id', $record->id)
+                                        ->update(['quantity_completed' => $pi['quantity_completed'] ?? 0]);
+                                    $updated++;
+                                }
+                            }
+                            $items = $record->items()->get();
+                            $totalQty = $items->sum('quantity');
+                            $completedQty = $items->sum('quantity_completed');
+                            $pct = $totalQty > 0 ? round(($completedQty / $totalQty) * 100) : 0;
+                            Notification::make()->title("{$updated} items updated — {$pct}% overall progress")->success()->send();
+                        }),
+
+                    /* ── Revision Snapshot ── */
                     \Filament\Actions\Action::make('createRevision')
                         ->label('Revision')->icon('heroicon-o-clock')->color('info')
                         ->modalHeading(fn(Boq $record) => 'Create Revision — ' . $record->boq_number)
@@ -538,7 +719,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                             Notification::make()->title('Revision ' . $data['revision_number'] . ' saved')->success()->send();
                         }),
 
-                    /* ── View Revisions ── */
+                    /* ── Revision History ── */
                     \Filament\Actions\Action::make('viewRevisions')
                         ->label('History')->icon('heroicon-o-clock')->color('gray')
                         ->modalWidth('screen')
@@ -546,12 +727,12 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                         ->schema(function (Boq $record) {
                             $revisions = $record->revisions()->with('creator')->orderByDesc('created_at')->get();
                             if ($revisions->isEmpty()) {
-                                return [Forms\Components\Placeholder::make('no_revisions')->content('No revisions yet. Create one to track changes.')];
+                                return [Forms\Components\Placeholder::make('no_revisions')->content('No revisions yet.')];
                             }
                             return $revisions->map(
                                 fn(BoqRevision $rev) =>
                                 Forms\Components\Placeholder::make('rev_' . $rev->id)
-                                    ->label($rev->revision_number . ' — ' . ($rev->creator?->name ?? 'Unknown') . ' · ' . $rev->created_at->format('M d, Y H:i'))
+                                    ->label($rev->revision_number . ' — ' . ($rev->creator?->name ?? '?') . ' · ' . $rev->created_at->format('M d, Y H:i'))
                                     ->content(
                                         $rev->change_description . "\n" .
                                         'Value: ' . CurrencyHelper::format($rev->snapshot['total_value'] ?? 0) .
@@ -561,14 +742,13 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                         })
                         ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
 
-                    /* ── Approve BOQ ── */
+                    /* ── Approve ── */
                     \Filament\Actions\Action::make('approve')
                         ->label('Approve')->icon('heroicon-o-check-circle')->color('success')
                         ->visible(fn(Boq $record) => !in_array($record->status, ['approved', 'final']))
                         ->requiresConfirmation()
                         ->modalDescription('Mark this BOQ as approved. A revision snapshot will be created automatically.')
                         ->action(function (Boq $record): void {
-                            // Auto-create revision snapshot before approval
                             BoqRevision::create([
                                 'boq_id' => $record->id,
                                 'revision_number' => 'Approval',
@@ -578,7 +758,6 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                                     'status' => $record->status,
                                     'items_count' => $record->items()->count(),
                                     'items' => $record->items()->orderBy('sort_order')->get()->toArray(),
-                                    'created_at' => now()->toIso8601String(),
                                 ],
                                 'created_by' => auth()->id(),
                             ]);
@@ -590,7 +769,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                             Notification::make()->title('BOQ approved ✓')->success()->send();
                         }),
 
-                    /* ── Update Status ── */
+                    /* ── Status Update ── */
                     \Filament\Actions\Action::make('updateStatus')
                         ->label('Status')->icon('heroicon-o-arrow-path')->color('warning')
                         ->schema([Forms\Components\Select::make('status')->options(Boq::$statuses)->required()])
@@ -608,6 +787,24 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                         ->action(function (array $data, Boq $record): void {
                             $record->update($data);
                             Notification::make()->title('BOQ updated')->success()->send();
+                        }),
+
+                    /* ── Delete Items ── */
+                    \Filament\Actions\Action::make('deleteItems')
+                        ->label('Delete Items')->icon('heroicon-o-trash')->color('danger')
+                        ->modalHeading(fn(Boq $record) => 'Delete Items — ' . $record->boq_number)
+                        ->schema([
+                            Forms\Components\CheckboxList::make('item_ids')
+                                ->label('Select items to remove')
+                                ->options(fn(Boq $record) => $record->items->mapWithKeys(fn($i) =>
+                                    [$i->id => ($i->is_variation ? '🔸 ' : '') . $i->item_code . ' — ' . \Illuminate\Support\Str::limit($i->description, 40) . ' (' . CurrencyHelper::format($i->amount) . ')']))
+                                ->required()->searchable()->columns(1),
+                        ])
+                        ->action(function (array $data, Boq $record): void {
+                            $count = count($data['item_ids']);
+                            BoqItem::whereIn('id', $data['item_ids'])->where('boq_id', $record->id)->delete();
+                            $record->update(['total_value' => $record->items()->sum('amount')]);
+                            Notification::make()->title("{$count} items deleted")->danger()->send();
                         }),
 
                     /* ── Duplicate ── */
@@ -629,13 +826,25 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                             Notification::make()->title('BOQ duplicated as ' . $new->boq_number)->success()->send();
                         }),
 
-                    /* ── Delete ── */
+                    /* ── Delete BOQ ── */
                     \Filament\Actions\Action::make('delete')
                         ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
                         ->action(fn(Boq $record) => $record->delete()),
                 ]),
             ])
             ->toolbarActions([
+                $this->exportCsvAction('boq', fn() => Boq::query()->where('cde_project_id', $this->pid())->with(['contract', 'creator']), [
+                    'boq_number' => 'BOQ #',
+                    'name' => 'Name',
+                    'contract.title' => 'Contract',
+                    'status' => 'Status',
+                    'total_value' => 'Total Value',
+                    'currency' => 'Currency',
+                    'description' => 'Description',
+                    'notes' => 'Notes',
+                    'creator.name' => 'Created By',
+                    'created_at' => 'Created At',
+                ]),
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\BulkAction::make('bulkStatus')->label('Update Status')->icon('heroicon-o-arrow-path')
                         ->schema([Forms\Components\Select::make('status')->options(Boq::$statuses)->required()])
@@ -648,7 +857,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->emptyStateHeading('No Bills of Quantities')
-            ->emptyStateDescription('Create BOQs to manage project costing, track progress, and handle variations.')
+            ->emptyStateDescription('Create BOQs and bulk-paste line items from your spreadsheets.')
             ->emptyStateIcon('heroicon-o-calculator')
             ->striped()->paginated([10, 25, 50]);
     }

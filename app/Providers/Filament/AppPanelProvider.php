@@ -19,6 +19,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
+use Filament\Auth\MultiFactor\Email\EmailAuthentication;
+
 class AppPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
@@ -32,6 +34,9 @@ class AppPanelProvider extends PanelProvider
             ->passwordReset()
             ->emailVerification()
             ->profile()
+            ->multiFactorAuthentication(
+                EmailAuthentication::make()->codeExpiryMinutes(10),
+            )
             ->colors([
                 'primary' => Color::hex('#1d4ed8'),   // Professional Blue (Aconex style)
                 'danger' => Color::Rose,

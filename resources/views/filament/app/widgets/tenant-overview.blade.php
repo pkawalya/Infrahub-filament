@@ -1,4 +1,4 @@
-<x-filament-widgets::widget>
+<x-filament-widgets::widget wire:poll.30s>
     @php
         $tenantStats = [
             [

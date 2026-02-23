@@ -17,9 +17,11 @@ use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
+use App\Filament\App\Concerns\ExportsTableCsv;
+
 class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 {
-    use InteractsWithTable, InteractsWithForms;
+    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
 
     protected static string $moduleCode = 'task_workflow';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
@@ -127,6 +129,26 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                     ->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList', 'link'])
                     ->columnSpanFull(),
             ])->collapsed(!$isCreate),
+            Section::make('Attachments')->schema([
+                Forms\Components\FileUpload::make('attachments')
+                    ->label('Files')
+                    ->multiple()
+                    ->maxFiles(10)
+                    ->maxSize(10240) // 10MB per file
+                    ->directory('task-attachments')
+                    ->acceptedFileTypes([
+                        'application/pdf',
+                        'image/*',
+                        'application/msword',
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        'application/vnd.ms-excel',
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        'text/csv',
+                        'text/plain',
+                    ])
+                    ->columnSpanFull()
+                    ->helperText('Upload documents, images, or spreadsheets (max 10 files, 10MB each)'),
+            ])->collapsed()->collapsible(),
         ];
     }
 
@@ -272,6 +294,20 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
+                $this->exportCsvAction('tasks', fn() => Task::query()->where('cde_project_id', $this->pid())->with(['creator', 'parent']), [
+                    'title' => 'Title',
+                    'type' => 'Type',
+                    'priority' => 'Priority',
+                    'status' => 'Status',
+                    'progress_percent' => 'Progress %',
+                    'estimated_hours' => 'Est. Hours',
+                    'actual_hours' => 'Actual Hours',
+                    'start_date' => 'Start Date',
+                    'due_date' => 'Due Date',
+                    'completed_at' => 'Completed',
+                    'creator.name' => 'Created By',
+                    'created_at' => 'Created At',
+                ]),
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\BulkAction::make('bulkStatus')->label('Update Status')->icon('heroicon-o-arrow-path')
                         ->schema([Forms\Components\Select::make('status')->options(Task::$statuses)->required()])

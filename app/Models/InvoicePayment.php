@@ -8,6 +8,7 @@ class InvoicePayment extends Model
 {
     protected $fillable = [
         'invoice_id',
+        'cde_project_id',
         'amount',
         'payment_method',
         'reference',
@@ -25,5 +26,10 @@ class InvoicePayment extends Model
     public function recorder()
     {
         return $this->belongsTo(User::class, 'recorded_by');
+    }
+
+    public function cdeProject()
+    {
+        return $this->belongsTo(CdeProject::class, 'cde_project_id');
     }
 }

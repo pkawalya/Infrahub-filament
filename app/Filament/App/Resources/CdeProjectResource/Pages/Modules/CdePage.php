@@ -22,10 +22,13 @@ use Filament\Tables\Contracts\HasTable;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Storage;
 
+use App\Filament\App\Concerns\ExportsTableCsv;
+
 class CdePage extends BaseModulePage implements HasTable, HasForms
 {
     use InteractsWithTable;
     use InteractsWithForms;
+    use ExportsTableCsv;
 
     protected static string $moduleCode = 'cde';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-folder-open';
@@ -571,6 +574,18 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
+                $this->exportCsvAction('documents', fn() => CdeDocument::query()->where('cde_project_id', $this->record->id)->with(['uploadedBy', 'folder']), [
+                    'document_number' => 'Doc #',
+                    'title' => 'Title',
+                    'discipline' => 'Discipline',
+                    'revision' => 'Revision',
+                    'status' => 'Suitability',
+                    'file_type' => 'File Type',
+                    'file_size' => 'File Size',
+                    'uploadedBy.name' => 'Uploaded By',
+                    'folder.name' => 'Folder',
+                    'created_at' => 'Uploaded At',
+                ]),
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),

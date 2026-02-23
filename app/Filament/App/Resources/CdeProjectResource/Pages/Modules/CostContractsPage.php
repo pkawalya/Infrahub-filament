@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
+use App\Models\Certificate;
 use App\Models\Contract;
 use App\Models\User;
 use App\Models\Vendor;
@@ -18,9 +19,11 @@ use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
+use App\Filament\App\Concerns\ExportsTableCsv;
+
 class CostContractsPage extends BaseModulePage implements HasTable, HasForms
 {
-    use InteractsWithTable, InteractsWithForms;
+    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
 
     protected static string $moduleCode = 'cost_contracts';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
@@ -118,7 +121,10 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                 Forms\Components\TextInput::make('original_value')->label('Original Value')->numeric()->prefix('$')->required()->default(0),
                 Forms\Components\TextInput::make('revised_value')->label('Revised Value')->numeric()->prefix('$')->default(0),
                 Forms\Components\TextInput::make('amount_paid')->label('Amount Paid')->numeric()->prefix('$')->default(0)->visible(!$isCreate),
-                Forms\Components\TextInput::make('retainage_percent')->label('Retainage (%)')->numeric()->suffix('%')->default(0),
+                Forms\Components\TextInput::make('retainage_percent')->label('Retainage (%)')->numeric()->suffix('%')->default(0)
+                    ->helperText('Percentage withheld from each payment'),
+                Forms\Components\TextInput::make('retainage_held')->label('Retainage Held')->numeric()->prefix('$')->default(0)->visible(!$isCreate),
+                Forms\Components\TextInput::make('retainage_released')->label('Retainage Released')->numeric()->prefix('$')->default(0)->visible(!$isCreate),
             ])->columns(2),
             Section::make('Scope & Description')->schema([
                 Forms\Components\RichEditor::make('description')->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList'])->columnSpanFull(),
@@ -143,6 +149,46 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                     Contract::create($data);
                     Notification::make()->title('Contract created')->success()->send();
                 }),
+            Action::make('addCertificate')
+                ->label('Add Certificate')->icon('heroicon-o-shield-check')->color('success')
+                ->modalWidth('2xl')
+                ->schema([
+                    Section::make('Certificate Details')->schema([
+                        Forms\Components\Select::make('type')->options(Certificate::$types)->required(),
+                        Forms\Components\TextInput::make('name')->required()->maxLength(255)
+                            ->placeholder('e.g. Public Liability Insurance'),
+                        Forms\Components\TextInput::make('reference_number')->maxLength(100),
+                        Forms\Components\TextInput::make('issuing_authority')->maxLength(255),
+                        Forms\Components\DatePicker::make('issue_date'),
+                        Forms\Components\DatePicker::make('expiry_date'),
+                        Forms\Components\Select::make('contract_id')->label('Linked Contract')
+                            ->options(fn() => Contract::where('cde_project_id', $this->pid())->pluck('title', 'id'))
+                            ->searchable()->nullable(),
+                        Forms\Components\Select::make('vendor_id')->label('Vendor')
+                            ->options(fn() => Vendor::where('company_id', $this->cid())->pluck('name', 'id'))
+                            ->searchable()->nullable(),
+                        Forms\Components\FileUpload::make('file_path')
+                            ->label('Certificate File')
+                            ->directory('certificates')
+                            ->acceptedFileTypes(['application/pdf', 'image/*'])
+                            ->maxSize(5120),
+                        Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
+                    ])->columns(2),
+                ])
+                ->action(function (array $data): void {
+                    $data['company_id'] = $this->cid();
+                    $data['cde_project_id'] = $this->pid();
+                    $data['created_by'] = auth()->id();
+                    $data['status'] = 'active';
+                    Certificate::create($data);
+                    Notification::make()->title('Certificate added')->success()->send();
+                }),
+            Action::make('viewCertificates')
+                ->label('Certificates')->icon('heroicon-o-clipboard-document-list')->color('gray')
+                ->modalWidth('4xl')
+                ->modalHeading('Project Certificates')
+                ->schema(fn() => $this->getCertificateSchema())
+                ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
         ];
     }
 
@@ -162,6 +208,8 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('revised_value')->label('Revised')->money('USD')->sortable()
                     ->color(fn(Contract $record) => ($record->revised_value ?? 0) > ($record->original_value ?? 0) ? 'danger' : null),
                 Tables\Columns\TextColumn::make('amount_paid')->label('Paid')->money('USD')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('retainage_held')->label('Ret. Held')->money('USD')->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('payment_progress')->label('% Paid')
                     ->state(fn(Contract $record) => $record->revised_value > 0 ? round(($record->amount_paid / $record->revised_value) * 100) . '%' : '—')
                     ->toggleable(),
@@ -201,6 +249,13 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                                     ' | Revised: ' . CurrencyHelper::format($record->revised_value) .
                                     ' | Paid: ' . CurrencyHelper::format($record->amount_paid) .
                                     ' (' . ($record->revised_value > 0 ? round(($record->amount_paid / $record->revised_value) * 100) : 0) . '%)')
+                                ->columnSpanFull(),
+                            Forms\Components\Placeholder::make('retainage')->label('Retainage')
+                                ->content(fn() =>
+                                    'Rate: ' . ($record->retainage_percent ?? 0) . '% | ' .
+                                    'Held: ' . CurrencyHelper::format($record->retainage_held ?? 0) . ' | ' .
+                                    'Released: ' . CurrencyHelper::format($record->retainage_released ?? 0) . ' | ' .
+                                    'Remaining: ' . CurrencyHelper::format(($record->retainage_held ?? 0) - ($record->retainage_released ?? 0)))
                                 ->columnSpanFull(),
                             Forms\Components\Placeholder::make('scope')->label('Scope of Work')
                                 ->content($record->scope_of_work ?: '—')
@@ -280,6 +335,19 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
+                $this->exportCsvAction('contracts', fn() => Contract::query()->where('cde_project_id', $this->pid())->with(['vendor', 'creator']), [
+                    'contract_number' => 'Contract #',
+                    'title' => 'Title',
+                    'vendor.name' => 'Vendor',
+                    'type' => 'Type',
+                    'status' => 'Status',
+                    'original_value' => 'Original Value',
+                    'revised_value' => 'Revised Value',
+                    'amount_paid' => 'Amount Paid',
+                    'start_date' => 'Start Date',
+                    'end_date' => 'End Date',
+                    'created_at' => 'Created At',
+                ]),
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\BulkAction::make('bulkStatus')->label('Update Status')->icon('heroicon-o-arrow-path')
                         ->schema([Forms\Components\Select::make('status')->options(Contract::$statuses)->required()])
@@ -295,5 +363,65 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
             ->emptyStateDescription('Create contracts to track costs and payments.')
             ->emptyStateIcon('heroicon-o-banknotes')
             ->striped()->paginated([10, 25, 50]);
+    }
+
+    private function getCertificateSchema(): array
+    {
+        $certs = Certificate::where('cde_project_id', $this->pid())
+            ->with(['contract', 'vendor'])
+            ->orderBy('expiry_date')
+            ->get();
+
+        if ($certs->isEmpty()) {
+            return [
+                Forms\Components\Placeholder::make('no_certs')
+                    ->content('No certificates added yet. Click "Add Certificate" to start tracking.')
+                    ->columnSpanFull(),
+            ];
+        }
+
+        $rows = $certs->map(function ($cert) {
+            $days = $cert->daysUntilExpiry();
+            $expiryLabel = $cert->expiry_date ? $cert->expiry_date->format('M d, Y') : 'No expiry';
+            $statusColor = $cert->isExpired() ? '#dc2626'
+                : ($cert->isExpiringSoon() ? '#d97706' : '#059669');
+            $statusLabel = $cert->isExpired() ? 'EXPIRED'
+                : ($cert->isExpiringSoon() ? "Exp. in {$days}d" : 'Active');
+
+            return '<tr style="border-bottom:1px solid #f1f5f9;">' .
+                '<td style="padding:4px 8px;font-weight:600;font-size:11px;">' . e($cert->name) . '</td>' .
+                '<td style="padding:4px 8px;font-size:11px;">' . (Certificate::$types[$cert->type] ?? $cert->type) . '</td>' .
+                '<td style="padding:4px 8px;font-size:11px;">' . e($cert->reference_number ?? '—') . '</td>' .
+                '<td style="padding:4px 8px;font-size:11px;">' . ($cert->vendor?->name ?? $cert->contract?->title ?? '—') . '</td>' .
+                '<td style="padding:4px 8px;font-size:11px;">' . $expiryLabel . '</td>' .
+                '<td style="padding:4px 8px;font-size:11px;font-weight:600;color:' . $statusColor . ';">' . $statusLabel . '</td>' .
+                '</tr>';
+        })->join('');
+
+        $html = '<table style="width:100%;border-collapse:collapse;font-size:12px;">' .
+            '<thead><tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' .
+            '<th style="text-align:left;padding:4px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">Name</th>' .
+            '<th style="text-align:left;padding:4px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">Type</th>' .
+            '<th style="text-align:left;padding:4px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">Ref #</th>' .
+            '<th style="text-align:left;padding:4px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">Linked To</th>' .
+            '<th style="text-align:left;padding:4px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">Expires</th>' .
+            '<th style="text-align:left;padding:4px 8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">Status</th>' .
+            '</tr></thead><tbody>' . $rows . '</tbody></table>';
+
+        $expired = $certs->filter(fn($c) => $c->isExpired())->count();
+        $expiringSoon = $certs->filter(fn($c) => $c->isExpiringSoon())->count();
+
+        $summary = '<div style="display:flex;gap:16px;padding:8px 12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:8px;font-size:12px;">' .
+            '<span><strong>' . $certs->count() . '</strong> total</span>' .
+            ($expired > 0 ? '<span style="color:#dc2626;font-weight:600;">⚠ ' . $expired . ' expired</span>' : '') .
+            ($expiringSoon > 0 ? '<span style="color:#d97706;font-weight:600;">⏰ ' . $expiringSoon . ' expiring soon</span>' : '') .
+            ($expired === 0 && $expiringSoon === 0 ? '<span style="color:#059669;">✓ All current</span>' : '') .
+            '</div>';
+
+        return [
+            Forms\Components\Placeholder::make('cert_table')
+                ->content(fn() => new \Illuminate\Support\HtmlString($summary . $html))
+                ->columnSpanFull(),
+        ];
     }
 }

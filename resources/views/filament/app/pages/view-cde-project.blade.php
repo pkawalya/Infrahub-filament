@@ -1,4 +1,4 @@
-<x-filament-panels::page>
+<x-filament-panels::page wire:poll.30s>
 @php
     $stats = $this->getStats();
     $recentTasks = $this->getRecentTasks();

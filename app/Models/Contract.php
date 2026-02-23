@@ -25,6 +25,8 @@ class Contract extends Model
         'revised_value',
         'amount_paid',
         'retainage_percent',
+        'retainage_held',
+        'retainage_released',
         'description',
         'scope',
         'scope_of_work',
@@ -39,6 +41,8 @@ class Contract extends Model
         'revised_value' => 'decimal:2',
         'amount_paid' => 'decimal:2',
         'retainage_percent' => 'decimal:2',
+        'retainage_held' => 'decimal:2',
+        'retainage_released' => 'decimal:2',
     ];
 
     public static array $statuses = [

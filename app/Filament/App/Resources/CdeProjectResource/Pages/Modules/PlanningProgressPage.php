@@ -16,9 +16,11 @@ use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
+use App\Filament\App\Concerns\ExportsTableCsv;
+
 class PlanningProgressPage extends BaseModulePage implements HasTable, HasForms
 {
-    use InteractsWithTable, InteractsWithForms;
+    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
 
     protected static string $moduleCode = 'planning_progress';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
@@ -252,6 +254,14 @@ class PlanningProgressPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
+                $this->exportCsvAction('milestones', fn() => Milestone::query()->where('cde_project_id', $this->pid()), [
+                    'name' => 'Milestone',
+                    'priority' => 'Priority',
+                    'status' => 'Status',
+                    'target_date' => 'Target Date',
+                    'actual_date' => 'Actual Date',
+                    'created_at' => 'Created At',
+                ]),
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\BulkAction::make('bulkStatus')->label('Update Status')->icon('heroicon-o-arrow-path')
                         ->schema([Forms\Components\Select::make('status')->options(Milestone::$statuses)->required()])

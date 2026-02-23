@@ -19,9 +19,11 @@ use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
+use App\Filament\App\Concerns\ExportsTableCsv;
+
 class SheqPage extends BaseModulePage implements HasTable, HasForms
 {
-    use InteractsWithTable, InteractsWithForms;
+    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
 
     protected static string $moduleCode = 'sheq';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
@@ -349,11 +351,24 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
+                $this->exportCsvAction('safety_incidents', fn() => SafetyIncident::query()->where('cde_project_id', $this->pid())->with(['reporter', 'investigator']), [
+                    'incident_number' => 'Incident #',
+                    'title' => 'Title',
+                    'type' => 'Type',
+                    'severity' => 'Severity',
+                    'status' => 'Status',
+                    'incident_date' => 'Date',
+                    'location' => 'Location',
+                    'reporter.name' => 'Reported By',
+                    'investigator.name' => 'Investigated By',
+                    'created_at' => 'Created At',
+                ]),
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\BulkAction::make('bulkStatus')->label('Update Status')->icon('heroicon-o-arrow-path')
                         ->schema([Forms\Components\Select::make('status')->options(SafetyIncident::$statuses)->required()])
                         ->action(function (array $data, $records): void {
-                            foreach ($records as $r) $r->update($data);
+                            foreach ($records as $r)
+                                $r->update($data);
                             Notification::make()->title($records->count() . ' incidents updated')->success()->send();
                         })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\DeleteBulkAction::make(),
@@ -426,6 +441,21 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                     \Filament\Actions\Action::make('deleteInspection')
                         ->label('Delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
                         ->action(fn(SafetyInspection $r) => $r->delete()),
+                ]),
+            ])
+            ->toolbarActions([
+                $this->exportCsvAction('inspections', fn() => SafetyInspection::query()->where('cde_project_id', $this->pid())->with(['inspector']), [
+                    'inspection_number' => 'Inspection #',
+                    'title' => 'Title',
+                    'type' => 'Type',
+                    'status' => 'Status',
+                    'score' => 'Score',
+                    'scheduled_date' => 'Scheduled Date',
+                    'inspector.name' => 'Inspector',
+                    'location' => 'Location',
+                    'notes' => 'Notes',
+                    'completed_date' => 'Completed',
+                    'created_at' => 'Created At',
                 ]),
             ])
             ->emptyStateHeading('No Inspections')
@@ -511,11 +541,25 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
+                $this->exportCsvAction('snag_items', fn() => SnagItem::query()->where('cde_project_id', $this->pid())->with(['reporter', 'assignee']), [
+                    'snag_number' => 'Snag #',
+                    'title' => 'Title',
+                    'category' => 'Category',
+                    'severity' => 'Severity',
+                    'status' => 'Status',
+                    'location' => 'Location',
+                    'reporter.name' => 'Reported By',
+                    'assignee.name' => 'Assigned To',
+                    'due_date' => 'Due Date',
+                    'resolved_at' => 'Resolved At',
+                    'created_at' => 'Created At',
+                ]),
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\BulkAction::make('bulkResolve')->label('Resolve')->icon('heroicon-o-check-circle')->color('success')
                         ->requiresConfirmation()
                         ->action(function ($records): void {
-                            foreach ($records as $r) $r->update(['status' => 'resolved', 'resolved_at' => now()]);
+                            foreach ($records as $r)
+                                $r->update(['status' => 'resolved', 'resolved_at' => now()]);
                             Notification::make()->title($records->count() . ' snags resolved')->success()->send();
                         })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\DeleteBulkAction::make(),

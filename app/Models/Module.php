@@ -61,6 +61,11 @@ class Module extends Model
             'description' => 'Custom reports and analytics dashboards',
             'icon' => 'heroicon-o-chart-bar',
         ],
+        'financials' => [
+            'name' => 'Financials',
+            'description' => 'Track invoices, receipts, and project related revenue and expense',
+            'icon' => 'heroicon-o-banknotes',
+        ],
     ];
 
     public function scopeActive($q)

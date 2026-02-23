@@ -12,6 +12,7 @@ class Invoice extends Model
 
     protected $fillable = [
         'company_id',
+        'cde_project_id',
         'invoice_number',
         'work_order_id',
         'client_id',
@@ -26,11 +27,15 @@ class Invoice extends Model
         'due_date',
         'notes',
         'created_by',
+        'reminder_sent_at',
+        'reminder_count',
+        'terms_and_conditions',
     ];
 
     protected $casts = [
         'issue_date' => 'date',
         'due_date' => 'date',
+        'reminder_sent_at' => 'date',
         'subtotal' => 'decimal:2',
         'total_amount' => 'decimal:2',
         'amount_paid' => 'decimal:2',
@@ -54,6 +59,10 @@ class Invoice extends Model
     {
         return $this->belongsTo(Client::class);
     }
+    public function items()
+    {
+        return $this->hasMany(InvoiceItem::class)->orderBy('sort_order');
+    }
     public function payments()
     {
         return $this->hasMany(InvoicePayment::class);
@@ -61,6 +70,11 @@ class Invoice extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function cdeProject()
+    {
+        return $this->belongsTo(CdeProject::class, 'cde_project_id');
     }
 
     public function getBalanceDueAttribute(): float

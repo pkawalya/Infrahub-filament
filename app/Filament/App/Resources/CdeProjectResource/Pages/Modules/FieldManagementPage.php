@@ -16,9 +16,11 @@ use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
+use App\Filament\App\Concerns\ExportsTableCsv;
+
 class FieldManagementPage extends BaseModulePage implements HasTable, HasForms
 {
-    use InteractsWithTable, InteractsWithForms;
+    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
 
     protected static string $moduleCode = 'field_management';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-map-pin';
@@ -259,6 +261,23 @@ class FieldManagementPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
+                $this->exportCsvAction('daily_logs', fn() => DailySiteLog::query()->where('cde_project_id', $this->pid())->with(['creator', 'approver']), [
+                    'log_date' => 'Date',
+                    'weather' => 'Weather',
+                    'temperature_high' => 'Temp High',
+                    'temperature_low' => 'Temp Low',
+                    'workers_on_site' => 'Workers',
+                    'visitors_on_site' => 'Visitors',
+                    'status' => 'Status',
+                    'work_performed' => 'Work Performed',
+                    'materials_received' => 'Materials',
+                    'equipment_used' => 'Equipment',
+                    'delays' => 'Delays',
+                    'safety_incidents' => 'Safety Incidents',
+                    'notes' => 'Notes',
+                    'creator.name' => 'Logged By',
+                    'approver.name' => 'Approved By',
+                ]),
                 \Filament\Actions\BulkActionGroup::make([
                     \Filament\Actions\BulkAction::make('bulkApprove')->label('Approve')
                         ->icon('heroicon-o-check-circle')->color('success')->requiresConfirmation()

@@ -98,6 +98,24 @@ class InvoiceResource extends Resource
                 Forms\Components\DatePicker::make('due_date'),
             ])->columns(2),
 
+            Schemas\Components\Section::make('Line Items')->schema([
+                Forms\Components\Repeater::make('items')
+                    ->relationship()
+                    ->schema([
+                        Forms\Components\TextInput::make('description')->required()->columnSpan(3),
+                        Forms\Components\TextInput::make('quantity')->numeric()->default(1)->minValue(1)->columnSpan(1),
+                        Forms\Components\TextInput::make('unit')->placeholder('pcs, hrs…')->maxLength(20)->columnSpan(1),
+                        Forms\Components\TextInput::make('unit_price')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0)->columnSpan(1),
+                        Forms\Components\TextInput::make('amount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0)->readOnly()->columnSpan(1),
+                    ])
+                    ->columns(7)
+                    ->defaultItems(0)
+                    ->addActionLabel('+ Add Line Item')
+                    ->reorderable()
+                    ->collapsible()
+                    ->columnSpanFull(),
+            ])->collapsible(),
+
             Schemas\Components\Section::make('Amounts')->schema([
                 Forms\Components\TextInput::make('subtotal')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0),
                 Forms\Components\TextInput::make('tax_rate')->numeric()->suffix('%')->default(0),
@@ -107,9 +125,10 @@ class InvoiceResource extends Resource
                 Forms\Components\TextInput::make('amount_paid')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0),
             ])->columns(3),
 
-            Schemas\Components\Section::make('Notes')->schema([
-                Forms\Components\Textarea::make('notes')->rows(3)->columnSpanFull(),
-            ])->collapsible()->collapsed(),
+            Schemas\Components\Section::make('Notes & Terms')->schema([
+                Forms\Components\Textarea::make('notes')->rows(3),
+                Forms\Components\Textarea::make('terms_and_conditions')->label('Terms & Conditions')->rows(3),
+            ])->columns(2)->collapsible()->collapsed(),
         ]);
     }
 
@@ -120,6 +139,7 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('invoice_number')->label('Invoice #')->searchable()->sortable(),
                 Tables\Columns\TextColumn::make('client.name')->searchable(),
                 Tables\Columns\TextColumn::make('workOrder.wo_number')->label('Work Order'),
+                Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->badge()->color('gray'),
                 Tables\Columns\TextColumn::make('total_amount')->formatStateUsing(CurrencyHelper::formatter())->sortable(),
                 Tables\Columns\TextColumn::make('amount_paid')->formatStateUsing(CurrencyHelper::formatter()),
                 Tables\Columns\TextColumn::make('status')
@@ -135,7 +155,13 @@ class InvoiceResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(Invoice::$statuses),
             ])
-            ->actions([Actions\ViewAction::make(), Actions\EditAction::make()])
+            ->actions([
+                Actions\ViewAction::make(),
+                Actions\EditAction::make(),
+                Actions\Action::make('print')
+                    ->icon('heroicon-o-printer')->color('gray')
+                    ->url(fn(Invoice $record) => route('print.invoice', $record), shouldOpenInNewTab: true),
+            ])
             ->bulkActions([Actions\DeleteBulkAction::make()]);
     }
 
