@@ -67,7 +67,7 @@
                         <div class="absolute left-0 right-0" style="top: {{ $index * 72 + 10 }}px; height: 62px;">
                             {{-- Project Bar --}}
                             <a href="{{ $project['url'] }}" class="group absolute flex items-center rounded-xl shadow-sm border transition-all duration-300
-                                               hover:shadow-lg hover:scale-[1.015] hover:z-20 cursor-pointer overflow-hidden"
+                                               hover:shadow-lg hover:scale-[1.015] hover:z-20 cursor-pointer"
                                 style="left: {{ $project['leftPercent'] }}%;
                                                width: {{ $project['widthPercent'] }}%;
                                                min-width: 120px;
@@ -77,9 +77,22 @@
                                                backdrop-filter: blur(4px);"
                                 title="{{ $project['name'] }} — {{ $project['startDate'] }} to {{ $project['endDate'] }}">
 
-                                {{-- Colored left edge accent --}}
-                                <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl"
-                                    style="background: linear-gradient(to bottom, {{ $colors['from'] }}, {{ $colors['to'] }});"></div>
+                                <div class="absolute inset-0 rounded-xl overflow-hidden pointer-events-none z-0">
+                                    {{-- Colored left edge accent --}}
+                                    <div class="absolute left-0 top-0 bottom-0 w-1 rounded-l-xl"
+                                        style="background: linear-gradient(to bottom, {{ $colors['from'] }}, {{ $colors['to'] }});"></div>
+
+                                    {{-- Actual Progress Fill with gradient --}}
+                                    <div class="absolute inset-y-0 left-0 rounded-l-xl transition-all duration-700 ease-out"
+                                        style="width: {{ $project['progress'] }}%;
+                                               background: linear-gradient(135deg, {{ $colors['from'] }}40, {{ $colors['to'] }}30);"></div>
+
+                                    {{-- Animated shimmer on active projects --}}
+                                    @if($project['status'] === 'active')
+                                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                                            style="animation: shimmer 3s ease-in-out infinite;"></div>
+                                    @endif
+                                </div>
 
                                 {{-- Expected Progress marker (where it should be) --}}
                                 @if($project['expectedProgress'] > 0 && $project['expectedProgress'] < 100)
@@ -90,17 +103,6 @@
                                             <div class="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[5px] border-l-transparent border-r-transparent border-t-gray-400 dark:border-t-gray-500 opacity-70"></div>
                                         </div>
                                     </div>
-                                @endif
-
-                                {{-- Actual Progress Fill with gradient --}}
-                                <div class="absolute inset-y-0 left-0 rounded-l-xl transition-all duration-700 ease-out"
-                                    style="width: {{ $project['progress'] }}%;
-                                           background: linear-gradient(135deg, {{ $colors['from'] }}40, {{ $colors['to'] }}30);"></div>
-
-                                {{-- Animated shimmer on active projects --}}
-                                @if($project['status'] === 'active')
-                                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                                        style="animation: shimmer 3s ease-in-out infinite;"></div>
                                 @endif
 
                                 {{-- Content --}}
@@ -126,11 +128,14 @@
                                                 {{ $project['name'] }}
                                             </div>
                                             <div class="text-[10px] text-gray-500 dark:text-gray-400 truncate flex items-center gap-1">
-                                                <span class="inline-block w-1.5 h-1.5 rounded-full" style="background: {{ $colors['to'] }};"></span>
-                                                {{ $project['statusLabel'] }}
-                                                @if($project['budget'])
-                                                    · {{ $project['budget'] }}
-                                                @endif
+                                                <span class="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0" style="background: {{ $colors['to'] }};"></span>
+                                                <span class="truncate">
+                                                    {{ $project['statusLabel'] }}
+                                                    @if($project['budget'])
+                                                        · {{ $project['budget'] }}
+                                                    @endif
+                                                    · <span class="text-gray-600 dark:text-gray-300 font-medium">{{ $project['startDate'] }} <span class="text-gray-400 dark:text-gray-500">to</span> {{ $project['endDate'] }}</span>
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
