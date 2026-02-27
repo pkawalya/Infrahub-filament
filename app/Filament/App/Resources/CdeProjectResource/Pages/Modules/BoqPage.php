@@ -63,30 +63,52 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
     public function getStats(): array
     {
         $pid = $this->pid();
-        $base = Boq::where('cde_project_id', $pid);
-        $total = (clone $base)->count();
-        $approved = (clone $base)->where('status', 'approved')->count();
-        $totalVal = (clone $base)->sum('total_value');
-        $itemCount = BoqItem::whereHas('boq', fn($q) => $q->where('cde_project_id', $pid))->count();
-        $variationCount = BoqItem::whereHas('boq', fn($q) => $q->where('cde_project_id', $pid))->where('is_variation', true)->count();
 
-        $allItems = BoqItem::whereHas('boq', fn($q) => $q->where('cde_project_id', $pid));
-        $totalQty = (clone $allItems)->sum('quantity');
-        $completedQty = (clone $allItems)->sum('quantity_completed');
+        // Single aggregate for BOQ stats
+        $boqStats = \DB::selectOne("
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) as approved,
+                COALESCE(SUM(total_value), 0) as total_val
+            FROM boqs WHERE cde_project_id = ?
+        ", [$pid]);
+
+        // Single aggregate for item stats via JOIN instead of whereHas
+        $itemStats = \DB::selectOne("
+            SELECT
+                COUNT(bi.id) as item_count,
+                SUM(CASE WHEN bi.is_variation = 1 THEN 1 ELSE 0 END) as variation_count,
+                COALESCE(SUM(bi.quantity), 0) as total_qty,
+                COALESCE(SUM(bi.quantity_completed), 0) as completed_qty
+            FROM boq_items bi
+            INNER JOIN boqs b ON b.id = bi.boq_id
+            WHERE b.cde_project_id = ?
+        ", [$pid]);
+
+        // Single count for revisions via JOIN
+        $revisionCount = \DB::selectOne("
+            SELECT COUNT(br.id) as total
+            FROM boq_revisions br
+            INNER JOIN boqs b ON b.id = br.boq_id
+            WHERE b.cde_project_id = ?
+        ", [$pid]);
+
+        $totalQty = (float) $itemStats->total_qty;
+        $completedQty = (float) $itemStats->completed_qty;
         $progressPct = $totalQty > 0 ? round(($completedQty / $totalQty) * 100) : 0;
 
         return [
             [
                 'label' => 'Total BOQs',
-                'value' => $total,
-                'sub' => $approved . ' approved',
+                'value' => (int) $boqStats->total,
+                'sub' => (int) $boqStats->approved . ' approved',
                 'sub_type' => 'success',
                 'primary' => true,
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V13.5zm0 2.25h.008v.008H8.25v-.008zm0 2.25h.008v.008H8.25V18zm2.498-6.75h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V13.5zm0 2.25h.007v.008h-.007v-.008zm0 2.25h.007v.008h-.007V18zm2.504-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zm0 2.25h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V18zm2.498-6.75h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V13.5zM8.25 6h7.5v2.25h-7.5V6zM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 002.25 2.25h10.5a2.25 2.25 0 002.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0012 2.25z" /></svg>',
             ],
             [
                 'label' => 'Total Value',
-                'value' => CurrencyHelper::format($totalVal, 0),
+                'value' => CurrencyHelper::format($boqStats->total_val, 0),
                 'sub' => 'All BOQs combined',
                 'sub_type' => 'neutral',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#6366f1" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
@@ -95,14 +117,14 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
             [
                 'label' => 'Overall Progress',
                 'value' => $progressPct . '%',
-                'sub' => $itemCount . ' line items · ' . $variationCount . ' variations',
+                'sub' => (int) $itemStats->item_count . ' line items · ' . (int) $itemStats->variation_count . ' variations',
                 'sub_type' => $progressPct >= 75 ? 'success' : ($progressPct >= 40 ? 'info' : 'neutral'),
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>',
                 'icon_bg' => '#ecfdf5',
             ],
             [
                 'label' => 'Revisions',
-                'value' => BoqRevision::whereHas('boq', fn($q) => $q->where('cde_project_id', $pid))->count(),
+                'value' => (int) $revisionCount->total,
                 'sub' => 'Tracked snapshots',
                 'sub_type' => 'info',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#3b82f6" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
@@ -116,29 +138,40 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
     public function getCategorySummary(): array
     {
         $pid = $this->pid();
-        $items = BoqItem::whereHas('boq', fn($q) => $q->where('cde_project_id', $pid))->get();
-        if ($items->isEmpty())
+
+        // Use DB aggregate instead of loading all items into PHP memory
+        $rows = \DB::select("
+            SELECT
+                COALESCE(bi.category, 'uncategorized') as category,
+                COUNT(bi.id) as item_count,
+                COALESCE(SUM(bi.amount), 0) as total,
+                COALESCE(SUM(bi.quantity), 0) as total_qty,
+                COALESCE(SUM(bi.quantity_completed), 0) as completed_qty,
+                COALESCE(SUM(CASE WHEN bi.is_variation = 1 THEN bi.amount ELSE 0 END), 0) as variation_amt
+            FROM boq_items bi
+            INNER JOIN boqs b ON b.id = bi.boq_id
+            WHERE b.cde_project_id = ?
+            GROUP BY bi.category
+            ORDER BY SUM(bi.amount) DESC
+        ", [$pid]);
+
+        if (empty($rows))
             return [];
 
-        $byCategory = $items->groupBy('category');
         $summary = [];
-        foreach ($byCategory as $cat => $catItems) {
-            $catTotal = $catItems->sum('amount');
-            $catQty = $catItems->sum('quantity');
-            $catCompleted = $catItems->sum('quantity_completed');
-            $pct = $catQty > 0 ? round(($catCompleted / $catQty) * 100) : 0;
-            $variationAmt = $catItems->where('is_variation', true)->sum('amount');
+        foreach ($rows as $row) {
+            $cat = $row->category;
+            $pct = (float) $row->total_qty > 0 ? round(((float) $row->completed_qty / (float) $row->total_qty) * 100) : 0;
             $summary[] = [
-                'key' => $cat ?: 'uncategorized',
-                'label' => self::$categories[$cat] ?? ucfirst(str_replace('_', ' ', $cat ?: 'Uncategorized')),
-                'total' => $catTotal,
-                'total_formatted' => CurrencyHelper::format($catTotal, 0),
-                'count' => $catItems->count(),
+                'key' => $cat,
+                'label' => self::$categories[$cat] ?? ucfirst(str_replace('_', ' ', $cat)),
+                'total' => (float) $row->total,
+                'total_formatted' => CurrencyHelper::format($row->total, 0),
+                'count' => (int) $row->item_count,
                 'progress' => $pct,
-                'variations' => $variationAmt,
+                'variations' => (float) $row->variation_amt,
             ];
         }
-        usort($summary, fn($a, $b) => $b['total'] <=> $a['total']);
         return $summary;
     }
 
@@ -415,16 +448,16 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
         return $table
             ->query(Boq::query()->where('cde_project_id', $this->pid())->with(['contract', 'items', 'creator', 'revisions']))
             ->columns([
-                Tables\Columns\TextColumn::make('boq_number')->label('BOQ #')->searchable()->sortable()->weight('bold')
+                Tables\Columns\TextColumn::make('boq_number')->label('BOQ #')->searchable()->sortable()->weight('bold')->toggleable()
                     ->icon('heroicon-o-calculator')->copyable(),
-                Tables\Columns\TextColumn::make('name')->searchable()->limit(35)->tooltip(fn(Boq $record) => $record->name),
+                Tables\Columns\TextColumn::make('name')->searchable()->limit(35)->tooltip(fn(Boq $record) => $record->name)->toggleable(),
                 Tables\Columns\TextColumn::make('contract.title')->label('Contract')->placeholder('—')->toggleable(),
-                Tables\Columns\TextColumn::make('status')->badge()
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'approved' => 'success', 'final' => 'primary', 'priced' => 'info', 'submitted' => 'warning', 'draft' => 'gray', default => 'gray'})->sortable()
                     ->formatStateUsing(fn($state) => Boq::$statuses[$state] ?? $state),
-                Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->sortable(),
-                Tables\Columns\TextColumn::make('total_value')->label('Total Value')->money('USD')->sortable(),
-                Tables\Columns\TextColumn::make('progress')
+                Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('total_value')->label('Total Value')->money('USD')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('progress')->toggleable()
                     ->label('Progress')
                     ->state(function (Boq $record) {
                         $totalQty = $record->items->sum('quantity');

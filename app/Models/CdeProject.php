@@ -186,13 +186,30 @@ class CdeProject extends Model
 
     /**
      * Get all enabled module codes for this project.
+     * Result is cached per-request to avoid repeated queries.
      */
     public function getEnabledModules(): array
     {
-        return $this->moduleAccess()
+        // Cache per-request using a property
+        if (isset($this->attributes['_cached_enabled_modules'])) {
+            return $this->attributes['_cached_enabled_modules'];
+        }
+
+        $modules = $this->moduleAccess()
             ->where('is_enabled', true)
             ->pluck('module_code')
             ->toArray();
+
+        $this->attributes['_cached_enabled_modules'] = $modules;
+        return $modules;
+    }
+
+    /**
+     * Clear the cached enabled modules (call after enabling/disabling modules).
+     */
+    public function clearModuleCache(): void
+    {
+        unset($this->attributes['_cached_enabled_modules']);
     }
 
     /**
@@ -230,5 +247,7 @@ class CdeProject extends Model
                 'disabled_at' => now(),
                 'disabled_by' => $by,
             ]);
+
+        $this->clearModuleCache();
     }
 }

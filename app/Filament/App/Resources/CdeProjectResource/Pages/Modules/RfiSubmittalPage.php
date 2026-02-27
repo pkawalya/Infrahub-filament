@@ -254,7 +254,7 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('rfi_number')
+                Tables\Columns\TextColumn::make('rfi_number')->toggleable()
                     ->label('RFI #')
                     ->searchable()
                     ->sortable()
@@ -262,12 +262,12 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
                     ->color('primary')
                     ->copyable(),
 
-                Tables\Columns\TextColumn::make('subject')
+                Tables\Columns\TextColumn::make('subject')->toggleable()
                     ->searchable()
                     ->limit(40)
                     ->tooltip(fn($record) => $record->subject),
 
-                Tables\Columns\TextColumn::make('priority')
+                Tables\Columns\TextColumn::make('priority')->toggleable()
                     ->badge()
                     ->color(fn(string $state) => match ($state) {
                         'urgent' => 'danger',
@@ -277,7 +277,7 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('status')->toggleable()
                     ->badge()
                     ->color(fn(string $state) => match ($state) {
                         'open' => 'warning',
@@ -289,18 +289,18 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('assignee.name')
+                Tables\Columns\TextColumn::make('assignee.name')->toggleable()
                     ->label('Assigned To')
                     ->placeholder('Unassigned'),
 
-                Tables\Columns\TextColumn::make('due_date')
+                Tables\Columns\TextColumn::make('due_date')->toggleable()
                     ->label('Due')
                     ->date()
                     ->color(fn($record) => $record->due_date && $record->due_date->isPast()
                         && !in_array($record->status, ['answered', 'closed']) ? 'danger' : null)
                     ->placeholder('—'),
 
-                Tables\Columns\TextColumn::make('created_at')
+                Tables\Columns\TextColumn::make('created_at')->toggleable()
                     ->label('Raised')
                     ->since()
                     ->sortable(),
@@ -405,7 +405,7 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('submittal_number')
+                Tables\Columns\TextColumn::make('submittal_number')->toggleable()
                     ->label('Submittal #')
                     ->searchable()
                     ->sortable()
@@ -413,21 +413,21 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
                     ->color('primary')
                     ->copyable(),
 
-                Tables\Columns\TextColumn::make('title')
+                Tables\Columns\TextColumn::make('title')->toggleable()
                     ->searchable()
                     ->limit(40)
                     ->tooltip(fn($record) => $record->title),
 
-                Tables\Columns\TextColumn::make('type')
+                Tables\Columns\TextColumn::make('type')->toggleable()
                     ->formatStateUsing(fn(?string $state) => Submittal::$types[$state] ?? $state)
                     ->badge()
                     ->color('info'),
 
-                Tables\Columns\TextColumn::make('current_revision')
+                Tables\Columns\TextColumn::make('current_revision')->toggleable()
                     ->label('Rev')
                     ->alignCenter(),
 
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('status')->toggleable()
                     ->badge()
                     ->color(fn(string $state) => match ($state) {
                         'pending' => 'warning',
@@ -439,18 +439,18 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('reviewer.name')
+                Tables\Columns\TextColumn::make('reviewer.name')->toggleable()
                     ->label('Reviewer')
                     ->placeholder('Unassigned'),
 
-                Tables\Columns\TextColumn::make('due_date')
+                Tables\Columns\TextColumn::make('due_date')->toggleable()
                     ->label('Due')
                     ->date()
                     ->color(fn($record) => $record->due_date && $record->due_date->isPast()
                         && in_array($record->status, ['pending', 'under_review']) ? 'danger' : null)
                     ->placeholder('—'),
 
-                Tables\Columns\TextColumn::make('created_at')
+                Tables\Columns\TextColumn::make('created_at')->toggleable()
                     ->label('Submitted')
                     ->since()
                     ->sortable(),

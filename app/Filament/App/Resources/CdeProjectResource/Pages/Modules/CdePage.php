@@ -330,22 +330,22 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                     ->with(['uploadedBy', 'folder'])
             )
             ->columns([
-                Tables\Columns\TextColumn::make('document_number')
+                Tables\Columns\TextColumn::make('document_number')->toggleable()
                     ->label('Doc #')->searchable()->sortable()
                     ->weight('bold')
                     ->icon('heroicon-o-document-text'),
-                Tables\Columns\TextColumn::make('title')->searchable()->limit(50),
-                Tables\Columns\TextColumn::make('discipline')->badge()->color('info'),
-                Tables\Columns\TextColumn::make('revision')->badge()->color('warning'),
-                Tables\Columns\TextColumn::make('status')->badge()
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(50)->toggleable(),
+                Tables\Columns\TextColumn::make('discipline')->badge()->color('info')->toggleable(),
+                Tables\Columns\TextColumn::make('revision')->badge()->color('warning')->toggleable(),
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(?string $state) => match ($state) {
                         'S0' => 'gray', 'S1' => 'info', 'S2' => 'primary',
                         'S3' => 'warning', 'S4' => 'success', 'S6' => 'success', 'S7' => 'success',
                         default => 'gray',
                     })
                     ->label('Suitability'),
-                Tables\Columns\TextColumn::make('file_type')->label('Type')->badge()->color('gray'),
-                Tables\Columns\TextColumn::make('file_size')
+                Tables\Columns\TextColumn::make('file_type')->label('Type')->badge()->color('gray')->toggleable(),
+                Tables\Columns\TextColumn::make('file_size')->toggleable()
                     ->label('Size')
                     ->formatStateUsing(function ($state) {
                         if (!$state)
@@ -356,8 +356,8 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                             return round($state / 1024, 1) . ' KB';
                         return round($state / 1048576, 1) . ' MB';
                     }),
-                Tables\Columns\TextColumn::make('uploadedBy.name')->label('Uploaded By'),
-                Tables\Columns\TextColumn::make('created_at')->dateTime('M d, Y H:i')->sortable()->label('Uploaded'),
+                Tables\Columns\TextColumn::make('uploadedBy.name')->label('Uploaded By')->toggleable(),
+                Tables\Columns\TextColumn::make('created_at')->dateTime('M d, Y H:i')->sortable()->label('Uploaded')->toggleable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([

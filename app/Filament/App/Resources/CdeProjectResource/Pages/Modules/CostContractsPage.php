@@ -197,20 +197,20 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
         return $table
             ->query(Contract::query()->where('cde_project_id', $this->pid())->with(['vendor', 'creator']))
             ->columns([
-                Tables\Columns\TextColumn::make('contract_number')->label('Contract #')->searchable()->sortable()->weight('bold')
+                Tables\Columns\TextColumn::make('contract_number')->label('Contract #')->searchable()->sortable()->weight('bold')->toggleable()
                     ->icon('heroicon-o-document-text')->copyable(),
-                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(Contract $record) => $record->title),
-                Tables\Columns\TextColumn::make('vendor.name')->label('Vendor')->placeholder('—')->searchable(),
-                Tables\Columns\TextColumn::make('type')->badge()->color('info'),
-                Tables\Columns\TextColumn::make('status')->badge()
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(Contract $record) => $record->title)->toggleable(),
+                Tables\Columns\TextColumn::make('vendor.name')->label('Vendor')->placeholder('—')->searchable()->toggleable(),
+                Tables\Columns\TextColumn::make('type')->badge()->color('info')->toggleable(),
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'active' => 'success', 'completed' => 'primary', 'draft' => 'gray', 'terminated' => 'danger', 'suspended' => 'warning', default => 'gray'})->sortable(),
-                Tables\Columns\TextColumn::make('original_value')->label('Original')->money('USD')->sortable(),
-                Tables\Columns\TextColumn::make('revised_value')->label('Revised')->money('USD')->sortable()
+                Tables\Columns\TextColumn::make('original_value')->label('Original')->money('USD')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('revised_value')->label('Revised')->money('USD')->sortable()->toggleable()
                     ->color(fn(Contract $record) => ($record->revised_value ?? 0) > ($record->original_value ?? 0) ? 'danger' : null),
                 Tables\Columns\TextColumn::make('amount_paid')->label('Paid')->money('USD')->sortable()->toggleable(),
-                Tables\Columns\TextColumn::make('retainage_held')->label('Ret. Held')->money('USD')->sortable()
+                Tables\Columns\TextColumn::make('retainage_held')->label('Ret. Held')->money('USD')->sortable()->toggleable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('payment_progress')->label('% Paid')
+                Tables\Columns\TextColumn::make('payment_progress')->label('% Paid')->toggleable()
                     ->state(fn(Contract $record) => $record->revised_value > 0 ? round(($record->amount_paid / $record->revised_value) * 100) . '%' : '—')
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('start_date')->date()->sortable()->toggleable(isToggledHiddenByDefault: true),

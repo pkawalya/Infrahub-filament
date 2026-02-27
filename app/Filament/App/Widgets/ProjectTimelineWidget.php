@@ -23,6 +23,7 @@ class ProjectTimelineWidget extends Widget
             ->when($companyId, fn($q) => $q->where('company_id', $companyId))
             ->whereNotNull('start_date')
             ->whereNotNull('end_date')
+            ->with(['milestones' => fn($q) => $q->orderBy('target_date')]) // Eager load milestones
             ->orderBy('start_date')
             ->get();
 
@@ -72,10 +73,10 @@ class ProjectTimelineWidget extends Widget
                 $expectedProgress = min(100, round(($elapsed / $totalProjectDays) * 100));
             }
 
-            // Actual progress — compute from milestones or status
-            $milestoneCount = Milestone::where('cde_project_id', $project->id)->count();
-            $completedMilestones = Milestone::where('cde_project_id', $project->id)
-                ->where('status', 'completed')->count();
+            // Actual progress — use eager-loaded milestones (no extra queries)
+            $projectMilestones = $project->milestones;
+            $milestoneCount = $projectMilestones->count();
+            $completedMilestones = $projectMilestones->where('status', 'completed')->count();
 
             if ($project->status === 'completed') {
                 $actualProgress = 100;
@@ -113,21 +114,18 @@ class ProjectTimelineWidget extends Widget
                 $varianceColor = '#ef4444';
             }
 
-            // Get milestones for this project
-            $milestones = Milestone::where('cde_project_id', $project->id)
-                ->orderBy('target_date')
-                ->get()
-                ->map(function (Milestone $m) use ($timelineStart, $totalDays) {
-                    $pos = round(($timelineStart->diffInDays($m->target_date) / $totalDays) * 100, 2);
-                    return [
-                        'name' => $m->name,
-                        'date' => $m->target_date->format('M d, Y'),
-                        'status' => $m->status,
-                        'priority' => $m->priority,
-                        'position' => $pos,
-                        'isOverdue' => $m->status !== 'completed' && $m->target_date->isPast(),
-                    ];
-                });
+            // Use eager-loaded milestones (no extra queries)
+            $milestones = $projectMilestones->map(function (Milestone $m) use ($timelineStart, $totalDays) {
+                $pos = round(($timelineStart->diffInDays($m->target_date) / $totalDays) * 100, 2);
+                return [
+                    'name' => $m->name,
+                    'date' => $m->target_date->format('M d, Y'),
+                    'status' => $m->status,
+                    'priority' => $m->priority,
+                    'position' => $pos,
+                    'isOverdue' => $m->status !== 'completed' && $m->target_date->isPast(),
+                ];
+            });
 
             $statusColors = [
                 'planning' => '#6366f1',   // indigo

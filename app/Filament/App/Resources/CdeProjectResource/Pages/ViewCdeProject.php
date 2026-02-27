@@ -24,18 +24,46 @@ class ViewCdeProject extends ViewRecord
 
     public function getStats(): array
     {
-        $record = $this->record;
+        $pid = $this->record->id;
+        $now = now();
+        $weekStart = $now->copy()->startOfWeek();
+
+        // Single query for all task stats
+        $taskStats = \DB::selectOne("
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN status NOT IN ('done','cancelled') THEN 1 ELSE 0 END) as open,
+                SUM(CASE WHEN status NOT IN ('done','cancelled') AND due_date < ? THEN 1 ELSE 0 END) as overdue
+            FROM tasks WHERE cde_project_id = ?
+        ", [$now, $pid]);
+
+        // Single query for document/folder/rfi stats
+        $docStats = \DB::selectOne("
+            SELECT
+                (SELECT COUNT(*) FROM cde_documents WHERE cde_project_id = ?) as documents,
+                (SELECT COUNT(*) FROM cde_documents WHERE cde_project_id = ? AND created_at >= ?) as docs_this_week,
+                (SELECT COUNT(*) FROM cde_folders WHERE cde_project_id = ?) as folders,
+                (SELECT COUNT(*) FROM rfis WHERE cde_project_id = ?) as rfis
+        ", [$pid, $pid, $weekStart, $pid, $pid]);
+
+        // Single query for incident stats
+        $incidentStats = \DB::selectOne("
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN status NOT IN ('closed','resolved') THEN 1 ELSE 0 END) as open
+            FROM safety_incidents WHERE cde_project_id = ?
+        ", [$pid]);
 
         return [
-            'tasks_total' => $record->tasks()->count(),
-            'tasks_open' => $record->tasks()->whereNotIn('status', ['done', 'cancelled'])->count(),
-            'tasks_overdue' => $record->tasks()->where('due_date', '<', now())->whereNotIn('status', ['done', 'cancelled'])->count(),
-            'documents' => $record->documents()->count(),
-            'docs_this_week' => $record->documents()->where('created_at', '>=', now()->startOfWeek())->count(),
-            'folders' => $record->folders()->count(),
-            'rfis' => $record->rfis()->count(),
-            'incidents' => $record->safetyIncidents()->count(),
-            'incidents_open' => $record->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count(),
+            'tasks_total' => (int) $taskStats->total,
+            'tasks_open' => (int) $taskStats->open,
+            'tasks_overdue' => (int) $taskStats->overdue,
+            'documents' => (int) $docStats->documents,
+            'docs_this_week' => (int) $docStats->docs_this_week,
+            'folders' => (int) $docStats->folders,
+            'rfis' => (int) $docStats->rfis,
+            'incidents' => (int) $incidentStats->total,
+            'incidents_open' => (int) $incidentStats->open,
         ];
     }
 

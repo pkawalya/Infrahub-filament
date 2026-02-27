@@ -20,36 +20,30 @@ class TenantDashboardOverview extends Widget
     public function getViewData(): array
     {
         $companyId = auth()->user()?->company_id;
+        $now = now();
 
-        $activeProjects = CdeProject::where('company_id', $companyId)->where('status', 'active')->count();
-        $totalProjects = CdeProject::where('company_id', $companyId)->count();
+        // Single query for project, task, and work order stats
+        $stats = \DB::selectOne("
+            SELECT
+                (SELECT COUNT(*) FROM cde_projects WHERE company_id = ? AND deleted_at IS NULL AND status = 'active') as active_projects,
+                (SELECT COUNT(*) FROM cde_projects WHERE company_id = ? AND deleted_at IS NULL) as total_projects,
+                (SELECT COUNT(*) FROM work_orders WHERE company_id = ? AND status NOT IN ('completed','cancelled')) as open_wo,
+                (SELECT COUNT(*) FROM work_orders WHERE company_id = ? AND status = 'completed' AND MONTH(completed_at) = ? AND YEAR(completed_at) = ?) as completed_wo,
+                (SELECT COUNT(*) FROM tasks WHERE company_id = ? AND status NOT IN ('done','cancelled')) as open_tasks,
+                (SELECT COUNT(*) FROM tasks WHERE company_id = ? AND status NOT IN ('done','cancelled') AND due_date < ?) as overdue_tasks
+        ", [$companyId, $companyId, $companyId, $companyId, $now->month, $now->year, $companyId, $companyId, $now]);
 
-        $openWO = WorkOrder::where('company_id', $companyId)
-            ->whereNotIn('status', ['completed', 'cancelled'])
-            ->count();
-        $completedWO = WorkOrder::where('company_id', $companyId)
-            ->where('status', 'completed')
-            ->whereMonth('completed_at', now()->month)
-            ->count();
+        // Revenue query
+        $revenue = \DB::selectOne("
+            SELECT
+                COALESCE(SUM(CASE WHEN MONTH(issue_date) = ? AND YEAR(issue_date) = ? THEN total_amount ELSE 0 END), 0) as current_month,
+                COALESCE(SUM(CASE WHEN MONTH(issue_date) = ? AND YEAR(issue_date) = ? THEN total_amount ELSE 0 END), 0) as last_month
+            FROM invoices WHERE company_id = ? AND status = 'paid'
+              AND issue_date >= ?
+        ", [$now->month, $now->year, $now->subMonth()->month, $now->subMonth()->year, $companyId, $now->copy()->subMonths(2)->startOfMonth()]);
 
-        $openTasks = Task::where('company_id', $companyId)
-            ->whereNotIn('status', ['done', 'cancelled'])
-            ->count();
-        $overdueTasks = Task::where('company_id', $companyId)
-            ->whereNotIn('status', ['done', 'cancelled'])
-            ->where('due_date', '<', now())
-            ->count();
-
-        $monthlyRevenue = Invoice::where('company_id', $companyId)
-            ->where('status', 'paid')
-            ->whereMonth('issue_date', now()->month)
-            ->sum('total_amount');
-
-        $lastMonthRevenue = Invoice::where('company_id', $companyId)
-            ->where('status', 'paid')
-            ->whereMonth('issue_date', now()->subMonth()->month)
-            ->whereYear('issue_date', now()->subMonth()->year)
-            ->sum('total_amount');
+        $monthlyRevenue = (float) $revenue->current_month;
+        $lastMonthRevenue = (float) $revenue->last_month;
 
         $revenueChange = $lastMonthRevenue > 0
             ? round((($monthlyRevenue - $lastMonthRevenue) / $lastMonthRevenue) * 100)
@@ -58,16 +52,16 @@ class TenantDashboardOverview extends Widget
         return [
             'stats' => [
                 'projects' => [
-                    'active' => $activeProjects,
-                    'total' => $totalProjects,
+                    'active' => (int) $stats->active_projects,
+                    'total' => (int) $stats->total_projects,
                 ],
                 'tasks' => [
-                    'open' => $openTasks,
-                    'overdue' => $overdueTasks,
+                    'open' => (int) $stats->open_tasks,
+                    'overdue' => (int) $stats->overdue_tasks,
                 ],
                 'workOrders' => [
-                    'open' => $openWO,
-                    'completed' => $completedWO,
+                    'open' => (int) $stats->open_wo,
+                    'completed' => (int) $stats->completed_wo,
                 ],
                 'revenue' => [
                     'current' => CurrencyHelper::format($monthlyRevenue, 2),

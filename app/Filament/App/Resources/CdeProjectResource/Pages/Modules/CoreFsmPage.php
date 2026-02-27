@@ -40,15 +40,35 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
     public function getStats(): array
     {
         $pid = $this->record->id;
-        $base = WorkOrder::where('cde_project_id', $pid);
+        $now = now();
 
-        $total = (clone $base)->count();
-        $open = (clone $base)->whereNotIn('status', ['completed', 'cancelled'])->count();
-        $urgent = (clone $base)->where('priority', 'urgent')->whereNotIn('status', ['completed', 'cancelled'])->count();
-        $overdue = (clone $base)->whereNotIn('status', ['completed', 'cancelled'])->whereNotNull('due_date')->where('due_date', '<', now())->count();
-        $inProg = (clone $base)->where('status', 'in_progress')->count();
-        $compMonth = (clone $base)->where('status', 'completed')->whereMonth('completed_at', now()->month)->whereYear('completed_at', now()->year)->count();
-        $totalCost = (clone $base)->withSum('items', 'amount')->get()->sum('items_sum_amount') ?? 0;
+        // Single aggregate query instead of 7 separate queries
+        $stats = \DB::selectOne("
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN status NOT IN ('completed','cancelled') THEN 1 ELSE 0 END) as open_count,
+                SUM(CASE WHEN priority = 'urgent' AND status NOT IN ('completed','cancelled') THEN 1 ELSE 0 END) as urgent,
+                SUM(CASE WHEN status NOT IN ('completed','cancelled') AND due_date IS NOT NULL AND due_date < ? THEN 1 ELSE 0 END) as overdue,
+                SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
+                SUM(CASE WHEN status = 'completed' AND MONTH(completed_at) = ? AND YEAR(completed_at) = ? THEN 1 ELSE 0 END) as comp_month
+            FROM work_orders WHERE cde_project_id = ?
+        ", [$now, $now->month, $now->year, $pid]);
+
+        // Separate efficient query for total cost via JOIN (avoids loading all records)
+        $costResult = \DB::selectOne("
+            SELECT COALESCE(SUM(woi.amount), 0) as total_cost
+            FROM work_order_items woi
+            INNER JOIN work_orders wo ON wo.id = woi.work_order_id
+            WHERE wo.cde_project_id = ?
+        ", [$pid]);
+
+        $total = (int) $stats->total;
+        $open = (int) $stats->open_count;
+        $urgent = (int) $stats->urgent;
+        $overdue = (int) $stats->overdue;
+        $inProg = (int) $stats->in_progress;
+        $compMonth = (int) $stats->comp_month;
+        $totalCost = (float) $costResult->total_cost;
 
         return [
             [
@@ -285,7 +305,7 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
                     ->with(['assignee', 'client', 'type', 'tasks', 'items'])
             )
             ->columns([
-                Tables\Columns\TextColumn::make('wo_number')
+                Tables\Columns\TextColumn::make('wo_number')->toggleable()
                     ->label('WO #')
                     ->searchable()
                     ->sortable()
@@ -294,26 +314,26 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
                     ->copyable()
                     ->copyMessage('WO number copied'),
 
-                Tables\Columns\TextColumn::make('title')
+                Tables\Columns\TextColumn::make('title')->toggleable()
                     ->searchable()
                     ->limit(40)
                     ->tooltip(fn(WorkOrder $record) => $record->title),
 
-                Tables\Columns\TextColumn::make('type.name')
+                Tables\Columns\TextColumn::make('type.name')->toggleable()
                     ->label('Type')
                     ->badge()
                     ->color('info')
                     ->toggleable()
                     ->placeholder('—'),
 
-                Tables\Columns\TextColumn::make('priority')
+                Tables\Columns\TextColumn::make('priority')->toggleable()
                     ->badge()
                     ->color(fn(string $state) => match ($state) {
                         'urgent' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'
                     })
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('status')
+                Tables\Columns\TextColumn::make('status')->toggleable()
                     ->badge()
                     ->color(fn(string $state) => match ($state) {
                         'completed' => 'success', 'in_progress' => 'info', 'approved' => 'primary',
@@ -321,12 +341,12 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
                     })
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('assignee.name')
+                Tables\Columns\TextColumn::make('assignee.name')->toggleable()
                     ->label('Assigned To')
                     ->placeholder('Unassigned')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('tasks_progress')
+                Tables\Columns\TextColumn::make('tasks_progress')->toggleable()
                     ->label('Tasks')
                     ->state(function (WorkOrder $record) {
                         $total = $record->tasks->count();
@@ -344,34 +364,34 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
                     })
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('items_cost')
+                Tables\Columns\TextColumn::make('items_cost')->toggleable()
                     ->label('Cost')
                     ->state(fn(WorkOrder $record) => $record->items->sum('amount'))
                     ->money('USD')
                     ->sortable(query: fn($query, $direction) => $query->withSum('items', 'amount')->orderBy('items_sum_amount', $direction))
                     ->toggleable(),
 
-                Tables\Columns\TextColumn::make('client.name')
+                Tables\Columns\TextColumn::make('client.name')->toggleable()
                     ->label('Client')
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('due_date')
+                Tables\Columns\TextColumn::make('due_date')->toggleable()
                     ->date()
                     ->sortable()
                     ->color(fn($record) => $record->due_date?->isPast() && !in_array($record->status, ['completed', 'cancelled']) ? 'danger' : null)
                     ->description(fn($record) => $record->due_date?->isPast() && !in_array($record->status, ['completed', 'cancelled']) ? 'Overdue' : null),
 
-                Tables\Columns\TextColumn::make('started_at')
+                Tables\Columns\TextColumn::make('started_at')->toggleable()
                     ->label('Started')
                     ->dateTime('M d, H:i')
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('completed_at')
+                Tables\Columns\TextColumn::make('completed_at')->toggleable()
                     ->label('Completed')
                     ->dateTime('M d, H:i')
                     ->toggleable(isToggledHiddenByDefault: true),
 
-                Tables\Columns\TextColumn::make('created_at')
+                Tables\Columns\TextColumn::make('created_at')->toggleable()
                     ->dateTime('M d, Y')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

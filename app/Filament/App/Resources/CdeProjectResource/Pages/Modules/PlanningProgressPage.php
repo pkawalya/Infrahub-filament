@@ -121,16 +121,16 @@ class PlanningProgressPage extends BaseModulePage implements HasTable, HasForms
         return $table
             ->query(Milestone::query()->where('cde_project_id', $this->pid()))
             ->columns([
-                Tables\Columns\TextColumn::make('name')->searchable()->sortable()->weight('bold')->limit(50),
-                Tables\Columns\TextColumn::make('priority')->badge()
+                Tables\Columns\TextColumn::make('name')->searchable()->sortable()->weight('bold')->limit(50)->toggleable(),
+                Tables\Columns\TextColumn::make('priority')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'critical' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'})->sortable(),
-                Tables\Columns\TextColumn::make('status')->badge()
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'completed' => 'success', 'in_progress' => 'info', 'delayed' => 'danger', 'pending' => 'gray', 'cancelled' => 'gray', default => 'gray'})->sortable(),
-                Tables\Columns\TextColumn::make('target_date')->label('Target')->date()->sortable()
+                Tables\Columns\TextColumn::make('target_date')->label('Target')->date()->sortable()->toggleable()
                     ->color(fn($record) => $record->target_date?->isPast() && !in_array($record->status, ['completed', 'cancelled']) ? 'danger' : null)
                     ->description(fn($record) => $record->target_date?->isPast() && !in_array($record->status, ['completed', 'cancelled']) ? 'Overdue' : ($record->target_date?->diffForHumans() ?? '')),
-                Tables\Columns\TextColumn::make('actual_date')->label('Actual')->date()->placeholder('—')->sortable(),
-                Tables\Columns\TextColumn::make('variance')->label('Variance')
+                Tables\Columns\TextColumn::make('actual_date')->label('Actual')->date()->placeholder('—')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('variance')->label('Variance')->toggleable()
                     ->state(function (Milestone $record) {
                         if (!$record->target_date)
                             return '—';

@@ -154,9 +154,13 @@ class CdeProjectResource extends Resource
             'Operations' => [
                 'icon' => 'heroicon-o-wrench-screwdriver',
                 'items' => [
-                    $makeItem('core', 'Work Orders', 'heroicon-o-wrench-screwdriver', Modules\CoreFsmPage::class),
-                    $makeItem('task_workflow', 'Tasks', 'heroicon-o-clipboard-document-check', Modules\TaskWorkflowPage::class),
-                    $makeItem('planning_progress', 'Planning', 'heroicon-o-calendar-days', Modules\PlanningProgressPage::class),
+                        // Unified MS‑Project schedule (merges old Tasks + Work Orders + Planning)
+                    (in_array('task_workflow', $enabledModules) || in_array('core', $enabledModules) || in_array('planning_progress', $enabledModules))
+                    ? NavigationItem::make('Schedule')
+                        ->icon('heroicon-o-calendar-days')
+                        ->isActiveWhen(fn() => $page instanceof Modules\TaskWorkflowPage)
+                        ->url(static::getUrl('module-task-workflow', ['record' => $record]))
+                    : null,
                 ],
             ],
             'Site' => [
@@ -239,34 +243,44 @@ class CdeProjectResource extends Resource
         return 'module-' . str_replace('_', '-', $code);
     }
 
-    public static function getNavigationBadge(): ?string
+    /**
+     * Cache navigation badge data to avoid redundant queries.
+     */
+    private static function getNavigationBadgeData(): array
     {
+        static $cache = null;
+        if ($cache !== null)
+            return $cache;
+
         $company = auth()->user()?->company;
         $count = (int) static::getEloquentQuery()->count();
+        $limit = $company ? $company->getEffectiveMaxProjects() : 0;
 
-        if ($company) {
-            $limit = $company->getEffectiveMaxProjects();
-            if ($limit)
-                return "{$count}/{$limit}";
+        $cache = compact('company', 'count', 'limit');
+        return $cache;
+    }
+
+    public static function getNavigationBadge(): ?string
+    {
+        $data = static::getNavigationBadgeData();
+
+        if ($data['company'] && $data['limit']) {
+            return "{$data['count']}/{$data['limit']}";
         }
 
-        return (string) $count;
+        return (string) $data['count'];
     }
 
     public static function getNavigationBadgeColor(): ?string
     {
-        $company = auth()->user()?->company;
-        if (!$company)
+        $data = static::getNavigationBadgeData();
+
+        if (!$data['company'] || !$data['limit'])
             return 'primary';
 
-        $limit = $company->getEffectiveMaxProjects();
-        if (!$limit)
-            return 'primary';
-
-        $count = $company->projects()->count();
-        if ($count >= $limit)
+        if ($data['count'] >= $data['limit'])
             return 'danger';
-        if ($count >= $limit * 0.8)
+        if ($data['count'] >= $data['limit'] * 0.8)
             return 'warning';
         return 'primary';
     }

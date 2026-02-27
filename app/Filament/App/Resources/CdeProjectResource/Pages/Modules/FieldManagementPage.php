@@ -146,18 +146,18 @@ class FieldManagementPage extends BaseModulePage implements HasTable, HasForms
         return $table
             ->query(DailySiteLog::query()->where('cde_project_id', $this->pid())->with(['creator', 'approver']))
             ->columns([
-                Tables\Columns\TextColumn::make('log_date')->date('D, M d Y')->sortable()->searchable()->weight('bold'),
-                Tables\Columns\TextColumn::make('weather')->formatStateUsing(fn(string $state) => match ($state) {
+                Tables\Columns\TextColumn::make('log_date')->date('D, M d Y')->sortable()->searchable()->weight('bold')->toggleable(),
+                Tables\Columns\TextColumn::make('weather')->toggleable()->formatStateUsing(fn(string $state) => match ($state) {
                     'sunny' => '☀️ Sunny', 'partly_cloudy' => '⛅ Partly', 'cloudy' => '☁️ Cloudy', 'rainy' => '🌧️ Rainy',
                     'stormy' => '⛈️ Storm', 'snowy' => '❄️ Snow', 'windy' => '💨 Wind', 'foggy' => '🌫️ Fog', default => $state ?? '—'
                 }),
-                Tables\Columns\TextColumn::make('temperature_display')->label('Temp')
+                Tables\Columns\TextColumn::make('temperature_display')->label('Temp')->toggleable()
                     ->state(fn($record) => $record->temperature_high || $record->temperature_low ? ($record->temperature_low ?? '–') . '–' . ($record->temperature_high ?? '–') . '°C' : '—'),
-                Tables\Columns\TextColumn::make('workers_on_site')->label('Workers')->sortable(),
-                Tables\Columns\TextColumn::make('status')->badge()
+                Tables\Columns\TextColumn::make('workers_on_site')->label('Workers')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'approved' => 'success', 'submitted' => 'info', 'draft' => 'gray', default => 'warning'})->sortable(),
-                Tables\Columns\TextColumn::make('work_performed')->limit(50)->toggleable()->placeholder('—'),
-                Tables\Columns\TextColumn::make('delays')->limit(30)->toggleable(isToggledHiddenByDefault: true)->placeholder('None'),
+                Tables\Columns\TextColumn::make('work_performed')->limit(50)->toggleable()->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('delays')->limit(30)->toggleable(isToggledHiddenByDefault: true)->placeholder('None')->toggleable(),
                 Tables\Columns\TextColumn::make('creator.name')->label('Logged By')->toggleable(),
                 Tables\Columns\TextColumn::make('approver.name')->label('Approved By')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
             ])

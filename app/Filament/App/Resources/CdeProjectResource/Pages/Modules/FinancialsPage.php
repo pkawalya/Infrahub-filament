@@ -52,11 +52,21 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
     {
         $pid = $this->pid();
 
-        $invoiced = Invoice::where('cde_project_id', $pid)->sum('total_amount');
-        $received = InvoicePayment::where('cde_project_id', $pid)->sum('amount');
-        $outstanding = Invoice::where('cde_project_id', $pid)->whereNotIn('status', ['paid', 'cancelled'])->selectRaw('SUM(total_amount - amount_paid) as balance')->value('balance') ?? 0;
-        $expenses = Expense::where('cde_project_id', $pid)->whereNotIn('status', ['rejected'])->sum('amount');
-        $overdue = Invoice::where('cde_project_id', $pid)->where('status', '!=', 'paid')->where('status', '!=', 'cancelled')->whereNotNull('due_date')->where('due_date', '<', now())->count();
+        // Single aggregate query instead of 5 separate queries
+        $stats = \DB::selectOne("
+            SELECT
+                COALESCE((SELECT SUM(total_amount) FROM invoices WHERE cde_project_id = ?), 0) as invoiced,
+                COALESCE((SELECT SUM(amount) FROM invoice_payments WHERE cde_project_id = ?), 0) as received,
+                COALESCE((SELECT SUM(total_amount - amount_paid) FROM invoices WHERE cde_project_id = ? AND status NOT IN ('paid','cancelled')), 0) as outstanding,
+                COALESCE((SELECT SUM(amount) FROM expenses WHERE cde_project_id = ? AND status != 'rejected'), 0) as expenses,
+                (SELECT COUNT(*) FROM invoices WHERE cde_project_id = ? AND status NOT IN ('paid','cancelled') AND due_date IS NOT NULL AND due_date < NOW()) as overdue
+        ", [$pid, $pid, $pid, $pid, $pid]);
+
+        $invoiced = (float) $stats->invoiced;
+        $received = (float) $stats->received;
+        $outstanding = (float) $stats->outstanding;
+        $expenses = (float) $stats->expenses;
+        $overdue = (int) $stats->overdue;
 
         $balance = $received - $expenses;
 
@@ -227,18 +237,18 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('invoice_number')->label('Invoice #')->searchable()->sortable()->weight('bold')
+                Tables\Columns\TextColumn::make('invoice_number')->label('Invoice #')->searchable()->sortable()->weight('bold')->toggleable()
                     ->icon('heroicon-o-document-text')->copyable(),
-                Tables\Columns\TextColumn::make('client.name')->label('Client')->searchable()->placeholder('—'),
-                Tables\Columns\TextColumn::make('status')->badge()
+                Tables\Columns\TextColumn::make('client.name')->label('Client')->searchable()->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'paid' => 'success', 'partially_paid' => 'info', 'sent' => 'primary', 'draft' => 'gray', 'overdue' => 'danger', 'cancelled' => 'warning', default => 'gray'})->sortable()
                     ->formatStateUsing(fn($state) => Invoice::$statuses[$state] ?? $state),
-                Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->badge()->color('gray'),
-                Tables\Columns\TextColumn::make('total_amount')->label('Total')->money('USD')->sortable(),
-                Tables\Columns\TextColumn::make('amount_paid')->label('Paid')->money('USD')->sortable()
+                Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->badge()->color('gray')->toggleable(),
+                Tables\Columns\TextColumn::make('total_amount')->label('Total')->money('USD')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('amount_paid')->label('Paid')->money('USD')->sortable()->toggleable()
                     ->color(fn(Invoice $record) => $record->amount_paid > 0 && $record->amount_paid < $record->total_amount ? 'warning' : null),
-                Tables\Columns\TextColumn::make('issue_date')->date('M d, Y')->sortable(),
-                Tables\Columns\TextColumn::make('due_date')->date('M d, Y')->sortable()
+                Tables\Columns\TextColumn::make('issue_date')->date('M d, Y')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('due_date')->date('M d, Y')->sortable()->toggleable()
                     ->color(fn(Invoice $record) => $record->due_date && \Carbon\Carbon::parse($record->due_date)->isPast() && !in_array($record->status, ['paid', 'cancelled']) ? 'danger' : null),
             ])
             ->defaultSort('created_at', 'desc')
@@ -412,14 +422,14 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('invoice.invoice_number')->label('Invoice #')->searchable()->sortable()->weight('bold')
+                Tables\Columns\TextColumn::make('invoice.invoice_number')->label('Invoice #')->searchable()->sortable()->weight('bold')->toggleable()
                     ->icon('heroicon-o-document-text'),
-                Tables\Columns\TextColumn::make('invoice.client.name')->label('Client')->placeholder('—'),
-                Tables\Columns\TextColumn::make('amount')->label('Amount')->money('USD')->sortable()->weight('bold')->color('success'),
-                Tables\Columns\TextColumn::make('payment_method')->label('Method')->badge()->color('info')
+                Tables\Columns\TextColumn::make('invoice.client.name')->label('Client')->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('amount')->label('Amount')->money('USD')->sortable()->weight('bold')->color('success')->toggleable(),
+                Tables\Columns\TextColumn::make('payment_method')->label('Method')->badge()->color('info')->toggleable()
                     ->formatStateUsing(fn($state) => ucwords(str_replace('_', ' ', $state))),
-                Tables\Columns\TextColumn::make('reference')->label('Ref #')->searchable()->placeholder('—'),
-                Tables\Columns\TextColumn::make('payment_date')->date('M d, Y')->sortable(),
+                Tables\Columns\TextColumn::make('reference')->label('Ref #')->searchable()->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('payment_date')->date('M d, Y')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('recorder.name')->label('Recorded By')->placeholder('—')->toggleable(),
             ])
             ->defaultSort('payment_date', 'desc')
@@ -475,15 +485,15 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->weight('bold')->tooltip(fn(Expense $record) => $record->title),
-                Tables\Columns\TextColumn::make('category')->badge()->color('gray')
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->weight('bold')->tooltip(fn(Expense $record) => $record->title)->toggleable(),
+                Tables\Columns\TextColumn::make('category')->badge()->color('gray')->toggleable()
                     ->formatStateUsing(fn($state) => ucfirst($state)),
-                Tables\Columns\TextColumn::make('amount')->money('USD')->sortable()->color('danger')->weight('bold'),
-                Tables\Columns\TextColumn::make('status')->badge()
+                Tables\Columns\TextColumn::make('amount')->money('USD')->sortable()->color('danger')->weight('bold')->toggleable(),
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'paid' => 'success', 'approved' => 'info', 'pending' => 'warning', 'rejected' => 'danger', default => 'gray'})->sortable()
                     ->formatStateUsing(fn($state) => Expense::$statuses[$state] ?? $state),
-                Tables\Columns\TextColumn::make('expense_date')->date('M d, Y')->sortable(),
-                Tables\Columns\TextColumn::make('reference_number')->label('Ref #')->searchable()->placeholder('—'),
+                Tables\Columns\TextColumn::make('expense_date')->date('M d, Y')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('reference_number')->label('Ref #')->searchable()->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('recorder.name')->label('Recorded By')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('expense_date', 'desc')

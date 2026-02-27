@@ -68,12 +68,24 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
     public function getStats(): array
     {
         $pid = $this->pid();
-        $base = SafetyIncident::where('cde_project_id', $pid);
-        $total = (clone $base)->count();
-        $open = (clone $base)->whereIn('status', ['reported', 'investigating'])->count();
-        $critical = (clone $base)->whereIn('severity', ['critical', 'fatal'])->whereNotIn('status', ['closed', 'resolved'])->count();
-        $thisMonth = (clone $base)->whereMonth('incident_date', now()->month)->whereYear('incident_date', now()->year)->count();
-        $resolved = (clone $base)->where('status', 'resolved')->count();
+        $now = now();
+
+        // Single aggregate query instead of 5 separate queries
+        $stats = \DB::selectOne("
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN status IN ('reported','investigating') THEN 1 ELSE 0 END) as open_count,
+                SUM(CASE WHEN severity IN ('critical','fatal') AND status NOT IN ('closed','resolved') THEN 1 ELSE 0 END) as critical,
+                SUM(CASE WHEN MONTH(incident_date) = ? AND YEAR(incident_date) = ? THEN 1 ELSE 0 END) as this_month,
+                SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved
+            FROM safety_incidents WHERE cde_project_id = ?
+        ", [$now->month, $now->year, $pid]);
+
+        $total = (int) $stats->total;
+        $open = (int) $stats->open_count;
+        $critical = (int) $stats->critical;
+        $thisMonth = (int) $stats->this_month;
+        $resolved = (int) $stats->resolved;
 
         return [
             [
@@ -234,16 +246,16 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('incident_number')->label('Incident #')->searchable()->sortable()->weight('bold')
+                Tables\Columns\TextColumn::make('incident_number')->label('Incident #')->searchable()->sortable()->weight('bold')->toggleable()
                     ->icon('heroicon-o-exclamation-triangle')->copyable(),
-                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(SafetyIncident $record) => $record->title),
-                Tables\Columns\TextColumn::make('type')->badge()->color('info')
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(SafetyIncident $record) => $record->title)->toggleable(),
+                Tables\Columns\TextColumn::make('type')->badge()->color('info')->toggleable()
                     ->formatStateUsing(fn($state) => self::$types[$state] ?? $state),
-                Tables\Columns\TextColumn::make('severity')->badge()
+                Tables\Columns\TextColumn::make('severity')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'fatal' => 'danger', 'critical' => 'danger', 'major' => 'warning', 'moderate' => 'info', default => 'gray'})->sortable(),
-                Tables\Columns\TextColumn::make('status')->badge()
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'closed' => 'gray', 'resolved' => 'success', 'investigating' => 'warning', 'reported' => 'info', default => 'gray'})->sortable(),
-                Tables\Columns\TextColumn::make('incident_date')->dateTime('M d, Y H:i')->sortable(),
+                Tables\Columns\TextColumn::make('incident_date')->dateTime('M d, Y H:i')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('location')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('reporter.name')->label('Reported By')->toggleable(),
                 Tables\Columns\TextColumn::make('investigator.name')->label('Investigator')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
@@ -385,15 +397,15 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('inspection_number')->label('#')->searchable()->sortable()->weight('bold')->copyable(),
-                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(SafetyInspection $r) => $r->title),
-                Tables\Columns\TextColumn::make('type')->badge()->color('info')
+                Tables\Columns\TextColumn::make('inspection_number')->label('#')->searchable()->sortable()->weight('bold')->copyable()->toggleable(),
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(SafetyInspection $r) => $r->title)->toggleable(),
+                Tables\Columns\TextColumn::make('type')->badge()->color('info')->toggleable()
                     ->formatStateUsing(fn($state) => InspectionTemplate::$types[$state] ?? $state),
-                Tables\Columns\TextColumn::make('status')->badge()
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $s) => match ($s) { 'completed' => 'success', 'in_progress' => 'warning', default => 'info'})->sortable(),
-                Tables\Columns\TextColumn::make('score')->label('Score')->placeholder('—')->sortable()
+                Tables\Columns\TextColumn::make('score')->label('Score')->placeholder('—')->sortable()->toggleable()
                     ->color(fn($state) => $state >= 80 ? 'success' : ($state >= 50 ? 'warning' : 'danger')),
-                Tables\Columns\TextColumn::make('scheduled_date')->dateTime('M d, Y')->sortable(),
+                Tables\Columns\TextColumn::make('scheduled_date')->dateTime('M d, Y')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('inspector.name')->label('Inspector')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('location')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -469,16 +481,16 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('snag_number')->label('Snag #')->searchable()->sortable()->weight('bold')->copyable(),
-                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(SnagItem $r) => $r->title),
-                Tables\Columns\TextColumn::make('category')->badge()->color('info')
+                Tables\Columns\TextColumn::make('snag_number')->label('Snag #')->searchable()->sortable()->weight('bold')->copyable()->toggleable(),
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(SnagItem $r) => $r->title)->toggleable(),
+                Tables\Columns\TextColumn::make('category')->badge()->color('info')->toggleable()
                     ->formatStateUsing(fn($state) => SnagItem::$categories[$state] ?? $state),
-                Tables\Columns\TextColumn::make('severity')->badge()
+                Tables\Columns\TextColumn::make('severity')->badge()->toggleable()
                     ->color(fn(string $s) => match ($s) { 'critical' => 'danger', 'major' => 'warning', default => 'gray'})->sortable(),
-                Tables\Columns\TextColumn::make('status')->badge()
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $s) => match ($s) { 'open' => 'danger', 'in_progress' => 'info', 'resolved' => 'success', 'verified' => 'success', 'closed' => 'gray', default => 'gray'})->sortable(),
-                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('—'),
-                Tables\Columns\TextColumn::make('due_date')->date('M d, Y')->sortable()
+                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('due_date')->date('M d, Y')->sortable()->toggleable()
                     ->color(fn(SnagItem $r) => $r->due_date?->isPast() && !in_array($r->status, ['resolved', 'verified', 'closed']) ? 'danger' : null)
                     ->placeholder('—'),
                 Tables\Columns\TextColumn::make('trade')->label('Trade')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),

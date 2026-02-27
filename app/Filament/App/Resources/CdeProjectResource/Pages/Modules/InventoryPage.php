@@ -136,16 +136,16 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         return $table
             ->query(PurchaseOrder::query()->where('cde_project_id', $this->pid())->with(['supplier', 'creator', 'items']))
             ->columns([
-                Tables\Columns\TextColumn::make('po_number')->label('PO #')->searchable()->sortable()->weight('bold')
+                Tables\Columns\TextColumn::make('po_number')->label('PO #')->searchable()->sortable()->weight('bold')->toggleable()
                     ->icon('heroicon-o-shopping-cart')->copyable(),
-                Tables\Columns\TextColumn::make('supplier.name')->label('Supplier')->searchable()->sortable()->placeholder('—'),
-                Tables\Columns\TextColumn::make('status')->badge()
+                Tables\Columns\TextColumn::make('supplier.name')->label('Supplier')->searchable()->sortable()->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'received' => 'success', 'ordered' => 'info', 'approved' => 'primary', 'partially_received' => 'warning', 'cancelled' => 'danger', default => 'gray'})->sortable(),
-                Tables\Columns\TextColumn::make('order_date')->date()->sortable(),
-                Tables\Columns\TextColumn::make('expected_date')->label('Expected')->date()->sortable()
+                Tables\Columns\TextColumn::make('order_date')->date()->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('expected_date')->label('Expected')->date()->sortable()->toggleable()
                     ->color(fn($record) => $record->expected_date?->isPast() && !in_array($record->status, ['received', 'cancelled']) ? 'danger' : null),
-                Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->sortable(),
-                Tables\Columns\TextColumn::make('total_amount')->label('Total')->money('USD')->sortable(),
+                Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('total_amount')->label('Total')->money('USD')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('creator.name')->label('Created By')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')->dateTime('M d, Y')->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
