@@ -82,8 +82,7 @@
     html.app-fullscreen .fi-sidebar,
     html.app-fullscreen .fi-topbar+div>nav,
     html.app-fullscreen nav[aria-label="Sub-navigation"],
-    html.app-fullscreen [class*="fi-resource-sub-navigation"],
-    html.app-fullscreen .fi-breadcrumbs {
+    html.app-fullscreen [class*="fi-resource-sub-navigation"] {
         display: none !important;
     }
 

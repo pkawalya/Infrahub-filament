@@ -212,6 +212,26 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         return Supplier::where('company_id', $this->cid())->where('is_active', true)->pluck('name', 'id')->toArray();
     }
 
+    public bool $showQuickSupplierModal = false;
+    public array $quickSupplierForm = ['name' => '', 'email' => '', 'phone' => '', 'contact_person' => ''];
+
+    public function openQuickSupplier(): void
+    {
+        $this->quickSupplierForm = ['name' => '', 'email' => '', 'phone' => '', 'contact_person' => ''];
+        $this->showQuickSupplierModal = true;
+    }
+
+    public function submitQuickSupplier(): void
+    {
+        $this->validate(['quickSupplierForm.name' => 'required|string|max:255']);
+        $s = Supplier::create(array_merge($this->quickSupplierForm, [
+            'company_id' => $this->cid(),
+            'is_active' => true,
+        ]));
+        $this->showQuickSupplierModal = false;
+        Notification::make()->title("Supplier \"{$s->name}\" created")->success()->send();
+    }
+
     public function submitPO(): void
     {
         $this->validate(['poHeader.po_number' => 'required|string|max:50', 'poItems' => 'required|array|min:1']);

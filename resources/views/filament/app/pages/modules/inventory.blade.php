@@ -159,12 +159,12 @@
             <button wire:click="$set('activeInventoryTab', '{{ $tab }}')"
                 class="inv-tab {{ $activeInventoryTab === $tab ? 'inv-tab-active' : '' }}"
                 style="padding:10px 20px; font-size:13px; font-weight:600; border:none; cursor:pointer; transition:all .2s; border-radius:8px 8px 0 0;
-                                                                                                    {{ $activeInventoryTab === $tab ? 'background:#4f46e5; color:white;' : 'background:transparent; color:#6b7280;' }}">
+                                                                                                        {{ $activeInventoryTab === $tab ? 'background:#4f46e5; color:white;' : 'background:transparent; color:#6b7280;' }}">
                 {!! $label !!}
                 @if($tab === 'products')
                     <span class="inv-badge"
                         style="margin-left:4px; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:700;
-                                                                                                                                                                                                {{ $activeInventoryTab === $tab ? 'background:rgba(255,255,255,0.2); color:white;' : 'background:#e5e7eb; color:#6b7280;' }}">
+                                                                                                                                                                                                        {{ $activeInventoryTab === $tab ? 'background:rgba(255,255,255,0.2); color:white;' : 'background:#e5e7eb; color:#6b7280;' }}">
                         {{ \App\Models\Product::where('company_id', $this->record->company_id)->count() }}
                     </span>
                 @endif
@@ -208,7 +208,7 @@
                         </div>
                         <span
                             style="margin-left:auto; padding:3px 10px; border-radius:99px; font-size:10px; font-weight:700;
-                                                                                                                                                                                                    {{ $store->is_active ? 'background:#dcfce7; color:#16a34a;' : 'background:#fee2e2; color:#ef4444;' }}">
+                                                                                                                                                                                                            {{ $store->is_active ? 'background:#dcfce7; color:#16a34a;' : 'background:#fee2e2; color:#ef4444;' }}">
                             {{ $store->is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </div>
@@ -286,7 +286,7 @@
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600;
-                                                                                                                {{ match ($grn->status) { 'accepted' => 'background:#d1fae5;color:#065f46', 'partial' => 'background:#fef3c7;color:#92400e', 'rejected' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                        {{ match ($grn->status) { 'accepted' => 'background:#d1fae5;color:#065f46', 'partial' => 'background:#fef3c7;color:#92400e', 'rejected' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ \App\Models\GoodsReceivedNote::$statuses[$grn->status] ?? $grn->status }}
                             </span>
                         </td>
@@ -419,14 +419,14 @@
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600;
-                                                                                                        {{ match ($transfer->status) { 'received' => 'background:#d1fae5;color:#065f46', 'in_transit' => 'background:#dbeafe;color:#1e40af', 'cancelled' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                {{ match ($transfer->status) { 'received' => 'background:#d1fae5;color:#065f46', 'in_transit' => 'background:#dbeafe;color:#1e40af', 'cancelled' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ \App\Models\StockTransfer::$statuses[$transfer->status] ?? $transfer->status }}
                             </span>
                         </td>
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;
-                                                                                                        {{ match ($transfer->priority) { 'urgent' => 'background:#fee2e2;color:#991b1b', 'high' => 'background:#fef3c7;color:#92400e', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                {{ match ($transfer->priority) { 'urgent' => 'background:#fee2e2;color:#991b1b', 'high' => 'background:#fef3c7;color:#92400e', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ ucfirst($transfer->priority ?? 'normal') }}
                             </span>
                         </td>
@@ -1587,13 +1587,18 @@
                         <div>
                             <label
                                 style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Supplier</label>
-                            <select wire:model="poHeader.supplier_id"
-                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                <option value="">-- Select Supplier --</option>
-                                @foreach($this->getSupplierOptions() as $id => $name)
-                                    <option value="{{ $id }}">{{ $name }}</option>
-                                @endforeach
-                            </select>
+                            <div style="display:flex;gap:6px">
+                                <select wire:model="poHeader.supplier_id"
+                                    style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+                                    <option value="">-- Select Supplier --</option>
+                                    @foreach($this->getSupplierOptions() as $id => $name)
+                                        <option value="{{ $id }}">{{ $name }}</option>
+                                    @endforeach
+                                </select>
+                                <button type="button" wire:click="openQuickSupplier"
+                                    style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;cursor:pointer;font-size:14px;font-weight:700;color:#4f46e5"
+                                    title="Add Supplier">+</button>
+                            </div>
                         </div>
                         <div>
                             <label
@@ -1796,6 +1801,46 @@
                             style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:white;font-size:13px;font-weight:700;cursor:pointer">
                             <span wire:loading.remove wire:target="submitQuickWarehouse">{!! $iStore !!} Create</span>
                             <span wire:loading wire:target="submitQuickWarehouse">Creating...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════════ QUICK CREATE SUPPLIER MODAL ═══════════════ --}}
+    @if($showQuickSupplierModal ?? false)
+        <div style="position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
+            wire:click.self="$set('showQuickSupplierModal', false)">
+            <div class="inv-modal" style="background:white;border-radius:16px;padding:24px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="font-size:18px;font-weight:800;margin:0">{!! $ico('M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z', 18) !!} New Supplier</h3>
+                    <button wire:click="$set('showQuickSupplierModal', false)" type="button" style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af">&times;</button>
+                </div>
+                <form wire:submit="submitQuickSupplier">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+                        <div style="grid-column:span 2">
+                            <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Supplier Name *</label>
+                            <input type="text" wire:model="quickSupplierForm.name" required placeholder="ABC Supplies Ltd" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Contact Person</label>
+                            <input type="text" wire:model="quickSupplierForm.contact_person" placeholder="John Doe" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Phone</label>
+                            <input type="text" wire:model="quickSupplierForm.phone" placeholder="+256 700 000000" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+                        </div>
+                        <div style="grid-column:span 2">
+                            <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Email</label>
+                            <input type="email" wire:model="quickSupplierForm.email" placeholder="supplier@example.com" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #e5e7eb">
+                        <button type="button" wire:click="$set('showQuickSupplierModal', false)" class="inv-btn-cancel" style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+                        <button type="submit" style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:white;font-size:13px;font-weight:700;cursor:pointer">
+                            <span wire:loading.remove wire:target="submitQuickSupplier">{!! $iPlus !!} Create</span>
+                            <span wire:loading wire:target="submitQuickSupplier">Creating...</span>
                         </button>
                     </div>
                 </form>

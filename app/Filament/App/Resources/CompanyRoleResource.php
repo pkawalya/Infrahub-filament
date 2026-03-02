@@ -54,6 +54,28 @@ class CompanyRoleResource extends Resource
         $user = auth()->user();
         $isCompanyAdmin = $user && $user->isCompanyAdmin() && !$user->isSuperAdmin();
 
+        // ── Build permission options with human-friendly labels ──
+        $permQuery = \Spatie\Permission\Models\Permission::query()->orderBy('name');
+
+        // Super-admin-only permissions that company admins should NOT see
+        if ($isCompanyAdmin) {
+            $permQuery->where(function ($q) {
+                $q->where('name', 'not like', '%_company')
+                    ->where('name', 'not like', '%_subscription')
+                    ->where('name', 'not like', '%_role')
+                    ->where('name', 'not like', '%_email::template')
+                    ->where('name', 'not like', '%_company::%')
+                    ->where('name', 'not like', 'page_SystemSettings')
+                    ->where('name', 'not like', 'widget_PlatformOverview')
+                    ->where('name', 'not like', 'widget_CompaniesByPlanChart')
+                    ->where('name', 'not like', 'widget_UserGrowthChart');
+            });
+        }
+
+        $permOptions = $permQuery->pluck('name', 'id')
+            ->mapWithKeys(fn(string $name, int $id) => [$id => self::formatPermissionLabel($name)])
+            ->toArray();
+
         return $schema->schema([
             Schemas\Components\Section::make('Role Details')->schema([
                 Forms\Components\TextInput::make('name')
@@ -73,12 +95,78 @@ class CompanyRoleResource extends Resource
             Schemas\Components\Section::make('Permissions')->schema([
                 Forms\Components\CheckboxList::make('permissions')
                     ->relationship('permissions', 'name')
+                    ->options($permOptions)
                     ->columns(3)
                     ->searchable()
                     ->bulkToggleable()
                     ->helperText('Select the permissions this role should have'),
             ]),
         ]);
+    }
+
+    /**
+     * Format raw permission name into a human-readable label.
+     * e.g. 'create_cde::project' → 'Create Project'
+     *      'view_any_work::order' → 'View Any Work Order'
+     *      'page_SystemSettings' → 'Page: System Settings'
+     *      'widget_ProjectProgressChart' → 'Widget: Project Progress Chart'
+     */
+    private static function formatPermissionLabel(string $name): string
+    {
+        // Widgets
+        if (str_starts_with($name, 'widget_')) {
+            $widget = Str::headline(str_replace('widget_', '', $name));
+            return "Widget: {$widget}";
+        }
+
+        // Pages
+        if (str_starts_with($name, 'page_')) {
+            $page = Str::headline(str_replace('page_', '', $name));
+            return "Page: {$page}";
+        }
+
+        // Resource permissions: action_resource or action_any_resource
+        // Replace :: with _ for processing, then humanize
+        $clean = str_replace('::', '_', $name);
+
+        // Resource name mappings for friendlier display
+        $resourceMap = [
+            'cde_project' => 'Project',
+            'safety_incident' => 'Safety Incident',
+            'work_order' => 'Work Order',
+            'email_template' => 'Email Template',
+            'company_email_template' => 'Company Email Template',
+            'company_role' => 'Company Role',
+            'company_user' => 'Company User',
+        ];
+
+        // Try to extract action and resource
+        $parts = explode('_', $clean);
+        $action = ucfirst($parts[0]); // create, view, update, delete, etc.
+
+        // Handle 'force_delete', 'force_delete_any', 'view_any', 'restore_any'
+        $rest = implode('_', array_slice($parts, 1));
+        if (str_starts_with($rest, 'delete_any_')) {
+            $action = 'Force Delete Any';
+            $rest = substr($rest, 11);
+        } elseif (str_starts_with($rest, 'delete_')) {
+            $action = 'Force Delete';
+            $rest = substr($rest, 7);
+        } elseif (str_starts_with($rest, 'any_')) {
+            $action = $action . ' Any';
+            $rest = substr($rest, 4);
+        } elseif ($parts[0] === 'force') {
+            $action = 'Force Delete';
+            $rest = implode('_', array_slice($parts, 2));
+            if (str_starts_with($rest, 'any_')) {
+                $action = 'Force Delete Any';
+                $rest = substr($rest, 4);
+            }
+        }
+
+        $resource = $resourceMap[$rest] ?? Str::headline($rest);
+
+        return trim("{$action} {$resource}");
     }
 
     public static function infolist(Schema $schema): Schema
@@ -108,6 +196,7 @@ class CompanyRoleResource extends Resource
                     ->label('Permissions')
                     ->badge()
                     ->color('primary')
+                    ->formatStateUsing(fn(string $state): string => self::formatPermissionLabel($state))
                     ->separator(', ')
                     ->placeholder('No permissions assigned'),
             ]),

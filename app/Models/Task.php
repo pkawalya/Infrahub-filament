@@ -417,15 +417,45 @@ class Task extends Model
         }
         $avgProgress = $totalWeight > 0 ? round($weightedProgress / $totalWeight) : 0;
 
-        $this->update([
+        // Derive status from children
+        $childStatuses = $children->pluck('status')->unique();
+        $allDone = $childStatuses->count() === 1 && $childStatuses->first() === 'done';
+        $anyBlocked = $childStatuses->contains('blocked');
+        $anyInProgress = $childStatuses->contains('in_progress') || $childStatuses->contains('review');
+
+        $status = $this->status;
+        if ($allDone) {
+            $status = 'done';
+        } elseif ($anyBlocked) {
+            $status = 'blocked';
+        } elseif ($anyInProgress || $avgProgress > 0) {
+            $status = 'in_progress';
+        }
+
+        // Actual dates from children
+        $actualStart = $children->whereNotNull('actual_start')->min('actual_start');
+        $actualFinish = $allDone ? $children->max('actual_finish') : null;
+
+        $updates = [
             'start_date' => $earliestStart,
             'due_date' => $latestFinish,
             'estimated_hours' => $totalEstHours,
             'actual_hours' => $totalActHours,
             'progress_percent' => $avgProgress,
             'actual_cost' => $totalCost,
+            'status' => $status,
             'duration_days' => $this->calculateDuration(),
-        ]);
+        ];
+
+        if ($actualStart) {
+            $updates['actual_start'] = $actualStart;
+        }
+        if ($allDone && $actualFinish) {
+            $updates['actual_finish'] = $actualFinish;
+            $updates['completed_at'] = now();
+        }
+
+        $this->update($updates);
     }
 
     // ─── Gantt Data Export ─────────────────────────────────────────

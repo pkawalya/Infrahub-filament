@@ -72,4 +72,16 @@ class DailySiteLog extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+
+    public function taskEntries()
+    {
+        return $this->hasMany(DailySiteLogTask::class);
+    }
+
+    public function tasks()
+    {
+        return $this->belongsToMany(Task::class, 'daily_site_log_tasks')
+            ->withPivot('progress_today', 'cumulative_progress', 'hours_worked', 'workers_assigned', 'status_update', 'remarks')
+            ->withTimestamps();
+    }
 }
