@@ -501,7 +501,7 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Filters\SelectFilter::make('severity')->options(SnagItem::$severities),
                 Tables\Filters\SelectFilter::make('category')->options(SnagItem::$categories),
                 Tables\Filters\Filter::make('overdue')->label('Overdue Only')
-                    ->query(fn($q) => $q->where('due_date', '<', now())->whereNotIn('status', ['resolved', 'verified', 'closed']))->toggle(),
+                    ->query(fn(\Illuminate\Database\Eloquent\Builder $query) => $query->where('due_date', '<', now())->whereNotIn('status', ['resolved', 'verified', 'closed']))->toggle(),
             ])
             ->recordActions([
                 \Filament\Actions\ActionGroup::make([

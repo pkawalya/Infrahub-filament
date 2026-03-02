@@ -195,19 +195,22 @@
 
                     <div style="width:1px;height:24px;background:var(--c-300,#d1d5db);margin:0 4px"></div>
 
-                    <button onclick="window.toggleGanttFullscreen()" class="gantt-fullscreen-btn" title="Toggle Fullscreen"
+                    <button onclick="window.toggleGanttFullscreen()" class="gantt-fullscreen-btn"
+                        title="Toggle Fullscreen"
                         style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;border:1px solid var(--c-300,#d1d5db);background:white;color:var(--c-600,#4b5563);cursor:pointer;transition:all .2s;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                        <svg id="fsExpandIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="15 3 21 3 21 9"/>
-                            <polyline points="9 21 3 21 3 15"/>
-                            <line x1="21" y1="3" x2="14" y2="10"/>
-                            <line x1="3" y1="21" x2="10" y2="14"/>
+                        <svg id="fsExpandIcon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <polyline points="15 3 21 3 21 9" />
+                            <polyline points="9 21 3 21 3 15" />
+                            <line x1="21" y1="3" x2="14" y2="10" />
+                            <line x1="3" y1="21" x2="10" y2="14" />
                         </svg>
-                        <svg id="fsCollapseIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;">
-                            <polyline points="4 14 10 14 10 20"/>
-                            <polyline points="20 10 14 10 14 4"/>
-                            <line x1="14" y1="10" x2="21" y2="3"/>
-                            <line x1="3" y1="21" x2="10" y2="14"/>
+                        <svg id="fsCollapseIcon" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" style="display:none;">
+                            <polyline points="4 14 10 14 10 20" />
+                            <polyline points="20 10 14 10 14 4" />
+                            <line x1="14" y1="10" x2="21" y2="3" />
+                            <line x1="3" y1="21" x2="10" y2="14" />
                         </svg>
                     </button>
                 </div>
@@ -1331,7 +1334,7 @@
 
     {{-- ═══════════════ JAVASCRIPT ENGINE ═══════════════ --}}
     <script>
-       // ── Module tab switching (global) ──
+        // ── Module tab switching (global) ──
         window.switchModuleTab = function (tab) {
             document.querySelectorAll('.module-content').forEach(el => el.style.display = 'none');
             document.querySelectorAll('.smt-btn').forEach(b => b.classList.remove('active'));
@@ -1535,23 +1538,23 @@
             }
 
             // ── Inline Edit Logic ──
-            window.editCell = function(event, taskId, field, currentValue) {
+            window.editCell = function (event, taskId, field, currentValue) {
                 event.stopPropagation();
                 const td = event.currentTarget;
                 if (td.querySelector('.inline-edit-input')) return; // Already editing
-                
+
                 // Save original content in case of abort
                 const originalHtml = td.innerHTML;
-                
+
                 // Determine input type
                 const inputType = field === 'start_date' ? 'date' : (field === 'duration_days' || field === 'progress' ? 'number' : 'text');
-                
+
                 // Create input
                 const input = document.createElement('input');
                 input.type = inputType;
                 input.value = currentValue;
                 input.className = 'inline-edit-input';
-                
+
                 // Minimal styling for seamless effect
                 input.style.width = '100%';
                 input.style.boxSizing = 'border-box';
@@ -1560,10 +1563,10 @@
                 input.style.padding = '0 4px';
                 input.style.outline = 'none';
                 input.style.fontSize = '12px';
-                
+
                 // Swap
                 td.innerHTML = '';
-                if(field === 'title') {
+                if (field === 'title') {
                     // For title, keep the indent
                     const wrapper = document.createElement('div');
                     wrapper.style.display = 'flex';
@@ -1575,9 +1578,9 @@
                 } else {
                     td.appendChild(input);
                 }
-                
+
                 input.focus();
-                
+
                 if (inputType === 'text' || inputType === 'number') {
                     input.select();
                 }
@@ -1587,7 +1590,7 @@
                         try {
                             td.innerHTML = '<span style="color:#9ca3af;font-size:11px">Saving...</span>';
                             await @this.updateTaskField(taskId, field, input.value);
-                        } catch(e) {
+                        } catch (e) {
                             td.innerHTML = originalHtml;
                             console.error('Save failed', e);
                         }
@@ -1908,26 +1911,26 @@
             // ── Task selection & Dragging ──
             window.isDraggingBar = false;
 
-            window.startDragBar = function(event, taskId, startStr) {
+            window.startDragBar = function (event, taskId, startStr) {
                 event.stopPropagation();
                 event.preventDefault(); // Prevent text selection
-                
+
                 const startX = event.clientX;
                 const bar = event.currentTarget;
                 const initialLeftStr = bar.style.left;
                 const initialLeft = parseFloat(initialLeftStr) || 0;
-                
+
                 // Get pixels per day from the current zoom level and DOM
                 const bounds = getTimelineBounds();
                 const totalDays = daysBetween(bounds.start, bounds.end);
                 // The parent row width is totalWidth. We can get it from body style or recalculate
                 const body = document.getElementById('ganttChartBody');
                 const totalWidth = parseFloat(body.style.width) || 0;
-                
+
                 const pxPerDay = totalWidth / (totalDays + 1);
                 let currentShiftDays = 0;
-                
-                const onMouseMove = function(e) {
+
+                const onMouseMove = function (e) {
                     window.isDraggingBar = true;
                     const deltaX = e.clientX - startX;
                     const newLeft = initialLeft + deltaX;
@@ -1939,32 +1942,32 @@
                     bar.style.zIndex = '10';
                     currentShiftDays = Math.round(deltaX / pxPerDay);
                 };
-                
-                const onMouseUp = async function(e) {
+
+                const onMouseUp = async function (e) {
                     document.removeEventListener('mousemove', onMouseMove);
                     document.removeEventListener('mouseup', onMouseUp);
-                    
+
                     setTimeout(() => { window.isDraggingBar = false; }, 50); // delay so selectTask ignores
-                    
+
                     bar.style.transform = 'none';
                     bar.style.boxShadow = 'none';
                     bar.style.zIndex = '1';
-                    
+
                     if (currentShiftDays !== 0) {
                         try {
                             bar.style.opacity = '0.5';
                             // Calculate new start date
                             const oldStart = new Date(startStr);
                             oldStart.setDate(oldStart.getDate() + currentShiftDays);
-                            
+
                             const y = oldStart.getFullYear();
                             const m = String(oldStart.getMonth() + 1).padStart(2, '0');
                             const d = String(oldStart.getDate()).padStart(2, '0');
                             const newDateStr = `${y}-${m}-${d}`;
-                            
+
                             // Send to Livewire (triggering auto-schedule forward pass)
                             await @this.updateTaskField(taskId, 'start_date', newDateStr);
-                        } catch(err) {
+                        } catch (err) {
                             console.error('Drag failed', err);
                             bar.style.left = initialLeftStr;
                             bar.style.opacity = '1';
@@ -1973,14 +1976,14 @@
                         bar.style.left = initialLeftStr; // Reset just in case
                     }
                 };
-                
+
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
             };
 
             window.selectTask = function (taskId) {
                 if (window.isDraggingBar) return; // Prevent selection if just dragged
-                
+
                 selectedTaskId = taskId;
                 document.querySelectorAll('.gantt-row').forEach(r => r.classList.remove('selected'));
                 const row = document.querySelector(`.gantt-row[data-task-id="${taskId}"]`);
@@ -2063,8 +2066,8 @@
                 </div>
 
                 <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:16px;">
-                    <button onclick="Livewire.dispatch('open-modal', {id: 'edit-task-${task.id}'})" style="padding:6px 14px; font-size:12px; font-weight:600; border-radius:6px; border:1px solid var(--c-300); background:white; cursor:pointer">✏️ Edit</button>
-                    <button onclick="Livewire.dispatch('open-modal', {id: 'progress-task-${task.id}'})" style="padding:6px 14px; font-size:12px; font-weight:600; border-radius:6px; border:none; background:#6366f1; color:white; cursor:pointer">📊 Update Progress</button>
+                    <button onclick="Livewire.find('${document.querySelector('[wire\\\\:id]').getAttribute('wire:id')}').call('openEditTaskModal', ${task.id})" style="padding:6px 14px; font-size:12px; font-weight:600; border-radius:6px; border:1px solid var(--c-300); background:white; cursor:pointer">✏️ Edit</button>
+                    <button onclick="Livewire.find('${document.querySelector('[wire\\\\:id]').getAttribute('wire:id')}').call('openProgressModal', ${task.id})" style="padding:6px 14px; font-size:12px; font-weight:600; border-radius:6px; border:none; background:#6366f1; color:white; cursor:pointer">📊 Update Progress</button>
                 </div>
             `;
 
@@ -2243,7 +2246,7 @@
 
             // ── Initialize ──
             render();
-            syncScroll();
+            syncScroll()  ;
             initSplitter();
 
             // ── Fullscreen toggle ──
@@ -2456,6 +2459,100 @@
                             style="padding:8px 20px;border-radius:8px;border:none;background:#f59e0b;color:white;font-size:13px;font-weight:600;cursor:pointer">
                             <span wire:loading.remove wire:target="submitMilestone">Add Milestone</span>
                             <span wire:loading wire:target="submitMilestone">Adding...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════════ EDIT TASK MODAL ═══════════════ --}}
+    @if($showEditModal)
+        <div style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
+             wire:click.self="$set('showEditModal', false)">
+            <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.2)" class="dark:!bg-gray-800">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="font-size:18px;font-weight:700">✏️ Edit Task</h3>
+                    <button wire:click="$set('showEditModal', false)" type="button" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--c-400)">&times;</button>
+                </div>
+                <form wire:submit="submitEditTask">
+                    <div style="display:grid;gap:12px">
+                        <div>
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--c-600)">Title</label>
+                            <input type="text" wire:model="editTask.title" required style="width:100%;padding:8px 12px;border:1px solid var(--c-300);border-radius:8px;font-size:14px">
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <div>
+                                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--c-600)">Status</label>
+                                <select wire:model="editTask.status" style="width:100%;padding:8px 12px;border:1px solid var(--c-300);border-radius:8px;font-size:14px">
+                                    @foreach(\App\Models\Task::$statuses as $k => $v) <option value="{{ $k }}">{{ $v }}</option> @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--c-600)">Priority</label>
+                                <select wire:model="editTask.priority" style="width:100%;padding:8px 12px;border:1px solid var(--c-300);border-radius:8px;font-size:14px">
+                                    @foreach(\App\Models\Task::$priorities as $k => $v) <option value="{{ $k }}">{{ $v }}</option> @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <div>
+                                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--c-600)">Start Date</label>
+                                <input type="date" wire:model="editTask.start_date" style="width:100%;padding:8px 12px;border:1px solid var(--c-300);border-radius:8px;font-size:14px">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--c-600)">Due Date</label>
+                                <input type="date" wire:model="editTask.due_date" style="width:100%;padding:8px 12px;border:1px solid var(--c-300);border-radius:8px;font-size:14px">
+                            </div>
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--c-600)">Description</label>
+                            <textarea wire:model="editTask.description" rows="3" style="width:100%;padding:8px 12px;border:1px solid var(--c-300);border-radius:8px;font-size:14px;resize:vertical"></textarea>
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:16px;margin-top:16px;border-top:1px solid var(--c-200)">
+                        <button type="button" wire:click="$set('showEditModal', false)" style="padding:8px 20px;border-radius:8px;border:1px solid var(--c-300);background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+                        <button type="submit" style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:white;font-size:13px;font-weight:600;cursor:pointer">
+                            <span wire:loading.remove wire:target="submitEditTask">Save Changes</span>
+                            <span wire:loading wire:target="submitEditTask">Saving...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════════ UPDATE PROGRESS MODAL ═══════════════ --}}
+    @if($showProgressModal)
+        <div style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
+             wire:click.self="$set('showProgressModal', false)">
+            <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.2)" class="dark:!bg-gray-800">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="font-size:18px;font-weight:700">📊 Update Progress</h3>
+                    <button wire:click="$set('showProgressModal', false)" type="button" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--c-400)">&times;</button>
+                </div>
+                <form wire:submit="submitProgress">
+                    <div style="display:grid;gap:12px">
+                        <div>
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--c-600)">Status</label>
+                            <select wire:model="progressTask.status" style="width:100%;padding:8px 12px;border:1px solid var(--c-300);border-radius:8px;font-size:14px">
+                                @foreach(\App\Models\Task::$statuses as $k => $v) <option value="{{ $k }}">{{ $v }}</option> @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--c-600)">% Complete</label>
+                            <input type="number" wire:model="progressTask.progress_percent" min="0" max="100" style="width:100%;padding:8px 12px;border:1px solid var(--c-300);border-radius:8px;font-size:14px">
+                        </div>
+                        <div>
+                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px;color:var(--c-600)">Actual Hours Worked</label>
+                            <input type="number" wire:model="progressTask.actual_hours" step="0.5" style="width:100%;padding:8px 12px;border:1px solid var(--c-300);border-radius:8px;font-size:14px">
+                        </div>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:16px;margin-top:16px;border-top:1px solid var(--c-200)">
+                        <button type="button" wire:click="$set('showProgressModal', false)" style="padding:8px 20px;border-radius:8px;border:1px solid var(--c-300);background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+                        <button type="submit" style="padding:8px 20px;border-radius:8px;border:none;background:#6366f1;color:white;font-size:13px;font-weight:600;cursor:pointer">
+                            <span wire:loading.remove wire:target="submitProgress">Update</span>
+                            <span wire:loading wire:target="submitProgress">Updating...</span>
                         </button>
                     </div>
                 </form>

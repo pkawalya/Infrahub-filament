@@ -83,10 +83,10 @@ class ReportingPage extends BaseModulePage
         $milestones = $this->record->milestones()
             ->orderBy('target_date')
             ->limit(20)
-            ->get(['title', 'target_date', 'actual_date', 'status']);
+            ->get(['name', 'target_date', 'actual_date', 'status']);
 
         return $milestones->map(fn($m) => [
-            'title' => $m->title,
+            'title' => $m->name,
             'target' => $m->target_date?->format('M d'),
             'actual' => $m->actual_date?->format('M d'),
             'status' => $m->status,

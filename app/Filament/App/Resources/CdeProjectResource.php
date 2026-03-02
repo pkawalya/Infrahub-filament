@@ -211,14 +211,7 @@ class CdeProjectResource extends Resource
                 continue;
             }
 
-            // If only 1 item in group, show it directly (no group wrapper)
-            if (count($items) === 1) {
-                $item = reset($items);
-                $nav[] = $item->sort($sort++);
-                continue;
-            }
-
-            // Multiple items → wrap in NavigationGroup
+            // Single or multiple items → always wrap in NavigationGroup for consistency
             $nav[] = NavigationGroup::make($groupLabel)
                 ->collapsible()
                 ->items(array_values($items));

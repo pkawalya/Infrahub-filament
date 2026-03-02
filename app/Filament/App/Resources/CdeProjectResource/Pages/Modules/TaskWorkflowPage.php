@@ -44,6 +44,25 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     // ─── Modal / Form State (Livewire-driven) ───────────────────
     public bool $showTaskModal = false;
     public bool $showMilestoneModal = false;
+    public bool $showEditModal = false;
+    public bool $showProgressModal = false;
+    public ?int $editingTaskId = null;
+
+    public array $editTask = [
+        'title' => '',
+        'status' => 'to_do',
+        'priority' => 'medium',
+        'start_date' => '',
+        'due_date' => '',
+        'assigned_to' => null,
+        'description' => '',
+    ];
+
+    public array $progressTask = [
+        'status' => 'to_do',
+        'progress_percent' => 0,
+        'actual_hours' => null,
+    ];
 
     public array $newTask = [
         'title' => '',
@@ -407,6 +426,86 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
         $this->dispatch('gantt-refresh');
     }
 
+    public function openEditTaskModal(int $taskId): void
+    {
+        $task = Task::find($taskId);
+        if (!$task)
+            return;
+
+        $this->editingTaskId = $taskId;
+        $this->editTask = [
+            'title' => $task->title,
+            'status' => $task->status,
+            'priority' => $task->priority,
+            'start_date' => $task->start_date?->format('Y-m-d'),
+            'due_date' => $task->due_date?->format('Y-m-d'),
+            'assigned_to' => $task->assigned_to,
+            'description' => $task->description ?? '',
+        ];
+        $this->showEditModal = true;
+    }
+
+    public function submitEditTask(): void
+    {
+        $this->validate([
+            'editTask.title' => 'required|string|max:255',
+            'editTask.start_date' => 'nullable|date',
+            'editTask.due_date' => 'nullable|date',
+        ]);
+
+        $task = Task::find($this->editingTaskId);
+        if (!$task)
+            return;
+
+        $task->update($this->editTask);
+        $this->showEditModal = false;
+        Notification::make()->title('Task updated')->success()->send();
+        $this->dispatch('gantt-refresh');
+    }
+
+    public function openProgressModal(int $taskId): void
+    {
+        $task = Task::find($taskId);
+        if (!$task)
+            return;
+
+        $this->editingTaskId = $taskId;
+        $this->progressTask = [
+            'status' => $task->status,
+            'progress_percent' => $task->progress_percent ?? 0,
+            'actual_hours' => $task->actual_hours,
+        ];
+        $this->showProgressModal = true;
+    }
+
+    public function submitProgress(): void
+    {
+        $task = Task::find($this->editingTaskId);
+        if (!$task)
+            return;
+
+        $data = $this->progressTask;
+        if ($data['status'] === 'done') {
+            $data['progress_percent'] = 100;
+            $data['completed_at'] = now();
+            $data['actual_finish'] = now()->format('Y-m-d');
+        }
+        if ($data['status'] === 'in_progress' && !$task->actual_start) {
+            $data['actual_start'] = now()->format('Y-m-d');
+        }
+
+        $task->update($data);
+
+        if ($task->parent_id) {
+            $parent = Task::find($task->parent_id);
+            $parent?->rollUpFromChildren();
+        }
+
+        $this->showProgressModal = false;
+        Notification::make()->title('Progress updated')->success()->send();
+        $this->dispatch('gantt-refresh');
+    }
+
     public function doSaveBaseline(): void
     {
         $tasks = Task::where('cde_project_id', $this->pid())->get();
@@ -540,9 +639,74 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                     ->color(fn($record) => $record->due_date?->isPast() && !in_array($record->status, ['done', 'cancelled']) ? 'danger' : null),
                 Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'done' => 'success', 'in_progress' => 'info', 'review' => 'primary', 'blocked' => 'danger', default => 'gray'})->sortable(),
-                Tables\Columns\TextColumn::make('progress_percent')->label('%')->toggleable()
-                    ->suffix('%')->sortable()->width('50px')
-                    ->color(fn(string $state) => $state >= 100 ? 'success' : ($state >= 50 ? 'info' : null)),
+                Tables\Columns\TextColumn::make('progress_percent')->label('Timeline')->toggleable()
+                    ->html()
+                    ->sortable()
+                    ->formatStateUsing(function ($state, Task $record) {
+                        $progress = (int) ($state ?? 0);
+                        $startDate = $record->start_date;
+                        $dueDate = $record->due_date;
+                        $status = $record->status ?? '';
+                        $isDone = in_array($status, ['done', 'cancelled']);
+
+                        // Calculate % time elapsed
+                        $timeElapsed = 0;
+                        if ($startDate && $dueDate) {
+                            $start = \Carbon\Carbon::parse($startDate);
+                            $end = \Carbon\Carbon::parse($dueDate);
+                            $totalDays = max(1, $start->diffInDays($end));
+                            $daysSpent = max(0, $start->diffInDays(now()));
+                            $timeElapsed = min(100, round(($daysSpent / $totalDays) * 100));
+                        }
+
+                        $isOverdue = $dueDate && \Carbon\Carbon::parse($dueDate)->isPast() && !$isDone;
+                        $variance = $progress - $timeElapsed;
+
+                        // Colors
+                        $barColor = $isDone ? '#10b981' : ($progress > 0 ? '#22c55e' : '#d1d5db');
+                        $bgColor = $isOverdue ? '#fed7aa' : '#e5e7eb';
+
+                        // Time marker
+                        $marker = '';
+                        if ($startDate && $dueDate && !$isDone && $timeElapsed > 0 && $timeElapsed < 100) {
+                            $marker = '<div style="position:absolute;top:-2px;bottom:-2px;left:' . $timeElapsed . '%;width:2px;background:#ef4444;z-index:2;box-shadow:0 0 3px rgba(239,68,68,0.5);"></div>';
+                        }
+
+                        // Variance label
+                        $varLabel = '';
+                        if ($startDate && $dueDate && !$isDone) {
+                            if ($variance < 0) {
+                                $varLabel = '<span style="font-size:9px;font-weight:600;color:#dc2626;">▼' . abs($variance) . '%</span>';
+                            } elseif ($variance > 0) {
+                                $varLabel = '<span style="font-size:9px;font-weight:600;color:#10b981;">▲' . $variance . '%</span>';
+                            } else {
+                                $varLabel = '<span style="font-size:9px;font-weight:600;color:#6b7280;">On track</span>';
+                            }
+                        }
+
+                        $pctColor = $isDone ? '#10b981' : ($isOverdue ? '#dc2626' : '#374151');
+
+                        $tooltip = $progress . '% done';
+                        if ($startDate && $dueDate) {
+                            $tooltip .= ' · ' . $timeElapsed . '% time used';
+                            if (!$isDone) {
+                                $tooltip .= ' · ' . ($variance >= 0 ? $variance . '% ahead' : abs($variance) . '% behind');
+                            }
+                        }
+
+                        return new \Illuminate\Support\HtmlString(
+                            '<div title="' . e($tooltip) . '" style="min-width:120px;max-width:160px;">' .
+                            '<div style="position:relative;height:14px;border-radius:7px;overflow:hidden;background:' . $bgColor . ';">' .
+                            '<div style="position:absolute;top:0;left:0;bottom:0;width:' . $progress . '%;background:' . $barColor . ';border-radius:7px 0 0 7px;transition:width 0.3s;"></div>' .
+                            $marker .
+                            '</div>' .
+                            '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">' .
+                            '<span style="font-size:10px;font-weight:700;color:' . $pctColor . ';">' . $progress . '%</span>' .
+                            $varLabel .
+                            '</div>' .
+                            '</div>'
+                        );
+                    }),
                 Tables\Columns\TextColumn::make('priority')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'urgent' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'})->sortable(),
                 Tables\Columns\TextColumn::make('assignee.name')->label('Resource')->placeholder('—')->toggleable(),

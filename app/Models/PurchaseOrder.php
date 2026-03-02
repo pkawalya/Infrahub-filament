@@ -27,12 +27,17 @@ class PurchaseOrder extends Model
         'notes',
         'created_by',
         'approved_by',
+        'submitted_at',
+        'approved_at',
+        'rejection_reason',
     ];
 
     protected $casts = [
         'order_date' => 'date',
         'expected_date' => 'date',
         'received_date' => 'date',
+        'submitted_at' => 'datetime',
+        'approved_at' => 'datetime',
         'subtotal' => 'decimal:2',
         'total_amount' => 'decimal:2',
     ];
@@ -41,6 +46,7 @@ class PurchaseOrder extends Model
         'draft' => 'Draft',
         'submitted' => 'Submitted',
         'approved' => 'Approved',
+        'rejected' => 'Rejected',
         'ordered' => 'Ordered',
         'partially_received' => 'Partially Received',
         'received' => 'Received',
@@ -66,5 +72,25 @@ class PurchaseOrder extends Model
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+    public function approver()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    // ─── Approval helpers ───
+    public function canBeSubmitted(): bool
+    {
+        return $this->status === 'draft' || $this->status === 'rejected';
+    }
+
+    public function canBeApproved(): bool
+    {
+        return $this->status === 'submitted';
+    }
+
+    public function canBeRejected(): bool
+    {
+        return $this->status === 'submitted';
     }
 }

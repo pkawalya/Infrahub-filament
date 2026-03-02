@@ -163,10 +163,26 @@ class ProjectTimelineWidget extends Widget
             $todayPercent = round(($timelineStart->diffInDays(now()) / $totalDays) * 100, 2);
         }
 
+        // Summary stats for fullscreen view (computed from already-loaded data)
+        $totalProjects = $projectData->count();
+        $activeProjects = $projectData->where('status', 'active')->count();
+        $behindProjects = $projectData->filter(fn($p) => $p['variance'] < -5)->count();
+        $aheadProjects = $projectData->filter(fn($p) => $p['variance'] > 5)->count();
+        $totalBudget = $projects->sum('budget');
+        $avgProgress = $totalProjects > 0 ? round($projectData->avg('progress')) : 0;
+
         return [
             'projects' => $projectData,
             'months' => $months,
             'todayPercent' => $todayPercent,
+            'summaryStats' => [
+                'totalProjects' => $totalProjects,
+                'activeProjects' => $activeProjects,
+                'behindProjects' => $behindProjects,
+                'aheadProjects' => $aheadProjects,
+                'totalBudget' => $totalBudget ? '$' . number_format($totalBudget, 0) : '$0',
+                'avgProgress' => $avgProgress,
+            ],
         ];
     }
 }
