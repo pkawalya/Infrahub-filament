@@ -2850,94 +2850,6 @@
             @endforelse
         </div>
 
-        {{-- Stock Monitor Modal (full store detail) --}}
-        @if($showStockMonitorModal)
-            @php $smd = $this->getStockMonitorData(); @endphp
-            <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;"
-                 wire:click.self="$set('showStockMonitorModal', false)">
-                <div style="background:white;border-radius:16px;width:100%;max-width:1000px;max-height:90vh;overflow-y:auto;padding:24px;" wire:click.stop>
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-                        <h3 style="font-size:18px;font-weight:800;margin:0;">📊 Stock Monitor — {{ $smd['warehouse']->name ?? '' }}</h3>
-                        <button wire:click="$set('showStockMonitorModal', false)" style="background:none;border:none;cursor:pointer;font-size:20px;">✕</button>
-                    </div>
-
-                    @if(!empty($smd['summary']))
-                        {{-- Summary cards --}}
-                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px;">
-                            @foreach([
-                                    ['label' => 'Products', 'value' => $smd['summary']['total_items'], 'color' => '#4f46e5'],
-                                    ['label' => 'On Hand', 'value' => number_format($smd['summary']['total_on_hand']), 'color' => '#3b82f6'],
-                                    ['label' => 'Reserved', 'value' => number_format($smd['summary']['total_reserved']), 'color' => '#f59e0b'],
-                                    ['label' => 'Available', 'value' => number_format($smd['summary']['total_available']), 'color' => '#10b981'],
-                                    ['label' => 'Total Value', 'value' => \App\Support\CurrencyHelper::formatCompact($smd['summary']['total_value']), 'color' => '#7c3aed'],
-                                    ['label' => 'Low Stock', 'value' => $smd['summary']['low_stock_count'], 'color' => $smd['summary']['low_stock_count'] > 0 ? '#f59e0b' : '#10b981'],
-                                    ['label' => 'Out of Stock', 'value' => $smd['summary']['out_of_stock_count'], 'color' => $smd['summary']['out_of_stock_count'] > 0 ? '#ef4444' : '#10b981'],
-                                ] as $card)
-                                            <div style="background:#f9fafb;border-radius:10px;padding:12px;text-align:center;border:1px solid #e5e7eb;">
-                                                <div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#9ca3af;letter-spacing:.05em">{{ $card['label'] }}</div>
-                                                <div style="font-size:20px;font-weight:800;color:{{ $card['color'] }};margin-top:4px;">{{ $card['value'] }}</div>
-                                            </div>
-                            @endforeach
-                        </div>
-
-                        {{-- Item-by-item table --}}
-                        <table style="width:100%;border-collapse:collapse;font-size:12px;">
-                            <thead>
-                                <tr style="background:#f8fafc;border-bottom:2px solid #e5e7eb;">
-                                    <th style="text-align:left;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Product</th>
-                                    <th style="text-align:left;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">SKU</th>
-                                    <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">On Hand</th>
-                                    <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Reserved</th>
-                                    <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Available</th>
-                                    <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Reorder</th>
-                                    <th style="text-align:right;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Value</th>
-                                    <th style="text-align:left;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Bin</th>
-                                    <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($smd['items'] as $si)
-                                    <tr style="border-bottom:1px solid #f3f4f6; {{ $si['is_out'] ? 'background:#fef2f2;' : ($si['is_low'] ? 'background:#fffbeb;' : '') }}">
-                                        <td style="padding:8px;font-weight:600;">{{ $si['product_name'] }}</td>
-                                        <td style="padding:8px;color:#6b7280;">{{ $si['sku'] }}</td>
-                                        <td style="padding:8px;text-align:center;font-weight:700;">{{ number_format($si['on_hand']) }}</td>
-                                        <td style="padding:8px;text-align:center;">{{ number_format($si['reserved']) }}</td>
-                                        <td style="padding:8px;text-align:center;font-weight:600;color:#10b981;">{{ number_format($si['available']) }}</td>
-                                        <td style="padding:8px;text-align:center;color:#9ca3af;">{{ number_format($si['reorder_level']) }}</td>
-                                        <td style="padding:8px;text-align:right;font-weight:600;">{{ \App\Support\CurrencyHelper::format($si['stock_value'], 0) }}</td>
-                                        <td style="padding:8px;color:#6b7280;">{{ $si['bin_location'] }}</td>
-                                        <td style="padding:8px;text-align:center;">
-                                            @if($si['is_out'])
-                                                <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fee2e2;color:#ef4444;">Out</span>
-                                            @elseif($si['is_low'])
-                                                <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;">Low</span>
-                                            @else
-                                                <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#dcfce7;color:#16a34a;">OK</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr><td colspan="9" style="text-align:center;padding:20px;color:#9ca3af;">No stock items in this store.</td></tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-
-                        @if(count($smd['low_stock']) > 0)
-                            <div style="margin-top:16px;padding:12px;background:#fffbeb;border:1px solid #fef3c7;border-radius:10px;">
-                                <div style="font-weight:700;font-size:13px;color:#d97706;margin-bottom:8px;">⚠ Low Stock Alerts</div>
-                                <div style="display:flex;flex-wrap:wrap;gap:8px;">
-                                    @foreach($smd['low_stock'] as $ls)
-                                        <span style="background:white;border:1px solid #fcd34d;padding:4px 12px;border-radius:8px;font-size:12px;">
-                                            <strong>{{ $ls['product_name'] }}</strong>: {{ $ls['on_hand'] }}/{{ $ls['reorder_level'] }} (need {{ $ls['deficit'] }} more)
-                                        </span>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-                    @endif
-                </div>
-            </div>
-        @endif
     @endif
 
     {{-- ═══════════════ PRODUCT TRACKING TAB ═══════════════ --}}
@@ -3147,6 +3059,95 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- Stock Monitor Modal (full store detail) - Can be triggered from Stores or Stock Monitor Tab --}}
+    @if($showStockMonitorModal)
+        @php $smd = $this->getStockMonitorData(); @endphp
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;"
+             wire:click.self="$set('showStockMonitorModal', false)">
+            <div style="background:white;border-radius:16px;width:100%;max-width:1000px;max-height:90vh;overflow-y:auto;padding:24px;" wire:click.stop>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                    <h3 style="font-size:18px;font-weight:800;margin:0;">📊 Stock Monitor — {{ $smd['warehouse']->name ?? '' }}</h3>
+                    <button wire:click="$set('showStockMonitorModal', false)" style="background:none;border:none;cursor:pointer;font-size:20px;">✕</button>
+                </div>
+
+                @if(!empty($smd['summary']))
+                    {{-- Summary cards --}}
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px;">
+                        @foreach([
+                                ['label' => 'Products', 'value' => $smd['summary']['total_items'], 'color' => '#4f46e5'],
+                                ['label' => 'On Hand', 'value' => number_format($smd['summary']['total_on_hand']), 'color' => '#3b82f6'],
+                                ['label' => 'Reserved', 'value' => number_format($smd['summary']['total_reserved']), 'color' => '#f59e0b'],
+                                ['label' => 'Available', 'value' => number_format($smd['summary']['total_available']), 'color' => '#10b981'],
+                                ['label' => 'Total Value', 'value' => \App\Support\CurrencyHelper::formatCompact($smd['summary']['total_value']), 'color' => '#7c3aed'],
+                                ['label' => 'Low Stock', 'value' => $smd['summary']['low_stock_count'], 'color' => $smd['summary']['low_stock_count'] > 0 ? '#f59e0b' : '#10b981'],
+                                ['label' => 'Out of Stock', 'value' => $smd['summary']['out_of_stock_count'], 'color' => $smd['summary']['out_of_stock_count'] > 0 ? '#ef4444' : '#10b981'],
+                            ] as $card)
+                                            <div style="background:#f9fafb;border-radius:10px;padding:12px;text-align:center;border:1px solid #e5e7eb;">
+                                                <div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#9ca3af;letter-spacing:.05em">{{ $card['label'] }}</div>
+                                                <div style="font-size:20px;font-weight:800;color:{{ $card['color'] }};margin-top:4px;">{{ $card['value'] }}</div>
+                                            </div>
+                        @endforeach
+                    </div>
+
+                    {{-- Item-by-item table --}}
+                    <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                        <thead>
+                            <tr style="background:#f8fafc;border-bottom:2px solid #e5e7eb;">
+                                <th style="text-align:left;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Product</th>
+                                <th style="text-align:left;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">SKU</th>
+                                <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">On Hand</th>
+                                <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Reserved</th>
+                                <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Available</th>
+                                <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Reorder</th>
+                                <th style="text-align:right;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Value</th>
+                                <th style="text-align:left;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Bin</th>
+                                <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($smd['items'] as $si)
+                                <tr style="border-bottom:1px solid #f3f4f6; {{ $si['is_out'] ? 'background:#fef2f2;' : ($si['is_low'] ? 'background:#fffbeb;' : '') }}">
+                                    <td style="padding:8px;font-weight:600;">{{ $si['product_name'] }}</td>
+                                    <td style="padding:8px;color:#6b7280;">{{ $si['sku'] }}</td>
+                                    <td style="padding:8px;text-align:center;font-weight:700;">{{ number_format($si['on_hand']) }}</td>
+                                    <td style="padding:8px;text-align:center;">{{ number_format($si['reserved']) }}</td>
+                                    <td style="padding:8px;text-align:center;font-weight:600;color:#10b981;">{{ number_format($si['available']) }}</td>
+                                    <td style="padding:8px;text-align:center;color:#9ca3af;">{{ number_format($si['reorder_level']) }}</td>
+                                    <td style="padding:8px;text-align:right;font-weight:600;">{{ \App\Support\CurrencyHelper::format($si['stock_value'], 0) }}</td>
+                                    <td style="padding:8px;color:#6b7280;">{{ $si['bin_location'] }}</td>
+                                    <td style="padding:8px;text-align:center;">
+                                        @if($si['is_out'])
+                                            <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fee2e2;color:#ef4444;">Out</span>
+                                        @elseif($si['is_low'])
+                                            <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;">Low</span>
+                                        @else
+                                            <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#dcfce7;color:#16a34a;">OK</span>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="9" style="text-align:center;padding:20px;color:#9ca3af;">No stock items in this store.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+
+                    @if(count($smd['low_stock']) > 0)
+                        <div style="margin-top:16px;padding:12px;background:#fffbeb;border:1px solid #fef3c7;border-radius:10px;">
+                            <div style="font-weight:700;font-size:13px;color:#d97706;margin-bottom:8px;">⚠ Low Stock Alerts</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                                @foreach($smd['low_stock'] as $ls)
+                                    <span style="background:white;border:1px solid #fcd34d;padding:4px 12px;border-radius:8px;font-size:12px;">
+                                        <strong>{{ $ls['product_name'] }}</strong>: {{ $ls['on_hand'] }}/{{ $ls['reorder_level'] }} (need {{ $ls['deficit'] }} more)
+                                    </span>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @endif
             </div>
         </div>
     @endif
