@@ -21,6 +21,8 @@ class CdeProject extends Model
         'start_date',
         'end_date',
         'budget',
+        'currency',
+        'currency_symbol',
         'address',
         'city',
         'country',
@@ -33,6 +35,24 @@ class CdeProject extends Model
         'budget' => 'decimal:2',
     ];
 
+    public static array $currencies = [
+        'USD' => ['name' => 'US Dollar', 'symbol' => '$'],
+        'UGX' => ['name' => 'Ugandan Shilling', 'symbol' => 'UGX'],
+        'KES' => ['name' => 'Kenyan Shilling', 'symbol' => 'KES'],
+        'TZS' => ['name' => 'Tanzanian Shilling', 'symbol' => 'TZS'],
+        'RWF' => ['name' => 'Rwandan Franc', 'symbol' => 'RWF'],
+        'GBP' => ['name' => 'British Pound', 'symbol' => '£'],
+        'EUR' => ['name' => 'Euro', 'symbol' => '€'],
+        'ZAR' => ['name' => 'South African Rand', 'symbol' => 'R'],
+        'NGN' => ['name' => 'Nigerian Naira', 'symbol' => '₦'],
+        'GHS' => ['name' => 'Ghanaian Cedi', 'symbol' => 'GH₵'],
+        'ETB' => ['name' => 'Ethiopian Birr', 'symbol' => 'Br'],
+        'AED' => ['name' => 'UAE Dirham', 'symbol' => 'AED'],
+        'SAR' => ['name' => 'Saudi Riyal', 'symbol' => 'SAR'],
+        'INR' => ['name' => 'Indian Rupee', 'symbol' => '₹'],
+        'CNY' => ['name' => 'Chinese Yuan', 'symbol' => '¥'],
+    ];
+
     public static array $statuses = [
         'planning' => 'Planning',
         'active' => 'Active',
@@ -40,6 +60,20 @@ class CdeProject extends Model
         'completed' => 'Completed',
         'cancelled' => 'Cancelled',
     ];
+
+    /**
+     * Get the currency symbol for this project.
+     * Falls back to company currency, then '$'.
+     */
+    public function getCurrencySymbol(): string
+    {
+        if ($this->currency_symbol)
+            return $this->currency_symbol;
+        if ($this->currency && isset(self::$currencies[$this->currency])) {
+            return self::$currencies[$this->currency]['symbol'];
+        }
+        return $this->company?->currency_symbol ?? $this->company?->currency ?? '$';
+    }
 
     public function client()
     {

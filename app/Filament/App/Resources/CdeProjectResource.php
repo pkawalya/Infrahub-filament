@@ -40,7 +40,26 @@ class CdeProjectResource extends Resource
                     ->relationship('manager', 'name')->searchable()->preload()->label('Project Manager'),
                 Forms\Components\Select::make('status')
                     ->options(CdeProject::$statuses)->default('planning'),
-                Forms\Components\TextInput::make('budget')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix()),
+                Forms\Components\Select::make('currency')
+                    ->label('Project Currency')
+                    ->options(
+                        collect(CdeProject::$currencies)
+                            ->mapWithKeys(fn($def, $code) => [$code => $code . ' — ' . $def['name']])
+                            ->toArray()
+                    )
+                    ->searchable()
+                    ->placeholder('Inherit from company')
+                    ->reactive()
+                    ->afterStateUpdated(function ($state, callable $set) {
+                        if ($state && isset(CdeProject::$currencies[$state])) {
+                            $set('currency_symbol', CdeProject::$currencies[$state]['symbol']);
+                        }
+                    })
+                    ->helperText('Leave empty to use company default'),
+                Forms\Components\Hidden::make('currency_symbol'),
+                Forms\Components\TextInput::make('budget')->numeric()
+                    ->prefix(fn($get) => $get('currency_symbol') ?? CurrencyHelper::prefix() ?? '$')
+                    ->suffix(fn() => CurrencyHelper::suffix()),
                 Forms\Components\DatePicker::make('start_date'),
                 Forms\Components\DatePicker::make('end_date'),
                 Forms\Components\RichEditor::make('description')->columnSpanFull(),
