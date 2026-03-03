@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
+use App\Support\CurrencyHelper;
 use App\Models\CdeProject;
 use App\Models\Milestone;
 use App\Models\Task;
