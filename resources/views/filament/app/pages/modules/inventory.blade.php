@@ -1,6 +1,7 @@
 <x-filament-panels::page>
     {{-- Heroicon SVG helpers (inline, 16px default) --}}
     @php
+        $cs = \App\Support\CurrencyHelper::symbol();
         $ico = fn($path, $size = 16) => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:' . $size . 'px;height:' . $size . 'px;display:inline-block;vertical-align:middle"><path stroke-linecap="round" stroke-linejoin="round" d="' . $path . '" /></svg>';
         // Standard Heroicons (outline)
         $iCube = $ico('M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9');
@@ -170,12 +171,12 @@
             <button wire:click="$set('activeInventoryTab', '{{ $tab }}')"
                 class="inv-tab {{ $activeInventoryTab === $tab ? 'inv-tab-active' : '' }}"
                 style="padding:10px 20px; font-size:13px; font-weight:600; border:none; cursor:pointer; transition:all .2s; border-radius:8px 8px 0 0;
-                                                                                                                                                                                                                {{ $activeInventoryTab === $tab ? 'background:#4f46e5; color:white;' : 'background:transparent; color:#6b7280;' }}">
+                                                                                                                                                                                                                    {{ $activeInventoryTab === $tab ? 'background:#4f46e5; color:white;' : 'background:transparent; color:#6b7280;' }}">
                 {!! $label !!}
                 @if($tab === 'products')
                     <span class="inv-badge"
                         style="margin-left:4px; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:700;
-                                                                                                                                                                                                                                                                                                                                                                                                                        {{ $activeInventoryTab === $tab ? 'background:rgba(255,255,255,0.2); color:white;' : 'background:#e5e7eb; color:#6b7280;' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                {{ $activeInventoryTab === $tab ? 'background:rgba(255,255,255,0.2); color:white;' : 'background:#e5e7eb; color:#6b7280;' }}">
                         {{ \App\Models\Product::where('company_id', $this->record->company_id)->count() }}
                     </span>
                 @endif
@@ -219,7 +220,7 @@
                         </div>
                         <span
                             style="margin-left:auto; padding:3px 10px; border-radius:99px; font-size:10px; font-weight:700;
-                                                                                                                                                                                                                                                                                                                                                                                                                            {{ $store->is_active ? 'background:#dcfce7; color:#16a34a;' : 'background:#fee2e2; color:#ef4444;' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                    {{ $store->is_active ? 'background:#dcfce7; color:#16a34a;' : 'background:#fee2e2; color:#ef4444;' }}">
                             {{ $store->is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </div>
@@ -297,7 +298,7 @@
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600;
-                                                                                                                                                                                                                                                                                                                                        {{ match ($grn->status) { 'accepted' => 'background:#d1fae5;color:#065f46', 'partial' => 'background:#fef3c7;color:#92400e', 'rejected' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                                                                                                                                                                                                                                                {{ match ($grn->status) { 'accepted' => 'background:#d1fae5;color:#065f46', 'partial' => 'background:#fef3c7;color:#92400e', 'rejected' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ \App\Models\GoodsReceivedNote::$statuses[$grn->status] ?? $grn->status }}
                             </span>
                         </td>
@@ -430,14 +431,14 @@
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600;
-                                                                                                                                                                                                                                                                                                                                {{ match ($transfer->status) { 'received' => 'background:#d1fae5;color:#065f46', 'in_transit' => 'background:#dbeafe;color:#1e40af', 'cancelled' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                                                                                                                                                                                                                                        {{ match ($transfer->status) { 'received' => 'background:#d1fae5;color:#065f46', 'in_transit' => 'background:#dbeafe;color:#1e40af', 'cancelled' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ \App\Models\StockTransfer::$statuses[$transfer->status] ?? $transfer->status }}
                             </span>
                         </td>
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;
-                                                                                                                                                                                                                                                                                                                                {{ match ($transfer->priority) { 'urgent' => 'background:#fee2e2;color:#991b1b', 'high' => 'background:#fef3c7;color:#92400e', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                                                                                                                                                                                                                                        {{ match ($transfer->priority) { 'urgent' => 'background:#fee2e2;color:#991b1b', 'high' => 'background:#fef3c7;color:#92400e', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ ucfirst($transfer->priority ?? 'normal') }}
                             </span>
                         </td>
@@ -678,7 +679,7 @@
                                         style="{{ $asset->condition === 'damaged' ? 'color:#ef4444;font-weight:600' : '' }}">{{ \App\Models\Asset::$conditions[$asset->condition] ?? $asset->condition }}</span>
                                 </td>
                                 <td style="padding:8px 12px;text-align:right;font-family:monospace;font-weight:600">
-                                    ${{ number_format($asset->current_book_value, 0) }}</td>
+                                    {{ $cs }}{{ number_format($asset->current_book_value, 0) }}</td>
                                 <td style="padding:8px 12px;text-align:center">
                                     <div x-data="{ open: false }"
                                         style="position:relative;display:inline-flex;gap:4px;align-items:center">
@@ -812,7 +813,7 @@
                                     style="{{ $asset->condition === 'damaged' ? 'color:#ef4444;' : '' }}">{{ \App\Models\Asset::$conditions[$asset->condition] ?? $asset->condition }}</strong>
                             </div>
                             <div><span style="color:#9ca3af">Book Value:</span>
-                                <strong>${{ number_format($asset->current_book_value, 0) }}</strong>
+                                <strong>{{ $cs }}{{ number_format($asset->current_book_value, 0) }}</strong>
                             </div>
                         </div>
                         <div
@@ -1949,7 +1950,7 @@
                                                 style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;text-align:right;background:transparent">
                                         </td>
                                         <td style="padding:6px 10px;text-align:right;font-weight:700;font-family:monospace">
-                                            ${{ number_format(((float) ($item['quantity'] ?? 0)) * ((float) ($item['unit_price'] ?? 0)), 2) }}
+                                            {{ $cs }}{{ number_format(((float) ($item['quantity'] ?? 0)) * ((float) ($item['unit_price'] ?? 0)), 2) }}
                                         </td>
                                         <td style="padding:6px 10px">
                                             @if(count($poItems) > 1)
@@ -1976,7 +1977,7 @@
                                 <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px">
                                     <span class="inv-label" style="color:#6b7280">Subtotal</span>
                                     <span
-                                        style="font-weight:600;font-family:monospace">${{ number_format($subtotal, 2) }}</span>
+                                        style="font-weight:600;font-family:monospace">{{ $cs }}{{ number_format($subtotal, 2) }}</span>
                                 </div>
                                 <div
                                     style="display:flex;justify-content:space-between;padding:4px 0;font-size:13px;align-items:center">
@@ -1993,7 +1994,7 @@
                                 <div
                                     style="display:flex;justify-content:space-between;padding:8px 0 0;margin-top:6px;border-top:2px solid #4f46e5;font-size:16px;font-weight:800">
                                     <span>Total</span>
-                                    <span style="color:#4f46e5;font-family:monospace">${{ number_format($total, 2) }}</span>
+                                    <span style="color:#4f46e5;font-family:monospace">{{ $cs }}{{ number_format($total, 2) }}</span>
                                 </div>
                             </div>
                         </div>
@@ -2237,7 +2238,7 @@
                             style="font-size:10px;text-transform:uppercase;color:#9ca3af;letter-spacing:.5px;font-weight:700;margin-bottom:4px">
                             Book Value</div>
                         <div style="font-weight:700;font-size:16px;font-family:monospace">
-                            ${{ number_format($assetDetail['_book_value'], 0) }}</div>
+                            {{ $cs }}{{ number_format($assetDetail['_book_value'], 0) }}</div>
                     </div>
                     <div style="background:#f9fafb;border-radius:10px;padding:12px">
                         <div
@@ -2265,7 +2266,7 @@
                 <div
                     style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:12px;margin-bottom:20px;padding:12px;background:#f9fafb;border-radius:10px">
                     <div><span style="color:#9ca3af">Purchase:</span>
-                        <strong>${{ number_format($assetDetail['purchase_cost'] ?? 0, 0) }}</strong>
+                        <strong>{{ $cs }}{{ number_format($assetDetail['purchase_cost'] ?? 0, 0) }}</strong>
                     </div>
                     <div><span style="color:#9ca3af">Date:</span>
                         <strong>{{ $assetDetail['purchase_date'] ? \Carbon\Carbon::parse($assetDetail['purchase_date'])->format('M d, Y') : '—' }}</strong>
@@ -2274,7 +2275,7 @@
                         <strong>{{ $assetDetail['useful_life_years'] ?? '—' }} yrs</strong>
                     </div>
                     <div><span style="color:#9ca3af">Salvage:</span>
-                        <strong>${{ number_format($assetDetail['salvage_value'] ?? 0, 0) }}</strong>
+                        <strong>{{ $cs }}{{ number_format($assetDetail['salvage_value'] ?? 0, 0) }}</strong>
                     </div>
                 </div>
 
@@ -2304,7 +2305,7 @@
                                     @if($event['notes'])
                                     <div style="color:#6b7280;margin-top:2px">{{ Str::limit($event['notes'], 80) }}</div> @endif
                                     @if(isset($event['cost']) && $event['cost'] > 0)
-                                        <span style="color:#d97706;font-weight:600">${{ number_format($event['cost'], 0) }}</span>
+                                        <span style="color:#d97706;font-weight:600">{{ $cs }}{{ number_format($event['cost'], 0) }}</span>
                                     @endif
                                 </div>
                                 <div style="text-align:right;flex-shrink:0;white-space:nowrap">
@@ -2607,7 +2608,8 @@
                 style="background:white;border-radius:16px;padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
                     <h3 style="font-size:18px;font-weight:800;margin:0;display:flex;align-items:center;gap:6px">
-                        {!! $iTransfer !!} Replace Asset</h3>
+                        {!! $iTransfer !!} Replace Asset
+                    </h3>
                     <button wire:click="$set('showReplaceAssetModal', false)" type="button"
                         style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af">&times;</button>
                 </div>

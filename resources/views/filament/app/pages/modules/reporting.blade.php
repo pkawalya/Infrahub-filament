@@ -392,7 +392,8 @@
     </div>
 
     {{-- Financial Overview --}}
-    @php $fin = $this->getFinancialSummary(); @endphp
+    @php $fin = $this->getFinancialSummary();
+    $cs = \App\Support\CurrencyHelper::symbol(); @endphp
     <div class="rpt-card" style="margin-bottom: 1rem;">
         <div class="rpt-card-title">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
@@ -408,7 +409,8 @@
                     style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#9ca3af; font-weight:600;">
                     Contract Original</div>
                 <div style="font-size:1.25rem; font-weight:700;" class="dark:text-gray-100">
-                    ${{ number_format($fin['contract_original'], 0) }}</div>
+                    {{ $cs }}{{ number_format($fin['contract_original'], 0) }}
+                </div>
             </div>
             <div>
                 <div
@@ -416,10 +418,10 @@
                     Contract Revised</div>
                 <div
                     style="font-size:1.25rem; font-weight:700; color:{{ $fin['variance'] > 0 ? '#ef4444' : '#10b981' }};">
-                    ${{ number_format($fin['contract_revised'], 0) }}
+                    {{ $cs }}{{ number_format($fin['contract_revised'], 0) }}
                     @if($fin['variance'] != 0)
                         <span
-                            style="font-size:11px;">({{ $fin['variance'] > 0 ? '+' : '' }}${{ number_format($fin['variance'], 0) }})</span>
+                            style="font-size:11px;">{{ $fin['variance'] > 0 ? '+' : '' }}{{ $cs }}{{ number_format($fin['variance'], 0) }})</span>
                     @endif
                 </div>
             </div>
@@ -428,20 +430,23 @@
                     style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#9ca3af; font-weight:600;">
                     BOQ Value</div>
                 <div style="font-size:1.25rem; font-weight:700;" class="dark:text-gray-100">
-                    ${{ number_format($fin['boq_value'], 0) }}</div>
+                    {{ $cs }}{{ number_format($fin['boq_value'], 0) }}
+                </div>
             </div>
             <div>
                 <div
                     style="font-size:11px; text-transform:uppercase; letter-spacing:0.5px; color:#9ca3af; font-weight:600;">
                     PO Spend</div>
                 <div style="font-size:1.25rem; font-weight:700;" class="dark:text-gray-100">
-                    ${{ number_format($fin['po_total'], 0) }}</div>
+                    {{ $cs }}{{ number_format($fin['po_total'], 0) }}
+                </div>
             </div>
         </div>
         {{-- Payment progress bar --}}
         <div style="font-size:12px; font-weight:600; color:#6b7280; margin-bottom:4px;" class="dark:text-gray-400">
-            Payment Progress — {{ $fin['contract_pct'] }}% paid (${{ number_format($fin['contract_paid'], 0) }} of
-            ${{ number_format($fin['contract_revised'], 0) }})
+            Payment Progress — {{ $fin['contract_pct'] }}% paid ({{ $cs }}{{ number_format($fin['contract_paid'], 0) }}
+            of
+            {{ $cs }}{{ number_format($fin['contract_revised'], 0) }})
         </div>
         <div class="rpt-bar-track" style="height:20px;">
             <div class="rpt-bar-fill"
