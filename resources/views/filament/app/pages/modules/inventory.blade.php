@@ -19,6 +19,17 @@
         $iWarn = $ico('M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z');
         $iTrash = $ico('M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0');
         $iSave = $ico('M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z');
+        // Lifecycle icons
+        $iEye = $ico('M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178zM15 12a3 3 0 11-6 0 3 3 0 016 0z');
+        $iCheckout = $ico('M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5'); // arrow-up-tray
+        $iCheckin = $ico('M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12M12 16.5V3'); // arrow-down-tray
+        $iTransfer = $ico('M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5'); // arrows-right-left
+        $iPause = $ico('M14.25 9v6m-4.5 0V9M21 12a9 9 0 11-18 0 9 9 0 0118 0z'); // pause-circle
+        $iMapPin = $ico('M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z');
+        $iClock = $ico('M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z');
+        $iDots = $ico('M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z'); // ellipsis-horizontal
+        $iFloppy = $ico('M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z');
+        $iSaveDoc = $ico('M9 3.75H6.912a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.238 5.338a2.25 2.25 0 00-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859');
     @endphp
 
 
@@ -159,12 +170,12 @@
             <button wire:click="$set('activeInventoryTab', '{{ $tab }}')"
                 class="inv-tab {{ $activeInventoryTab === $tab ? 'inv-tab-active' : '' }}"
                 style="padding:10px 20px; font-size:13px; font-weight:600; border:none; cursor:pointer; transition:all .2s; border-radius:8px 8px 0 0;
-                                                                                                        {{ $activeInventoryTab === $tab ? 'background:#4f46e5; color:white;' : 'background:transparent; color:#6b7280;' }}">
+                                                                                                                                                                                                                {{ $activeInventoryTab === $tab ? 'background:#4f46e5; color:white;' : 'background:transparent; color:#6b7280;' }}">
                 {!! $label !!}
                 @if($tab === 'products')
                     <span class="inv-badge"
                         style="margin-left:4px; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:700;
-                                                                                                                                                                                                        {{ $activeInventoryTab === $tab ? 'background:rgba(255,255,255,0.2); color:white;' : 'background:#e5e7eb; color:#6b7280;' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                        {{ $activeInventoryTab === $tab ? 'background:rgba(255,255,255,0.2); color:white;' : 'background:#e5e7eb; color:#6b7280;' }}">
                         {{ \App\Models\Product::where('company_id', $this->record->company_id)->count() }}
                     </span>
                 @endif
@@ -208,7 +219,7 @@
                         </div>
                         <span
                             style="margin-left:auto; padding:3px 10px; border-radius:99px; font-size:10px; font-weight:700;
-                                                                                                                                                                                                            {{ $store->is_active ? 'background:#dcfce7; color:#16a34a;' : 'background:#fee2e2; color:#ef4444;' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                            {{ $store->is_active ? 'background:#dcfce7; color:#16a34a;' : 'background:#fee2e2; color:#ef4444;' }}">
                             {{ $store->is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </div>
@@ -286,7 +297,7 @@
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600;
-                                                                                                                        {{ match ($grn->status) { 'accepted' => 'background:#d1fae5;color:#065f46', 'partial' => 'background:#fef3c7;color:#92400e', 'rejected' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                                                                                                                                                                                                                                        {{ match ($grn->status) { 'accepted' => 'background:#d1fae5;color:#065f46', 'partial' => 'background:#fef3c7;color:#92400e', 'rejected' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ \App\Models\GoodsReceivedNote::$statuses[$grn->status] ?? $grn->status }}
                             </span>
                         </td>
@@ -419,14 +430,14 @@
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600;
-                                                                                                                {{ match ($transfer->status) { 'received' => 'background:#d1fae5;color:#065f46', 'in_transit' => 'background:#dbeafe;color:#1e40af', 'cancelled' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                                                                                                                                                                                                                                {{ match ($transfer->status) { 'received' => 'background:#d1fae5;color:#065f46', 'in_transit' => 'background:#dbeafe;color:#1e40af', 'cancelled' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ \App\Models\StockTransfer::$statuses[$transfer->status] ?? $transfer->status }}
                             </span>
                         </td>
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;
-                                                                                                                {{ match ($transfer->priority) { 'urgent' => 'background:#fee2e2;color:#991b1b', 'high' => 'background:#fef3c7;color:#92400e', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                                                                                                                                                                                                                                {{ match ($transfer->priority) { 'urgent' => 'background:#fee2e2;color:#991b1b', 'high' => 'background:#fef3c7;color:#92400e', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ ucfirst($transfer->priority ?? 'normal') }}
                             </span>
                         </td>
@@ -533,117 +544,351 @@
 
     {{-- ═══════════════ ASSETS TAB ═══════════════ --}}
     @if($activeInventoryTab === 'assets')
-        <div style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:12px;">
+        @php
+            $assetsPaginated = $this->getAssets();
+            $stats = $this->getAssetStats();
+            $statusColors = [
+                'available' => ['bg' => '#dcfce7', 'text' => '#16a34a'],
+                'assigned' => ['bg' => '#dbeafe', 'text' => '#2563eb'],
+                'maintenance' => ['bg' => '#fef3c7', 'text' => '#d97706'],
+                'retired' => ['bg' => '#f3f4f6', 'text' => '#6b7280'],
+                'lost' => ['bg' => '#fee2e2', 'text' => '#ef4444'],
+                'disposed' => ['bg' => '#fecaca', 'text' => '#dc2626'],
+            ];
+        @endphp
+
+        {{-- ── Toolbar: Stats + Search + Filters + View Toggle ── --}}
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:16px">
+            {{-- Status filter pills --}}
+            <div style="display:flex;gap:4px;flex-wrap:wrap;flex:1">
+                @foreach(array_merge(['all' => 'All'], \App\Models\Asset::$statuses) as $key => $label)
+                    @php
+                        $count = $stats[$key] ?? 0;
+                        $isActive = $assetStatusFilter === $key;
+                        $sc = $statusColors[$key] ?? ['bg' => '#f3f4f6', 'text' => '#6b7280'];
+                    @endphp
+                    <button wire:click="$set('assetStatusFilter', '{{ $key }}')"
+                        style="padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid {{ $isActive ? ($sc['text'] ?? '#6366f1') : '#e5e7eb' }};background:{{ $isActive ? ($sc['bg'] ?? '#eef2ff') : 'white' }};color:{{ $isActive ? ($sc['text'] ?? '#4f46e5') : '#6b7280' }};transition:all .15s;display:flex;align-items:center;gap:4px">
+                        {{ $label }}
+                        @if($count > 0)
+                            <span
+                                style="background:{{ $isActive ? ($sc['text'] ?? '#4f46e5') : '#e5e7eb' }};color:{{ $isActive ? 'white' : '#6b7280' }};padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700">{{ number_format($count) }}</span>
+                        @endif
+                    </button>
+                @endforeach
+            </div>
+
+            {{-- Search --}}
+            <div style="position:relative;min-width:220px">
+                <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#94a3b8;pointer-events:none"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input type="text" wire:model.live.debounce.300ms="assetSearch" placeholder="Search assets..."
+                    style="width:100%;padding:7px 10px 7px 32px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;box-sizing:border-box"
+                    onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#d1d5db'">
+            </div>
+
+            {{-- View toggle --}}
+            <div style="display:flex;border:1px solid #d1d5db;border-radius:8px;overflow:hidden">
+                <button wire:click="$set('assetViewMode', 'table')"
+                    style="padding:6px 12px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:{{ $assetViewMode === 'table' ? '#4f46e5' : 'white' }};color:{{ $assetViewMode === 'table' ? 'white' : '#6b7280' }}">
+                    {!! $ico('M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M10.875 12c-.621 0-1.125.504-1.125 1.125M12 10.875c-.621 0-1.125.504-1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 1.5c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m-2.25 0c-.621 0-1.125.504-1.125 1.125m0 1.5v-1.5', 14) !!}
+                    Table
+                </button>
+                <button wire:click="$set('assetViewMode', 'cards')"
+                    style="padding:6px 12px;font-size:12px;font-weight:600;border:none;border-left:1px solid #d1d5db;cursor:pointer;background:{{ $assetViewMode === 'cards' ? '#4f46e5' : 'white' }};color:{{ $assetViewMode === 'cards' ? 'white' : '#6b7280' }}">
+                    {!! $ico('M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z', 14) !!}
+                    Cards
+                </button>
+            </div>
+
+            {{-- Register button --}}
             <button wire:click="$set('showAssetModal', true)"
-                style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; font-size:13px; font-weight:600; border-radius:8px; border:none; background:#7c3aed; color:white; cursor:pointer;">
+                style="display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-size:13px;font-weight:600;border-radius:8px;border:none;background:#7c3aed;color:white;cursor:pointer">
                 {!! $iPlus !!} Register Asset
             </button>
         </div>
 
-        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
-            @forelse($this->getAssets() as $asset)
-                @php
-                    $statusColors = ['available' => 'background:#dcfce7; color:#16a34a;', 'assigned' => 'background:#dbeafe; color:#2563eb;', 'maintenance' => 'background:#fef3c7; color:#d97706;', 'retired' => 'background:#f3f4f6; color:#6b7280;', 'lost' => 'background:#fee2e2; color:#ef4444;', 'disposed' => 'background:#fecaca; color:#dc2626;'];
-                @endphp
-                <div class="inv-card"
-                    style="background:white; border:1px solid #e5e7eb; border-radius:12px; padding:16px; transition:all .2s;"
-                    onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'; this.style.transform='translateY(-2px)';"
-                    onmouseleave="this.style.boxShadow='none'; this.style.transform='none';">
-
-                    {{-- Header --}}
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
-                        <div>
-                            <div style="font-weight:700; font-size:15px;">{{ $asset->display_name }}</div>
-                            <div style="font-size:11px; color:#9ca3af; margin-top:2px; font-family:monospace;">
-                                {{ $asset->asset_tag }}
-                            </div>
-                            @if($asset->serial_number)
-                                <div style="font-size:10px; color:#9ca3af;">S/N: {{ $asset->serial_number }}</div>
-                            @endif
-                        </div>
-                        <span
-                            style="padding:3px 10px; border-radius:6px; font-size:11px; font-weight:600; {{ $statusColors[$asset->status] ?? '' }}">
-                            {{ \App\Models\Asset::$statuses[$asset->status] ?? $asset->status }}
-                        </span>
-                    </div>
-
-                    {{-- Details Grid --}}
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; font-size:12px; margin-bottom:10px;">
-                        <div><span class="inv-label" style="color:#9ca3af;">Holder:</span>
-                            <strong>{{ $asset->currentHolder?->name ?? '—' }}</strong>
-                        </div>
-                        <div><span class="inv-label" style="color:#9ca3af;">Location:</span>
-                            <strong>{{ $asset->current_location ?? $asset->warehouse?->name ?? '—' }}</strong>
-                        </div>
-                        <div><span class="inv-label" style="color:#9ca3af;">Condition:</span>
-                            <strong
-                                style="{{ $asset->condition === 'damaged' ? 'color:#ef4444;' : '' }}">{{ \App\Models\Asset::$conditions[$asset->condition] ?? $asset->condition }}</strong>
-                        </div>
-                        <div><span class="inv-label" style="color:#9ca3af;">Book Value:</span>
-                            <strong>${{ number_format($asset->current_book_value, 0) }}</strong>
-                        </div>
-                        @if($asset->warranty_expiry)
-                            <div style="grid-column:1/-1;">
-                                <span style="color:#9ca3af;">Warranty:</span>
-                                <strong style="{{ $asset->isWarrantyActive() ? 'color:#16a34a;' : 'color:#ef4444;' }}">
-                                    {{ $asset->warranty_expiry->format('M d, Y') }}
-                                    {{ $asset->isWarrantyActive() ? '✓' : '✗ Expired' }}
-                                </strong>
-                            </div>
-                        @endif
-                    </div>
-
-                    {{-- Actions + QR --}}
-                    <div class="inv-divider"
-                        style="display:flex; align-items:center; justify-content:space-between; padding-top:10px; border-top:1px solid #f3f4f6;">
-                        <div style="display:flex; gap:4px; flex-wrap:wrap;">
-                            @if($asset->status === 'available')
-                                <button wire:click="openCheckoutModal({{ $asset->id }})"
-                                    style="padding:4px 10px; font-size:11px; font-weight:600; border-radius:6px; border:none; background:#2563eb; color:white; cursor:pointer;">📤
-                                    Checkout</button>
-                            @elseif($asset->status === 'assigned')
-                                <button wire:click="checkinAsset({{ $asset->id }})"
-                                    style="padding:4px 10px; font-size:11px; font-weight:600; border-radius:6px; border:none; background:#16a34a; color:white; cursor:pointer;">{!! $iInbox !!}
-                                    Checkin</button>
-                            @endif
-                            <button wire:click="openMaintenanceModal({{ $asset->id }})" class="inv-btn-outline"
-                                style="padding:4px 10px; font-size:11px; font-weight:600; border-radius:6px; border:1px solid #e5e7eb; background:white; cursor:pointer;">{!! $iWrench !!}</button>
-                            <button onclick="window.open('{{ $asset->qr_code_url }}', '_blank')" class="inv-btn-outline"
-                                style="padding:4px 10px; font-size:11px; font-weight:600; border-radius:6px; border:1px solid #e5e7eb; background:white; cursor:pointer;">{!! $ico('M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z M6.75 6.75h.75v.75h-.75v-.75zM6.75 16.5h.75v.75h-.75v-.75zM16.5 6.75h.75v.75h-.75v-.75zM13.5 13.5h.75v.75h-.75v-.75zM13.5 19.5h.75v.75h-.75v-.75zM19.5 13.5h.75v.75h-.75v-.75zM19.5 19.5h.75v.75h-.75v-.75zM16.5 16.5h.75v.75h-.75v-.75z') !!}
-                                QR</button>
-                        </div>
-                        <img src="{{ $asset->qr_code_url }}" alt="QR"
-                            style="width:44px; height:44px; border-radius:4px; border:1px solid #e5e7eb;" loading="lazy">
-                    </div>
-
-                    {{-- Assignment History (collapsed) --}}
-                    @if($asset->assignments->count() > 0)
-                        <details style="margin-top:10px; font-size:11px;">
-                            <summary style="cursor:pointer; color:#6366f1; font-weight:600;">📜 History
-                                ({{ $asset->assignments->count() }})</summary>
-                            <div style="margin-top:6px; max-height:120px; overflow-y:auto;">
-                                @foreach($asset->assignments->take(5) as $log)
-                                    <div
-                                        style="padding:4px 0; border-bottom:1px solid #f9fafb; display:flex; justify-content:space-between;">
-                                        <span>{{ \App\Models\AssetAssignment::$actions[$log->action] ?? $log->action }}
-                                            → {{ $log->assignedTo?->name ?? $log->assigned_to_name ?? '—' }}</span>
-                                        <span style="color:#9ca3af;">{{ $log->checkout_date?->format('M d') }}</span>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </details>
-                    @endif
-                </div>
-            @empty
-                <div class="inv-empty" style="grid-column:1/-1; text-align:center; padding:40px; color:#9ca3af;">
-                    <div style="margin-bottom:8px;color:#9ca3af">
-                        {!! $ico('M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z M6 6h.008v.008H6V6z', 32) !!}
-                    </div>
-                    <div style="font-weight:600;">No Assets Registered</div>
-                    <div style="font-size:13px;">Register assets to track equipment, tools, and machinery.</div>
-                </div>
-            @endforelse
+        {{-- Results count --}}
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:8px">
+            Showing {{ $assetsPaginated->firstItem() ?? 0 }}–{{ $assetsPaginated->lastItem() ?? 0 }} of
+            {{ number_format($assetsPaginated->total()) }} assets
+            @if($assetSearch) <span style="color:#4f46e5;font-weight:600">matching "{{ $assetSearch }}"</span> @endif
         </div>
+
+        {{-- ══ TABLE VIEW ══ --}}
+        @if($assetViewMode === 'table')
+            <div style="border:1px solid #e5e7eb;border-radius:12px;overflow:visible;position:relative">
+                <table class="inv-table" style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead>
+                        <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.5px">
+                                Asset Tag</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.5px">
+                                Name / Product</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.5px">
+                                Status</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.5px">
+                                Holder</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.5px">
+                                Location</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.5px">
+                                Condition</th>
+                            <th
+                                style="padding:10px 12px;text-align:right;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.5px">
+                                Book Value</th>
+                            <th
+                                style="padding:10px 12px;text-align:center;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;letter-spacing:.5px;width:140px">
+                                Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($assetsPaginated as $asset)
+                            @php $sc = $statusColors[$asset->status] ?? ['bg' => '#f3f4f6', 'text' => '#6b7280']; @endphp
+                            <tr style="border-bottom:1px solid #f3f4f6;transition:background .1s"
+                                onmouseenter="this.style.background='#f9fafb'" onmouseleave="this.style.background=''">
+                                <td style="padding:8px 12px;font-family:monospace;font-size:12px;font-weight:600;color:#4f46e5">
+                                    {{ $asset->asset_tag }}
+                                </td>
+                                <td style="padding:8px 12px">
+                                    <div style="font-weight:600">{{ $asset->display_name }}</div>
+                                    @if($asset->serial_number)
+                                    <div style="font-size:11px;color:#9ca3af">S/N: {{ $asset->serial_number }}</div>@endif
+                                </td>
+                                <td style="padding:8px 12px">
+                                    <span
+                                        style="padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;background:{{ $sc['bg'] }};color:{{ $sc['text'] }}">
+                                        {{ \App\Models\Asset::$statuses[$asset->status] ?? $asset->status }}
+                                    </span>
+                                </td>
+                                <td style="padding:8px 12px;font-size:12px">{{ $asset->currentHolder?->name ?? '—' }}</td>
+                                <td style="padding:8px 12px;font-size:12px">
+                                    {{ $asset->current_location ?? $asset->warehouse?->name ?? '—' }}
+                                </td>
+                                <td style="padding:8px 12px;font-size:12px">
+                                    <span
+                                        style="{{ $asset->condition === 'damaged' ? 'color:#ef4444;font-weight:600' : '' }}">{{ \App\Models\Asset::$conditions[$asset->condition] ?? $asset->condition }}</span>
+                                </td>
+                                <td style="padding:8px 12px;text-align:right;font-family:monospace;font-weight:600">
+                                    ${{ number_format($asset->current_book_value, 0) }}</td>
+                                <td style="padding:8px 12px;text-align:center">
+                                    <div x-data="{ open: false }"
+                                        style="position:relative;display:inline-flex;gap:4px;align-items:center">
+                                        {{-- Primary action --}}
+                                        @if($asset->status === 'available')
+                                            <button wire:click="openCheckoutModal({{ $asset->id }})"
+                                                style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:6px;border:none;background:#2563eb;color:white;cursor:pointer;display:inline-flex;align-items:center;gap:3px"
+                                                title="Checkout">{!! $iCheckout !!} Checkout</button>
+                                        @elseif($asset->status === 'assigned')
+                                            <button wire:click="checkinAsset({{ $asset->id }})"
+                                                style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:6px;border:none;background:#16a34a;color:white;cursor:pointer;display:inline-flex;align-items:center;gap:3px"
+                                                title="Checkin">{!! $iCheckin !!} Checkin</button>
+                                        @else
+                                            <button wire:click="openAssetDetail({{ $asset->id }})"
+                                                style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:6px;border:1px solid #d1d5db;background:white;color:#374151;cursor:pointer;display:inline-flex;align-items:center;gap:3px"
+                                                title="View">{!! $iEye !!} View</button>
+                                        @endif
+                                        {{-- Dropdown --}}
+                                        <button x-on:click="open = !open"
+                                            style="padding:4px 6px;border-radius:6px;border:1px solid #d1d5db;background:white;cursor:pointer;display:inline-flex;align-items:center;color:#6b7280"
+                                            title="More actions">{!! $iDots !!}</button>
+                                        <div x-show="open" x-cloak x-on:click.outside="open = false" x-transition.opacity
+                                            style="position:absolute;right:0;top:100%;margin-top:4px;background:white;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:50;min-width:170px;overflow:hidden;white-space:nowrap">
+                                            <button wire:click="openAssetDetail({{ $asset->id }})" x-on:click="open=false"
+                                                class="inv-dd-item"
+                                                style="display:flex;width:100%;padding:7px 14px;font-size:12px;align-items:center;gap:8px;border:none;background:none;cursor:pointer;color:#374151"
+                                                onmouseover="this.style.background='#f1f5f9'"
+                                                onmouseout="this.style.background=''">{!! $iEye !!} View Details</button>
+                                            <button wire:click="openEditAssetModal({{ $asset->id }})" x-on:click="open=false"
+                                                class="inv-dd-item"
+                                                style="display:flex;width:100%;padding:7px 14px;font-size:12px;align-items:center;gap:8px;border:none;background:none;cursor:pointer;color:#374151"
+                                                onmouseover="this.style.background='#f1f5f9'"
+                                                onmouseout="this.style.background=''">{!! $iPencil !!} Edit</button>
+                                            <div style="border-top:1px solid #f3f4f6"></div>
+                                            @if(in_array($asset->status, ['available', 'assigned']))
+                                                <button wire:click="openTransferAssetModal({{ $asset->id }})" x-on:click="open=false"
+                                                    class="inv-dd-item"
+                                                    style="display:flex;width:100%;padding:7px 14px;font-size:12px;align-items:center;gap:8px;border:none;background:none;cursor:pointer;color:#374151"
+                                                    onmouseover="this.style.background='#f1f5f9'"
+                                                    onmouseout="this.style.background=''">{!! $iTransfer !!} Transfer</button>
+                                            @endif
+                                            <button wire:click="openMaintenanceModal({{ $asset->id }})" x-on:click="open=false"
+                                                class="inv-dd-item"
+                                                style="display:flex;width:100%;padding:7px 14px;font-size:12px;align-items:center;gap:8px;border:none;background:none;cursor:pointer;color:#374151"
+                                                onmouseover="this.style.background='#f1f5f9'"
+                                                onmouseout="this.style.background=''">{!! $iWrench !!} Maintenance</button>
+                                            <button wire:click="openConditionModal({{ $asset->id }})" x-on:click="open=false"
+                                                class="inv-dd-item"
+                                                style="display:flex;width:100%;padding:7px 14px;font-size:12px;align-items:center;gap:8px;border:none;background:none;cursor:pointer;color:#374151"
+                                                onmouseover="this.style.background='#f1f5f9'"
+                                                onmouseout="this.style.background=''">{!! $iClipboard !!} Condition</button>
+                                            <a href="{{ $asset->qr_code_url }}" target="_blank" class="inv-dd-item"
+                                                style="display:flex;width:100%;padding:7px 14px;font-size:12px;align-items:center;gap:8px;text-decoration:none;color:#374151"
+                                                onmouseover="this.style.background='#f1f5f9'"
+                                                onmouseout="this.style.background=''">{!! $iTag !!} QR Code</a>
+                                            @if(!in_array($asset->status, ['retired', 'disposed', 'lost']))
+                                                <div style="border-top:1px solid #f3f4f6"></div>
+                                                <button wire:click="openReplaceAssetModal({{ $asset->id }})" x-on:click="open=false"
+                                                    class="inv-dd-item"
+                                                    style="display:flex;width:100%;padding:7px 14px;font-size:12px;align-items:center;gap:8px;border:none;background:none;cursor:pointer;color:#4f46e5"
+                                                    onmouseover="this.style.background='#eef2ff'"
+                                                    onmouseout="this.style.background=''">{!! $iTransfer !!} Replace</button>
+                                                <button wire:click="openDisposeAssetModal({{ $asset->id }}, 'retire')"
+                                                    x-on:click="open=false" class="inv-dd-item"
+                                                    style="display:flex;width:100%;padding:7px 14px;font-size:12px;align-items:center;gap:8px;border:none;background:none;cursor:pointer;color:#d97706"
+                                                    onmouseover="this.style.background='#fef3c7'"
+                                                    onmouseout="this.style.background=''">{!! $iPause !!} Retire</button>
+                                                <button wire:click="openDisposeAssetModal({{ $asset->id }}, 'dispose')"
+                                                    x-on:click="open=false" class="inv-dd-item"
+                                                    style="display:flex;width:100%;padding:7px 14px;font-size:12px;align-items:center;gap:8px;border:none;background:none;cursor:pointer;color:#dc2626"
+                                                    onmouseover="this.style.background='#fee2e2'"
+                                                    onmouseout="this.style.background=''">{!! $iTrash !!} Dispose</button>
+                                                <button wire:click="openDisposeAssetModal({{ $asset->id }}, 'lost')"
+                                                    x-on:click="open=false" class="inv-dd-item"
+                                                    style="display:flex;width:100%;padding:7px 14px;font-size:12px;align-items:center;gap:8px;border:none;background:none;cursor:pointer;color:#ef4444"
+                                                    onmouseover="this.style.background='#fee2e2'"
+                                                    onmouseout="this.style.background=''">{!! $iWarn !!} Report Lost</button>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="inv-empty" style="text-align:center;padding:40px;color:#9ca3af">
+                                    <div style="font-weight:600">
+                                        {{ $assetSearch ? 'No assets match your search' : 'No Assets Registered' }}
+                                    </div>
+                                    <div style="font-size:12px;margin-top:4px">
+                                        {{ $assetSearch ? 'Try a different search term' : 'Register assets to track equipment, tools, and machinery.' }}
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        @endif
+
+        {{-- ══ CARD VIEW ══ --}}
+        @if($assetViewMode === 'cards')
+            <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(320px, 1fr));gap:16px">
+                @forelse($assetsPaginated as $asset)
+                    @php $sc = $statusColors[$asset->status] ?? ['bg' => '#f3f4f6', 'text' => '#6b7280']; @endphp
+                    <div class="inv-card"
+                        style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:16px;transition:all .2s"
+                        onmouseenter="this.style.boxShadow='0 4px 16px rgba(0,0,0,.08)';this.style.transform='translateY(-2px)'"
+                        onmouseleave="this.style.boxShadow='none';this.style.transform='none'">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+                            <div>
+                                <div style="font-weight:700;font-size:15px">{{ $asset->display_name }}</div>
+                                <div style="font-size:11px;color:#9ca3af;margin-top:2px;font-family:monospace">
+                                    {{ $asset->asset_tag }}
+                                </div>
+                                @if($asset->serial_number)
+                                <div style="font-size:10px;color:#9ca3af">S/N: {{ $asset->serial_number }}</div>@endif
+                            </div>
+                            <span
+                                style="padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:{{ $sc['bg'] }};color:{{ $sc['text'] }}">
+                                {{ \App\Models\Asset::$statuses[$asset->status] ?? $asset->status }}
+                            </span>
+                        </div>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:10px">
+                            <div><span style="color:#9ca3af">Holder:</span>
+                                <strong>{{ $asset->currentHolder?->name ?? '—' }}</strong>
+                            </div>
+                            <div><span style="color:#9ca3af">Location:</span>
+                                <strong>{{ $asset->current_location ?? $asset->warehouse?->name ?? '—' }}</strong>
+                            </div>
+                            <div><span style="color:#9ca3af">Condition:</span> <strong
+                                    style="{{ $asset->condition === 'damaged' ? 'color:#ef4444;' : '' }}">{{ \App\Models\Asset::$conditions[$asset->condition] ?? $asset->condition }}</strong>
+                            </div>
+                            <div><span style="color:#9ca3af">Book Value:</span>
+                                <strong>${{ number_format($asset->current_book_value, 0) }}</strong>
+                            </div>
+                        </div>
+                        <div
+                            style="display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid #f3f4f6">
+                            <div style="display:flex;gap:4px;align-items:center">
+                                @if($asset->status === 'available')
+                                    <button wire:click="openCheckoutModal({{ $asset->id }})"
+                                        style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:6px;border:none;background:#2563eb;color:white;cursor:pointer;display:inline-flex;align-items:center;gap:3px">{!! $iCheckout !!}
+                                        Checkout</button>
+                                @elseif($asset->status === 'assigned')
+                                    <button wire:click="checkinAsset({{ $asset->id }})"
+                                        style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:6px;border:none;background:#16a34a;color:white;cursor:pointer;display:inline-flex;align-items:center;gap:3px">{!! $iCheckin !!}
+                                        Checkin</button>
+                                @endif
+                                <button wire:click="openAssetDetail({{ $asset->id }})"
+                                    style="padding:4px 8px;font-size:11px;border-radius:6px;border:1px solid #e5e7eb;background:white;cursor:pointer;display:inline-flex;align-items:center;color:#6b7280"
+                                    title="View Details">{!! $iEye !!}</button>
+                                <button wire:click="openMaintenanceModal({{ $asset->id }})"
+                                    style="padding:4px 8px;font-size:11px;border-radius:6px;border:1px solid #e5e7eb;background:white;cursor:pointer;display:inline-flex;align-items:center;color:#6b7280"
+                                    title="Maintenance">{!! $iWrench !!}</button>
+                                <a href="{{ $asset->qr_code_url }}" target="_blank"
+                                    style="padding:4px 8px;font-size:11px;border-radius:6px;border:1px solid #e5e7eb;background:white;display:inline-flex;align-items:center;color:#6b7280;text-decoration:none"
+                                    title="QR Code">{!! $iTag !!}</a>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="inv-empty" style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af">
+                        <div style="font-weight:600">{{ $assetSearch ? 'No assets match your search' : 'No Assets Registered' }}
+                        </div>
+                        <div style="font-size:13px">Register assets to track equipment, tools, and machinery.</div>
+                    </div>
+                @endforelse
+            </div>
+        @endif
+
+        {{-- ══ PAGINATION ══ --}}
+        @if($assetsPaginated->lastPage() > 1)
+            <div style="display:flex;justify-content:center;align-items:center;gap:4px;margin-top:16px;flex-wrap:wrap">
+                {{-- Prev --}}
+                <button wire:click="gotoAssetPage({{ max(1, $assetPage - 1) }})" @if($assetPage <= 1) disabled @endif
+                    style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:white;color:{{ $assetPage <= 1 ? '#d1d5db' : '#374151' }}">
+                    ← Prev
+                </button>
+
+                {{-- Page numbers --}}
+                @php
+                    $lastPage = $assetsPaginated->lastPage();
+                    $from = max(1, $assetPage - 3);
+                    $to = min($lastPage, $assetPage + 3);
+                @endphp
+                @if($from > 1)
+                    <button wire:click="gotoAssetPage(1)"
+                        style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;cursor:pointer;background:white;color:#374151">1</button>
+                    @if($from > 2) <span style="color:#9ca3af;font-size:12px">…</span> @endif
+                @endif
+                @for($p = $from; $p <= $to; $p++)
+                    <button wire:click="gotoAssetPage({{ $p }})"
+                        style="padding:6px 10px;border:1px solid {{ $p === $assetPage ? '#4f46e5' : '#d1d5db' }};border-radius:6px;font-size:12px;font-weight:{{ $p === $assetPage ? '700' : '500' }};cursor:pointer;background:{{ $p === $assetPage ? '#4f46e5' : 'white' }};color:{{ $p === $assetPage ? 'white' : '#374151' }}">
+                        {{ $p }}
+                    </button>
+                @endfor
+                @if($to < $lastPage)
+                    @if($to < $lastPage - 1) <span style="color:#9ca3af;font-size:12px">…</span> @endif
+                    <button wire:click="gotoAssetPage({{ $lastPage }})"
+                        style="padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;cursor:pointer;background:white;color:#374151">{{ $lastPage }}</button>
+                @endif
+
+                {{-- Next --}}
+                <button wire:click="gotoAssetPage({{ min($lastPage, $assetPage + 1) }})" @if($assetPage >= $lastPage) disabled
+                @endif
+                    style="padding:6px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:white;color:{{ $assetPage >= $lastPage ? '#d1d5db' : '#374151' }}">
+                    Next →
+                </button>
+            </div>
+        @endif
     @endif
 
     {{-- ═══════════════ ADD PRODUCT MODAL ═══════════════ --}}
@@ -830,13 +1075,8 @@
                             <div>
                                 <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Issued To
                                     (User)</label>
-                                <select wire:model="issuanceForm.issued_to"
-                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                    <option value="">-- Select --</option>
-                                    @foreach($this->getTeamOptions() as $id => $name)
-                                        <option value="{{ $id }}">{{ $name }}</option>
-                                    @endforeach
-                                </select>
+                                <x-searchable-select :wire-model="'issuanceForm.issued_to'"
+                                    :options="$this->getTeamOptions()" placeholder="-- Select User --" />
                             </div>
                             <div>
                                 <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Or External
@@ -859,13 +1099,8 @@
                             <div>
                                 <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">From Store
                                     *</label>
-                                <select wire:model="issuanceForm.warehouse_id" required
-                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                    <option value="">-- Select --</option>
-                                    @foreach($this->getStoreOptions() as $id => $name)
-                                        <option value="{{ $id }}">{{ $name }}</option>
-                                    @endforeach
-                                </select>
+                                <x-searchable-select :wire-model="'issuanceForm.warehouse_id'"
+                                    :options="$this->getStoreOptions()" placeholder="-- Select Store --" :required="true" />
                             </div>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -884,13 +1119,14 @@
                         </div>
                         <div>
                             <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Product *</label>
-                            <select wire:model="issuanceForm.product_id" required
-                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                <option value="">-- Select Product --</option>
-                                @foreach($this->getProductOptions() as $id => $name)
-                                    <option value="{{ $id }}">{{ $name }}</option>
-                                @endforeach
-                            </select>
+                            <div style="display:flex;gap:6px">
+                                <div style="flex:1"><x-searchable-select :wire-model="'issuanceForm.product_id'"
+                                        :options="$this->getProductOptions()" placeholder="-- Select Product --"
+                                        :required="true" /></div>
+                                <button type="button" wire:click="openQuickProduct"
+                                    style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;cursor:pointer;font-size:14px;font-weight:700;color:#4f46e5;height:38px"
+                                    title="Add Product">+</button>
+                            </div>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                             <div>
@@ -953,13 +1189,14 @@
                             <div>
                                 <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Product
                                     Type</label>
-                                <select wire:model="assetForm.product_id"
-                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                    <option value="">-- None --</option>
-                                    @foreach($this->getProductOptions() as $id => $name)
-                                        <option value="{{ $id }}">{{ $name }}</option>
-                                    @endforeach
-                                </select>
+                                <div style="display:flex;gap:6px">
+                                    <div style="flex:1"><x-searchable-select :wire-model="'assetForm.product_id'"
+                                            :options="$this->getProductOptions()" placeholder="-- Select Product --" />
+                                    </div>
+                                    <button type="button" wire:click="openQuickProduct"
+                                        style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;cursor:pointer;font-size:14px;font-weight:700;color:#4f46e5;height:38px"
+                                        title="Add Product">+</button>
+                                </div>
                             </div>
                             <div>
                                 <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Serial
@@ -981,13 +1218,8 @@
                             <div>
                                 <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Store /
                                     Warehouse</label>
-                                <select wire:model="assetForm.warehouse_id"
-                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                    <option value="">-- None --</option>
-                                    @foreach($this->getStoreOptions() as $id => $name)
-                                        <option value="{{ $id }}">{{ $name }}</option>
-                                    @endforeach
-                                </select>
+                                <x-searchable-select :wire-model="'assetForm.warehouse_id'"
+                                    :options="$this->getStoreOptions()" placeholder="-- Select Store --" />
                             </div>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
@@ -1052,7 +1284,7 @@
             <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:450px;box-shadow:0 20px 60px rgba(0,0,0,.2)"
                 class="inv-modal">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-                    <h3 style="font-size:18px;font-weight:700">📤 Checkout Asset</h3>
+                    <h3 style="font-size:18px;font-weight:700">{!! $iCheckout !!} Checkout Asset</h3>
                     <button wire:click="$set('showCheckoutModal', false)" type="button"
                         style="background:none;border:none;font-size:20px;cursor:pointer">&times;</button>
                 </div>
@@ -1061,13 +1293,8 @@
                         <div>
                             <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Assign To
                                 (User)</label>
-                            <select wire:model="checkoutForm.assigned_to"
-                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                <option value="">-- Select --</option>
-                                @foreach($this->getTeamOptions() as $id => $name)
-                                    <option value="{{ $id }}">{{ $name }}</option>
-                                @endforeach
-                            </select>
+                            <x-searchable-select :wire-model="'checkoutForm.assigned_to'" :options="$this->getTeamOptions()"
+                                placeholder="-- Select User --" />
                         </div>
                         <div>
                             <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Or External
@@ -1110,59 +1337,131 @@
         </div>
     @endif
 
-    {{-- ═══════════════ MAINTENANCE LOG MODAL ═══════════════ --}}
+    {{-- ═══════════════ MAINTENANCE LOG MODAL (Enhanced) ═══════════════ --}}
     @if($showMaintenanceModal ?? false)
         <div style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
             wire:click.self="$set('showMaintenanceModal', false)">
-            <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:450px;box-shadow:0 20px 60px rgba(0,0,0,.2)"
+            <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)"
                 class="inv-modal">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-                    <h3 style="font-size:18px;font-weight:700">{!! $iWrench !!} Log Maintenance</h3>
+                    <h3 style="font-size:18px;font-weight:700;display:flex;align-items:center;gap:6px">{!! $iWrench !!} Log
+                        Maintenance</h3>
                     <button wire:click="$set('showMaintenanceModal', false)" type="button"
                         style="background:none;border:none;font-size:20px;cursor:pointer">&times;</button>
                 </div>
                 <form wire:submit="submitMaintenance">
                     <div style="display:grid;gap:12px">
+                        {{-- Row 1: Type + Priority --}}
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                             <div>
-                                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Type *</label>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Type
+                                    *</label>
                                 <select wire:model="maintenanceForm.type" required
-                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
                                     @foreach(\App\Models\AssetMaintenanceLog::$types as $k => $v) <option value="{{ $k }}">
                                         {{ $v }}
                                     </option> @endforeach
                                 </select>
                             </div>
                             <div>
-                                <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Cost</label>
-                                <input type="number" wire:model="maintenanceForm.cost" step="0.01"
-                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Priority</label>
+                                <select wire:model="maintenanceForm.priority"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                                    @foreach(\App\Models\AssetMaintenanceLog::$priorities as $k => $v) <option
+                                    value="{{ $k }}">{{ $v }}</option> @endforeach
+                                </select>
                             </div>
                         </div>
-                        <div>
-                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Title *</label>
-                            <input type="text" wire:model="maintenanceForm.title" required
-                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                        </div>
-                        <div>
-                            <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Vendor</label>
-                            <input type="text" wire:model="maintenanceForm.vendor"
-                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                        </div>
+                        {{-- Title --}}
                         <div>
                             <label
-                                style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Description</label>
-                            <textarea wire:model="maintenanceForm.description" rows="2"
-                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;resize:vertical"></textarea>
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Title
+                                *</label>
+                            <input type="text" wire:model="maintenanceForm.title" required
+                                placeholder="e.g. Engine oil change"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                        </div>
+                        {{-- Row 2: Cost + Vendor --}}
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Cost
+                                    ($)</label>
+                                <input type="number" wire:model="maintenanceForm.cost" step="0.01" min="0"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                            </div>
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Vendor
+                                    / Technician</label>
+                                <input type="text" wire:model="maintenanceForm.vendor" placeholder="Service provider"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                            </div>
+                        </div>
+                        {{-- Row 3: Condition After + Downtime --}}
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Condition
+                                    After</label>
+                                <select wire:model="maintenanceForm.condition_after"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                                    @foreach(\App\Models\Asset::$conditions as $k => $v) <option value="{{ $k }}">{{ $v }}
+                                    </option> @endforeach
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Downtime
+                                    (Hours)</label>
+                                <input type="number" wire:model="maintenanceForm.downtime_hours" step="0.5" min="0"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                            </div>
+                        </div>
+                        {{-- Row 4: Meter Reading + Scheduled Date --}}
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Meter
+                                    / Hour Reading</label>
+                                <input type="number" wire:model="maintenanceForm.meter_reading" step="0.1" min="0"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                            </div>
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Next
+                                    Service Due</label>
+                                <input type="date" wire:model="maintenanceForm.next_service_date"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                            </div>
+                        </div>
+                        {{-- Parts Used --}}
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Parts
+                                / Materials Used</label>
+                            <input type="text" wire:model="maintenanceForm.parts_used"
+                                placeholder="e.g. Oil filter, 5L engine oil"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                        </div>
+                        {{-- Description --}}
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Description</label>
+                            <textarea wire:model="maintenanceForm.description" rows="2" placeholder="Work performed..."
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;resize:vertical;box-sizing:border-box"></textarea>
                         </div>
                     </div>
                     <div
                         style="display:flex;justify-content:flex-end;gap:8px;padding-top:16px;margin-top:16px;border-top:1px solid #e5e7eb">
-                        <button type="button" wire:click="$set('showMaintenanceModal', false)" class="inv-btn-cancel"
+                        <button type="button" wire:click="$set('showMaintenanceModal', false)"
                             style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
                         <button type="submit"
                             style="padding:8px 20px;border-radius:8px;border:none;background:#d97706;color:white;font-size:13px;font-weight:600;cursor:pointer">
-                            <span wire:loading.remove wire:target="submitMaintenance">Log Maintenance</span>
+                            <span wire:loading.remove wire:target="submitMaintenance">{!! $iWrench !!} Log
+                                Maintenance</span>
                             <span wire:loading wire:target="submitMaintenance">Saving...</span>
                         </button>
                     </div>
@@ -1192,26 +1491,17 @@
                             <label
                                 style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Against
                                 PO</label>
-                            <select wire:model="grnHeader.purchase_order_id"
-                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                <option value="">-- No PO (Open Receipt) --</option>
-                                @foreach($this->getAvailablePOs() as $poId => $poNum)
-                                    <option value="{{ $poId }}">{{ $poNum }}</option>
-                                @endforeach
-                            </select>
+                            <x-searchable-select :wire-model="'grnHeader.purchase_order_id'"
+                                :options="$this->getAvailablePOs()" placeholder="-- No PO (Open Receipt) --" />
                         </div>
                         <div>
                             <label
                                 style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Receiving
                                 Warehouse *</label>
                             <div style="display:flex;gap:6px">
-                                <select wire:model="grnHeader.warehouse_id" required
-                                    style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                    <option value="">-- Select --</option>
-                                    @foreach($this->getWarehouseOptions() as $wid => $wname) <option value="{{ $wid }}">
-                                        {{ $wname }}
-                                    </option> @endforeach
-                                </select>
+                                <div style="flex:1"><x-searchable-select :wire-model="'grnHeader.warehouse_id'"
+                                        :options="$this->getWarehouseOptions()" placeholder="-- Select --"
+                                        :required="true" /></div>
                                 <button type="button" wire:click="openQuickWarehouse"
                                     style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;cursor:pointer;font-size:14px;font-weight:700;color:#4f46e5"
                                     title="Add Warehouse">+</button>
@@ -1270,12 +1560,8 @@
                                     <tr style="border-bottom:1px solid #f3f4f6">
                                         <td style="padding:4px 6px;color:#9ca3af;font-weight:600">{{ $idx + 1 }}</td>
                                         <td style="padding:4px 6px">
-                                            <select wire:model="grnItems.{{ $idx }}.product_id"
-                                                style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;background:transparent">
-                                                <option value="">-- Optional --</option>
-                                                @foreach($this->getProductOptions() as $pid => $pname) <option
-                                                value="{{ $pid }}">{{ $pname }}</option> @endforeach
-                                            </select>
+                                            <x-searchable-select :wire-model=\"'grnItems.'.$idx.'.product_id'\"
+                                                :options=\"$this->getProductOptions()\" placeholder=\"-- Optional --\" />
                                         </td>
                                         <td style="padding:4px 6px"><input type="text"
                                                 wire:model="grnItems.{{ $idx }}.description"
@@ -1347,13 +1633,9 @@
                                 style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">From
                                 Warehouse *</label>
                             <div style="display:flex;gap:6px">
-                                <select wire:model="transferHeader.from_warehouse_id" required
-                                    style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                    <option value="">-- Select --</option>
-                                    @foreach($this->getWarehouseOptions() as $wid => $wname) <option value="{{ $wid }}">
-                                        {{ $wname }}
-                                    </option> @endforeach
-                                </select>
+                                <div style="flex:1"><x-searchable-select :wire-model="'transferHeader.from_warehouse_id'"
+                                        :options="$this->getWarehouseOptions()" placeholder="-- Select --"
+                                        :required="true" /></div>
                                 <button type="button" wire:click="openQuickWarehouse"
                                     style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;cursor:pointer;font-size:14px;font-weight:700;color:#4f46e5"
                                     title="Add Warehouse">+</button>
@@ -1364,13 +1646,9 @@
                                 style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">To
                                 Warehouse *</label>
                             <div style="display:flex;gap:6px">
-                                <select wire:model="transferHeader.to_warehouse_id" required
-                                    style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                    <option value="">-- Select --</option>
-                                    @foreach($this->getWarehouseOptions() as $wid => $wname) <option value="{{ $wid }}">
-                                        {{ $wname }}
-                                    </option> @endforeach
-                                </select>
+                                <div style="flex:1"><x-searchable-select :wire-model="'transferHeader.to_warehouse_id'"
+                                        :options="$this->getWarehouseOptions()" placeholder="-- Select --"
+                                        :required="true" /></div>
                                 <button type="button" wire:click="openQuickWarehouse"
                                     style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;cursor:pointer;font-size:14px;font-weight:700;color:#4f46e5"
                                     title="Add Warehouse">+</button>
@@ -1424,12 +1702,9 @@
                                     <tr style="border-bottom:1px solid #f3f4f6">
                                         <td style="padding:6px 10px;color:#9ca3af;font-weight:600">{{ $idx + 1 }}</td>
                                         <td style="padding:6px 10px">
-                                            <select wire:model="transferItems.{{ $idx }}.product_id" required
-                                                style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;background:transparent">
-                                                <option value="">-- Select --</option>
-                                                @foreach($this->getProductOptions() as $pid => $pname) <option
-                                                value="{{ $pid }}">{{ $pname }}</option> @endforeach
-                                            </select>
+                                            <x-searchable-select :wire-model="'transferItems.'.$idx.'.product_id'"
+                                                :options="$this->getProductOptions()" placeholder="-- Select --"
+                                                :required="true" />
                                         </td>
                                         <td style="padding:6px 10px"><input type="number"
                                                 wire:model="transferItems.{{ $idx }}.quantity" min="1" step="any"
@@ -1483,13 +1758,9 @@
                                 style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Warehouse
                                 *</label>
                             <div style="display:flex;gap:6px">
-                                <select wire:model="adjustmentForm.warehouse_id" required
-                                    style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                    <option value="">-- Select --</option>
-                                    @foreach($this->getWarehouseOptions() as $wid => $wname) <option value="{{ $wid }}">
-                                        {{ $wname }}
-                                    </option> @endforeach
-                                </select>
+                                <div style="flex:1"><x-searchable-select :wire-model="'adjustmentForm.warehouse_id'"
+                                        :options="$this->getWarehouseOptions()" placeholder="-- Select --"
+                                        :required="true" /></div>
                                 <button type="button" wire:click="openQuickWarehouse"
                                     style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;cursor:pointer;font-size:14px;font-weight:700;color:#4f46e5"
                                     title="Add Warehouse">+</button>
@@ -1499,13 +1770,14 @@
                             <label
                                 style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Product
                                 *</label>
-                            <select wire:model="adjustmentForm.product_id" required
-                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                <option value="">-- Select --</option>
-                                @foreach($this->getProductOptions() as $pid => $pname) <option value="{{ $pid }}">
-                                    {{ $pname }}
-                                </option> @endforeach
-                            </select>
+                            <div style="display:flex;gap:6px">
+                                <div style="flex:1"><x-searchable-select :wire-model="'adjustmentForm.product_id'"
+                                        :options="$this->getProductOptions()" placeholder="-- Select Product --"
+                                        :required="true" /></div>
+                                <button type="button" wire:click="openQuickProduct"
+                                    style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;cursor:pointer;font-size:14px;font-weight:700;color:#4f46e5;height:38px"
+                                    title="Add Product">+</button>
+                            </div>
                         </div>
                         <div>
                             <label
@@ -1588,13 +1860,8 @@
                             <label
                                 style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Supplier</label>
                             <div style="display:flex;gap:6px">
-                                <select wire:model="poHeader.supplier_id"
-                                    style="flex:1;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
-                                    <option value="">-- Select Supplier --</option>
-                                    @foreach($this->getSupplierOptions() as $id => $name)
-                                        <option value="{{ $id }}">{{ $name }}</option>
-                                    @endforeach
-                                </select>
+                                <div style="flex:1"><x-searchable-select :wire-model="'poHeader.supplier_id'"
+                                        :options="$this->getSupplierOptions()" placeholder="-- Select Supplier --" /></div>
                                 <button type="button" wire:click="openQuickSupplier"
                                     style="padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;background:#f9fafb;cursor:pointer;font-size:14px;font-weight:700;color:#4f46e5"
                                     title="Add Supplier">+</button>
@@ -1663,13 +1930,8 @@
                                     <tr style="border-bottom:1px solid #f3f4f6">
                                         <td style="padding:6px 10px;color:#9ca3af;font-weight:600">{{ $idx + 1 }}</td>
                                         <td style="padding:6px 10px">
-                                            <select wire:model="poItems.{{ $idx }}.product_id"
-                                                style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;background:transparent">
-                                                <option value="">-- Optional --</option>
-                                                @foreach($this->getProductOptions() as $pid => $pname)
-                                                    <option value="{{ $pid }}">{{ $pname }}</option>
-                                                @endforeach
-                                            </select>
+                                            <x-searchable-select :wire-model="'poItems.'.$idx.'.product_id'"
+                                                :options="$this->getProductOptions()" placeholder="-- Optional --" />
                                         </td>
                                         <td style="padding:6px 10px">
                                             <input type="text" wire:model="poItems.{{ $idx }}.description"
@@ -1812,35 +2074,632 @@
     @if($showQuickSupplierModal ?? false)
         <div style="position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
             wire:click.self="$set('showQuickSupplierModal', false)">
-            <div class="inv-modal" style="background:white;border-radius:16px;padding:24px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+            <div class="inv-modal"
+                style="background:white;border-radius:16px;padding:24px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-                    <h3 style="font-size:18px;font-weight:800;margin:0">{!! $ico('M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z', 18) !!} New Supplier</h3>
-                    <button wire:click="$set('showQuickSupplierModal', false)" type="button" style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af">&times;</button>
+                    <h3 style="font-size:18px;font-weight:800;margin:0">
+                        {!! $ico('M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z', 18) !!}
+                        New Supplier
+                    </h3>
+                    <button wire:click="$set('showQuickSupplierModal', false)" type="button"
+                        style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af">&times;</button>
                 </div>
                 <form wire:submit="submitQuickSupplier">
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
                         <div style="grid-column:span 2">
-                            <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Supplier Name *</label>
-                            <input type="text" wire:model="quickSupplierForm.name" required placeholder="ABC Supplies Ltd" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Supplier
+                                Name *</label>
+                            <input type="text" wire:model="quickSupplierForm.name" required placeholder="ABC Supplies Ltd"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
                         </div>
                         <div>
-                            <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Contact Person</label>
-                            <input type="text" wire:model="quickSupplierForm.contact_person" placeholder="John Doe" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Contact
+                                Person</label>
+                            <input type="text" wire:model="quickSupplierForm.contact_person" placeholder="John Doe"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
                         </div>
                         <div>
-                            <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Phone</label>
-                            <input type="text" wire:model="quickSupplierForm.phone" placeholder="+256 700 000000" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Phone</label>
+                            <input type="text" wire:model="quickSupplierForm.phone" placeholder="+256 700 000000"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
                         </div>
                         <div style="grid-column:span 2">
-                            <label style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Email</label>
-                            <input type="email" wire:model="quickSupplierForm.email" placeholder="supplier@example.com" style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Email</label>
+                            <input type="email" wire:model="quickSupplierForm.email" placeholder="supplier@example.com"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px">
                         </div>
                     </div>
-                    <div style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #e5e7eb">
-                        <button type="button" wire:click="$set('showQuickSupplierModal', false)" class="inv-btn-cancel" style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
-                        <button type="submit" style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:white;font-size:13px;font-weight:700;cursor:pointer">
+                    <div
+                        style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #e5e7eb">
+                        <button type="button" wire:click="$set('showQuickSupplierModal', false)" class="inv-btn-cancel"
+                            style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+                        <button type="submit"
+                            style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:white;font-size:13px;font-weight:700;cursor:pointer">
                             <span wire:loading.remove wire:target="submitQuickSupplier">{!! $iPlus !!} Create</span>
                             <span wire:loading wire:target="submitQuickSupplier">Creating...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════ QUICK-ADD PRODUCT MODAL ═══════════ --}}
+    @if($showQuickProductModal ?? false)
+        <div style="position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
+            wire:click.self="$set('showQuickProductModal', false)">
+            <div class="inv-modal"
+                style="background:white;border-radius:16px;padding:24px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="font-size:18px;font-weight:800;margin:0">
+                        {!! $ico('M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z', 18) !!}
+                        New Product
+                    </h3>
+                    <button wire:click="$set('showQuickProductModal', false)" type="button"
+                        style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af">&times;</button>
+                </div>
+                <form wire:submit="submitQuickProduct">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+                        <div style="grid-column:span 2">
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Product
+                                Name *</label>
+                            <input type="text" wire:model="quickProductForm.name" required
+                                placeholder="Portland Cement 50kg"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">SKU</label>
+                            <input type="text" wire:model="quickProductForm.sku" placeholder="CEM-50KG"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Unit</label>
+                            <select wire:model="quickProductForm.unit_of_measure"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                                @foreach(\App\Models\Product::$units as $k => $v)
+                                    <option value="{{ $k }}">{{ $v }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div style="grid-column:span 2">
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Cost
+                                Price</label>
+                            <input type="number" wire:model="quickProductForm.cost_price" step="0.01" min="0"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #e5e7eb">
+                        <button type="button" wire:click="$set('showQuickProductModal', false)" class="inv-btn-cancel"
+                            style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+                        <button type="submit"
+                            style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:white;font-size:13px;font-weight:700;cursor:pointer">
+                            <span wire:loading.remove wire:target="submitQuickProduct">{!! $iPlus !!} Create</span>
+                            <span wire:loading wire:target="submitQuickProduct">Creating...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════ ASSET DETAIL / TIMELINE MODAL ═══════════ --}}
+    @if($showAssetDetailModal && $assetDetail)
+        <div style="position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
+            wire:click.self="$set('showAssetDetailModal', false)">
+            <div class="inv-modal"
+                style="background:white;border-radius:16px;padding:28px;width:100%;max-width:700px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                {{-- Header --}}
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+                    <div>
+                        <h3 style="font-size:20px;font-weight:800;margin:0">{{ $assetDetail['_display_name'] }}</h3>
+                        <div style="font-size:12px;color:#9ca3af;font-family:monospace;margin-top:2px">
+                            {{ $assetDetail['asset_tag'] ?? '' }}
+                        </div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:10px">
+                        <img src="{{ $assetDetail['_qr_url'] }}" alt="QR"
+                            style="width:60px;height:60px;border-radius:6px;border:1px solid #e5e7eb">
+                        <button wire:click="$set('showAssetDetailModal', false)" type="button"
+                            style="background:none;border:none;font-size:24px;cursor:pointer;color:#9ca3af">&times;</button>
+                    </div>
+                </div>
+
+                {{-- Info Grid --}}
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px">
+                    @php
+                        $sc = ['available' => ['#dcfce7', '#16a34a'], 'assigned' => ['#dbeafe', '#2563eb'], 'maintenance' => ['#fef3c7', '#d97706'], 'retired' => ['#f3f4f6', '#6b7280'], 'lost' => ['#fee2e2', '#ef4444'], 'disposed' => ['#fecaca', '#dc2626']];
+                        $s = $sc[$assetDetail['status'] ?? ''] ?? ['#f3f4f6', '#6b7280'];
+                    @endphp
+                    <div style="background:#f9fafb;border-radius:10px;padding:12px">
+                        <div
+                            style="font-size:10px;text-transform:uppercase;color:#9ca3af;letter-spacing:.5px;font-weight:700;margin-bottom:4px">
+                            Status</div>
+                        <span
+                            style="padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600;background:{{ $s[0] }};color:{{ $s[1] }}">{{ $assetDetail['_status_label'] }}</span>
+                    </div>
+                    <div style="background:#f9fafb;border-radius:10px;padding:12px">
+                        <div
+                            style="font-size:10px;text-transform:uppercase;color:#9ca3af;letter-spacing:.5px;font-weight:700;margin-bottom:4px">
+                            Condition</div>
+                        <div style="font-weight:600;font-size:14px">{{ $assetDetail['_condition_label'] }}</div>
+                    </div>
+                    <div style="background:#f9fafb;border-radius:10px;padding:12px">
+                        <div
+                            style="font-size:10px;text-transform:uppercase;color:#9ca3af;letter-spacing:.5px;font-weight:700;margin-bottom:4px">
+                            Book Value</div>
+                        <div style="font-weight:700;font-size:16px;font-family:monospace">
+                            ${{ number_format($assetDetail['_book_value'], 0) }}</div>
+                    </div>
+                    <div style="background:#f9fafb;border-radius:10px;padding:12px">
+                        <div
+                            style="font-size:10px;text-transform:uppercase;color:#9ca3af;letter-spacing:.5px;font-weight:700;margin-bottom:4px">
+                            Holder</div>
+                        <div style="font-weight:600;font-size:13px">{{ $assetDetail['_holder_name'] ?? '—' }}</div>
+                    </div>
+                    <div style="background:#f9fafb;border-radius:10px;padding:12px">
+                        <div
+                            style="font-size:10px;text-transform:uppercase;color:#9ca3af;letter-spacing:.5px;font-weight:700;margin-bottom:4px">
+                            Location</div>
+                        <div style="font-weight:600;font-size:13px">
+                            {{ $assetDetail['current_location'] ?? $assetDetail['_warehouse_name'] ?? '—' }}
+                        </div>
+                    </div>
+                    <div style="background:#f9fafb;border-radius:10px;padding:12px">
+                        <div
+                            style="font-size:10px;text-transform:uppercase;color:#9ca3af;letter-spacing:.5px;font-weight:700;margin-bottom:4px">
+                            Product</div>
+                        <div style="font-weight:600;font-size:13px">{{ $assetDetail['_product_name'] ?? '—' }}</div>
+                    </div>
+                </div>
+
+                {{-- Purchase / Depreciation --}}
+                <div
+                    style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;font-size:12px;margin-bottom:20px;padding:12px;background:#f9fafb;border-radius:10px">
+                    <div><span style="color:#9ca3af">Purchase:</span>
+                        <strong>${{ number_format($assetDetail['purchase_cost'] ?? 0, 0) }}</strong>
+                    </div>
+                    <div><span style="color:#9ca3af">Date:</span>
+                        <strong>{{ $assetDetail['purchase_date'] ? \Carbon\Carbon::parse($assetDetail['purchase_date'])->format('M d, Y') : '—' }}</strong>
+                    </div>
+                    <div><span style="color:#9ca3af">Useful Life:</span>
+                        <strong>{{ $assetDetail['useful_life_years'] ?? '—' }} yrs</strong>
+                    </div>
+                    <div><span style="color:#9ca3af">Salvage:</span>
+                        <strong>${{ number_format($assetDetail['salvage_value'] ?? 0, 0) }}</strong>
+                    </div>
+                </div>
+
+                {{-- Activity Timeline --}}
+                <div style="margin-bottom:12px">
+                    <h4 style="font-size:14px;font-weight:700;margin:0 0 12px 0;display:flex;align-items:center;gap:6px">
+                        {!! $iClock !!}
+                        Activity Timeline <span
+                            style="font-size:11px;font-weight:500;color:#9ca3af">({{ count($assetTimeline) }} events)</span>
+                    </h4>
+                    <div style="max-height:300px;overflow-y:auto;border:1px solid #f3f4f6;border-radius:10px">
+                        @forelse($assetTimeline as $event)
+                            <div style="padding:10px 14px;border-bottom:1px solid #f9fafb;display:flex;gap:10px;align-items:flex-start;font-size:12px"
+                                onmouseenter="this.style.background='#f9fafb'" onmouseleave="this.style.background=''">
+                                @php
+                                    $eventIcons = ['checkout' => $iCheckout, 'checkin' => $iCheckin, 'transfer' => $iTransfer, 'maintenance' => $iWrench, 'retire' => $iPause, 'lost' => $iWarn, 'dispose' => $iTrash];
+                                @endphp
+                                <span
+                                    style="flex-shrink:0;color:#6b7280">{!! $eventIcons[$event['icon']] ?? $iClipboard !!}</span>
+                                <div style="flex:1;min-width:0">
+                                    <div style="font-weight:600;color:#1e293b">{{ $event['action'] }}
+                                        @if($event['to']) <span style="color:#6b7280;font-weight:400">→
+                                        {{ $event['to'] }}</span> @endif
+                                    </div>
+                                    @if($event['location'])
+                                    <div style="color:#9ca3af">{!! $iMapPin !!} {{ $event['location'] }}</div> @endif
+                                    @if($event['notes'])
+                                    <div style="color:#6b7280;margin-top:2px">{{ Str::limit($event['notes'], 80) }}</div> @endif
+                                    @if(isset($event['cost']) && $event['cost'] > 0)
+                                        <span style="color:#d97706;font-weight:600">${{ number_format($event['cost'], 0) }}</span>
+                                    @endif
+                                </div>
+                                <div style="text-align:right;flex-shrink:0;white-space:nowrap">
+                                    <div style="color:#6b7280;font-weight:600">{{ $event['date'] ?? '—' }}</div>
+                                    <div style="color:#9ca3af;font-size:11px">{{ $event['by'] }}</div>
+                                </div>
+                            </div>
+                        @empty
+                            <div style="padding:24px;text-align:center;color:#9ca3af">No activity recorded yet</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════ TRANSFER ASSET MODAL ═══════════ --}}
+    @if($showTransferAssetModal ?? false)
+        <div style="position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
+            wire:click.self="$set('showTransferAssetModal', false)">
+            <div class="inv-modal"
+                style="background:white;border-radius:16px;padding:24px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="font-size:18px;font-weight:800;margin:0">{!! $iTransfer !!} Transfer Asset</h3>
+                    <button wire:click="$set('showTransferAssetModal', false)" type="button"
+                        style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af">&times;</button>
+                </div>
+                <form wire:submit="submitTransferAsset">
+                    <div style="display:grid;gap:12px;margin-bottom:16px">
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Warehouse</label>
+                            <x-searchable-select :wire-model="'transferAssetForm.warehouse_id'"
+                                :options="$this->getWarehouseOptions()" placeholder="-- Select Warehouse --" />
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Location
+                                / Area</label>
+                            <input type="text" wire:model="transferAssetForm.location"
+                                placeholder="e.g. Building A, Floor 3"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Notes</label>
+                            <textarea wire:model="transferAssetForm.notes" rows="2" placeholder="Reason for transfer..."
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;resize:vertical"></textarea>
+                        </div>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #e5e7eb">
+                        <button type="button" wire:click="$set('showTransferAssetModal', false)"
+                            style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+                        <button type="submit"
+                            style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:white;font-size:13px;font-weight:700;cursor:pointer">
+                            <span wire:loading.remove wire:target="submitTransferAsset">{!! $iTransfer !!} Transfer</span>
+                            <span wire:loading wire:target="submitTransferAsset">Transferring...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════ DISPOSE / RETIRE / LOST MODAL ═══════════ --}}
+    @if($showDisposeAssetModal ?? false)
+        <div style="position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
+            wire:click.self="$set('showDisposeAssetModal', false)">
+            @php
+                $dColors = ['retire' => ['#d97706', '#fef3c7', $ico('M14.25 9v6m-4.5 0V9M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 14), 'Retire Asset'], 'dispose' => ['#dc2626', '#fee2e2', $ico('M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0', 14), 'Dispose Asset'], 'lost' => ['#ef4444', '#fee2e2', $ico('M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z', 14), 'Report Lost']];
+                $dc = $dColors[$disposeAssetForm['action'] ?? 'retire'] ?? $dColors['retire'];
+            @endphp
+            <div class="inv-modal"
+                style="background:white;border-radius:16px;padding:24px;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3
+                        style="font-size:18px;font-weight:800;margin:0;color:{{ $dc[0] }};display:flex;align-items:center;gap:6px">
+                        {!! $dc[2] !!} {{ $dc[3] }}
+                    </h3>
+                    <button wire:click="$set('showDisposeAssetModal', false)" type="button"
+                        style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af">&times;</button>
+                </div>
+                <div
+                    style="background:{{ $dc[1] }};border-radius:8px;padding:10px 14px;font-size:12px;color:{{ $dc[0] }};margin-bottom:16px;font-weight:500">
+                    {!! $iWarn !!} This action will change the asset status. This is recorded in the audit trail.
+                </div>
+                <form wire:submit="submitDisposeAsset">
+                    <div style="display:grid;gap:12px;margin-bottom:16px">
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Reason
+                                *</label>
+                            <textarea wire:model="disposeAssetForm.reason" rows="2" required
+                                placeholder="Explain why this asset is being {{ $disposeAssetForm['action'] ?? 'retired' }}..."
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;resize:vertical"></textarea>
+                        </div>
+                        @if(($disposeAssetForm['action'] ?? '') === 'dispose')
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Disposal
+                                    Method</label>
+                                <select wire:model="disposeAssetForm.disposal_method"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                                    <option value="">-- Select --</option>
+                                    @foreach(\App\Filament\App\Resources\CdeProjectResource\Pages\Modules\InventoryPage::$disposalMethods as $k => $v)
+                                        <option value="{{ $k }}">{{ $v }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                        @endif
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Additional
+                                Notes</label>
+                            <textarea wire:model="disposeAssetForm.notes" rows="2" placeholder="Any additional details..."
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;resize:vertical"></textarea>
+                        </div>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #e5e7eb">
+                        <button type="button" wire:click="$set('showDisposeAssetModal', false)"
+                            style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+                        <button type="submit"
+                            style="padding:8px 20px;border-radius:8px;border:none;background:{{ $dc[0] }};color:white;font-size:13px;font-weight:700;cursor:pointer">
+                            <span wire:loading.remove wire:target="submitDisposeAsset">{!! $dc[2] !!} Confirm</span>
+                            <span wire:loading wire:target="submitDisposeAsset">Processing...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════ UPDATE CONDITION MODAL ═══════════ --}}
+    @if($showConditionModal ?? false)
+        <div style="position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
+            wire:click.self="$set('showConditionModal', false)">
+            <div class="inv-modal"
+                style="background:white;border-radius:16px;padding:24px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="font-size:18px;font-weight:800;margin:0">{!! $iClipboard !!} Update Condition</h3>
+                    <button wire:click="$set('showConditionModal', false)" type="button"
+                        style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af">&times;</button>
+                </div>
+                <form wire:submit="submitConditionUpdate">
+                    <div style="display:grid;gap:12px;margin-bottom:16px">
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Condition
+                                *</label>
+                            <div style="display:flex;flex-wrap:wrap;gap:6px">
+                                @foreach(\App\Models\Asset::$conditions as $k => $v)
+                                    <label
+                                        style="display:flex;align-items:center;gap:6px;padding:8px 14px;border:2px solid {{ ($conditionForm['condition'] ?? '') === $k ? '#4f46e5' : '#e5e7eb' }};border-radius:8px;cursor:pointer;font-size:13px;font-weight:{{ ($conditionForm['condition'] ?? '') === $k ? '700' : '500' }};background:{{ ($conditionForm['condition'] ?? '') === $k ? '#eef2ff' : 'white' }};transition:all .15s">
+                                        <input type="radio" wire:model.live="conditionForm.condition" value="{{ $k }}"
+                                            style="display:none">
+                                        {{ $v }}
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Meter
+                                / Hour Reading</label>
+                            <input type="number" wire:model="conditionForm.meter_reading" step="0.1" min="0"
+                                placeholder="Current reading"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Notes</label>
+                            <textarea wire:model="conditionForm.notes" rows="2" placeholder="Inspection notes..."
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+                        </div>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #e5e7eb">
+                        <button type="button" wire:click="$set('showConditionModal', false)"
+                            style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+                        <button type="submit"
+                            style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:white;font-size:13px;font-weight:700;cursor:pointer">
+                            <span wire:loading.remove wire:target="submitConditionUpdate">Update</span>
+                            <span wire:loading wire:target="submitConditionUpdate">Updating...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════ EDIT ASSET MODAL ═══════════ --}}
+    @if($showEditAssetModal ?? false)
+        <div style="position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
+            wire:click.self="$set('showEditAssetModal', false)">
+            <div class="inv-modal"
+                style="background:white;border-radius:16px;padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="font-size:18px;font-weight:800;margin:0">{!! $iPencil !!} Edit Asset</h3>
+                    <button wire:click="$set('showEditAssetModal', false)" type="button"
+                        style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af">&times;</button>
+                </div>
+                <form wire:submit="submitEditAsset">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+                        <div style="grid-column:span 2">
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Asset
+                                Name</label>
+                            <input type="text" wire:model="editAssetForm.name" placeholder="e.g. CAT 320 Excavator"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Serial
+                                Number</label>
+                            <input type="text" wire:model="editAssetForm.serial_number"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Purchase
+                                Cost ($)</label>
+                            <input type="number" wire:model="editAssetForm.purchase_cost" step="0.01" min="0"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Purchase
+                                Date</label>
+                            <input type="date" wire:model="editAssetForm.purchase_date"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Warranty
+                                Expiry</label>
+                            <input type="date" wire:model="editAssetForm.warranty_expiry"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Useful
+                                Life (Years)</label>
+                            <input type="number" wire:model="editAssetForm.useful_life_years" min="1"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Salvage
+                                Value ($)</label>
+                            <input type="number" wire:model="editAssetForm.salvage_value" step="0.01" min="0"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Meter
+                                Reading</label>
+                            <input type="number" wire:model="editAssetForm.meter_reading" step="0.1" min="0"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Meter
+                                Unit</label>
+                            <select wire:model="editAssetForm.meter_unit"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box">
+                                <option value="">-- None --</option>
+                                @foreach(\App\Models\Asset::$meterUnits as $k => $v) <option value="{{ $k }}">{{ $v }}
+                                </option> @endforeach
+                            </select>
+                        </div>
+                        <div style="grid-column:span 2">
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Notes</label>
+                            <textarea wire:model="editAssetForm.notes" rows="2"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;box-sizing:border-box;resize:vertical"></textarea>
+                        </div>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #e5e7eb">
+                        <button type="button" wire:click="$set('showEditAssetModal', false)"
+                            style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+                        <button type="submit"
+                            style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:white;font-size:13px;font-weight:700;cursor:pointer">
+                            <span wire:loading.remove wire:target="submitEditAsset">{!! $iSave !!} Save Changes</span>
+                            <span wire:loading wire:target="submitEditAsset">Saving...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════ REPLACE ASSET MODAL ═══════════ --}}
+    @if($showReplaceAssetModal ?? false)
+        <div style="position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
+            wire:click.self="$set('showReplaceAssetModal', false)">
+            <div class="inv-modal"
+                style="background:white;border-radius:16px;padding:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <h3 style="font-size:18px;font-weight:800;margin:0;display:flex;align-items:center;gap:6px">
+                        {!! $iTransfer !!} Replace Asset</h3>
+                    <button wire:click="$set('showReplaceAssetModal', false)" type="button"
+                        style="background:none;border:none;font-size:22px;cursor:pointer;color:#9ca3af">&times;</button>
+                </div>
+                <div
+                    style="background:#dbeafe;border-radius:8px;padding:10px 14px;font-size:12px;color:#1e40af;margin-bottom:16px;font-weight:500">
+                    {!! $iEye !!} This will retire the current asset and create a new replacement asset linked to it.
+                </div>
+                <form wire:submit="submitReplaceAsset">
+                    <div style="display:grid;gap:12px;margin-bottom:16px">
+                        {{-- Reason --}}
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Reason
+                                for Replacement *</label>
+                            <textarea wire:model="replaceAssetForm.reason" rows="2" required
+                                placeholder="Why is this asset being replaced?"
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+                        </div>
+                        <div style="border-top:1px solid #e5e7eb;padding-top:12px">
+                            <div style="font-size:12px;font-weight:700;color:#374151;margin-bottom:8px">New Replacement
+                                Asset</div>
+                        </div>
+                        {{-- Name + Serial --}}
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Asset
+                                    Name *</label>
+                                <input type="text" wire:model="replaceAssetForm.new_asset_name" required
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                            </div>
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Serial
+                                    Number</label>
+                                <input type="text" wire:model="replaceAssetForm.new_serial_number"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                            </div>
+                        </div>
+                        {{-- Cost + Date --}}
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Purchase
+                                    Cost ($)</label>
+                                <input type="number" wire:model="replaceAssetForm.new_purchase_cost" step="0.01" min="0"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                            </div>
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Purchase
+                                    Date</label>
+                                <input type="date" wire:model="replaceAssetForm.new_purchase_date"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                            </div>
+                        </div>
+                        {{-- Warranty + Condition --}}
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Warranty
+                                    Expiry</label>
+                                <input type="date" wire:model="replaceAssetForm.new_warranty_expiry"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                            </div>
+                            <div>
+                                <label
+                                    style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Condition</label>
+                                <select wire:model="replaceAssetForm.new_condition"
+                                    style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box">
+                                    @foreach(\App\Models\Asset::$conditions as $k => $v) <option value="{{ $k }}">{{ $v }}
+                                    </option> @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label
+                                style="display:block;font-size:11px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Additional
+                                Notes</label>
+                            <textarea wire:model="replaceAssetForm.notes" rows="2" placeholder="Any additional details..."
+                                style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;box-sizing:border-box;resize:vertical"></textarea>
+                        </div>
+                    </div>
+                    <div
+                        style="display:flex;justify-content:flex-end;gap:8px;padding-top:12px;border-top:1px solid #e5e7eb">
+                        <button type="button" wire:click="$set('showReplaceAssetModal', false)"
+                            style="padding:8px 20px;border-radius:8px;border:1px solid #d1d5db;background:white;font-size:13px;font-weight:600;cursor:pointer">Cancel</button>
+                        <button type="submit"
+                            style="padding:8px 20px;border-radius:8px;border:none;background:#4f46e5;color:white;font-size:13px;font-weight:700;cursor:pointer">
+                            <span wire:loading.remove wire:target="submitReplaceAsset">{!! $iTransfer !!} Replace & Create
+                                New</span>
+                            <span wire:loading wire:target="submitReplaceAsset">Processing...</span>
                         </button>
                     </div>
                 </form>

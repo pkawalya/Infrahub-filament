@@ -33,6 +33,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
 use App\Filament\App\Concerns\ExportsTableCsv;
+use Livewire\Attributes\Url;
 
 class InventoryPage extends BaseModulePage implements HasTable, HasForms
 {
@@ -45,6 +46,7 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
     protected string $view = 'filament.app.pages.modules.inventory';
 
     // ─── Tab state ──────────────────────────────────────────
+    #[Url(as: 'tab')]
     public string $activeInventoryTab = 'products';
 
     // ─── Modal state ────────────────────────────────────────
@@ -57,6 +59,12 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
     public ?int $editingProductId = null;
     public ?int $editingStoreId = null;
     public ?int $activeAssetId = null;
+
+    // ─── Asset tab state ────────────────────────────────────
+    public string $assetSearch = '';
+    public string $assetStatusFilter = 'all';
+    public string $assetViewMode = 'table';
+    public int $assetPage = 1;
 
     public array $productForm = [
         'name' => '',
@@ -117,10 +125,17 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
 
     public array $maintenanceForm = [
         'type' => 'inspection',
+        'priority' => 'normal',
         'title' => '',
+        'description' => '',
         'cost' => 0,
         'vendor' => '',
-        'description' => '',
+        'condition_after' => '',
+        'scheduled_date' => '',
+        'downtime_hours' => '',
+        'meter_reading' => '',
+        'next_service_date' => '',
+        'parts_used' => '',
     ];
 
     // ─── PO Builder (invoice-style) ─────────────────────────
@@ -230,6 +245,29 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         ]));
         $this->showQuickSupplierModal = false;
         Notification::make()->title("Supplier \"{$s->name}\" created")->success()->send();
+    }
+
+    // ── Quick-Add Product ──────────────────────────────
+    public bool $showQuickProductModal = false;
+    public array $quickProductForm = ['name' => '', 'sku' => '', 'unit_of_measure' => 'each', 'cost_price' => 0];
+
+    public function openQuickProduct(): void
+    {
+        $this->quickProductForm = ['name' => '', 'sku' => '', 'unit_of_measure' => 'each', 'cost_price' => 0];
+        $this->showQuickProductModal = true;
+    }
+
+    public function submitQuickProduct(): void
+    {
+        $this->validate(['quickProductForm.name' => 'required|string|max:255']);
+        $p = Product::create(array_merge($this->quickProductForm, [
+            'company_id' => $this->cid(),
+            'condition' => 'new',
+            'selling_price' => 0,
+            'reorder_level' => 0,
+        ]));
+        $this->showQuickProductModal = false;
+        Notification::make()->title("Product \"{$p->name}\" created")->success()->send();
     }
 
     public function submitPO(): void
@@ -641,9 +679,50 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
 
     public function getAssets()
     {
-        return Asset::where('company_id', $this->cid())
-            ->with(['product', 'currentHolder', 'warehouse', 'assignments'])
-            ->orderByDesc('created_at')->get();
+        $query = Asset::where('company_id', $this->cid())
+            ->with(['product', 'currentHolder', 'warehouse']);
+
+        // Search
+        if ($this->assetSearch) {
+            $s = '%' . $this->assetSearch . '%';
+            $query->where(function ($q) use ($s) {
+                $q->where('display_name', 'like', $s)
+                    ->orWhere('asset_tag', 'like', $s)
+                    ->orWhere('serial_number', 'like', $s)
+                    ->orWhereHas('product', fn($pq) => $pq->where('name', 'like', $s));
+            });
+        }
+
+        // Status filter
+        if ($this->assetStatusFilter !== 'all') {
+            $query->where('status', $this->assetStatusFilter);
+        }
+
+        return $query->orderByDesc('created_at')->paginate(25, ['*'], 'assetPage', $this->assetPage);
+    }
+
+    public function getAssetStats(): array
+    {
+        $counts = Asset::where('company_id', $this->cid())
+            ->selectRaw("status, COUNT(*) as cnt")
+            ->groupBy('status')
+            ->pluck('cnt', 'status')
+            ->toArray();
+        $counts['all'] = array_sum($counts);
+        return $counts;
+    }
+
+    public function updatedAssetSearch(): void
+    {
+        $this->assetPage = 1;
+    }
+    public function updatedAssetStatusFilter(): void
+    {
+        $this->assetPage = 1;
+    }
+    public function gotoAssetPage(int $page): void
+    {
+        $this->assetPage = $page;
     }
 
     public function getTeamOptions(): array
@@ -901,8 +980,24 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
 
     public function openMaintenanceModal(int $id): void
     {
+        $asset = Asset::find($id);
+        if (!$asset)
+            return;
         $this->activeAssetId = $id;
-        $this->maintenanceForm = ['type' => 'inspection', 'title' => '', 'cost' => 0, 'vendor' => '', 'description' => ''];
+        $this->maintenanceForm = [
+            'type' => 'inspection',
+            'priority' => 'normal',
+            'title' => '',
+            'description' => '',
+            'cost' => 0,
+            'vendor' => '',
+            'condition_after' => $asset->condition,
+            'scheduled_date' => '',
+            'downtime_hours' => '',
+            'meter_reading' => $asset->meter_reading ?? '',
+            'next_service_date' => '',
+            'parts_used' => '',
+        ];
         $this->showMaintenanceModal = true;
     }
 
@@ -913,21 +1008,389 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         if (!$asset)
             return;
 
+        $f = $this->maintenanceForm;
+
         AssetMaintenanceLog::create([
             'asset_id' => $asset->id,
-            'type' => $this->maintenanceForm['type'],
-            'title' => $this->maintenanceForm['title'],
-            'description' => $this->maintenanceForm['description'] ?: null,
-            'cost' => $this->maintenanceForm['cost'] ?: 0,
-            'vendor' => $this->maintenanceForm['vendor'] ?: null,
+            'type' => $f['type'],
+            'priority' => $f['priority'] ?: 'normal',
+            'title' => $f['title'],
+            'description' => $f['description'] ?: null,
+            'cost' => $f['cost'] ?: 0,
+            'vendor' => $f['vendor'] ?: null,
+            'downtime_hours' => $f['downtime_hours'] ?: null,
+            'meter_reading' => $f['meter_reading'] ?: null,
+            'parts_used' => $f['parts_used'] ?: null,
             'status' => 'completed',
+            'scheduled_date' => $f['scheduled_date'] ?: null,
             'completed_date' => now()->format('Y-m-d'),
+            'next_service_date' => $f['next_service_date'] ?: null,
             'condition_before' => $asset->condition,
+            'condition_after' => $f['condition_after'] ?: $asset->condition,
             'performed_by' => auth()->id(),
         ]);
 
+        // Update asset with new data
+        $updates = ['last_service_date' => now()->format('Y-m-d')];
+        if ($f['condition_after'] && $f['condition_after'] !== $asset->condition) {
+            $updates['condition'] = $f['condition_after'];
+        }
+        if ($f['next_service_date']) {
+            $updates['next_service_date'] = $f['next_service_date'];
+        }
+        if ($f['meter_reading']) {
+            $updates['meter_reading'] = $f['meter_reading'];
+        }
+        $asset->update($updates);
+
         $this->showMaintenanceModal = false;
         Notification::make()->title('Maintenance logged')->success()->send();
+    }
+
+    // ── Asset Detail / Timeline ────────────────────────────
+    public bool $showAssetDetailModal = false;
+    public ?array $assetDetail = null;
+    public array $assetTimeline = [];
+
+    public function openAssetDetail(int $id): void
+    {
+        $asset = Asset::with([
+            'product',
+            'currentHolder',
+            'warehouse',
+            'creator',
+            'assignments.assignedTo',
+            'assignments.performedBy',
+            'maintenanceLogs.performer'
+        ])->find($id);
+        if (!$asset)
+            return;
+
+        $this->assetDetail = $asset->toArray();
+        $this->assetDetail['_display_name'] = $asset->display_name;
+        $this->assetDetail['_status_label'] = Asset::$statuses[$asset->status] ?? $asset->status;
+        $this->assetDetail['_condition_label'] = Asset::$conditions[$asset->condition] ?? $asset->condition;
+        $this->assetDetail['_holder_name'] = $asset->currentHolder?->name;
+        $this->assetDetail['_warehouse_name'] = $asset->warehouse?->name;
+        $this->assetDetail['_product_name'] = $asset->product?->name;
+        $this->assetDetail['_creator_name'] = $asset->creator?->name;
+        $this->assetDetail['_book_value'] = $asset->current_book_value;
+        $this->assetDetail['_warranty_active'] = $asset->isWarrantyActive();
+        $this->assetDetail['_qr_url'] = $asset->qr_code_url;
+
+        // Build unified timeline
+        $timeline = [];
+        foreach ($asset->assignments as $a) {
+            $timeline[] = [
+                'type' => 'assignment',
+                'action' => AssetAssignment::$actions[$a->action] ?? $a->action,
+                'icon' => $a->action,
+                'to' => $a->assignedTo?->name ?? $a->assigned_to_name,
+                'location' => $a->location,
+                'notes' => $a->notes,
+                'date' => $a->checkout_date?->format('M d, Y'),
+                'by' => $a->performedBy?->name ?? '—',
+            ];
+        }
+        foreach ($asset->maintenanceLogs as $m) {
+            $timeline[] = [
+                'type' => 'maintenance',
+                'action' => AssetMaintenanceLog::$types[$m->type] ?? $m->type,
+                'icon' => 'maintenance',
+                'to' => $m->title,
+                'location' => $m->vendor,
+                'notes' => $m->description,
+                'date' => ($m->completed_date ?? $m->scheduled_date)?->format('M d, Y'),
+                'by' => $m->performer?->name ?? '—',
+                'cost' => $m->cost,
+                'status' => AssetMaintenanceLog::$statuses[$m->status] ?? $m->status,
+            ];
+        }
+        // Sort by date descending
+        usort($timeline, fn($a, $b) => strtotime($b['date'] ?? '1970-01-01') - strtotime($a['date'] ?? '1970-01-01'));
+        $this->assetTimeline = $timeline;
+        $this->showAssetDetailModal = true;
+    }
+
+    // ── Transfer Asset ──────────────────────────────────────
+    public bool $showTransferAssetModal = false;
+    public array $transferAssetForm = ['warehouse_id' => '', 'location' => '', 'notes' => ''];
+
+    public function openTransferAssetModal(int $id): void
+    {
+        $this->activeAssetId = $id;
+        $this->transferAssetForm = ['warehouse_id' => '', 'location' => '', 'notes' => ''];
+        $this->showTransferAssetModal = true;
+    }
+
+    public function submitTransferAsset(): void
+    {
+        $asset = Asset::find($this->activeAssetId);
+        if (!$asset)
+            return;
+
+        $data = $this->transferAssetForm;
+        $wh = $data['warehouse_id'] ? Warehouse::find($data['warehouse_id']) : null;
+
+        AssetAssignment::create([
+            'asset_id' => $asset->id,
+            'action' => 'transfer',
+            'assigned_from' => $asset->current_holder_id,
+            'location' => $data['location'] ?: ($wh?->name),
+            'project_id' => $this->pid(),
+            'condition_before' => $asset->condition,
+            'checkout_date' => now()->format('Y-m-d'),
+            'notes' => $data['notes'] ?: null,
+            'performed_by' => auth()->id(),
+        ]);
+
+        $asset->update([
+            'warehouse_id' => $data['warehouse_id'] ?: $asset->warehouse_id,
+            'current_location' => $data['location'] ?: ($wh?->name ?? $asset->current_location),
+        ]);
+
+        $this->showTransferAssetModal = false;
+        Notification::make()->title('Asset transferred to ' . ($wh?->name ?? $data['location']))->success()->send();
+    }
+
+    // ── Dispose / Retire Asset ──────────────────────────────
+    public bool $showDisposeAssetModal = false;
+    public array $disposeAssetForm = ['action' => 'retire', 'reason' => '', 'disposal_method' => '', 'notes' => ''];
+
+    public static array $disposalMethods = [
+        'sold' => 'Sold',
+        'donated' => 'Donated',
+        'recycled' => 'Recycled',
+        'scrapped' => 'Scrapped',
+        'returned' => 'Returned to Vendor',
+    ];
+
+    public function openDisposeAssetModal(int $id, string $action = 'retire'): void
+    {
+        $this->activeAssetId = $id;
+        $this->disposeAssetForm = ['action' => $action, 'reason' => '', 'disposal_method' => '', 'notes' => ''];
+        $this->showDisposeAssetModal = true;
+    }
+
+    public function submitDisposeAsset(): void
+    {
+        $this->validate(['disposeAssetForm.reason' => 'required|string|max:500']);
+        $asset = Asset::find($this->activeAssetId);
+        if (!$asset)
+            return;
+
+        $data = $this->disposeAssetForm;
+        $action = $data['action']; // 'retire', 'dispose', 'lost'
+
+        AssetAssignment::create([
+            'asset_id' => $asset->id,
+            'action' => $action === 'dispose' ? 'retire' : $action,
+            'condition_before' => $asset->condition,
+            'checkout_date' => now()->format('Y-m-d'),
+            'notes' => trim(($data['reason'] ?? '') . ($data['disposal_method'] ? ' | Method: ' . (self::$disposalMethods[$data['disposal_method']] ?? $data['disposal_method']) : '') . ($data['notes'] ? ' | ' . $data['notes'] : '')),
+            'performed_by' => auth()->id(),
+        ]);
+
+        $newStatus = match ($action) {
+            'retire' => 'retired',
+            'dispose' => 'disposed',
+            'lost' => 'lost',
+            default => 'retired',
+        };
+
+        $asset->update([
+            'status' => $newStatus,
+            'current_holder_id' => null,
+        ]);
+
+        $this->showDisposeAssetModal = false;
+        $labels = ['retire' => 'retired', 'dispose' => 'disposed', 'lost' => 'marked as lost'];
+        Notification::make()->title('Asset ' . ($labels[$action] ?? 'updated'))->success()->send();
+    }
+
+    // ── Update Condition ────────────────────────────────────
+    public bool $showConditionModal = false;
+    public array $conditionForm = ['condition' => '', 'meter_reading' => '', 'notes' => ''];
+
+    public function openConditionModal(int $id): void
+    {
+        $asset = Asset::find($id);
+        if (!$asset)
+            return;
+        $this->activeAssetId = $id;
+        $this->conditionForm = [
+            'condition' => $asset->condition,
+            'meter_reading' => $asset->meter_reading ?? '',
+            'notes' => '',
+        ];
+        $this->showConditionModal = true;
+    }
+
+    public function submitConditionUpdate(): void
+    {
+        $asset = Asset::find($this->activeAssetId);
+        if (!$asset)
+            return;
+
+        $oldCondition = $asset->condition;
+        $newCondition = $this->conditionForm['condition'];
+        $meterReading = $this->conditionForm['meter_reading'] ?: null;
+
+        if ($oldCondition !== $newCondition || $meterReading) {
+            AssetAssignment::create([
+                'asset_id' => $asset->id,
+                'action' => 'transfer',
+                'condition_before' => $oldCondition,
+                'condition_after' => $newCondition,
+                'meter_reading' => $meterReading,
+                'checkout_date' => now()->format('Y-m-d'),
+                'notes' => 'Condition updated: ' . (Asset::$conditions[$oldCondition] ?? $oldCondition) . ' → ' . (Asset::$conditions[$newCondition] ?? $newCondition)
+                    . ($meterReading ? ' | Meter: ' . $meterReading : '')
+                    . ($this->conditionForm['notes'] ? '. ' . $this->conditionForm['notes'] : ''),
+                'performed_by' => auth()->id(),
+            ]);
+
+            $updates = ['condition' => $newCondition];
+            if ($meterReading)
+                $updates['meter_reading'] = $meterReading;
+            $asset->update($updates);
+        }
+
+        $this->showConditionModal = false;
+        Notification::make()->title('Condition updated to ' . (Asset::$conditions[$newCondition] ?? $newCondition))->success()->send();
+    }
+
+    // ── Edit Asset ──────────────────────────────────────────
+    public bool $showEditAssetModal = false;
+    public array $editAssetForm = [];
+
+    public function openEditAssetModal(int $id): void
+    {
+        $asset = Asset::find($id);
+        if (!$asset)
+            return;
+        $this->activeAssetId = $id;
+        $this->editAssetForm = [
+            'name' => $asset->name ?? '',
+            'serial_number' => $asset->serial_number ?? '',
+            'purchase_cost' => $asset->purchase_cost ?? 0,
+            'purchase_date' => $asset->purchase_date?->format('Y-m-d') ?? '',
+            'warranty_expiry' => $asset->warranty_expiry?->format('Y-m-d') ?? '',
+            'useful_life_years' => $asset->useful_life_years ?? 5,
+            'salvage_value' => $asset->salvage_value ?? 0,
+            'meter_reading' => $asset->meter_reading ?? '',
+            'meter_unit' => $asset->meter_unit ?? '',
+            'notes' => $asset->notes ?? '',
+        ];
+        $this->showEditAssetModal = true;
+    }
+
+    public function submitEditAsset(): void
+    {
+        $asset = Asset::find($this->activeAssetId);
+        if (!$asset)
+            return;
+
+        $asset->update(array_filter($this->editAssetForm, fn($v) => $v !== '' && $v !== null));
+        $this->showEditAssetModal = false;
+        Notification::make()->title('Asset updated')->success()->send();
+    }
+
+    // ── Replace Asset ────────────────────────────────────────
+    public bool $showReplaceAssetModal = false;
+    public array $replaceAssetForm = [
+        'reason' => '',
+        'new_asset_name' => '',
+        'new_serial_number' => '',
+        'new_purchase_cost' => 0,
+        'new_purchase_date' => '',
+        'new_warranty_expiry' => '',
+        'new_condition' => 'new',
+        'notes' => '',
+    ];
+
+    public function openReplaceAssetModal(int $id): void
+    {
+        $asset = Asset::find($id);
+        if (!$asset)
+            return;
+        $this->activeAssetId = $id;
+        $this->replaceAssetForm = [
+            'reason' => '',
+            'new_asset_name' => $asset->display_name . ' (Replacement)',
+            'new_serial_number' => '',
+            'new_purchase_cost' => 0,
+            'new_purchase_date' => now()->format('Y-m-d'),
+            'new_warranty_expiry' => '',
+            'new_condition' => 'new',
+            'notes' => '',
+        ];
+        $this->showReplaceAssetModal = true;
+    }
+
+    public function submitReplaceAsset(): void
+    {
+        $this->validate([
+            'replaceAssetForm.reason' => 'required|string|max:500',
+            'replaceAssetForm.new_asset_name' => 'required|string|max:255',
+        ]);
+
+        $oldAsset = Asset::find($this->activeAssetId);
+        if (!$oldAsset)
+            return;
+
+        $f = $this->replaceAssetForm;
+        $projectId = $this->pid();
+
+        // Generate tag for new asset
+        $nextNum = Asset::where('cde_project_id', $projectId)->count() + 1;
+        $newTag = 'AST-' . str_pad((string) $nextNum, 5, '0', STR_PAD_LEFT);
+
+        // Create the replacement asset
+        $newAsset = Asset::create([
+            'company_id' => $oldAsset->company_id,
+            'product_id' => $oldAsset->product_id,
+            'cde_project_id' => $projectId,
+            'asset_tag' => $newTag,
+            'name' => $f['new_asset_name'],
+            'serial_number' => $f['new_serial_number'] ?: null,
+            'status' => 'available',
+            'condition' => $f['new_condition'],
+            'warehouse_id' => $oldAsset->warehouse_id,
+            'current_location' => $oldAsset->current_location,
+            'purchase_date' => $f['new_purchase_date'] ?: null,
+            'purchase_cost' => $f['new_purchase_cost'] ?: 0,
+            'warranty_expiry' => $f['new_warranty_expiry'] ?: null,
+            'useful_life_years' => $oldAsset->useful_life_years,
+            'salvage_value' => $oldAsset->salvage_value,
+            'depreciation_method' => $oldAsset->depreciation_method,
+            'meter_unit' => $oldAsset->meter_unit,
+            'replaces_id' => $oldAsset->id,
+            'created_by' => auth()->id(),
+        ]);
+
+        // Link old → new
+        $oldAsset->update([
+            'status' => 'retired',
+            'current_holder_id' => null,
+            'replaced_by_id' => $newAsset->id,
+        ]);
+
+        // Audit trail on old asset
+        AssetAssignment::create([
+            'asset_id' => $oldAsset->id,
+            'action' => 'retire',
+            'condition_before' => $oldAsset->condition,
+            'checkout_date' => now()->format('Y-m-d'),
+            'notes' => 'Replaced by ' . $newTag . '. Reason: ' . $f['reason'] . ($f['notes'] ? ' | ' . $f['notes'] : ''),
+            'performed_by' => auth()->id(),
+        ]);
+
+        $this->showReplaceAssetModal = false;
+        Notification::make()
+            ->title('Asset replaced — new asset ' . $newTag . ' created')
+            ->success()
+            ->send();
     }
 
     protected function getHeaderActions(): array

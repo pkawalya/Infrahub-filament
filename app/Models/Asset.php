@@ -19,26 +19,35 @@ class Asset extends Model
         'name',
         'status',
         'condition',
+        'meter_reading',
+        'meter_unit',
         'current_holder_id',
         'current_location',
         'warehouse_id',
         'purchase_date',
         'purchase_cost',
         'warranty_expiry',
+        'last_service_date',
+        'next_service_date',
         'depreciation_method',
         'useful_life_years',
         'salvage_value',
         'qr_code',
         'image',
         'notes',
+        'replaced_by_id',
+        'replaces_id',
         'created_by',
     ];
 
     protected $casts = [
         'purchase_date' => 'date',
         'warranty_expiry' => 'date',
+        'last_service_date' => 'date',
+        'next_service_date' => 'date',
         'purchase_cost' => 'decimal:2',
         'salvage_value' => 'decimal:2',
+        'meter_reading' => 'decimal:1',
         'useful_life_years' => 'integer',
     ];
 
@@ -57,6 +66,13 @@ class Asset extends Model
         'fair' => 'Fair',
         'poor' => 'Poor',
         'damaged' => 'Damaged',
+    ];
+
+    public static array $meterUnits = [
+        'hours' => 'Hours',
+        'km' => 'Kilometres',
+        'miles' => 'Miles',
+        'cycles' => 'Cycles',
     ];
 
     // ─── Relationships ──────────────────────────────────────
@@ -87,6 +103,16 @@ class Asset extends Model
     public function maintenanceLogs()
     {
         return $this->hasMany(AssetMaintenanceLog::class)->orderByDesc('created_at');
+    }
+
+    // ─── Replacement chain ──────────────────────────────────
+    public function replacedBy()
+    {
+        return $this->belongsTo(self::class, 'replaced_by_id');
+    }
+    public function replaces()
+    {
+        return $this->belongsTo(self::class, 'replaces_id');
     }
 
     // ─── Computed ───────────────────────────────────────────
@@ -130,5 +156,18 @@ class Asset extends Model
     public function isWarrantyActive(): bool
     {
         return $this->warranty_expiry && $this->warranty_expiry->isFuture();
+    }
+
+    public function isServiceDue(): bool
+    {
+        return $this->next_service_date && $this->next_service_date->isPast();
+    }
+
+    public function getMeterDisplayAttribute(): ?string
+    {
+        if (!$this->meter_reading)
+            return null;
+        $unit = self::$meterUnits[$this->meter_unit ?? ''] ?? $this->meter_unit ?? '';
+        return number_format($this->meter_reading, 0) . ($unit ? " {$unit}" : '');
     }
 }

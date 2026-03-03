@@ -10,6 +10,7 @@ use BezhanSalleh\FilamentShield\Facades\FilamentShield;
 use Filament\Pages\BasePage as Page;
 use Filament\Resources\Resource;
 use Filament\Widgets\Widget;
+use Filament\Forms\Components\Select;
 use Illuminate\Support\Str;
 
 class AppServiceProvider extends ServiceProvider
@@ -27,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // ── Make ALL Select dropdowns searchable by default ──
+        Select::configureUsing(fn(Select $select) => $select->searchable());
+
         // ── Admin bypass: super_admin & company_admin skip all policy checks ──
         Gate::before(function ($user, $ability) {
             if (in_array($user->user_type, ['super_admin', 'company_admin'])) {

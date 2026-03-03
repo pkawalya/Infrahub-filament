@@ -9,13 +9,18 @@ class AssetMaintenanceLog extends Model
     protected $fillable = [
         'asset_id',
         'type',
+        'priority',
         'title',
         'description',
         'status',
         'scheduled_date',
         'completed_date',
+        'next_service_date',
         'cost',
+        'downtime_hours',
+        'meter_reading',
         'vendor',
+        'parts_used',
         'condition_before',
         'condition_after',
         'notes',
@@ -25,7 +30,10 @@ class AssetMaintenanceLog extends Model
     protected $casts = [
         'scheduled_date' => 'date',
         'completed_date' => 'date',
+        'next_service_date' => 'date',
         'cost' => 'decimal:2',
+        'downtime_hours' => 'decimal:1',
+        'meter_reading' => 'decimal:1',
     ];
 
     public static array $types = [
@@ -34,6 +42,15 @@ class AssetMaintenanceLog extends Model
         'calibration' => 'Calibration',
         'preventive' => 'Preventive',
         'cleaning' => 'Cleaning',
+        'overhaul' => 'Overhaul',
+        'replacement' => 'Part Replacement',
+    ];
+
+    public static array $priorities = [
+        'low' => 'Low',
+        'normal' => 'Normal',
+        'high' => 'High',
+        'critical' => 'Critical',
     ];
 
     public static array $statuses = [

@@ -85,6 +85,17 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
         'priority' => 'medium',
     ];
 
+    // ─── Work Orders & Milestones: server-side pagination/filter state ──
+    public string $woSearch = '';
+    public string $woStatusFilter = '';
+    public int $woPage = 1;
+    public int $woPerPage = 15;
+
+    public string $msSearch = '';
+    public string $msStatusFilter = '';
+    public int $msPage = 1;
+    public int $msPerPage = 15;
+
     /**
      * Accept access if ANY of the 3 merged module codes is enabled.
      */
@@ -1032,31 +1043,72 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     {
         $pid = $this->pid();
 
-        $workOrders = WorkOrder::where('cde_project_id', $pid)
-            ->with(['assignee:id,name', 'client:id,name', 'type:id,name', 'items'])
-            ->orderByRaw("FIELD(status, 'in_progress', 'approved', 'pending', 'on_hold', 'completed', 'cancelled')")
-            ->get();
+        $query = WorkOrder::where('cde_project_id', $pid)
+            ->with(['assignee:id,name', 'client:id,name', 'type:id,name', 'items']);
 
-        return $workOrders->map(fn(WorkOrder $wo) => [
-            'id' => $wo->id,
-            'wo_number' => $wo->wo_number,
-            'title' => $wo->title,
-            'description' => $wo->description,
-            'status' => $wo->status,
-            'priority' => $wo->priority,
-            'assignee' => $wo->assignee?->name,
-            'client' => $wo->client?->name,
-            'type' => $wo->type?->name,
-            'due_date' => $wo->due_date?->format('Y-m-d'),
-            'started_at' => $wo->started_at?->format('Y-m-d'),
-            'completed_at' => $wo->completed_at?->format('Y-m-d'),
-            'items_count' => $wo->items->count(),
-            'items_cost' => $wo->items->sum('amount'),
-            'tasks_count' => $wo->tasks->count(),
-            'notes' => $wo->notes,
-            'is_overdue' => $wo->due_date && $wo->due_date->isPast() && !in_array($wo->status, ['completed', 'cancelled']),
-            'days_until_due' => $wo->due_date ? (int) now()->diffInDays($wo->due_date, false) : null,
-        ])->toArray();
+        if ($this->woSearch) {
+            $s = '%' . $this->woSearch . '%';
+            $query->where(fn($q) => $q->where('title', 'like', $s)->orWhere('wo_number', 'like', $s)->orWhere('description', 'like', $s));
+        }
+        if ($this->woStatusFilter) {
+            $query->where('status', $this->woStatusFilter);
+        }
+
+        $query->orderByRaw("FIELD(status, 'in_progress', 'approved', 'pending', 'on_hold', 'completed', 'cancelled')");
+        $paginator = $query->paginate($this->woPerPage, ['*'], 'woPage', $this->woPage);
+
+        return [
+            'data' => collect($paginator->items())->map(fn(WorkOrder $wo) => [
+                'id' => $wo->id,
+                'wo_number' => $wo->wo_number,
+                'title' => $wo->title,
+                'description' => $wo->description,
+                'status' => $wo->status,
+                'priority' => $wo->priority,
+                'assignee' => $wo->assignee?->name,
+                'client' => $wo->client?->name,
+                'type' => $wo->type?->name,
+                'due_date' => $wo->due_date?->format('M d, Y'),
+                'started_at' => $wo->started_at?->format('M d, Y'),
+                'completed_at' => $wo->completed_at?->format('M d, Y'),
+                'items_count' => $wo->items->count(),
+                'items_cost' => $wo->items->sum('amount'),
+                'tasks_count' => $wo->tasks->count(),
+                'notes' => $wo->notes,
+                'is_overdue' => $wo->due_date && $wo->due_date->isPast() && !in_array($wo->status, ['completed', 'cancelled']),
+                'days_until_due' => $wo->due_date ? (int) now()->diffInDays($wo->due_date, false) : null,
+            ])->toArray(),
+            'total' => $paginator->total(),
+            'pages' => $paginator->lastPage(),
+            'page' => $paginator->currentPage(),
+            'per_page' => $this->woPerPage,
+        ];
+    }
+
+    // WO/MS navigation helpers (called from blade wire:click)
+    public function woGoPage(int $page): void
+    {
+        $this->woPage = max(1, $page);
+    }
+    public function msGoPage(int $page): void
+    {
+        $this->msPage = max(1, $page);
+    }
+    public function updatedWoSearch(): void
+    {
+        $this->woPage = 1;
+    }
+    public function updatedWoStatusFilter(): void
+    {
+        $this->woPage = 1;
+    }
+    public function updatedMsSearch(): void
+    {
+        $this->msPage = 1;
+    }
+    public function updatedMsStatusFilter(): void
+    {
+        $this->msPage = 1;
     }
 
     // ─── Milestones Data ──────────────────────────────────────────
@@ -1065,21 +1117,36 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     {
         $pid = $this->pid();
 
-        $milestones = Milestone::where('cde_project_id', $pid)
-            ->orderBy('target_date')
-            ->get();
+        $query = Milestone::where('cde_project_id', $pid);
 
-        return $milestones->map(fn(Milestone $m) => [
-            'id' => $m->id,
-            'name' => $m->name,
-            'status' => $m->status,
-            'priority' => $m->priority,
-            'target_date' => $m->target_date?->format('Y-m-d'),
-            'actual_date' => $m->actual_date?->format('Y-m-d'),
-            'description' => $m->description,
-            'is_overdue' => $m->isOverdue(),
-            'days_remaining' => $m->target_date ? (int) now()->diffInDays($m->target_date, false) : null,
-        ])->toArray();
+        if ($this->msSearch) {
+            $s = '%' . $this->msSearch . '%';
+            $query->where(fn($q) => $q->where('name', 'like', $s)->orWhere('description', 'like', $s));
+        }
+        if ($this->msStatusFilter) {
+            $query->where('status', $this->msStatusFilter);
+        }
+
+        $query->orderBy('target_date');
+        $paginator = $query->paginate($this->msPerPage, ['*'], 'msPage', $this->msPage);
+
+        return [
+            'data' => collect($paginator->items())->map(fn(Milestone $m) => [
+                'id' => $m->id,
+                'name' => $m->name,
+                'status' => $m->status,
+                'priority' => $m->priority,
+                'target_date' => $m->target_date?->format('M d, Y'),
+                'actual_date' => $m->actual_date?->format('M d, Y'),
+                'description' => $m->description,
+                'is_overdue' => $m->isOverdue(),
+                'days_remaining' => $m->target_date ? (int) now()->diffInDays($m->target_date, false) : null,
+            ])->toArray(),
+            'total' => $paginator->total(),
+            'pages' => $paginator->lastPage(),
+            'page' => $paginator->currentPage(),
+            'per_page' => $this->msPerPage,
+        ];
     }
 
     // ─── Combined Stats (all 3 merged modules) ───────────────────
