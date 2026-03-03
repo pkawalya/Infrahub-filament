@@ -456,7 +456,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                     ->color(fn(string $state) => match ($state) { 'approved' => 'success', 'final' => 'primary', 'priced' => 'info', 'submitted' => 'warning', 'draft' => 'gray', default => 'gray'})->sortable()
                     ->formatStateUsing(fn($state) => Boq::$statuses[$state] ?? $state),
                 Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->sortable()->toggleable(),
-                Tables\Columns\TextColumn::make('total_value')->label('Total Value')->money('USD')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('total_value')->label('Total Value')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('progress')->toggleable()
                     ->label('Progress')
                     ->state(function (Boq $record) {

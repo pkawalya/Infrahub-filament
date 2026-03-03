@@ -9,7 +9,8 @@
                 style="display: flex; align-items: flex-start; justify-content: space-between; position: relative; z-index: 1;">
                 <div>
                     <div class="mod-stat-label">{{ $stat['label'] }}</div>
-                    <div class="mod-stat-value">{{ $stat['value'] }}</div>
+                    <div class="mod-stat-value" title="{{ $stat['full_value'] ?? $stat['value'] }}">{{ $stat['value'] }}
+                    </div>
                     @if(!empty($stat['sub']))
                         <div class="mod-stat-sub {{ $stat['sub_type'] ?? '' }}">{{ $stat['sub'] }}</div>
                     @endif

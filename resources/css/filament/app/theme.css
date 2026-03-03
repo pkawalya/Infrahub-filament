@@ -324,10 +324,16 @@
 }
 
 .mod-stat-value {
-    font-size: 2rem;
+    font-size: clamp(1.1rem, 2.5vw, 2rem);
     font-weight: 800;
     line-height: 1.1;
     color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-variant-numeric: tabular-nums;
+    max-width: 100%;
+    letter-spacing: -0.02em;
 }
 
 .dark .mod-stat-card:not(.primary) .mod-stat-value {

@@ -73,7 +73,8 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
         return [
             [
                 'label' => 'Total Invoiced',
-                'value' => CurrencyHelper::format($invoiced, 0),
+                'value' => CurrencyHelper::formatCompact($invoiced),
+                'full_value' => CurrencyHelper::format($invoiced, 0),
                 'sub' => $overdue > 0 ? $overdue . ' overdue' : 'All on track',
                 'sub_type' => $overdue > 0 ? 'danger' : 'success',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#6366f1" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>',
@@ -81,7 +82,8 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
             ],
             [
                 'label' => 'Amount Received',
-                'value' => CurrencyHelper::format($received, 0),
+                'value' => CurrencyHelper::formatCompact($received),
+                'full_value' => CurrencyHelper::format($received, 0),
                 'sub' => 'Collected payments',
                 'sub_type' => 'success',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#10b981" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>',
@@ -89,7 +91,8 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
             ],
             [
                 'label' => 'Total Expenses',
-                'value' => CurrencyHelper::format($expenses, 0),
+                'value' => CurrencyHelper::formatCompact($expenses),
+                'full_value' => CurrencyHelper::format($expenses, 0),
                 'sub' => 'Project costs',
                 'sub_type' => 'danger',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#ef4444" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>',
@@ -97,7 +100,8 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
             ],
             [
                 'label' => 'Net Balance',
-                'value' => CurrencyHelper::format($balance, 0),
+                'value' => CurrencyHelper::formatCompact($balance),
+                'full_value' => CurrencyHelper::format($balance, 0),
                 'sub' => 'Revenue - Expenses',
                 'sub_type' => $balance >= 0 ? 'success' : 'danger',
                 'primary' => true,
@@ -133,13 +137,13 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                                 Forms\Components\TextInput::make('description')->required()->columnSpan(3),
                                 Forms\Components\TextInput::make('quantity')->numeric()->default(1)->minValue(1)->columnSpan(1),
                                 Forms\Components\TextInput::make('unit')->placeholder('pcs, hrs, lot…')->maxLength(20)->columnSpan(1),
-                                Forms\Components\TextInput::make('unit_price')->numeric()->prefix('$')->default(0)->columnSpan(1)
+                                Forms\Components\TextInput::make('unit_price')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0)->columnSpan(1)
                                     ->reactive()
                                     ->afterStateUpdated(function ($state, Set $set, Get $get) {
                                         $qty = max(1, intval($get('quantity') ?? 1));
                                         $set('amount', number_format($qty * floatval($state), 2, '.', ''));
                                     }),
-                                Forms\Components\TextInput::make('amount')->numeric()->prefix('$')->default(0)->readOnly()->columnSpan(1),
+                                Forms\Components\TextInput::make('amount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0)->readOnly()->columnSpan(1),
                             ])
                             ->columns(7)
                             ->defaultItems(1)
@@ -149,10 +153,10 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                             ->columnSpanFull(),
                     ]),
                     Section::make('Totals')->schema([
-                        Forms\Components\TextInput::make('subtotal')->numeric()->prefix('$')->required()->default(0),
+                        Forms\Components\TextInput::make('subtotal')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->required()->default(0),
                         Forms\Components\TextInput::make('tax_rate')->label('Tax Rate (%)')->numeric()->default(0),
-                        Forms\Components\TextInput::make('tax_amount')->numeric()->prefix('$')->default(0),
-                        Forms\Components\TextInput::make('total_amount')->numeric()->prefix('$')->required()->default(0),
+                        Forms\Components\TextInput::make('tax_amount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0),
+                        Forms\Components\TextInput::make('total_amount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->required()->default(0),
                     ])->columns(4),
                     Section::make('Additional')->schema([
                         Forms\Components\Textarea::make('notes')->rows(2)->maxLength(500),
@@ -185,7 +189,7 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                 ->schema([
                     Section::make('Expense Details')->schema([
                         Forms\Components\TextInput::make('title')->required()->maxLength(255),
-                        Forms\Components\TextInput::make('amount')->numeric()->prefix('$')->required()->default(0),
+                        Forms\Components\TextInput::make('amount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->required()->default(0),
                         Forms\Components\DatePicker::make('expense_date')->required()->default(now()),
                         Forms\Components\TextInput::make('reference_number')->label('Receipt / Ref #')->maxLength(50),
                         Forms\Components\Select::make('category')->options([
@@ -244,8 +248,8 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                     ->color(fn(string $state) => match ($state) { 'paid' => 'success', 'partially_paid' => 'info', 'sent' => 'primary', 'draft' => 'gray', 'overdue' => 'danger', 'cancelled' => 'warning', default => 'gray'})->sortable()
                     ->formatStateUsing(fn($state) => Invoice::$statuses[$state] ?? $state),
                 Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->badge()->color('gray')->toggleable(),
-                Tables\Columns\TextColumn::make('total_amount')->label('Total')->money('USD')->sortable()->toggleable(),
-                Tables\Columns\TextColumn::make('amount_paid')->label('Paid')->money('USD')->sortable()->toggleable()
+                Tables\Columns\TextColumn::make('total_amount')->label('Total')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('amount_paid')->label('Paid')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->toggleable()
                     ->color(fn(Invoice $record) => $record->amount_paid > 0 && $record->amount_paid < $record->total_amount ? 'warning' : null),
                 Tables\Columns\TextColumn::make('issue_date')->date('M d, Y')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('due_date')->date('M d, Y')->sortable()->toggleable()
@@ -302,7 +306,7 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                         ->visible(fn(Invoice $record) => !in_array($record->status, ['paid', 'cancelled']) && $record->balance_due > 0)
                         ->schema([
                             Forms\Components\TextInput::make('amount')->label('Amount Received')
-                                ->numeric()->prefix('$')->required()->default(fn(Invoice $record) => $record->balance_due),
+                                ->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->required()->default(fn(Invoice $record) => $record->balance_due),
                             Forms\Components\Select::make('payment_method')->options([
                                 'bank_transfer' => 'Bank Transfer',
                                 'cash' => 'Cash',
@@ -425,7 +429,7 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('invoice.invoice_number')->label('Invoice #')->searchable()->sortable()->weight('bold')->toggleable()
                     ->icon('heroicon-o-document-text'),
                 Tables\Columns\TextColumn::make('invoice.client.name')->label('Client')->placeholder('—')->toggleable(),
-                Tables\Columns\TextColumn::make('amount')->label('Amount')->money('USD')->sortable()->weight('bold')->color('success')->toggleable(),
+                Tables\Columns\TextColumn::make('amount')->label('Amount')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->weight('bold')->color('success')->toggleable(),
                 Tables\Columns\TextColumn::make('payment_method')->label('Method')->badge()->color('info')->toggleable()
                     ->formatStateUsing(fn($state) => ucwords(str_replace('_', ' ', $state))),
                 Tables\Columns\TextColumn::make('reference')->label('Ref #')->searchable()->placeholder('—')->toggleable(),
@@ -488,7 +492,7 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->weight('bold')->tooltip(fn(Expense $record) => $record->title)->toggleable(),
                 Tables\Columns\TextColumn::make('category')->badge()->color('gray')->toggleable()
                     ->formatStateUsing(fn($state) => ucfirst($state)),
-                Tables\Columns\TextColumn::make('amount')->money('USD')->sortable()->color('danger')->weight('bold')->toggleable(),
+                Tables\Columns\TextColumn::make('amount')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->color('danger')->weight('bold')->toggleable(),
                 Tables\Columns\TextColumn::make('status')->badge()->toggleable()
                     ->color(fn(string $state) => match ($state) { 'paid' => 'success', 'approved' => 'info', 'pending' => 'warning', 'rejected' => 'danger', default => 'gray'})->sortable()
                     ->formatStateUsing(fn($state) => Expense::$statuses[$state] ?? $state),
@@ -540,7 +544,7 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                         ->schema([
                             Section::make('Expense Details')->schema([
                                 Forms\Components\TextInput::make('title')->required()->maxLength(255),
-                                Forms\Components\TextInput::make('amount')->numeric()->prefix('$')->required(),
+                                Forms\Components\TextInput::make('amount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->required(),
                                 Forms\Components\DatePicker::make('expense_date')->required(),
                                 Forms\Components\TextInput::make('reference_number')->label('Receipt / Ref #')->maxLength(50),
                                 Forms\Components\Select::make('category')->options([

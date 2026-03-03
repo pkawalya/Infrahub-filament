@@ -723,7 +723,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('assignee.name')->label('Resource')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('estimated_hours')->label('Work')->suffix('h')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('actual_hours')->label('Actual')->suffix('h')->placeholder('—')->toggleable(),
-                Tables\Columns\TextColumn::make('fixed_cost')->label('Cost')->money('USD')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('fixed_cost')->label('Cost')->formatStateUsing(CurrencyHelper::formatter(0))->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('sort_order')
             ->filters([

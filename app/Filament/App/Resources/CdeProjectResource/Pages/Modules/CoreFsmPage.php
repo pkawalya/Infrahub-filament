@@ -367,7 +367,7 @@ class CoreFsmPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('items_cost')->toggleable()
                     ->label('Cost')
                     ->state(fn(WorkOrder $record) => $record->items->sum('amount'))
-                    ->money('USD')
+                    ->formatStateUsing(CurrencyHelper::formatter(0))
                     ->sortable(query: fn($query, $direction) => $query->withSum('items', 'amount')->orderBy('items_sum_amount', $direction))
                     ->toggleable(),
 

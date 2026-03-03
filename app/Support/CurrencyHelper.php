@@ -140,10 +140,48 @@ class CurrencyHelper
     }
 
     /**
+     * Format an amount in compact notation for stat cards.
+     * Examples: $1.2B, 890M UGX, $45K, $1,500
+     * Numbers below 10,000 are shown in full.
+     */
+    public static function formatCompact(float|int|null $amount, int $precision = 1): string
+    {
+        if (is_null($amount)) {
+            return '—';
+        }
+
+        $config = static::resolveConfig();
+        $abs = abs($amount);
+        $sign = $amount < 0 ? '-' : '';
+
+        if ($abs >= 1_000_000_000) {
+            $num = $sign . round($abs / 1_000_000_000, $precision) . 'B';
+        } elseif ($abs >= 1_000_000) {
+            $num = $sign . round($abs / 1_000_000, $precision) . 'M';
+        } elseif ($abs >= 10_000) {
+            $num = $sign . round($abs / 1_000, $precision) . 'K';
+        } else {
+            $num = $sign . number_format($abs, 0);
+        }
+
+        return $config['position'] === 'after'
+            ? $num . ' ' . $config['symbol']
+            : $config['symbol'] . $num;
+    }
+
+    /**
      * Format state for table columns (use as formatStateUsing callback).
      */
     public static function formatter(int $decimals = 2): \Closure
     {
         return fn($state) => static::format($state, $decimals);
+    }
+
+    /**
+     * Compact formatter for table columns / stat cards.
+     */
+    public static function compactFormatter(int $precision = 1): \Closure
+    {
+        return fn($state) => static::formatCompact($state, $precision);
     }
 }

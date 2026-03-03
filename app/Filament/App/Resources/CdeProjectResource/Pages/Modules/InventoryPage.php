@@ -1422,8 +1422,8 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                     ->badge()
                     ->color(fn($record) => $record->total_stock <= 0 ? 'danger' : ($record->total_stock <= $record->reorder_level ? 'warning' : 'success'))
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('cost_price')->label('Cost')->money('USD')->sortable()->toggleable(),
-                Tables\Columns\TextColumn::make('selling_price')->label('Sell')->money('USD')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('cost_price')->label('Cost')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('selling_price')->label('Sell')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('condition')
                     ->badge()->color(fn(string $state) => match ($state) { 'new' => 'success', 'good' => 'primary', 'fair' => 'warning', 'poor' => 'danger', 'damaged' => 'danger', default => 'gray'})
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -1468,7 +1468,7 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('expected_date')->label('Expected')->date()->sortable()->toggleable()
                     ->color(fn($record) => $record->expected_date?->isPast() && !in_array($record->status, ['received', 'cancelled']) ? 'danger' : null),
                 Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->sortable()->toggleable(),
-                Tables\Columns\TextColumn::make('total_amount')->label('Total')->money('USD')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('total_amount')->label('Total')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('approver.name')->label('Approved By')->placeholder('—')->toggleable()
                     ->description(fn($record) => $record->approved_at?->format('M d, Y')),
                 Tables\Columns\TextColumn::make('creator.name')->label('Created By')->toggleable(isToggledHiddenByDefault: true),
