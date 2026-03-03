@@ -3066,9 +3066,9 @@
     {{-- Stock Monitor Modal (full store detail) - Can be triggered from Stores or Stock Monitor Tab --}}
     @if($showStockMonitorModal)
         @php $smd = $this->getStockMonitorData(); @endphp
-        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;"
+        <div style="position:fixed;inset:0;background:var(--gray-50, #f9fafb);z-index:9999;display:flex;flex-direction:column;"
              wire:click.self="$set('showStockMonitorModal', false)">
-            <div style="background:white;border-radius:16px;width:100%;max-width:1000px;max-height:90vh;overflow-y:auto;padding:24px;" wire:click.stop>
+            <div style="background:white;width:100%;height:100vh;overflow-y:auto;padding:32px 48px;" wire:click.stop>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
                     <h3 style="font-size:18px;font-weight:800;margin:0;">📊 Stock Monitor — {{ $smd['warehouse']->name ?? '' }}</h3>
                     <button wire:click="$set('showStockMonitorModal', false)" style="background:none;border:none;cursor:pointer;font-size:20px;">✕</button>
@@ -3086,10 +3086,10 @@
                                 ['label' => 'Low Stock', 'value' => $smd['summary']['low_stock_count'], 'color' => $smd['summary']['low_stock_count'] > 0 ? '#f59e0b' : '#10b981'],
                                 ['label' => 'Out of Stock', 'value' => $smd['summary']['out_of_stock_count'], 'color' => $smd['summary']['out_of_stock_count'] > 0 ? '#ef4444' : '#10b981'],
                             ] as $card)
-                                            <div style="background:#f9fafb;border-radius:10px;padding:12px;text-align:center;border:1px solid #e5e7eb;">
-                                                <div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#9ca3af;letter-spacing:.05em">{{ $card['label'] }}</div>
-                                                <div style="font-size:20px;font-weight:800;color:{{ $card['color'] }};margin-top:4px;">{{ $card['value'] }}</div>
-                                            </div>
+                                                <div style="background:#f9fafb;border-radius:10px;padding:12px;text-align:center;border:1px solid #e5e7eb;">
+                                                    <div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#9ca3af;letter-spacing:.05em">{{ $card['label'] }}</div>
+                                                    <div style="font-size:20px;font-weight:800;color:{{ $card['color'] }};margin-top:4px;">{{ $card['value'] }}</div>
+                                                </div>
                         @endforeach
                     </div>
 
