@@ -12,6 +12,8 @@ use App\Models\GoodsReceivedNote;
 use App\Models\GrnItem;
 use App\Models\MaterialIssuance;
 use App\Models\MaterialIssuanceItem;
+use App\Models\MaterialRequisition;
+use App\Models\MaterialRequisitionItem;
 use App\Models\Milestone;
 use App\Models\Product;
 use App\Models\ProductTracking;
@@ -103,6 +105,7 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         'quantity' => 1,
         'condition' => 'good',
         'notes' => '',
+        'requisition_id' => null,
     ];
 
     public array $assetForm = [
@@ -177,6 +180,18 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
     // ─── Stock Monitor ──────────────────────────────────────
     public bool $showStockMonitorModal = false;
     public ?int $stockMonitorStoreId = null;
+
+    // ─── Material Requisitions ──────────────────────────────
+    public bool $showRequisitionModal = false;
+    public ?int $editingRequisitionId = null;
+    public array $reqHeader = [
+        'warehouse_id' => '',
+        'priority' => 'normal',
+        'purpose' => '',
+        'required_date' => '',
+        'notes' => '',
+    ];
+    public array $reqItems = [];
 
     public function initNewPO(): void
     {
@@ -845,6 +860,7 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             ],
             'items' => $levels->map(fn($sl) => [
                 'id' => $sl->id,
+                'product_id' => $sl->product_id,
                 'product_name' => $sl->product->name ?? '—',
                 'sku' => $sl->product->sku ?? '—',
                 'unit' => $sl->product->unit_of_measure ?? 'each',
@@ -1199,6 +1215,7 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             'expected_return_date' => $data['expected_return_date'] ?: null,
             'notes' => $data['notes'] ?: null,
             'created_by' => auth()->id(),
+            'material_requisition_id' => $data['requisition_id'] ?? null,
         ]);
 
         MaterialIssuanceItem::create([
@@ -1221,8 +1238,31 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             'recorded_by' => auth()->id(),
         ]);
 
+        // Update Requisition if exists
+        if (!empty($data['requisition_id'])) {
+            $req = MaterialRequisition::find($data['requisition_id']);
+            if ($req) {
+                // Update quantity_issued on the item
+                $reqItem = $req->items()->where('product_id', $data['product_id'])->first();
+                if ($reqItem) {
+                    $reqItem->increment('quantity_issued', $data['quantity']);
+                }
+
+                // Check if all items are fully issued
+                $allIssued = true;
+                foreach ($req->items as $ri) {
+                    $target = $ri->quantity_approved ?? $ri->quantity_requested;
+                    if ($ri->quantity_issued < $target) {
+                        $allIssued = false;
+                        break;
+                    }
+                }
+                $req->update(['status' => $allIssued ? 'issued' : 'partially_issued']);
+            }
+        }
+
         $this->showIssuanceModal = false;
-        $this->issuanceForm = ['issued_to' => '', 'issued_to_name' => '', 'purpose' => 'site_use', 'warehouse_id' => '', 'issue_date' => '', 'expected_return_date' => '', 'product_id' => '', 'quantity' => 1, 'condition' => 'good', 'notes' => ''];
+        $this->issuanceForm = ['issued_to' => '', 'issued_to_name' => '', 'purpose' => 'site_use', 'warehouse_id' => '', 'issue_date' => '', 'expected_return_date' => '', 'product_id' => '', 'quantity' => 1, 'condition' => 'good', 'notes' => '', 'requisition_id' => null];
         Notification::make()->title("Materials issued: {$number}")->success()->send();
     }
 
@@ -1729,6 +1769,122 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             ->title('Asset replaced — new asset ' . $newTag . ' created')
             ->success()
             ->send();
+    }
+
+    // ─── Material Requisitions Methods ─────────────────────────
+    public function getRequisitions()
+    {
+        return MaterialRequisition::where('company_id', $this->cid())
+            ->where('cde_project_id', $this->pid())
+            ->with(['requester', 'warehouse', 'approver', 'items.product'])
+            ->latest()->get();
+    }
+
+    public function initNewRequisition(?int $productId = null): void
+    {
+        $this->editingRequisitionId = null;
+        $this->reqHeader = [
+            'warehouse_id' => '',
+            'priority' => 'normal',
+            'purpose' => '',
+            'required_date' => now()->addDays(2)->format('Y-m-d'),
+            'notes' => '',
+        ];
+        if ($productId) {
+            $this->reqItems = [['product_id' => $productId, 'quantity_requested' => 1, 'notes' => '']];
+        } else {
+            $this->reqItems = [['product_id' => '', 'quantity_requested' => 1, 'notes' => '']];
+        }
+        $this->showRequisitionModal = true;
+    }
+
+    public function addReqItem(): void
+    {
+        $this->reqItems[] = ['product_id' => '', 'quantity_requested' => 1, 'notes' => ''];
+    }
+
+    public function removeReqItem(int $index): void
+    {
+        if (count($this->reqItems) > 1) {
+            array_splice($this->reqItems, $index, 1);
+        }
+    }
+
+    public function submitRequisition(): void
+    {
+        $this->validate([
+            'reqHeader.priority' => 'required',
+            'reqHeader.purpose' => 'required|string|max:255',
+            'reqItems.*.product_id' => 'required',
+            'reqItems.*.quantity_requested' => 'required|integer|min:1',
+        ]);
+
+        $next = MaterialRequisition::where('cde_project_id', $this->pid())->count() + 1;
+
+        $req = MaterialRequisition::create([
+            'company_id' => $this->cid(),
+            'cde_project_id' => $this->pid(),
+            'requisition_number' => 'REQ-' . str_pad((string) $next, 5, '0', STR_PAD_LEFT),
+            'requester_id' => auth()->id(),
+            'warehouse_id' => $this->reqHeader['warehouse_id'] ?: null,
+            'status' => 'pending',
+            'priority' => $this->reqHeader['priority'],
+            'purpose' => $this->reqHeader['purpose'],
+            'required_date' => $this->reqHeader['required_date'] ?: null,
+            'notes' => $this->reqHeader['notes'] ?: null,
+        ]);
+
+        foreach ($this->reqItems as $item) {
+            $req->items()->create([
+                'product_id' => $item['product_id'],
+                'quantity_requested' => $item['quantity_requested'],
+                'notes' => $item['notes'] ?? null,
+            ]);
+        }
+
+        $this->showRequisitionModal = false;
+        Notification::make()->title("Requisition {$req->requisition_number} submitted")->success()->send();
+    }
+
+    public function approveRequisition(int $id): void
+    {
+        $req = MaterialRequisition::find($id);
+        if ($req && $req->status === 'pending') {
+            $req->update([
+                'status' => 'approved',
+                'approved_by' => auth()->id(),
+                'approved_at' => now(),
+            ]);
+            foreach ($req->items as $item) {
+                $item->update(['quantity_approved' => $item->quantity_requested]);
+            }
+            Notification::make()->title("Requisition {$req->requisition_number} approved.")->success()->send();
+        }
+    }
+
+    public function promptIssueRequisition(int $id): void
+    {
+        $req = MaterialRequisition::with('items')->find($id);
+        if (!$req || !in_array($req->status, ['approved', 'partially_issued'])) {
+            return;
+        }
+
+        // Auto-fill an issuance form for this requisition
+        $this->issuanceForm = [
+            'issued_to' => $req->requester_id,
+            'issued_to_name' => '',
+            'purpose' => 'site_use',
+            'warehouse_id' => $req->warehouse_id ?? '',
+            'issue_date' => now()->format('Y-m-d'),
+            'expected_return_date' => '',
+            'notes' => "Issuing against Requisition {$req->requisition_number}",
+            'requisition_id' => $req->id, // Add tracking logic later inside submitIssuance
+            'product_id' => $req->items->first()->product_id ?? '',
+            'quantity' => ($req->items->first()->quantity_approved ?? $req->items->first()->quantity_requested) - $req->items->first()->quantity_issued,
+            'condition' => 'good',
+        ];
+
+        $this->showIssuanceModal = true;
     }
 
     protected function getHeaderActions(): array

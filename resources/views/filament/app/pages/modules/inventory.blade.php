@@ -169,7 +169,7 @@
 
     <div class="inv-tab-bar"
         style="display:flex; gap:4px; border-bottom:2px solid #e5e7eb; margin-bottom:16px; flex-wrap:wrap;">
-        @foreach(['products' => $iCube . ' Products', 'assets' => $iTag . ' Assets', 'stores' => $iStore . ' Stores', 'purchase_orders' => $iCart . ' Purchase Orders', 'grn' => $iInbox . ' GRN', 'issuances' => $iClipboard . ' Issuances', 'delivery_notes' => $iTruck . ' Delivery Notes', 'transfers' => $iArrows . ' Transfers', 'adjustments' => $iScale . ' Adjustments', 'stock_monitor' => $iSignal . ' Stock Monitor', 'tracking' => $iRoute . ' Tracking'] as $tab => $label)
+        @foreach(['products' => $iCube . ' Products', 'assets' => $iTag . ' Assets', 'stores' => $iStore . ' Stores', 'requisitions' => '📋 Requisitions', 'purchase_orders' => $iCart . ' Purchase Orders', 'grn' => $iInbox . ' GRN', 'issuances' => $iClipboard . ' Issuances', 'delivery_notes' => $iTruck . ' Delivery Notes', 'transfers' => $iArrows . ' Transfers', 'adjustments' => $iScale . ' Adjustments', 'stock_monitor' => $iSignal . ' Stock Monitor', 'tracking' => $iRoute . ' Tracking'] as $tab => $label)
             <button wire:click="$set('activeInventoryTab', '{{ $tab }}')"
                 class="inv-tab {{ $activeInventoryTab === $tab ? 'inv-tab-active' : '' }}"
                 style="padding:10px 20px; font-size:13px; font-weight:600; border:none; cursor:pointer; transition:all .2s; border-radius:8px 8px 0 0;
@@ -256,6 +256,69 @@
                     <div style="font-size:13px;">Add your first store or warehouse to manage inventory locations.</div>
                 </div>
             @endforelse
+        </div>
+    @endif
+
+    {{-- ═══════════════ REQUISITIONS TAB ═══════════════ --}}
+    @if($activeInventoryTab === 'requisitions')
+        <div style="margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;">
+            <div>
+                <h3 style="font-size:18px;font-weight:700;margin:0;color:#1f2937;">Material Requisitions</h3>
+                <p style="margin:4px 0 0 0;font-size:13px;color:#6b7280;">Manage internal requests for materials before issuance.</p>
+            </div>
+            <button wire:click="initNewRequisition" class="inv-btn-primary" style="padding:10px 16px; border-radius:8px; border:none; background:#4f46e5; color:white; font-weight:600; font-size:14px; cursor:pointer;">
+                + New Requisition
+            </button>
+        </div>
+
+        <div class="inv-card" style="background:white;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);overflow-x:auto;">
+            <table class="inv-table border-collapse w-full text-left bg-white text-sm" style="width:100%;border-collapse:collapse;font-size:13px;text-align:left;">
+                <thead>
+                    <tr style="background:#f8fafc;border-bottom:2px solid #e5e7eb;">
+                        <th style="padding:12px 16px;color:#6b7280;font-weight:600;">Requisition #</th>
+                        <th style="padding:12px 16px;color:#6b7280;font-weight:600;">Priority</th>
+                        <th style="padding:12px 16px;color:#6b7280;font-weight:600;">Status</th>
+                        <th style="padding:12px 16px;color:#6b7280;font-weight:600;">Requester</th>
+                        <th style="padding:12px 16px;color:#6b7280;font-weight:600;">Warehouse</th>
+                        <th style="padding:12px 16px;color:#6b7280;font-weight:600;">Date Required</th>
+                        <th style="padding:12px 16px;color:#6b7280;font-weight:600;text-align:right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($this->getRequisitions() as $req)
+                                                            <tr style="border-bottom:1px solid #f3f4f6;transition:background .2s;" class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                                                <td style="padding:12px 16px;font-weight:600;">{{ $req->requisition_number }}</td>
+                                                                <td style="padding:12px 16px;">
+                                                                    <span style="padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;
+                                                                        {{ $req->priority === 'high' || $req->priority === 'urgent' ? 'background:#fee2e2;color:#ef4444;' : 'background:#f3f4f6;color:#4b5563;' }}">
+                                                                        {{ ucfirst($req->priority) }}
+                                                                    </span>
+                                                                </td>
+                                                                <td style="padding:12px 16px;">
+                                                                    <span style="padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;
+                                                                        {{ $req->status === 'approved' ? 'background:#dcfce7;color:#16a34a;' :
+                        ($req->status === 'issued' ? 'background:#dbeafe;color:#2563eb;' :
+                            ($req->status === 'pending' ? 'background:#fef3c7;color:#d97706;' : 'background:#f3f4f6;color:#6b7280;')) }}">
+                                                                        {{ ucfirst(str_replace('_', ' ', $req->status)) }}
+                                                                    </span>
+                                                                </td>
+                                                                <td style="padding:12px 16px;">{{ $req->requester->name ?? '—' }}</td>
+                                                                <td style="padding:12px 16px;">{{ $req->warehouse->name ?? 'Any' }}</td>
+                                                                <td style="padding:12px 16px;">{{ $req->required_date ? $req->required_date->format('M d, Y') : '—' }}</td>
+                                                                <td style="padding:12px 16px;text-align:right;display:flex;justify-content:flex-end;gap:8px;">
+                                                                    @if($req->status === 'pending')
+                                                                        <button wire:click="approveRequisition({{ $req->id }})" wire:confirm="Approve this requisition?" style="background:#10b981;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">Approve</button>
+                                                                    @endif
+                                                                    @if(in_array($req->status, ['approved', 'partially_issued']))
+                                                                        <button wire:click="promptIssueRequisition({{ $req->id }})" style="background:#4f46e5;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">Issue</button>
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                    @empty
+                        <tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af;">No requisitions found.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
     @endif
 
@@ -2021,6 +2084,156 @@
         </div>
     @endif
 
+    {{-- ─── Requisition Builder Builder ──────────────────── --}}
+    @if($showRequisitionModal ?? false)
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(2px);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;">
+            <div style="background:white;width:100%;max-width:900px;border-radius:16px;box-shadow:0 10px 25px rgba(0,0,0,0.15);overflow:hidden;display:flex;flex-direction:column;max-height:90vh;">
+                <!-- Header -->
+                <div style="padding:24px 32px;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;background:#f8fafc;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <div style="width:40px;height:40px;border-radius:10px;background:#4f46e5;color:white;display:flex;align-items:center;justify-content:center;">
+                            {!! $iCart !!}
+                        </div>
+                        <div>
+                            <h2 style="margin:0;font-size:18px;font-weight:800;color:#1e293b;letter-spacing:-.01em;">
+                                Create Material Requisition
+                            </h2>
+                            <div style="font-size:13px;color:#64748b;margin-top:2px;font-weight:500;">
+                                Internal issue request for site or team.
+                            </div>
+                        </div>
+                    </div>
+                    <button wire:click="$set('showRequisitionModal', false)" type="button"
+                        style="background:none;border:none;cursor:pointer;color:#9ca3af;padding:8px;border-radius:8px;">
+                        <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+
+                <form wire:submit.prevent="submitRequisition" style="display:flex;flex-direction:column;min-height:0;flex:1;">
+                    <!-- Scrollable Body -->
+                    <div style="padding:32px;overflow-y:auto;flex:1;background:#fcfcfd;">
+                        @if($errors->any())
+                            <div style="margin-bottom:24px;background:#fee2e2;color:#ef4444;padding:12px;border-radius:8px;font-size:13px;">
+                                <ul style="margin:0;padding-left:16px;">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:32px;">
+                            <div class="inv-field">
+                                <label>Warehouse/Store (Optional)</label>
+                                <select wire:model.defer="reqHeader.warehouse_id" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+                                    <option value="">Any available</option>
+                                    @foreach(\App\Models\Warehouse::where('company_id', $this->cid())->get() as $wh)
+                                        <option value="{{ $wh->id }}">{{ $wh->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="inv-field">
+                                <label>Priority <span style="color:#ef4444">*</span></label>
+                                <select wire:model.defer="reqHeader.priority" required style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+                                    <option value="low">Low</option>
+                                    <option value="normal">Normal</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                            <div class="inv-field">
+                                <label>Date Required <span style="color:#ef4444">*</span></label>
+                                <input type="date" wire:model.defer="reqHeader.required_date" required
+                                    style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+                            </div>
+                        </div>
+
+                        <div class="inv-field" style="margin-bottom:32px;">
+                            <label>Purpose <span style="color:#ef4444">*</span></label>
+                            <input type="text" wire:model.defer="reqHeader.purpose" required placeholder="e.g. For Phase 1 plumbing works"
+                                style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+                        </div>
+
+                        <!-- Requisition Lines -->
+                        <div style="background:white;border:1px solid #e2e8f0;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(0,0,0,0.02);">
+                            <div style="background:#f8fafc;padding:12px 20px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+                                <h3 style="margin:0;font-size:14px;font-weight:700;color:#334155;">Requested Items</h3>
+                            </div>
+
+                            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                                <thead style="background:#f1f5f9;border-bottom:1px solid #e2e8f0;">
+                                    <tr>
+                                        <th style="padding:10px 16px;text-align:left;font-weight:600;color:#475569;width:40%;">Product / Item</th>
+                                        <th style="padding:10px 16px;text-align:left;font-weight:600;color:#475569;width:15%;">Quantity</th>
+                                        <th style="padding:10px 16px;text-align:left;font-weight:600;color:#475569;">Description / Notes</th>
+                                        <th style="padding:10px 16px;width:50px;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($reqItems as $index => $item)
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:12px 16px;">
+                                                <select wire:model="reqItems.{{ $index }}.product_id" required
+                                                    style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;">
+                                                    <option value="">Select Product...</option>
+                                                    @foreach($this->getProductOptions() as $val => $label)
+                                                        <option value="{{ $val }}">{{ $label }}</option>
+                                                    @endforeach
+                                                </select>
+                                                @error("reqItems.{$index}.product_id") <span style="color:red;font-size:11px;">Required</span> @enderror
+                                            </td>
+                                            <td style="padding:12px 16px;">
+                                                <input type="number" wire:model="reqItems.{{ $index }}.quantity_requested" required min="1" step="1"
+                                                    style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;">
+                                            </td>
+                                            <td style="padding:12px 16px;">
+                                                <input type="text" wire:model.defer="reqItems.{{ $index }}.notes" placeholder="Optional notes"
+                                                    style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;">
+                                            </td>
+                                            <td style="padding:12px 16px;text-align:center;">
+                                                @if(count($reqItems) > 1)
+                                                    <button type="button" wire:click="removeReqItem({{ $index }})"
+                                                        style="background:none;border:none;color:#ef4444;cursor:pointer;padding:4px;" title="Remove Line">
+                                                        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+
+                            <div style="padding:12px 20px;background:#f8fafc;border-top:1px solid #e2e8f0;">
+                                <button type="button" wire:click="addReqItem"
+                                    style="display:flex;align-items:center;gap:6px;background:none;border:1px dashed #94a3b8;color:#4f46e5;font-weight:600;padding:6px 16px;border-radius:6px;cursor:pointer;font-size:13px;">
+                                    + Add Item Line
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Footer -->
+                    <div style="padding:20px 32px;border-top:1px solid #e5e7eb;background:white;display:flex;justify-content:flex-end;gap:12px;align-items:center;">
+                        <button type="button" wire:click="$set('showRequisitionModal', false)" class="inv-btn-cancel"
+                            style="padding:10px 24px;border-radius:8px;border:1px solid #d1d5db;background:white;color:#374151;font-size:13px;font-weight:600;cursor:pointer">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            style="padding:10px 24px;border-radius:8px;border:none;background:#4f46e5;color:white;font-size:13px;font-weight:700;cursor:pointer">
+                            <span wire:loading.remove wire:target="submitRequisition">Submit Requisition</span>
+                            <span wire:loading wire:target="submitRequisition">Saving...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
     {{-- ═══════════════ QUICK CREATE WAREHOUSE MODAL ═══════════════ --}}
     @if($showQuickWarehouseModal ?? false)
         <div style="position:fixed;inset:0;z-index:10000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5)"
@@ -3086,10 +3299,10 @@
                                 ['label' => 'Low Stock', 'value' => $smd['summary']['low_stock_count'], 'color' => $smd['summary']['low_stock_count'] > 0 ? '#f59e0b' : '#10b981'],
                                 ['label' => 'Out of Stock', 'value' => $smd['summary']['out_of_stock_count'], 'color' => $smd['summary']['out_of_stock_count'] > 0 ? '#ef4444' : '#10b981'],
                             ] as $card)
-                                                <div style="background:#f9fafb;border-radius:10px;padding:12px;text-align:center;border:1px solid #e5e7eb;">
-                                                    <div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#9ca3af;letter-spacing:.05em">{{ $card['label'] }}</div>
-                                                    <div style="font-size:20px;font-weight:800;color:{{ $card['color'] }};margin-top:4px;">{{ $card['value'] }}</div>
-                                                </div>
+                                                                <div style="background:#f9fafb;border-radius:10px;padding:12px;text-align:center;border:1px solid #e5e7eb;">
+                                                                    <div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#9ca3af;letter-spacing:.05em">{{ $card['label'] }}</div>
+                                                                    <div style="font-size:20px;font-weight:800;color:{{ $card['color'] }};margin-top:4px;">{{ $card['value'] }}</div>
+                                                                </div>
                         @endforeach
                     </div>
 
@@ -3106,6 +3319,7 @@
                                 <th style="text-align:right;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Value</th>
                                 <th style="text-align:left;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Bin</th>
                                 <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Status</th>
+                                <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -3126,6 +3340,11 @@
                                             <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;">Low</span>
                                         @else
                                             <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#dcfce7;color:#16a34a;">OK</span>
+                                        @endif
+                                    </td>
+                                    <td style="padding:8px;text-align:center;">
+                                        @if(!$si['is_out'])
+                                            <button wire:click="initNewRequisition({{ $si['product_id'] }})" style="padding:4px 8px;font-size:10px;font-weight:600;background:#4f46e5;color:white;border:none;border-radius:4px;cursor:pointer;">Request</button>
                                         @endif
                                     </td>
                                 </tr>

@@ -24,6 +24,7 @@ class MaterialIssuance extends Model
         'notes',
         'created_by',
         'approved_by',
+        'material_requisition_id',
     ];
 
     protected $casts = [
@@ -71,5 +72,9 @@ class MaterialIssuance extends Model
     public function project()
     {
         return $this->belongsTo(CdeProject::class, 'cde_project_id');
+    }
+    public function requisition()
+    {
+        return $this->belongsTo(MaterialRequisition::class, 'material_requisition_id');
     }
 }
