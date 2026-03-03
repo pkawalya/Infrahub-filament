@@ -28,6 +28,9 @@
         $iMapPin = $ico('M15 10.5a3 3 0 11-6 0 3 3 0 016 0z M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z');
         $iClock = $ico('M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z');
         $iDots = $ico('M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z'); // ellipsis-horizontal
+        $iTruck = $ico('M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12');
+        $iRoute = $ico('M9 6.75V15m0-8.25a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM9 15a1.5 1.5 0 100 3 1.5 1.5 0 000-3zm6-5.25V18m0-11.25a1.5 1.5 0 110 3 1.5 1.5 0 010-3zM15 18a1.5 1.5 0 100 3 1.5 1.5 0 000-3z');
+        $iSignal = $ico('M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z');
         $iFloppy = $ico('M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z');
         $iSaveDoc = $ico('M9 3.75H6.912a2.25 2.25 0 00-2.15 1.588L2.35 13.177a2.25 2.25 0 00-.1.661V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18v-4.162c0-.224-.034-.447-.1-.661L19.238 5.338a2.25 2.25 0 00-2.15-1.588H15M2.25 13.5h3.86a2.25 2.25 0 012.012 1.244l.256.512a2.25 2.25 0 002.013 1.244h3.218a2.25 2.25 0 002.013-1.244l.256-.512a2.25 2.25 0 012.013-1.244h3.859');
     @endphp
@@ -166,16 +169,16 @@
 
     <div class="inv-tab-bar"
         style="display:flex; gap:4px; border-bottom:2px solid #e5e7eb; margin-bottom:16px; flex-wrap:wrap;">
-        @foreach(['products' => $iCube . ' Products', 'assets' => $iTag . ' Assets', 'stores' => $iStore . ' Stores', 'purchase_orders' => $iCart . ' Purchase Orders', 'grn' => $iInbox . ' GRN', 'issuances' => $iClipboard . ' Issuances', 'transfers' => $iArrows . ' Transfers', 'adjustments' => $iScale . ' Adjustments'] as $tab => $label)
+        @foreach(['products' => $iCube . ' Products', 'assets' => $iTag . ' Assets', 'stores' => $iStore . ' Stores', 'purchase_orders' => $iCart . ' Purchase Orders', 'grn' => $iInbox . ' GRN', 'issuances' => $iClipboard . ' Issuances', 'delivery_notes' => $iTruck . ' Delivery Notes', 'transfers' => $iArrows . ' Transfers', 'adjustments' => $iScale . ' Adjustments', 'stock_monitor' => $iSignal . ' Stock Monitor', 'tracking' => $iRoute . ' Tracking'] as $tab => $label)
             <button wire:click="$set('activeInventoryTab', '{{ $tab }}')"
                 class="inv-tab {{ $activeInventoryTab === $tab ? 'inv-tab-active' : '' }}"
                 style="padding:10px 20px; font-size:13px; font-weight:600; border:none; cursor:pointer; transition:all .2s; border-radius:8px 8px 0 0;
-                                                                                                                                                                                                                        {{ $activeInventoryTab === $tab ? 'background:#4f46e5; color:white;' : 'background:transparent; color:#6b7280;' }}">
+                                                                                                                                                                                                                            {{ $activeInventoryTab === $tab ? 'background:#4f46e5; color:white;' : 'background:transparent; color:#6b7280;' }}">
                 {!! $label !!}
                 @if($tab === 'products')
                     <span class="inv-badge"
                         style="margin-left:4px; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:700;
-                                                                                                                                                                                                                                                                                                                                                                                                                                        {{ $activeInventoryTab === $tab ? 'background:rgba(255,255,255,0.2); color:white;' : 'background:#e5e7eb; color:#6b7280;' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                {{ $activeInventoryTab === $tab ? 'background:rgba(255,255,255,0.2); color:white;' : 'background:#e5e7eb; color:#6b7280;' }}">
                         {{ \App\Models\Product::where('company_id', $this->record->company_id)->count() }}
                     </span>
                 @endif
@@ -219,7 +222,7 @@
                         </div>
                         <span
                             style="margin-left:auto; padding:3px 10px; border-radius:99px; font-size:10px; font-weight:700;
-                                                                                                                                                                                                                                                                                                                                                                                                                                            {{ $store->is_active ? 'background:#dcfce7; color:#16a34a;' : 'background:#fee2e2; color:#ef4444;' }}">
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    {{ $store->is_active ? 'background:#dcfce7; color:#16a34a;' : 'background:#fee2e2; color:#ef4444;' }}">
                             {{ $store->is_active ? 'Active' : 'Inactive' }}
                         </span>
                     </div>
@@ -242,6 +245,9 @@
                         <button wire:click="viewStoreStock({{ $store->id }})"
                             style="padding:4px 10px; font-size:11px; font-weight:600; border-radius:6px; border:none; background:#4f46e5; color:white; cursor:pointer;">{!! $iChart !!}
                             Stock</button>
+                        <button wire:click="openStockMonitor({{ $store->id }})"
+                            style="padding:4px 10px; font-size:11px; font-weight:600; border-radius:6px; border:none; background:#7c3aed; color:white; cursor:pointer;">{!! $iSignal !!}
+                            Monitor</button>
                     </div>
                 </div>
             @empty
@@ -297,7 +303,7 @@
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600;
-                                                                                                                                                                                                                                                                                                                                                        {{ match ($grn->status) { 'accepted' => 'background:#d1fae5;color:#065f46', 'partial' => 'background:#fef3c7;color:#92400e', 'rejected' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                                                                                                                                                                                                                                                                {{ match ($grn->status) { 'accepted' => 'background:#d1fae5;color:#065f46', 'partial' => 'background:#fef3c7;color:#92400e', 'rejected' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ \App\Models\GoodsReceivedNote::$statuses[$grn->status] ?? $grn->status }}
                             </span>
                         </td>
@@ -430,14 +436,14 @@
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 10px;border-radius:99px;font-size:11px;font-weight:600;
-                                                                                                                                                                                                                                                                                                                                                {{ match ($transfer->status) { 'received' => 'background:#d1fae5;color:#065f46', 'in_transit' => 'background:#dbeafe;color:#1e40af', 'cancelled' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                                                                                                                                                                                                                                                        {{ match ($transfer->status) { 'received' => 'background:#d1fae5;color:#065f46', 'in_transit' => 'background:#dbeafe;color:#1e40af', 'cancelled' => 'background:#fee2e2;color:#991b1b', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ \App\Models\StockTransfer::$statuses[$transfer->status] ?? $transfer->status }}
                             </span>
                         </td>
                         <td style="padding:10px">
                             <span
                                 style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;
-                                                                                                                                                                                                                                                                                                                                                {{ match ($transfer->priority) { 'urgent' => 'background:#fee2e2;color:#991b1b', 'high' => 'background:#fef3c7;color:#92400e', default => 'background:#f3f4f6;color:#6b7280'} }}">
+                                                                                                                                                                                                                                                                                                                                                        {{ match ($transfer->priority) { 'urgent' => 'background:#fee2e2;color:#991b1b', 'high' => 'background:#fef3c7;color:#92400e', default => 'background:#f3f4f6;color:#6b7280'} }}">
                                 {{ ucfirst($transfer->priority ?? 'normal') }}
                             </span>
                         </td>
@@ -2705,6 +2711,442 @@
                             <span wire:loading.remove wire:target="submitReplaceAsset">{!! $iTransfer !!} Replace & Create
                                 New</span>
                             <span wire:loading wire:target="submitReplaceAsset">Processing...</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════════ DELIVERY NOTES TAB ═══════════════ --}}
+    @if($activeInventoryTab === 'delivery_notes')
+        <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+            <button wire:click="initNewDN"
+                style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; font-size:13px; font-weight:600; border-radius:8px; border:none; background:#4f46e5; color:white; cursor:pointer;">
+                {!! $iPlus !!} New Delivery Note
+            </button>
+        </div>
+
+        <table class="inv-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+                <tr style="background:#f8fafc;border-bottom:2px solid #e5e7eb;">
+                    <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">DN #</th>
+                    <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Destination</th>
+                    <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Vehicle</th>
+                    <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Driver</th>
+                    <th style="text-align:center;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Items</th>
+                    <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Status</th>
+                    <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Dispatch</th>
+                    <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Milestone</th>
+                    <th style="text-align:center;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($this->getDeliveryNotes() as $dn)
+                    @php
+                        $statusColors = ['draft' => '#6b7280', 'dispatched' => '#f59e0b', 'in_transit' => '#3b82f6', 'delivered' => '#10b981', 'partial' => '#d97706'];
+                    @endphp
+                    <tr style="border-bottom:1px solid #f3f4f6;">
+                        <td style="padding:10px 12px;font-weight:700;color:#4f46e5">{{ $dn->dn_number }}</td>
+                        <td style="padding:10px 12px;">
+                            <div style="font-weight:600">{{ $dn->destination ?? '—' }}</div>
+                            @if($dn->destination_contact)<div style="font-size:11px;color:#9ca3af">{{ $dn->destination_contact }}</div>@endif
+                        </td>
+                        <td style="padding:10px 12px;">{{ $dn->vehicle_number ?? '—' }}</td>
+                        <td style="padding:10px 12px;">{{ $dn->driver_name ?? '—' }}</td>
+                        <td style="padding:10px 12px;text-align:center;">
+                            <span style="background:#eef2ff;color:#4f46e5;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;">{{ $dn->items->count() }}</span>
+                        </td>
+                        <td style="padding:10px 12px;">
+                            <span style="padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;color:white;background:{{ $statusColors[$dn->status] ?? '#6b7280' }}">
+                                {{ \App\Models\DeliveryNote::$statuses[$dn->status] ?? $dn->status }}
+                            </span>
+                        </td>
+                        <td style="padding:10px 12px;font-size:12px;">{{ $dn->dispatch_date?->format('M d, Y') ?? '—' }}</td>
+                        <td style="padding:10px 12px;font-size:12px;">{{ $dn->milestone?->name ?? '—' }}</td>
+                        <td style="padding:10px 12px;text-align:center;">
+                            @if($dn->status !== 'delivered')
+                                <button wire:click="markDNDelivered({{ $dn->id }})" wire:confirm="Mark this delivery note as delivered?"
+                                    style="padding:4px 10px;font-size:11px;font-weight:600;border-radius:6px;border:none;background:#10b981;color:white;cursor:pointer;">
+                                    ✓ Delivered
+                                </button>
+                            @else
+                                <span style="font-size:11px;color:#10b981;font-weight:600">✓ Completed</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @if($dn->items->count())
+                        <tr style="border-bottom:1px solid #e5e7eb;">
+                            <td colspan="9" style="padding:0 12px 10px 40px;">
+                                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                                    @foreach($dn->items as $di)
+                                        <span style="background:#f3f4f6;padding:3px 10px;border-radius:6px;font-size:11px;">
+                                            {{ $di->product?->name ?? $di->description }} × {{ number_format($di->quantity_dispatched) }} {{ $di->unit }}
+                                            @if($dn->status === 'delivered' && $di->condition !== 'good')
+                                                <span style="color:#ef4444;font-weight:600;">⚠ {{ $di->condition }}</span>
+                                            @endif
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </td>
+                        </tr>
+                    @endif
+                @empty
+                    <tr>
+                        <td colspan="9" style="text-align:center;padding:40px;color:#9ca3af;">
+                            <div style="margin-bottom:8px">{!! $iTruck !!}</div>
+                            <div style="font-weight:600;">No Delivery Notes</div>
+                            <div style="font-size:12px;">Create delivery notes to track dispatches to site.</div>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    @endif
+
+    {{-- ═══════════════ STOCK MONITOR TAB ═══════════════ --}}
+    @if($activeInventoryTab === 'stock_monitor')
+        @php $storesSummary = $this->getAllStoresStockSummary(); @endphp
+
+        {{-- Store-level summary cards --}}
+        <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap:16px; margin-bottom:24px;">
+            @forelse($storesSummary as $ws)
+                <div style="background:white;border:1px solid #e5e7eb;border-radius:12px;padding:16px;cursor:pointer;transition:all .2s;"
+                     wire:click="openStockMonitor({{ $ws['id'] }})"
+                     onmouseover="this.style.borderColor='#4f46e5';this.style.boxShadow='0 4px 12px rgba(79,70,229,0.1)'"
+                     onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow='none'">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                        <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,#dbeafe,#e0e7ff);display:flex;align-items:center;justify-content:center;">
+                            {!! $ico('M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35', 24) !!}
+                        </div>
+                        <div>
+                            <div style="font-weight:700;font-size:15px">{{ $ws['name'] }}</div>
+                            <div style="font-size:11px;color:#9ca3af">{{ $ws['code'] ?? '—' }}</div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;">
+                        <div><span style="color:#9ca3af">Products:</span> <strong>{{ number_format($ws['total_products']) }}</strong></div>
+                        <div><span style="color:#9ca3af">Total Qty:</span> <strong>{{ number_format($ws['total_quantity']) }}</strong></div>
+                        <div><span style="color:#9ca3af">Value:</span> <strong>{{ \App\Support\CurrencyHelper::formatCompact($ws['total_value']) }}</strong></div>
+                        <div>
+                            @if($ws['low_stock'] > 0)
+                                <span style="color:#f59e0b;font-weight:700">⚠ {{ $ws['low_stock'] }} low</span>
+                            @elseif($ws['out_of_stock'] > 0)
+                                <span style="color:#ef4444;font-weight:700">✕ {{ $ws['out_of_stock'] }} out</span>
+                            @else
+                                <span style="color:#10b981;font-weight:600">✓ Healthy</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div style="text-align:center;margin-top:12px;padding-top:10px;border-top:1px solid #f3f4f6;">
+                        <span style="font-size:11px;color:#4f46e5;font-weight:600;">Click to view full stock details →</span>
+                    </div>
+                </div>
+            @empty
+                <div style="grid-column:1/-1;text-align:center;padding:40px;color:#9ca3af;">
+                    <div style="margin-bottom:8px">{!! $iSignal !!}</div>
+                    <div style="font-weight:600;">No Stores to Monitor</div>
+                    <div style="font-size:12px;">Add stores in the Stores tab first.</div>
+                </div>
+            @endforelse
+        </div>
+
+        {{-- Stock Monitor Modal (full store detail) --}}
+        @if($showStockMonitorModal)
+            @php $smd = $this->getStockMonitorData(); @endphp
+            <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;"
+                 wire:click.self="$set('showStockMonitorModal', false)">
+                <div style="background:white;border-radius:16px;width:100%;max-width:1000px;max-height:90vh;overflow-y:auto;padding:24px;" wire:click.stop>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+                        <h3 style="font-size:18px;font-weight:800;margin:0;">📊 Stock Monitor — {{ $smd['warehouse']->name ?? '' }}</h3>
+                        <button wire:click="$set('showStockMonitorModal', false)" style="background:none;border:none;cursor:pointer;font-size:20px;">✕</button>
+                    </div>
+
+                    @if(!empty($smd['summary']))
+                        {{-- Summary cards --}}
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px;">
+                            @foreach([
+                                    ['label' => 'Products', 'value' => $smd['summary']['total_items'], 'color' => '#4f46e5'],
+                                    ['label' => 'On Hand', 'value' => number_format($smd['summary']['total_on_hand']), 'color' => '#3b82f6'],
+                                    ['label' => 'Reserved', 'value' => number_format($smd['summary']['total_reserved']), 'color' => '#f59e0b'],
+                                    ['label' => 'Available', 'value' => number_format($smd['summary']['total_available']), 'color' => '#10b981'],
+                                    ['label' => 'Total Value', 'value' => \App\Support\CurrencyHelper::formatCompact($smd['summary']['total_value']), 'color' => '#7c3aed'],
+                                    ['label' => 'Low Stock', 'value' => $smd['summary']['low_stock_count'], 'color' => $smd['summary']['low_stock_count'] > 0 ? '#f59e0b' : '#10b981'],
+                                    ['label' => 'Out of Stock', 'value' => $smd['summary']['out_of_stock_count'], 'color' => $smd['summary']['out_of_stock_count'] > 0 ? '#ef4444' : '#10b981'],
+                                ] as $card)
+                                        <div style="background:#f9fafb;border-radius:10px;padding:12px;text-align:center;border:1px solid #e5e7eb;">
+                                            <div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#9ca3af;letter-spacing:.05em">{{ $card['label'] }}</div>
+                                            <div style="font-size:20px;font-weight:800;color:{{ $card['color'] }};margin-top:4px;">{{ $card['value'] }}</div>
+                                        </div>
+                            @endforeach
+                        </div>
+
+                        {{-- Item-by-item table --}}
+                        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                            <thead>
+                                <tr style="background:#f8fafc;border-bottom:2px solid #e5e7eb;">
+                                    <th style="text-align:left;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Product</th>
+                                    <th style="text-align:left;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">SKU</th>
+                                    <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">On Hand</th>
+                                    <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Reserved</th>
+                                    <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Available</th>
+                                    <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Reorder</th>
+                                    <th style="text-align:right;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Value</th>
+                                    <th style="text-align:left;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Bin</th>
+                                    <th style="text-align:center;padding:8px;font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($smd['items'] as $si)
+                                    <tr style="border-bottom:1px solid #f3f4f6; {{ $si['is_out'] ? 'background:#fef2f2;' : ($si['is_low'] ? 'background:#fffbeb;' : '') }}">
+                                        <td style="padding:8px;font-weight:600;">{{ $si['product_name'] }}</td>
+                                        <td style="padding:8px;color:#6b7280;">{{ $si['sku'] }}</td>
+                                        <td style="padding:8px;text-align:center;font-weight:700;">{{ number_format($si['on_hand']) }}</td>
+                                        <td style="padding:8px;text-align:center;">{{ number_format($si['reserved']) }}</td>
+                                        <td style="padding:8px;text-align:center;font-weight:600;color:#10b981;">{{ number_format($si['available']) }}</td>
+                                        <td style="padding:8px;text-align:center;color:#9ca3af;">{{ number_format($si['reorder_level']) }}</td>
+                                        <td style="padding:8px;text-align:right;font-weight:600;">{{ \App\Support\CurrencyHelper::format($si['stock_value'], 0) }}</td>
+                                        <td style="padding:8px;color:#6b7280;">{{ $si['bin_location'] }}</td>
+                                        <td style="padding:8px;text-align:center;">
+                                            @if($si['is_out'])
+                                                <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fee2e2;color:#ef4444;">Out</span>
+                                            @elseif($si['is_low'])
+                                                <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;">Low</span>
+                                            @else
+                                                <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#dcfce7;color:#16a34a;">OK</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="9" style="text-align:center;padding:20px;color:#9ca3af;">No stock items in this store.</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+
+                        @if(count($smd['low_stock']) > 0)
+                            <div style="margin-top:16px;padding:12px;background:#fffbeb;border:1px solid #fef3c7;border-radius:10px;">
+                                <div style="font-weight:700;font-size:13px;color:#d97706;margin-bottom:8px;">⚠ Low Stock Alerts</div>
+                                <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                                    @foreach($smd['low_stock'] as $ls)
+                                        <span style="background:white;border:1px solid #fcd34d;padding:4px 12px;border-radius:8px;font-size:12px;">
+                                            <strong>{{ $ls['product_name'] }}</strong>: {{ $ls['on_hand'] }}/{{ $ls['reorder_level'] }} (need {{ $ls['deficit'] }} more)
+                                        </span>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    @endif
+                </div>
+            </div>
+        @endif
+    @endif
+
+    {{-- ═══════════════ PRODUCT TRACKING TAB ═══════════════ --}}
+    @if($activeInventoryTab === 'tracking')
+        @php $trackingSummary = $this->getProductTrackingSummary(); @endphp
+
+        <div style="margin-bottom:16px;">
+            <div style="font-size:13px;color:#6b7280;margin-bottom:12px;">Track products through their lifecycle: Ordered → Received → Stored → Issued → In Transit → Delivered → Installed</div>
+
+            {{-- Stage legend --}}
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+                @foreach(\App\Models\ProductTracking::$stages as $sk => $sl)
+                    <span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:99px;font-size:11px;font-weight:600;background:{{ \App\Models\ProductTracking::$stageColors[$sk] }}20;color:{{ \App\Models\ProductTracking::$stageColors[$sk] }};">
+                        <span style="width:8px;height:8px;border-radius:50%;background:{{ \App\Models\ProductTracking::$stageColors[$sk] }}"></span>
+                        {{ $sl }}
+                    </span>
+                @endforeach
+            </div>
+        </div>
+
+        <table class="inv-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+                <tr style="background:#f8fafc;border-bottom:2px solid #e5e7eb;">
+                    <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Product</th>
+                    <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">SKU</th>
+                    <th style="text-align:center;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Current Stage</th>
+                    <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Location</th>
+                    <th style="text-align:center;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Events</th>
+                    <th style="text-align:left;padding:10px 12px;font-size:11px;font-weight:700;text-transform:uppercase;color:#6b7280;">Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($trackingSummary as $tp)
+                    <tr style="border-bottom:1px solid #f3f4f6;">
+                        <td style="padding:10px 12px;font-weight:600;">{{ $tp['name'] }}</td>
+                        <td style="padding:10px 12px;color:#6b7280;">{{ $tp['sku'] ?? '—' }}</td>
+                        <td style="padding:10px 12px;text-align:center;">
+                            <span style="padding:3px 12px;border-radius:99px;font-size:11px;font-weight:700;color:white;background:{{ $tp['latest_stage_color'] }}">
+                                {{ $tp['latest_stage_label'] }}
+                            </span>
+                        </td>
+                        <td style="padding:10px 12px;font-size:12px;">{{ $tp['latest_location'] }}</td>
+                        <td style="padding:10px 12px;text-align:center;">
+                            <span style="background:#f3f4f6;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;">{{ $tp['total_events'] }}</span>
+                        </td>
+                        <td style="padding:10px 12px;font-size:12px;color:#6b7280;">{{ $tp['latest_date'] ?? '—' }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" style="text-align:center;padding:40px;color:#9ca3af;">
+                            <div style="margin-bottom:8px">{!! $iRoute !!}</div>
+                            <div style="font-weight:600;">No Product Tracking Data</div>
+                            <div style="font-size:12px;">Product movements will appear here as POs are received, goods are issued, and delivery notes dispatched.</div>
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    @endif
+
+    {{-- ═══════════════ DELIVERY NOTE MODAL ═══════════════ --}}
+    @if($showDNModal)
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;"
+             wire:click.self="$set('showDNModal', false)">
+            <div style="background:white;border-radius:16px;width:100%;max-width:900px;max-height:90vh;overflow-y:auto;padding:24px;" wire:click.stop>
+                <h3 style="font-size:18px;font-weight:800;margin:0 0 20px;">🚚 New Delivery Note</h3>
+
+                <form wire:submit.prevent="submitDN">
+                    {{-- Header fields --}}
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px;">Destination / Site</label>
+                            <input type="text" wire:model="dnHeader.destination" placeholder="e.g. Karuma Dam Site A"
+                                style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px;">Contact Person</label>
+                            <input type="text" wire:model="dnHeader.destination_contact" placeholder="Receiver name"
+                                style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px;">Contact Phone</label>
+                            <input type="text" wire:model="dnHeader.destination_phone"
+                                style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px;">Vehicle Number</label>
+                            <input type="text" wire:model="dnHeader.vehicle_number" placeholder="e.g. UAA 123B"
+                                style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px;">Driver Name</label>
+                            <input type="text" wire:model="dnHeader.driver_name"
+                                style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                        </div>
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px;">Driver Phone</label>
+                            <input type="text" wire:model="dnHeader.driver_phone"
+                                style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                        </div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px;">From Warehouse</label>
+                            <select wire:model="dnHeader.warehouse_id" style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                                <option value="">— Select —</option>
+                                @foreach($this->getWarehouseOptions() as $wid => $wname)
+                                    <option value="{{ $wid }}">{{ $wname }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px;">Linked Milestone</label>
+                            <select wire:model="dnHeader.milestone_id" style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                                <option value="">— None —</option>
+                                @foreach($this->getMilestoneOptions() as $mid => $mname)
+                                    <option value="{{ $mid }}">{{ $mname }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px;">Dispatch Date</label>
+                            <input type="date" wire:model="dnHeader.dispatch_date"
+                                style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;">
+                        </div>
+                    </div>
+
+                    {{-- Line items --}}
+                    <div style="margin-bottom:16px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <label style="font-size:13px;font-weight:700;">Items to Deliver</label>
+                            <button type="button" wire:click="addDNItem"
+                                style="padding:4px 12px;font-size:12px;font-weight:600;border-radius:6px;border:1px solid #4f46e5;background:white;color:#4f46e5;cursor:pointer;">
+                                {!! $iPlus !!} Add Item
+                            </button>
+                        </div>
+                        <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                            <thead>
+                                <tr style="background:#f8fafc;border-bottom:1px solid #e5e7eb;">
+                                    <th style="text-align:left;padding:6px 8px;font-weight:600;">Product</th>
+                                    <th style="text-align:left;padding:6px 8px;font-weight:600;">Description</th>
+                                    <th style="text-align:center;padding:6px 8px;font-weight:600;width:80px;">Qty</th>
+                                    <th style="text-align:center;padding:6px 8px;font-weight:600;width:90px;">Unit</th>
+                                    <th style="width:40px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($dnItems as $idx => $di)
+                                    <tr style="border-bottom:1px solid #f3f4f6;">
+                                        <td style="padding:4px 8px;">
+                                            <select wire:model="dnItems.{{ $idx }}.product_id"
+                                                style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;">
+                                                <option value="">— Select —</option>
+                                                @foreach($this->getProductOptions() as $pid => $pname)
+                                                    <option value="{{ $pid }}">{{ $pname }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td style="padding:4px 8px;">
+                                            <input type="text" wire:model="dnItems.{{ $idx }}.description" placeholder="Description"
+                                                style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;">
+                                        </td>
+                                        <td style="padding:4px 8px;">
+                                            <input type="number" wire:model="dnItems.{{ $idx }}.quantity_dispatched" min="1"
+                                                style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;text-align:center;">
+                                        </td>
+                                        <td style="padding:4px 8px;">
+                                            <select wire:model="dnItems.{{ $idx }}.unit"
+                                                style="width:100%;padding:6px 8px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;">
+                                                @foreach(\App\Models\Product::$units as $uk => $ul)
+                                                    <option value="{{ $uk }}">{{ $ul }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td style="padding:4px 8px;">
+                                            @if(count($dnItems) > 1)
+                                                <button type="button" wire:click="removeDNItem({{ $idx }})"
+                                                    style="background:none;border:none;cursor:pointer;color:#ef4444;font-size:16px">✕</button>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {{-- Notes --}}
+                    <div style="margin-bottom:16px;">
+                        <label style="font-size:11px;font-weight:700;color:#6b7280;display:block;margin-bottom:4px;">Notes</label>
+                        <textarea wire:model="dnHeader.notes" rows="2"
+                            style="width:100%;padding:8px 12px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;"></textarea>
+                    </div>
+
+                    <div style="display:flex;justify-content:flex-end;gap:8px;">
+                        <button type="button" wire:click="$set('showDNModal', false)"
+                            style="padding:8px 20px;font-size:13px;font-weight:600;border-radius:8px;border:1px solid #e5e7eb;background:white;cursor:pointer;">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            style="padding:8px 20px;font-size:13px;font-weight:600;border-radius:8px;border:none;background:#4f46e5;color:white;cursor:pointer;">
+                            <span wire:loading.remove wire:target="submitDN">Create & Dispatch</span>
+                            <span wire:loading wire:target="submitDN">Processing...</span>
                         </button>
                     </div>
                 </form>

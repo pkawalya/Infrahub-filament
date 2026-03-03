@@ -83,6 +83,16 @@ class Product extends Model
         return $this->hasMany(MaterialIssuanceItem::class);
     }
 
+    public function tracking()
+    {
+        return $this->hasMany(ProductTracking::class);
+    }
+
+    public function deliveryNoteItems()
+    {
+        return $this->hasMany(DeliveryNoteItem::class);
+    }
+
     public function getTotalStockAttribute(): int
     {
         return $this->stockLevels()->sum('quantity_on_hand');

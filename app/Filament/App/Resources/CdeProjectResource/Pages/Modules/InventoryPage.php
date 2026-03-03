@@ -6,11 +6,15 @@ use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\Asset;
 use App\Models\AssetAssignment;
 use App\Models\AssetMaintenanceLog;
+use App\Models\DeliveryNote;
+use App\Models\DeliveryNoteItem;
 use App\Models\GoodsReceivedNote;
 use App\Models\GrnItem;
 use App\Models\MaterialIssuance;
 use App\Models\MaterialIssuanceItem;
+use App\Models\Milestone;
 use App\Models\Product;
+use App\Models\ProductTracking;
 use App\Models\PurchaseOrder;
 use App\Models\PurchaseOrderItem;
 use App\Models\StockAdjustment;
@@ -152,6 +156,27 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         'notes' => '',
     ];
     public array $poItems = [];
+
+    // ─── Delivery Note Builder ───────────────────────────────
+    public bool $showDNModal = false;
+    public array $dnHeader = [
+        'destination' => '',
+        'destination_contact' => '',
+        'destination_phone' => '',
+        'vehicle_number' => '',
+        'driver_name' => '',
+        'driver_phone' => '',
+        'warehouse_id' => '',
+        'material_issuance_id' => '',
+        'milestone_id' => '',
+        'dispatch_date' => '',
+        'notes' => '',
+    ];
+    public array $dnItems = [];
+
+    // ─── Stock Monitor ──────────────────────────────────────
+    public bool $showStockMonitorModal = false;
+    public ?int $stockMonitorStoreId = null;
 
     public function initNewPO(): void
     {
@@ -309,6 +334,19 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                 'unit_price' => $item['unit_price'],
                 'total_price' => $lineTotal,
             ]);
+            // Track product lifecycle
+            if ($item['product_id'] && !$this->editingPOId) {
+                ProductTracking::create([
+                    'company_id' => $this->cid(),
+                    'cde_project_id' => $this->pid(),
+                    'product_id' => $item['product_id'],
+                    'stage' => 'ordered',
+                    'purchase_order_id' => $po->id,
+                    'quantity' => $item['quantity'],
+                    'notes' => 'Ordered via PO ' . $this->poHeader['po_number'],
+                    'recorded_by' => auth()->id(),
+                ]);
+            }
         }
         $this->showPOModal = false;
         $label = $this->editingPOId ? 'updated' : 'created';
@@ -414,6 +452,20 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                 );
                 $stock->increment('quantity_on_hand', $qtyAccepted);
                 $stock->increment('quantity_available', $qtyAccepted);
+            }
+            // Track product lifecycle
+            if ($item['product_id'] && $qtyAccepted > 0) {
+                ProductTracking::create([
+                    'company_id' => $this->cid(),
+                    'cde_project_id' => $this->pid(),
+                    'product_id' => $item['product_id'],
+                    'stage' => 'received',
+                    'purchase_order_id' => $this->grnHeader['purchase_order_id'] ?: null,
+                    'quantity' => $qtyAccepted,
+                    'location' => Warehouse::find($this->grnHeader['warehouse_id'])?->name,
+                    'notes' => 'Received via GRN ' . $grn->grn_number,
+                    'recorded_by' => auth()->id(),
+                ]);
             }
         }
         // Update PO status
@@ -606,6 +658,282 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             ->pluck('po_number', 'id')->toArray();
     }
 
+    // ─── Delivery Notes ─────────────────────────────────────
+    public function initNewDN(): void
+    {
+        $next = DeliveryNote::where('cde_project_id', $this->pid())->count() + 1;
+        $this->dnHeader = [
+            'destination' => '',
+            'destination_contact' => '',
+            'destination_phone' => '',
+            'vehicle_number' => '',
+            'driver_name' => '',
+            'driver_phone' => '',
+            'warehouse_id' => '',
+            'material_issuance_id' => '',
+            'milestone_id' => '',
+            'dispatch_date' => now()->format('Y-m-d'),
+            'notes' => '',
+        ];
+        $this->dnItems = [['product_id' => '', 'description' => '', 'quantity_dispatched' => 1, 'unit' => 'each']];
+        $this->showDNModal = true;
+    }
+
+    public function addDNItem(): void
+    {
+        $this->dnItems[] = ['product_id' => '', 'description' => '', 'quantity_dispatched' => 1, 'unit' => 'each'];
+    }
+
+    public function removeDNItem(int $index): void
+    {
+        if (count($this->dnItems) > 1) {
+            array_splice($this->dnItems, $index, 1);
+            $this->dnItems = array_values($this->dnItems);
+        }
+    }
+
+    public function submitDN(): void
+    {
+        $next = DeliveryNote::where('cde_project_id', $this->pid())->count() + 1;
+        $dn = DeliveryNote::create([
+            'company_id' => $this->cid(),
+            'cde_project_id' => $this->pid(),
+            'dn_number' => 'DN-' . str_pad((string) $next, 5, '0', STR_PAD_LEFT),
+            'destination' => $this->dnHeader['destination'] ?: null,
+            'destination_contact' => $this->dnHeader['destination_contact'] ?: null,
+            'destination_phone' => $this->dnHeader['destination_phone'] ?: null,
+            'vehicle_number' => $this->dnHeader['vehicle_number'] ?: null,
+            'driver_name' => $this->dnHeader['driver_name'] ?: null,
+            'driver_phone' => $this->dnHeader['driver_phone'] ?: null,
+            'warehouse_id' => $this->dnHeader['warehouse_id'] ?: null,
+            'material_issuance_id' => $this->dnHeader['material_issuance_id'] ?: null,
+            'milestone_id' => $this->dnHeader['milestone_id'] ?: null,
+            'dispatch_date' => $this->dnHeader['dispatch_date'] ?: null,
+            'notes' => $this->dnHeader['notes'] ?: null,
+            'status' => 'dispatched',
+            'dispatched_by' => auth()->id(),
+        ]);
+
+        foreach ($this->dnItems as $item) {
+            if (empty($item['description']) && empty($item['product_id']))
+                continue;
+            $dn->items()->create([
+                'product_id' => $item['product_id'] ?: null,
+                'description' => $item['description'] ?: (Product::find($item['product_id'])?->name ?? ''),
+                'unit' => $item['unit'] ?? 'each',
+                'quantity_dispatched' => $item['quantity_dispatched'] ?? 0,
+                'quantity_received' => 0,
+            ]);
+
+            // Track the product lifecycle
+            if ($item['product_id']) {
+                ProductTracking::create([
+                    'company_id' => $this->cid(),
+                    'cde_project_id' => $this->pid(),
+                    'product_id' => $item['product_id'],
+                    'stage' => 'in_transit',
+                    'delivery_note_id' => $dn->id,
+                    'milestone_id' => $this->dnHeader['milestone_id'] ?: null,
+                    'quantity' => $item['quantity_dispatched'] ?? 0,
+                    'location' => $this->dnHeader['destination'],
+                    'recorded_by' => auth()->id(),
+                ]);
+            }
+        }
+
+        $this->showDNModal = false;
+        Notification::make()->title("Delivery Note {$dn->dn_number} created")->success()->send();
+    }
+
+    public function markDNDelivered(int $id): void
+    {
+        $dn = DeliveryNote::with('items')->find($id);
+        if (!$dn)
+            return;
+
+        foreach ($dn->items as $item) {
+            $item->update(['quantity_received' => $item->quantity_dispatched, 'condition' => 'good']);
+
+            if ($item->product_id) {
+                ProductTracking::create([
+                    'company_id' => $this->cid(),
+                    'cde_project_id' => $this->pid(),
+                    'product_id' => $item->product_id,
+                    'stage' => 'delivered',
+                    'delivery_note_id' => $dn->id,
+                    'milestone_id' => $dn->milestone_id,
+                    'quantity' => $item->quantity_dispatched,
+                    'location' => $dn->destination,
+                    'recorded_by' => auth()->id(),
+                ]);
+            }
+        }
+
+        $dn->update([
+            'status' => 'delivered',
+            'delivery_date' => now(),
+            'received_by_user' => auth()->id(),
+        ]);
+
+        Notification::make()->title("DN {$dn->dn_number} marked as delivered")->success()->send();
+    }
+
+    public function getDeliveryNotes()
+    {
+        return DeliveryNote::where('cde_project_id', $this->pid())
+            ->with(['items.product', 'warehouse', 'milestone', 'dispatcher'])
+            ->orderByDesc('created_at')
+            ->get();
+    }
+
+    public function getMilestoneOptions(): array
+    {
+        return Milestone::where('cde_project_id', $this->pid())
+            ->pluck('name', 'id')->toArray();
+    }
+
+    public function getIssuanceOptions(): array
+    {
+        return MaterialIssuance::where('cde_project_id', $this->pid())
+            ->whereIn('status', ['draft', 'issued'])
+            ->pluck('issuance_number', 'id')->toArray();
+    }
+
+    // ─── Stock Monitor (comprehensive per-store) ────────────
+    public function openStockMonitor(int $warehouseId): void
+    {
+        $this->stockMonitorStoreId = $warehouseId;
+        $this->showStockMonitorModal = true;
+    }
+
+    public function getStockMonitorData(): array
+    {
+        if (!$this->stockMonitorStoreId)
+            return [];
+
+        $warehouse = Warehouse::find($this->stockMonitorStoreId);
+        if (!$warehouse)
+            return [];
+
+        $levels = StockLevel::where('warehouse_id', $this->stockMonitorStoreId)
+            ->with('product')
+            ->get();
+
+        $totalItems = $levels->count();
+        $totalOnHand = $levels->sum('quantity_on_hand');
+        $totalReserved = $levels->sum('quantity_reserved');
+        $totalAvailable = $levels->sum('quantity_available');
+        $totalValue = $levels->sum(fn($sl) => $sl->quantity_on_hand * ($sl->product->cost_price ?? 0));
+
+        $lowStock = $levels->filter(
+            fn($sl) =>
+            $sl->product && $sl->product->reorder_level > 0 && $sl->quantity_on_hand <= $sl->product->reorder_level
+        );
+
+        $outOfStock = $levels->filter(fn($sl) => $sl->quantity_on_hand <= 0);
+
+        return [
+            'warehouse' => $warehouse,
+            'summary' => [
+                'total_items' => $totalItems,
+                'total_on_hand' => $totalOnHand,
+                'total_reserved' => $totalReserved,
+                'total_available' => $totalAvailable,
+                'total_value' => $totalValue,
+                'low_stock_count' => $lowStock->count(),
+                'out_of_stock_count' => $outOfStock->count(),
+            ],
+            'items' => $levels->map(fn($sl) => [
+                'id' => $sl->id,
+                'product_name' => $sl->product->name ?? '—',
+                'sku' => $sl->product->sku ?? '—',
+                'unit' => $sl->product->unit_of_measure ?? 'each',
+                'on_hand' => $sl->quantity_on_hand,
+                'reserved' => $sl->quantity_reserved,
+                'available' => $sl->quantity_available,
+                'reorder_level' => $sl->product->reorder_level ?? 0,
+                'cost_price' => $sl->product->cost_price ?? 0,
+                'stock_value' => $sl->quantity_on_hand * ($sl->product->cost_price ?? 0),
+                'bin_location' => $sl->bin_location ?? '—',
+                'is_low' => $sl->product && $sl->product->reorder_level > 0 && $sl->quantity_on_hand <= $sl->product->reorder_level,
+                'is_out' => $sl->quantity_on_hand <= 0,
+            ])->sortBy('product_name')->values()->toArray(),
+            'low_stock' => $lowStock->map(fn($sl) => [
+                'product_name' => $sl->product->name ?? '—',
+                'on_hand' => $sl->quantity_on_hand,
+                'reorder_level' => $sl->product->reorder_level ?? 0,
+                'deficit' => ($sl->product->reorder_level ?? 0) - $sl->quantity_on_hand,
+            ])->values()->toArray(),
+        ];
+    }
+
+    public function getAllStoresStockSummary(): array
+    {
+        $warehouses = Warehouse::where('company_id', $this->cid())
+            ->where('is_active', true)
+            ->with(['stockLevels.product'])
+            ->get();
+
+        return $warehouses->map(fn($wh) => [
+            'id' => $wh->id,
+            'name' => $wh->name,
+            'code' => $wh->code,
+            'total_products' => $wh->stockLevels->count(),
+            'total_quantity' => $wh->stockLevels->sum('quantity_on_hand'),
+            'total_value' => $wh->stockLevels->sum(fn($sl) => $sl->quantity_on_hand * ($sl->product->cost_price ?? 0)),
+            'low_stock' => $wh->stockLevels->filter(
+                fn($sl) =>
+                $sl->product && $sl->product->reorder_level > 0 && $sl->quantity_on_hand <= $sl->product->reorder_level
+            )->count(),
+            'out_of_stock' => $wh->stockLevels->filter(fn($sl) => $sl->quantity_on_hand <= 0)->count(),
+        ])->toArray();
+    }
+
+    // ─── Product Tracking (lifecycle timeline) ──────────────
+    public function getProductTrackingTimeline(int $productId): array
+    {
+        return ProductTracking::where('product_id', $productId)
+            ->where('cde_project_id', $this->pid())
+            ->with(['milestone', 'task', 'purchaseOrder', 'deliveryNote', 'issuance', 'recorder'])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn($t) => [
+                'id' => $t->id,
+                'stage' => $t->stage,
+                'stage_label' => ProductTracking::$stages[$t->stage] ?? $t->stage,
+                'stage_color' => ProductTracking::$stageColors[$t->stage] ?? '#6b7280',
+                'quantity' => $t->quantity,
+                'location' => $t->location,
+                'milestone' => $t->milestone?->name,
+                'task' => $t->task?->name,
+                'po' => $t->purchaseOrder?->po_number,
+                'dn' => $t->deliveryNote?->dn_number,
+                'issuance' => $t->issuance?->issuance_number,
+                'notes' => $t->notes,
+                'recorder' => $t->recorder?->name,
+                'date' => $t->created_at->format('M d, Y H:i'),
+            ])->toArray();
+    }
+
+    public function getProductTrackingSummary(): array
+    {
+        $products = Product::where('company_id', $this->cid())
+            ->whereHas('tracking', fn($q) => $q->where('cde_project_id', $this->pid()))
+            ->with(['tracking' => fn($q) => $q->where('cde_project_id', $this->pid())->latest()])
+            ->get();
+
+        return $products->map(fn($p) => [
+            'id' => $p->id,
+            'name' => $p->name,
+            'sku' => $p->sku,
+            'latest_stage' => $p->tracking->first()?->stage ?? 'unknown',
+            'latest_stage_label' => ProductTracking::$stages[$p->tracking->first()?->stage ?? ''] ?? 'Unknown',
+            'latest_stage_color' => ProductTracking::$stageColors[$p->tracking->first()?->stage ?? ''] ?? '#6b7280',
+            'total_events' => $p->tracking->count(),
+            'latest_location' => $p->tracking->first()?->location ?? '—',
+            'latest_date' => $p->tracking->first()?->created_at?->format('M d, Y'),
+        ])->toArray();
+    }
 
     // ─── Helpers ────────────────────────────────────────────
     private function pid(): int
@@ -881,6 +1209,19 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             'product_id' => $data['product_id'],
             'quantity_issued' => $data['quantity'],
             'condition_on_issue' => $data['condition'] ?? 'good',
+        ]);
+
+        // Track product lifecycle
+        ProductTracking::create([
+            'company_id' => $this->cid(),
+            'cde_project_id' => $this->pid(),
+            'product_id' => $data['product_id'],
+            'stage' => 'issued',
+            'material_issuance_id' => $issuance->id,
+            'quantity' => $data['quantity'],
+            'location' => Warehouse::find($data['warehouse_id'])?->name,
+            'notes' => 'Issued via ' . $number . ' — ' . ($data['purpose'] ?? ''),
+            'recorded_by' => auth()->id(),
         ]);
 
         $this->showIssuanceModal = false;
