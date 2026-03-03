@@ -44,7 +44,7 @@ class CdeProjectResource extends Resource
                     ->label('Project Currency')
                     ->options(
                         collect(CdeProject::$currencies)
-                            ->mapWithKeys(fn($def, $code) => [$code => $code . ' — ' . $def['name']])
+                            ->mapWithKeys(fn($def, $code) => [$code => $def['symbol'] . ' — ' . $def['name'] . ' (' . ($def['position'] === 'before' ? $def['symbol'] . '100' : '100 ' . $def['symbol']) . ')'])
                             ->toArray()
                     )
                     ->searchable()
@@ -52,14 +52,20 @@ class CdeProjectResource extends Resource
                     ->reactive()
                     ->afterStateUpdated(function ($state, callable $set) {
                         if ($state && isset(CdeProject::$currencies[$state])) {
-                            $set('currency_symbol', CdeProject::$currencies[$state]['symbol']);
+                            $def = CdeProject::$currencies[$state];
+                            $set('currency_symbol', $def['symbol']);
+                            $set('currency_position', $def['position']);
+                        } else {
+                            $set('currency_symbol', null);
+                            $set('currency_position', 'before');
                         }
                     })
                     ->helperText('Leave empty to use company default'),
                 Forms\Components\Hidden::make('currency_symbol'),
+                Forms\Components\Hidden::make('currency_position'),
                 Forms\Components\TextInput::make('budget')->numeric()
-                    ->prefix(fn($get) => $get('currency_symbol') ?? CurrencyHelper::prefix() ?? '$')
-                    ->suffix(fn() => CurrencyHelper::suffix()),
+                    ->prefix(fn($get) => ($get('currency_position') ?? 'before') === 'before' ? ($get('currency_symbol') ?? CurrencyHelper::symbol()) : null)
+                    ->suffix(fn($get) => ($get('currency_position') ?? 'before') === 'after' ? ($get('currency_symbol') ?? CurrencyHelper::symbol()) : null),
                 Forms\Components\DatePicker::make('start_date'),
                 Forms\Components\DatePicker::make('end_date'),
                 Forms\Components\RichEditor::make('description')->columnSpanFull(),

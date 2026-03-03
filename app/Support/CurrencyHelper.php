@@ -8,31 +8,28 @@ use App\Models\Company;
 class CurrencyHelper
 {
     /**
-     * Resolve the currency symbol using the priority chain:
-     * 1. Current project (from route context)
-     * 2. Current company (from auth user)
-     * 3. Fallback to '$'
+     * Resolve the current project's currency config.
+     * Returns ['symbol' => '...', 'position' => 'before'|'after']
      */
-    protected static function resolveSymbol(): string
+    protected static function resolveConfig(): array
     {
-        // 1. Try project-level currency
         $project = static::project();
+
         if ($project) {
-            if ($project->currency_symbol)
-                return $project->currency_symbol;
-            if ($project->currency && isset(CdeProject::$currencies[$project->currency])) {
-                return CdeProject::$currencies[$project->currency]['symbol'];
-            }
+            $symbol = $project->getCurrencySymbol();
+            $position = $project->getCurrencyPosition();
+            return ['symbol' => $symbol, 'position' => $position];
         }
 
-        // 2. Try company-level currency
         $company = static::company();
-        return $company?->currency_symbol ?? $company?->currency ?? '$';
+        return [
+            'symbol' => $company?->currency_symbol ?? $company?->currency ?? '$',
+            'position' => $company?->currency_position ?? 'before',
+        ];
     }
 
     /**
      * Get the current project from route context.
-     * Works within CdeProjectResource pages where the record is a CdeProject.
      */
     protected static function project(): ?CdeProject
     {
@@ -46,20 +43,17 @@ class CurrencyHelper
         try {
             $route = request()->route();
             if ($route) {
-                // Try the 'record' parameter (standard Filament resource pages)
                 $record = $route->parameter('record');
                 if ($record instanceof CdeProject) {
                     $cached = $record;
                     return $cached;
                 }
-                // If record is an ID, try to resolve it
                 if (is_numeric($record)) {
                     $cached = CdeProject::find($record);
                     return $cached;
                 }
             }
         } catch (\Throwable) {
-            // Silently fail — we're outside a project context
         }
 
         return null;
@@ -75,11 +69,19 @@ class CurrencyHelper
     }
 
     /**
-     * Get the currency symbol (project → company → $).
+     * Get the currency symbol.
      */
     public static function symbol(): string
     {
-        return static::resolveSymbol();
+        return static::resolveConfig()['symbol'];
+    }
+
+    /**
+     * Get the currency position ('before' or 'after').
+     */
+    public static function position(): string
+    {
+        return static::resolveConfig()['position'];
     }
 
     /**
@@ -99,15 +101,10 @@ class CurrencyHelper
      */
     public static function prefix(): ?string
     {
-        $company = static::company();
-        $position = $company?->currency_position ?? 'before';
-
-        if ($position === 'before') {
-            $symbol = static::resolveSymbol();
-            $space = ($company?->currency_space ?? false) ? ' ' : '';
-            return $symbol . $space;
+        $config = static::resolveConfig();
+        if ($config['position'] === 'before') {
+            return $config['symbol'];
         }
-
         return null;
     }
 
@@ -117,20 +114,16 @@ class CurrencyHelper
      */
     public static function suffix(): ?string
     {
-        $company = static::company();
-        $position = $company?->currency_position ?? 'before';
-
-        if ($position === 'after') {
-            $symbol = static::resolveSymbol();
-            $space = ($company?->currency_space ?? false) ? ' ' : '';
-            return $space . $symbol;
+        $config = static::resolveConfig();
+        if ($config['position'] === 'after') {
+            return $config['symbol'];
         }
-
         return null;
     }
 
     /**
-     * Format an amount using the resolved currency.
+     * Format an amount with correct position.
+     * Examples: $1,500.00 or 1,500 UGX
      */
     public static function format(float|int|null $amount, int $decimals = 2): string
     {
@@ -138,8 +131,12 @@ class CurrencyHelper
             return '—';
         }
 
-        $symbol = static::resolveSymbol();
-        return $symbol . number_format($amount, $decimals);
+        $config = static::resolveConfig();
+        $formatted = number_format($amount, $decimals);
+
+        return $config['position'] === 'after'
+            ? $formatted . ' ' . $config['symbol']
+            : $config['symbol'] . $formatted;
     }
 
     /**

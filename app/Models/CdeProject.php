@@ -23,6 +23,7 @@ class CdeProject extends Model
         'budget',
         'currency',
         'currency_symbol',
+        'currency_position',
         'address',
         'city',
         'country',
@@ -35,22 +36,23 @@ class CdeProject extends Model
         'budget' => 'decimal:2',
     ];
 
+    // position: 'before' = $100, 'after' = 100 UGX
     public static array $currencies = [
-        'USD' => ['name' => 'US Dollar', 'symbol' => '$'],
-        'UGX' => ['name' => 'Ugandan Shilling', 'symbol' => 'UGX'],
-        'KES' => ['name' => 'Kenyan Shilling', 'symbol' => 'KES'],
-        'TZS' => ['name' => 'Tanzanian Shilling', 'symbol' => 'TZS'],
-        'RWF' => ['name' => 'Rwandan Franc', 'symbol' => 'RWF'],
-        'GBP' => ['name' => 'British Pound', 'symbol' => '£'],
-        'EUR' => ['name' => 'Euro', 'symbol' => '€'],
-        'ZAR' => ['name' => 'South African Rand', 'symbol' => 'R'],
-        'NGN' => ['name' => 'Nigerian Naira', 'symbol' => '₦'],
-        'GHS' => ['name' => 'Ghanaian Cedi', 'symbol' => 'GH₵'],
-        'ETB' => ['name' => 'Ethiopian Birr', 'symbol' => 'Br'],
-        'AED' => ['name' => 'UAE Dirham', 'symbol' => 'AED'],
-        'SAR' => ['name' => 'Saudi Riyal', 'symbol' => 'SAR'],
-        'INR' => ['name' => 'Indian Rupee', 'symbol' => '₹'],
-        'CNY' => ['name' => 'Chinese Yuan', 'symbol' => '¥'],
+        'USD' => ['name' => 'US Dollar', 'symbol' => '$', 'position' => 'before'],
+        'UGX' => ['name' => 'Ugandan Shilling', 'symbol' => 'UGX', 'position' => 'after'],
+        'KES' => ['name' => 'Kenyan Shilling', 'symbol' => 'KES', 'position' => 'after'],
+        'TZS' => ['name' => 'Tanzanian Shilling', 'symbol' => 'TZS', 'position' => 'after'],
+        'RWF' => ['name' => 'Rwandan Franc', 'symbol' => 'RWF', 'position' => 'after'],
+        'GBP' => ['name' => 'British Pound', 'symbol' => '£', 'position' => 'before'],
+        'EUR' => ['name' => 'Euro', 'symbol' => '€', 'position' => 'after'],
+        'ZAR' => ['name' => 'South African Rand', 'symbol' => 'R', 'position' => 'before'],
+        'NGN' => ['name' => 'Nigerian Naira', 'symbol' => '₦', 'position' => 'before'],
+        'GHS' => ['name' => 'Ghanaian Cedi', 'symbol' => 'GH₵', 'position' => 'before'],
+        'ETB' => ['name' => 'Ethiopian Birr', 'symbol' => 'Br', 'position' => 'after'],
+        'AED' => ['name' => 'UAE Dirham', 'symbol' => 'AED', 'position' => 'after'],
+        'SAR' => ['name' => 'Saudi Riyal', 'symbol' => 'SAR', 'position' => 'after'],
+        'INR' => ['name' => 'Indian Rupee', 'symbol' => '₹', 'position' => 'before'],
+        'CNY' => ['name' => 'Chinese Yuan', 'symbol' => '¥', 'position' => 'before'],
     ];
 
     public static array $statuses = [
@@ -73,6 +75,34 @@ class CdeProject extends Model
             return self::$currencies[$this->currency]['symbol'];
         }
         return $this->company?->currency_symbol ?? $this->company?->currency ?? '$';
+    }
+
+    /**
+     * Get the currency position for this project ('before' or 'after').
+     */
+    public function getCurrencyPosition(): string
+    {
+        if ($this->currency_position)
+            return $this->currency_position;
+        if ($this->currency && isset(self::$currencies[$this->currency])) {
+            return self::$currencies[$this->currency]['position'];
+        }
+        return $this->company?->currency_position ?? 'before';
+    }
+
+    /**
+     * Format an amount with this project's currency.
+     */
+    public function formatCurrency(float|int|null $amount, int $decimals = 2): string
+    {
+        if (is_null($amount))
+            return '—';
+        $symbol = $this->getCurrencySymbol();
+        $position = $this->getCurrencyPosition();
+        $formatted = number_format($amount, $decimals);
+        return $position === 'after'
+            ? $formatted . ' ' . $symbol
+            : $symbol . $formatted;
     }
 
     public function client()

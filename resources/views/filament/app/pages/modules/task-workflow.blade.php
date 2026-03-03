@@ -1,6 +1,6 @@
 <x-filament-panels::page>
     {{-- ═══════════════ MODULE SUB-TABS ═══════════════ --}}
-    @php $schedStats = $this->getScheduleStats(); $cs = \App\Support\CurrencyHelper::symbol(); @endphp
+    @php $schedStats = $this->getScheduleStats(); @endphp
     <div class="schedule-module-tabs">
         <button class="smt-btn {{ $activeTab === 'schedule' ? 'active' : '' }}" data-module="schedule" onclick="switchModuleTab('schedule')" wire:click="$set('activeTab','schedule')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -306,7 +306,7 @@
                             {{ $wo['due_date'] ?? '—' }}
                             @if($wo['is_overdue'])<span style="color:#ef4444;font-weight:600;font-size:10px;margin-left:4px">⚠ {{ abs($wo['days_until_due']) }}d late</span>@endif
                         </td>
-                        <td style="padding:10px 12px;text-align:right;font-weight:700;color:#4f46e5">{{ $cs }}{{ number_format($wo['items_cost'] ?? 0) }}</td>
+                        <td style="padding:10px 12px;text-align:right;font-weight:700;color:#4f46e5">{{ \App\Support\CurrencyHelper::format($wo['items_cost'] ?? 0) }}</td>
                         <td style="padding:10px 12px;text-align:center"><span style="padding:2px 8px;border-radius:8px;background:#f1f5f9;font-size:11px;font-weight:600">{{ $wo['items_count'] }}</span></td>
                     </tr>
                     @endforeach
