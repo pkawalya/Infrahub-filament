@@ -1152,10 +1152,7 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         $this->showStoreModal = true;
     }
 
-    public function viewStoreStock(int $id): void
-    {
-        Notification::make()->title('Store stock view coming soon')->info()->send();
-    }
+
 
     public function submitStore(): void
     {
