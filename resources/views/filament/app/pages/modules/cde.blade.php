@@ -119,93 +119,99 @@
 
             .cde-folders-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                gap: 0.75rem;
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+                gap: 1rem;
             }
 
             .cde-folder-card {
                 display: flex;
-                flex-direction: column;
                 align-items: center;
-                gap: 0.625rem;
-                padding: 1.125rem 0.75rem 1rem;
-                border-radius: 0.875rem;
-                border: 1.5px solid #e5e7eb;
-                background: #fafbfc;
+                gap: 0.875rem;
+                padding: 1rem 1.125rem;
+                border-radius: 0.75rem;
+                border: 1px solid #e2e8f0;
+                background: white;
                 cursor: pointer;
-                transition: all 200ms cubic-bezier(.4, 0, .2, 1);
-                text-align: center;
+                transition: all 150ms ease;
+                text-align: left;
+                position: relative;
+                overflow: hidden;
             }
 
             .dark .cde-folder-card {
-                background: rgba(255, 255, 255, .03);
-                border-color: rgba(255, 255, 255, .08);
+                background: rgba(30, 41, 59, 0.5);
+                border-color: rgba(255, 255, 255, 0.08);
+            }
+
+            .cde-folder-card::before {
+                content: '';
+                position: absolute;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                width: 3px;
+                background: #3b82f6;
+                opacity: 0;
+                transition: opacity 150ms;
             }
 
             .cde-folder-card:hover {
-                border-color: #818cf8;
-                background: #eef2ff;
-                transform: translateY(-3px);
-                box-shadow: 0 8px 20px -4px rgba(99, 102, 241, .15);
+                border-color: #cbd5e1;
+                background: #f8fafc;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+                transform: translateY(-1px);
+            }
+
+            .cde-folder-card:hover::before {
+                opacity: 1;
             }
 
             .dark .cde-folder-card:hover {
-                border-color: rgba(129, 140, 248, .4);
-                background: rgba(99, 102, 241, .08);
+                border-color: rgba(255, 255, 255, 0.15);
+                background: rgba(30, 41, 59, 1);
             }
 
             .cde-folder-icon-wrap {
-                width: 3rem;
-                height: 3rem;
-                border-radius: 0.75rem;
+                color: #64748b;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                background: linear-gradient(135deg, #dbeafe 0%, #e0e7ff 100%);
-                transition: all 200ms;
+                transition: color 150ms;
             }
 
             .dark .cde-folder-icon-wrap {
-                background: linear-gradient(135deg, rgba(59, 130, 246, .15) 0%, rgba(99, 102, 241, .15) 100%);
+                color: #94a3b8;
             }
 
             .cde-folder-card:hover .cde-folder-icon-wrap {
-                background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
-                transform: scale(1.08);
+                color: #3b82f6;
             }
 
             .cde-folder-icon {
-                width: 1.5rem;
-                height: 1.5rem;
-                color: #3b82f6;
-                transition: color 200ms;
+                width: 1.75rem;
+                height: 1.75rem;
+                fill: currentColor;
             }
 
-            .cde-folder-card:hover .cde-folder-icon {
-                color: white;
+            .cde-folder-info {
+                flex: 1;
+                min-width: 0;
+                display: flex;
+                flex-direction: column;
+                gap: 0.125rem;
             }
 
             .cde-folder-name {
-                font-size: 0.75rem;
+                font-size: 0.875rem;
                 font-weight: 600;
-                color: #374151;
-                max-width: 100%;
+                color: #1e293b;
                 overflow: hidden;
                 text-overflow: ellipsis;
                 white-space: nowrap;
-                transition: color 200ms;
             }
 
             .dark .cde-folder-name {
-                color: #d1d5db;
-            }
-
-            .cde-folder-card:hover .cde-folder-name {
-                color: #4338ca;
-            }
-
-            .dark .cde-folder-card:hover .cde-folder-name {
-                color: #a5b4fc;
+                color: #e2e8f0;
             }
 
             .cde-folder-meta {
@@ -215,25 +221,27 @@
             }
 
             .cde-folder-badge {
-                font-size: 0.5625rem;
+                font-size: 0.625rem;
                 font-weight: 700;
                 padding: 0.125rem 0.375rem;
                 border-radius: 0.25rem;
-                background: #f3f4f6;
-                color: #6b7280;
-                font-family: ui-monospace, monospace;
+                background: #f1f5f9;
+                color: #475569;
                 letter-spacing: 0.02em;
             }
 
             .dark .cde-folder-badge {
-                background: rgba(255, 255, 255, .06);
-                color: #9ca3af;
+                background: rgba(255, 255, 255, 0.1);
+                color: #cbd5e1;
             }
 
             .cde-folder-docs {
-                font-size: 0.625rem;
-                color: #9ca3af;
-                font-weight: 500;
+                font-size: 0.75rem;
+                color: #64748b;
+            }
+
+            .dark .cde-folder-docs {
+                color: #94a3b8;
             }
 
             /* Documents Table */
@@ -514,18 +522,18 @@
                 @foreach($subfolders as $sf)
                     <button wire:click="navigateToFolder({{ $sf->id }})" class="cde-folder-card">
                         <div class="cde-folder-icon-wrap">
-                            <svg class="cde-folder-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                fill="currentColor">
-                                <path
-                                    d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15zM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z" />
+                            <svg class="cde-folder-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                <path d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15zM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z" />
                             </svg>
                         </div>
-                        <span class="cde-folder-name">{{ $sf->name }}</span>
-                        <div class="cde-folder-meta">
-                            @if($sf->suitability_code)
-                                <span class="cde-folder-badge">{{ $sf->suitability_code }}</span>
-                            @endif
-                            <span class="cde-folder-docs">{{ $sf->documents()->count() }} docs</span>
+                        <div class="cde-folder-info">
+                            <span class="cde-folder-name" title="{{ $sf->name }}">{{ $sf->name }}</span>
+                            <div class="cde-folder-meta">
+                                @if($sf->suitability_code)
+                                    <span class="cde-folder-badge">{{ $sf->suitability_code }}</span>
+                                @endif
+                                <span class="cde-folder-docs">{{ $sf->documents()->count() }} docs</span>
+                            </div>
                         </div>
                     </button>
                 @endforeach
