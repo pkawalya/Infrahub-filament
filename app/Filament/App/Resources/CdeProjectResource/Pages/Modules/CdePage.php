@@ -460,59 +460,61 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->recordActions([
+                \Filament\Actions\Action::make('download')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('success')
+                    ->tooltip('Download Document')
+                    ->action(function (CdeDocument $record) {
+                        return $this->downloadDocument($record->id);
+                    }),
+
+                \Filament\Actions\Action::make('share')
+                    ->label('Share')
+                    ->icon('heroicon-o-share')
+                    ->color('info')
+                    ->tooltip('Share Document')
+                    ->modalWidth('lg')
+                    ->schema([
+                        Forms\Components\Select::make('user_id')
+                            ->label('Share with Team Member')
+                            ->options(fn() => User::where('company_id', $this->record->company_id)->where('id', '!=', auth()->id())->pluck('name', 'id'))
+                            ->searchable()
+                            ->nullable(),
+                        Forms\Components\Select::make('permission')
+                            ->label('Permission Level')
+                            ->options(DocumentShare::$permissions)
+                            ->default('download')
+                            ->required(),
+                        Forms\Components\Toggle::make('generate_link')
+                            ->label('Also generate a public share link?')
+                            ->default(false),
+                        Forms\Components\Select::make('expiry_days')
+                            ->label('Link Expires In')
+                            ->options([
+                                1 => '1 day',
+                                3 => '3 days',
+                                7 => '7 days',
+                                30 => '30 days',
+                                0 => 'Never',
+                            ])
+                            ->default(7)
+                            ->visible(fn(Forms\Get $get) => $get('generate_link')),
+                    ])
+                    ->action(function (array $data, CdeDocument $record): void {
+                        if (!empty($data['user_id'])) {
+                            $this->shareWithUser((int) $data['user_id'], $data['permission']);
+                        }
+                        if (!empty($data['generate_link'])) {
+                            $this->generateShareLink($record->id, $data['permission'], (int) ($data['expiry_days'] ?? 7));
+                        }
+                        if (empty($data['user_id']) && empty($data['generate_link'])) {
+                            Notification::make()->title('Please select a user or enable link sharing.')->warning()->send();
+                        }
+                    }),
+
                 \Filament\Actions\ActionGroup::make([
-                    \Filament\Actions\Action::make('download')
-                        ->icon('heroicon-o-arrow-down-tray')
-                        ->color('success')
-                        ->action(function (CdeDocument $record) {
-                            return $this->downloadDocument($record->id);
-                        }),
-
-                    \Filament\Actions\Action::make('share')
-                        ->label('Share')
-                        ->icon('heroicon-o-share')
-                        ->color('info')
-                        ->modalWidth('lg')
-                        ->schema([
-                            Forms\Components\Select::make('user_id')
-                                ->label('Share with Team Member')
-                                ->options(fn() => User::where('company_id', $this->record->company_id)->where('id', '!=', auth()->id())->pluck('name', 'id'))
-                                ->searchable()
-                                ->nullable(),
-                            Forms\Components\Select::make('permission')
-                                ->label('Permission Level')
-                                ->options(DocumentShare::$permissions)
-                                ->default('download')
-                                ->required(),
-                            Forms\Components\Toggle::make('generate_link')
-                                ->label('Also generate a public share link?')
-                                ->default(false),
-                            Forms\Components\Select::make('expiry_days')
-                                ->label('Link Expires In')
-                                ->options([
-                                    1 => '1 day',
-                                    3 => '3 days',
-                                    7 => '7 days',
-                                    30 => '30 days',
-                                    0 => 'Never',
-                                ])
-                                ->default(7)
-                                ->visible(fn(Forms\Get $get) => $get('generate_link')),
-                        ])
-                        ->action(function (array $data, CdeDocument $record): void {
-                            if (!empty($data['user_id'])) {
-                                $this->shareWithUser((int) $data['user_id'], $data['permission']);
-                            }
-                            if (!empty($data['generate_link'])) {
-                                $this->generateShareLink($record->id, $data['permission'], (int) ($data['expiry_days'] ?? 7));
-                            }
-                            if (empty($data['user_id']) && empty($data['generate_link'])) {
-                                Notification::make()->title('Please select a user or enable link sharing.')->warning()->send();
-                            }
-                        }),
-
                     \Filament\Actions\Action::make('copyLink')
-                        ->label('Copy Link')
+                        ->label('Copy Public Link')
                         ->icon('heroicon-o-link')
                         ->color('gray')
                         ->action(function (CdeDocument $record): void {
