@@ -7,8 +7,10 @@ use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\CdeDocument;
 use App\Models\CdeFolder;
 use App\Models\CdeProject;
+use App\Models\DocumentShare;
 use App\Models\Transmittal;
 use App\Models\TransmittalItem;
+use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -38,6 +40,8 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
 
     public ?int $currentFolderId = null;
     public string $folderPath = 'Root';
+    public bool $showShareModal = false;
+    public ?int $sharingDocumentId = null;
 
     public function mount(int|string $record): void
     {
@@ -319,6 +323,84 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
             ->get();
     }
 
+    // ─── Sharing & Download ──────────────────────────────────────────
+    public function downloadDocument(int $docId)
+    {
+        $doc = CdeDocument::find($docId);
+        if (!$doc || !$doc->file_path || !Storage::disk('public')->exists($doc->file_path)) {
+            Notification::make()->title('File not found')->danger()->send();
+            return;
+        }
+        return response()->streamDownload(
+            fn() => print (Storage::disk('public')->get($doc->file_path)),
+            $doc->title . '.' . $doc->file_type,
+            ['Content-Type' => Storage::disk('public')->mimeType($doc->file_path)]
+        );
+    }
+
+    public function openShareModal(int $docId): void
+    {
+        $this->sharingDocumentId = $docId;
+        $this->showShareModal = true;
+    }
+
+    public function shareWithUser(int $userId, string $permission = 'download'): void
+    {
+        if (!$this->sharingDocumentId)
+            return;
+
+        // Prevent duplicates
+        $existing = DocumentShare::where('cde_document_id', $this->sharingDocumentId)
+            ->where('shared_with', $userId)->first();
+
+        if ($existing) {
+            $existing->update(['permission' => $permission, 'is_active' => true]);
+            Notification::make()->title('Share permission updated.')->success()->send();
+        } else {
+            DocumentShare::create([
+                'cde_document_id' => $this->sharingDocumentId,
+                'shared_by' => auth()->id(),
+                'shared_with' => $userId,
+                'permission' => $permission,
+            ]);
+            Notification::make()->title('Document shared successfully.')->success()->send();
+        }
+    }
+
+    public function generateShareLink(int $docId, string $permission = 'download', ?int $expiryDays = 7): void
+    {
+        $token = DocumentShare::generateToken();
+        DocumentShare::create([
+            'cde_document_id' => $docId,
+            'shared_by' => auth()->id(),
+            'share_token' => $token,
+            'permission' => $permission,
+            'expires_at' => $expiryDays ? now()->addDays($expiryDays) : null,
+        ]);
+
+        $link = config('app.url') . '/share/doc/' . $token;
+        $this->dispatch('copy-to-clipboard', text: $link);
+        Notification::make()->title('Share link copied to clipboard!')->body($link)->success()->send();
+    }
+
+    public function revokeShare(int $shareId): void
+    {
+        $share = DocumentShare::find($shareId);
+        if ($share) {
+            $share->update(['is_active' => false]);
+            Notification::make()->title('Share access revoked.')->warning()->send();
+        }
+    }
+
+    public function getDocumentShares(int $docId): \Illuminate\Database\Eloquent\Collection
+    {
+        return DocumentShare::where('cde_document_id', $docId)
+            ->where('is_active', true)
+            ->with(['sharedWith:id,name,email', 'sharedBy:id,name'])
+            ->latest()
+            ->get();
+    }
+
     // ── Document table ─────────────────────────────────────────────────
     public function table(Table $table): Table
     {
@@ -383,14 +465,66 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                         ->icon('heroicon-o-arrow-down-tray')
                         ->color('success')
                         ->action(function (CdeDocument $record) {
-                            if ($record->file_path && Storage::disk('public')->exists($record->file_path)) {
-                                return response()->streamDownload(
-                                    fn() => print (Storage::disk('public')->get($record->file_path)),
-                                    $record->title . '.' . $record->file_type,
-                                    ['Content-Type' => Storage::disk('public')->mimeType($record->file_path)]
-                                );
+                            return $this->downloadDocument($record->id);
+                        }),
+
+                    \Filament\Actions\Action::make('share')
+                        ->label('Share')
+                        ->icon('heroicon-o-share')
+                        ->color('info')
+                        ->modalWidth('lg')
+                        ->schema([
+                            Forms\Components\Select::make('user_id')
+                                ->label('Share with Team Member')
+                                ->options(fn() => User::where('company_id', $this->record->company_id)->where('id', '!=', auth()->id())->pluck('name', 'id'))
+                                ->searchable()
+                                ->nullable(),
+                            Forms\Components\Select::make('permission')
+                                ->label('Permission Level')
+                                ->options(DocumentShare::$permissions)
+                                ->default('download')
+                                ->required(),
+                            Forms\Components\Toggle::make('generate_link')
+                                ->label('Also generate a public share link?')
+                                ->default(false),
+                            Forms\Components\Select::make('expiry_days')
+                                ->label('Link Expires In')
+                                ->options([
+                                    1 => '1 day',
+                                    3 => '3 days',
+                                    7 => '7 days',
+                                    30 => '30 days',
+                                    0 => 'Never',
+                                ])
+                                ->default(7)
+                                ->visible(fn(Forms\Get $get) => $get('generate_link')),
+                        ])
+                        ->action(function (array $data, CdeDocument $record): void {
+                            if (!empty($data['user_id'])) {
+                                $this->shareWithUser((int) $data['user_id'], $data['permission']);
                             }
-                            Notification::make()->title('File not found')->danger()->send();
+                            if (!empty($data['generate_link'])) {
+                                $this->generateShareLink($record->id, $data['permission'], (int) ($data['expiry_days'] ?? 7));
+                            }
+                            if (empty($data['user_id']) && empty($data['generate_link'])) {
+                                Notification::make()->title('Please select a user or enable link sharing.')->warning()->send();
+                            }
+                        }),
+
+                    \Filament\Actions\Action::make('copyLink')
+                        ->label('Copy Link')
+                        ->icon('heroicon-o-link')
+                        ->color('gray')
+                        ->action(function (CdeDocument $record): void {
+                            $this->generateShareLink($record->id, 'download', 7);
+                        }),
+
+                    \Filament\Actions\Action::make('manageShares')
+                        ->label('Manage Shares')
+                        ->icon('heroicon-o-user-group')
+                        ->color('gray')
+                        ->action(function (CdeDocument $record): void {
+                            $this->openShareModal($record->id);
                         }),
 
                     \Filament\Actions\Action::make('revise')

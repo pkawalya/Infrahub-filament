@@ -53,4 +53,23 @@ class CdeDocument extends Model
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
+    public function shares()
+    {
+        return $this->hasMany(DocumentShare::class, 'cde_document_id');
+    }
+    public function activeShares()
+    {
+        return $this->shares()->where('is_active', true);
+    }
+
+    public function formattedSize(): string
+    {
+        if (!$this->file_size)
+            return '—';
+        if ($this->file_size < 1024)
+            return $this->file_size . ' B';
+        if ($this->file_size < 1048576)
+            return round($this->file_size / 1024, 1) . ' KB';
+        return round($this->file_size / 1048576, 1) . ' MB';
+    }
 }

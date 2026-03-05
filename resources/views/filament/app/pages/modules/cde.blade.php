@@ -2,6 +2,8 @@
 
     @push('styles')
         <style>
+            /* ═══════════ CDE Page — Redesigned ═══════════ */
+
             /* Breadcrumb */
             .cde-breadcrumb {
                 display: flex;
@@ -234,7 +236,7 @@
                 font-weight: 500;
             }
 
-            /* Documents Table Section */
+            /* Documents Table */
             .cde-docs-section {
                 background: white;
                 border: 1px solid #e5e7eb;
@@ -279,15 +281,187 @@
                 height: 1.125rem;
                 color: #0ea5e9;
             }
+
+            /* Share Modal Overlay */
+            .cde-share-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, .45);
+                backdrop-filter: blur(3px);
+                z-index: 99999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            .cde-share-card {
+                background: white;
+                width: 100%;
+                max-width: 560px;
+                border-radius: 16px;
+                box-shadow: 0 25px 60px -10px rgba(0, 0, 0, .25);
+                overflow: hidden;
+            }
+
+            .dark .cde-share-card {
+                background: #1f2937;
+            }
+
+            .cde-share-header {
+                padding: 24px 28px;
+                border-bottom: 1px solid #f0f0f5;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .dark .cde-share-header {
+                border-color: rgba(255, 255, 255, .08);
+            }
+
+            .cde-share-body {
+                padding: 24px 28px;
+                max-height: 60vh;
+                overflow-y: auto;
+            }
+
+            .cde-share-person {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                padding: 12px 0;
+                border-bottom: 1px solid #f3f4f6;
+            }
+
+            .dark .cde-share-person {
+                border-color: rgba(255, 255, 255, .06);
+            }
+
+            .cde-share-person:last-child {
+                border-bottom: none;
+            }
+
+            .cde-share-avatar {
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, #818cf8, #6366f1);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: 700;
+                font-size: 14px;
+                flex-shrink: 0;
+            }
+
+            .cde-share-name {
+                font-size: 14px;
+                font-weight: 600;
+                color: #1e293b;
+            }
+
+            .dark .cde-share-name {
+                color: #e5e7eb;
+            }
+
+            .cde-share-email {
+                font-size: 12px;
+                color: #9ca3af;
+            }
+
+            .cde-share-badge {
+                padding: 3px 10px;
+                border-radius: 99px;
+                font-size: 11px;
+                font-weight: 600;
+                text-transform: capitalize;
+            }
+
+            .cde-share-badge-view {
+                background: #dbeafe;
+                color: #2563eb;
+            }
+
+            .cde-share-badge-download {
+                background: #dcfce7;
+                color: #16a34a;
+            }
+
+            .cde-share-badge-edit {
+                background: #fef3c7;
+                color: #d97706;
+            }
+
+            .cde-share-revoke {
+                background: none;
+                border: none;
+                color: #ef4444;
+                cursor: pointer;
+                font-size: 12px;
+                font-weight: 600;
+                padding: 4px 8px;
+                border-radius: 6px;
+                transition: background .15s;
+            }
+
+            .cde-share-revoke:hover {
+                background: #fee2e2;
+            }
+
+            .cde-link-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 0;
+                border-bottom: 1px solid #f3f4f6;
+            }
+
+            .dark .cde-link-row {
+                border-color: rgba(255, 255, 255, .06);
+            }
+
+            .cde-link-token {
+                font-family: ui-monospace, monospace;
+                font-size: 12px;
+                background: #f1f5f9;
+                padding: 6px 10px;
+                border-radius: 6px;
+                flex: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                color: #475569;
+            }
+
+            .dark .cde-link-token {
+                background: rgba(255, 255, 255, .05);
+                color: #94a3b8;
+            }
         </style>
     @endpush
 
+    @push('scripts')
+        <script>
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('copy-to-clipboard', ({ text }) => {
+                    navigator.clipboard.writeText(text).then(() => {
+                        // Handled by Filament notification
+                    }).catch(() => {
+                        prompt('Copy this link:', text);
+                    });
+                });
+            });
+        </script>
+    @endpush
+
     {{-- ── Stats Cards ─────────────────────────────────────────────────── --}}
-    @php 
-        $mappedStats = collect($this->getStats())->map(function($stat, $i) {
+    @php
+        $mappedStats = collect($this->getStats())->map(function ($stat, $i) {
             $stat['primary'] = $i === 0;
             return $stat;
-        })->toArray(); 
+        })->toArray();
     @endphp
     @include('filament.app.pages.modules.partials.stat-cards', ['stats' => $mappedStats])
 
@@ -426,6 +600,115 @@
                 </div>
             </x-filament::section>
         </div>
+    @endif
+
+    {{-- ═══════════ SHARING PERMISSIONS MODAL ═══════════ --}}
+    @if($showShareModal && $sharingDocumentId)
+        @php $shareDoc = \App\Models\CdeDocument::find($sharingDocumentId); @endphp
+        @if($shareDoc)
+            <div class="cde-share-overlay" wire:click.self="$set('showShareModal', false)">
+                <div class="cde-share-card" wire:click.stop>
+                    {{-- Header --}}
+                    <div class="cde-share-header">
+                        <div>
+                            <h3 style="margin:0;font-size:17px;font-weight:800;color:#0f172a;letter-spacing:-.02em;">
+                                Sharing & Permissions
+                            </h3>
+                            <p style="margin:4px 0 0;font-size:13px;color:#64748b;">
+                                {{ $shareDoc->document_number }} — {{ $shareDoc->title }}
+                            </p>
+                        </div>
+                        <button wire:click="$set('showShareModal', false)"
+                            style="background:none;border:none;cursor:pointer;color:#9ca3af;padding:8px;">
+                            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="cde-share-body">
+                        {{-- Quick Actions --}}
+                        <div style="display:flex;gap:8px;margin-bottom:20px;">
+                            <button wire:click="generateShareLink({{ $shareDoc->id }}, 'view', 7)"
+                                style="flex:1;padding:10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;cursor:pointer;font-size:13px;font-weight:600;color:#475569;display:flex;align-items:center;justify-content:center;gap:6px;">
+                                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                                View Link
+                            </button>
+                            <button wire:click="generateShareLink({{ $shareDoc->id }}, 'download', 7)"
+                                style="flex:1;padding:10px;border-radius:8px;border:none;background:linear-gradient(135deg,#4f46e5,#6366f1);cursor:pointer;font-size:13px;font-weight:600;color:white;display:flex;align-items:center;justify-content:center;gap:6px;">
+                                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.318a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.343 8.04" />
+                                </svg>
+                                Download Link
+                            </button>
+                        </div>
+
+                        {{-- Current Shares --}}
+                        @php $shares = $this->getDocumentShares($shareDoc->id); @endphp
+
+                        @if($shares->isNotEmpty())
+                            <div style="margin-bottom:8px;">
+                                <span
+                                    style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#94a3b8;">
+                                    People with access
+                                </span>
+                            </div>
+
+                            @foreach($shares as $share)
+                                @if($share->shared_with)
+                                    <div class="cde-share-person">
+                                        <div class="cde-share-avatar">
+                                            {{ strtoupper(substr($share->sharedWith->name ?? '?', 0, 1)) }}
+                                        </div>
+                                        <div style="flex:1;min-width:0;">
+                                            <div class="cde-share-name">{{ $share->sharedWith->name ?? 'Unknown' }}</div>
+                                            <div class="cde-share-email">{{ $share->sharedWith->email ?? '' }}</div>
+                                        </div>
+                                        <span class="cde-share-badge cde-share-badge-{{ $share->permission }}">
+                                            {{ $share->permission }}
+                                        </span>
+                                        <button wire:click="revokeShare({{ $share->id }})" class="cde-share-revoke"
+                                            title="Revoke">✕</button>
+                                    </div>
+                                @endif
+
+                                @if($share->share_token)
+                                    <div class="cde-link-row">
+                                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#6366f1" stroke-width="2"
+                                            style="flex-shrink:0;">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m9.86-2.318a4.5 4.5 0 00-1.242-7.244l-4.5-4.5a4.5 4.5 0 00-6.364 6.364L4.343 8.04" />
+                                        </svg>
+                                        <span class="cde-link-token">{{ config('app.url') }}/share/doc/{{ $share->share_token }}</span>
+                                        <span class="cde-share-badge cde-share-badge-{{ $share->permission }}"
+                                            style="flex-shrink:0;">{{ $share->permission }}</span>
+                                        @if($share->expires_at)
+                                            <span style="font-size:11px;color:#9ca3af;white-space:nowrap;flex-shrink:0;">
+                                                {{ $share->expires_at->diffForHumans() }}
+                                            </span>
+                                        @endif
+                                        <button wire:click="revokeShare({{ $share->id }})" class="cde-share-revoke"
+                                            title="Revoke">✕</button>
+                                    </div>
+                                @endif
+                            @endforeach
+                        @else
+                            <div style="text-align:center;padding:24px;color:#9ca3af;font-size:13px;">
+                                <div style="font-size:24px;margin-bottom:8px;">🔒</div>
+                                No active shares. Use the buttons above to create a share link.
+                            </div>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        @endif
     @endif
 
 </x-filament-panels::page>
