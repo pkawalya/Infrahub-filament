@@ -498,7 +498,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                                 0 => 'Never',
                             ])
                             ->default(7)
-                            ->visible(fn(Forms\Get $get) => $get('generate_link')),
+                            ->visible(fn(Forms\Get|\Filament\Schemas\Components\Utilities\Get $get) => $get('generate_link')),
                     ])
                     ->action(function (array $data, CdeDocument $record): void {
                         if (!empty($data['user_id'])) {
