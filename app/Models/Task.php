@@ -7,6 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Collection;
 
+/**
+ * @property \Carbon\Carbon|null $start_date
+ * @property \Carbon\Carbon|null $due_date
+ * @property \Carbon\Carbon|null $actual_start
+ * @property \Carbon\Carbon|null $actual_finish
+ * @property \Carbon\Carbon|null $completed_at
+ * @property \Carbon\Carbon|null $constraint_date
+ * @property \Carbon\Carbon|null $baseline_start
+ * @property \Carbon\Carbon|null $baseline_finish
+ * @property int|null $parent_id
+ * @property int|null $duration_days
+ * @property int|null $progress_percent
+ * @property bool $is_summary
+ * @property bool $is_milestone
+ */
 class Task extends Model
 {
     use SoftDeletes, BelongsToCompany;
@@ -193,6 +208,7 @@ class Task extends Model
             ->get();
 
         $counters = [];
+        /** @var Task $task */
         foreach ($tasks as $task) {
             $parentId = $task->parent_id;
             $level = 0;
@@ -268,13 +284,11 @@ class Task extends Model
 
     /**
      * MS Project Auto-Scheduling Forward Pass
+     * Supports all 4 dependency types: FS, SS, FF, SF
      * Pushes successor tasks forward if this task's dates violate their constraints.
      */
     public function forwardPass(): void
     {
-        if (!$this->due_date)
-            return;
-
         $successors = $this->successorLinks()->with('task')->get();
 
         foreach ($successors as $link) {
@@ -284,44 +298,71 @@ class Task extends Model
 
             $pushNeeded = false;
             $newStartDate = \Carbon\Carbon::parse($successor->start_date);
+            $successorFinish = $successor->due_date ? \Carbon\Carbon::parse($successor->due_date) : null;
+            $duration = $successor->duration_days ?? 1;
 
-            // Finish-to-Start (FS)
-            if ($link->dependency_type === 'finish_to_start') {
-                $minStart = \Carbon\Carbon::parse($this->due_date)->addDay();
+            $type = $link->dependency_type ?? 'finish_to_start';
+            $lag = $link->lag_days ?? 0;
 
-                // Skip weekends for early start
-                while ($minStart->isWeekend()) {
-                    $minStart->addDay();
-                }
+            // Calculate the minimum allowed date based on dependency type
+            $minDate = null;
 
-                // Apply Lag days
-                if ($link->lag_days > 0) {
-                    $lag = $link->lag_days;
-                    while ($lag > 0) {
-                        $minStart->addDay();
-                        if (!$minStart->isWeekend())
-                            $lag--;
-                    }
-                } elseif ($link->lag_days < 0) {
-                    $lag = abs($link->lag_days);
-                    while ($lag > 0) {
-                        $minStart->subDay();
-                        if (!$minStart->isWeekend())
-                            $lag--;
-                    }
-                }
+            if ($type === 'finish_to_start' && $this->due_date) {
+                // FS: Successor can't start until predecessor finishes + lag
+                $minDate = \Carbon\Carbon::parse($this->due_date)->addDay();
+                $minDate = self::skipWeekends($minDate);
+                $minDate = self::applyLagDays($minDate, $lag);
 
-                // If the successor is scheduled too early, push it forward
-                if ($minStart->gt($newStartDate)) {
-                    $newStartDate = $minStart;
+                if ($minDate->gt($newStartDate)) {
+                    $newStartDate = $minDate;
                     $pushNeeded = true;
+                }
+
+            } elseif ($type === 'start_to_start' && $this->start_date) {
+                // SS: Successor can't start until predecessor starts + lag
+                $minDate = \Carbon\Carbon::parse($this->start_date);
+                $minDate = self::skipWeekends($minDate);
+                $minDate = self::applyLagDays($minDate, $lag);
+
+                if ($minDate->gt($newStartDate)) {
+                    $newStartDate = $minDate;
+                    $pushNeeded = true;
+                }
+
+            } elseif ($type === 'finish_to_finish' && $this->due_date) {
+                // FF: Successor can't finish until predecessor finishes + lag
+                $minFinish = \Carbon\Carbon::parse($this->due_date);
+                $minFinish = self::skipWeekends($minFinish);
+                $minFinish = self::applyLagDays($minFinish, $lag);
+
+                // Work backward from min finish to get the required start
+                if ($successorFinish && $minFinish->gt($successorFinish)) {
+                    $requiredStart = self::calculateStartFromFinish($minFinish, $duration);
+                    if ($requiredStart->gt($newStartDate)) {
+                        $newStartDate = $requiredStart;
+                        $pushNeeded = true;
+                    }
+                }
+
+            } elseif ($type === 'start_to_finish' && $this->start_date) {
+                // SF: Successor can't finish until predecessor starts + lag
+                $minFinish = \Carbon\Carbon::parse($this->start_date);
+                $minFinish = self::skipWeekends($minFinish);
+                $minFinish = self::applyLagDays($minFinish, $lag);
+
+                if ($successorFinish && $minFinish->gt($successorFinish)) {
+                    $requiredStart = self::calculateStartFromFinish($minFinish, $duration);
+                    if ($requiredStart->gt($newStartDate)) {
+                        $newStartDate = $requiredStart;
+                        $pushNeeded = true;
+                    }
                 }
             }
 
             if ($pushNeeded) {
                 $successor->start_date = $newStartDate->format('Y-m-d');
-                if ($successor->duration_days > 0) {
-                    $successor->due_date = self::calculateFinishDate($successor->start_date, $successor->duration_days)->format('Y-m-d');
+                if ($duration > 0) {
+                    $successor->due_date = self::calculateFinishDate($newStartDate, $duration)->format('Y-m-d');
                 }
                 $successor->save();
 
@@ -329,6 +370,55 @@ class Task extends Model
                 $successor->forwardPass();
             }
         }
+    }
+
+    /**
+     * Skip weekends — advance the date to the next Monday.
+     */
+    public static function skipWeekends(\Carbon\Carbon $date): \Carbon\Carbon
+    {
+        while ($date->isWeekend()) {
+            $date->addDay();
+        }
+        return $date;
+    }
+
+    /**
+     * Apply lag days (positive or negative) skipping weekends.
+     */
+    public static function applyLagDays(\Carbon\Carbon $date, int $lag): \Carbon\Carbon
+    {
+        if ($lag > 0) {
+            $remaining = $lag;
+            while ($remaining > 0) {
+                $date->addDay();
+                if (!$date->isWeekend())
+                    $remaining--;
+            }
+        } elseif ($lag < 0) {
+            $remaining = abs($lag);
+            while ($remaining > 0) {
+                $date->subDay();
+                if (!$date->isWeekend())
+                    $remaining--;
+            }
+        }
+        return $date;
+    }
+
+    /**
+     * Calculate a start date by working backward from a finish date for N business days.
+     */
+    public static function calculateStartFromFinish(\Carbon\Carbon $finish, int $durationDays): \Carbon\Carbon
+    {
+        $start = $finish->copy();
+        $remaining = max(0, $durationDays - 1);
+        while ($remaining > 0) {
+            $start->subDay();
+            if (!$start->isWeekend())
+                $remaining--;
+        }
+        return $start;
     }
 
     /**

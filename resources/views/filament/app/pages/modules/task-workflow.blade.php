@@ -2,7 +2,8 @@
     {{-- ═══════════════ MODULE SUB-TABS ═══════════════ --}}
     @php $schedStats = $this->getScheduleStats(); @endphp
     <div class="schedule-module-tabs">
-        <button class="smt-btn {{ $activeTab === 'schedule' ? 'active' : '' }}" data-module="schedule" onclick="switchModuleTab('schedule')" wire:click="$set('activeTab','schedule')">
+        <button class="smt-btn {{ $activeTab === 'schedule' ? 'active' : '' }}" data-module="schedule"
+            onclick="switchModuleTab('schedule')" wire:click="$set('activeTab','schedule')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="4" width="18" height="4" rx="1" />
                 <rect x="3" y="10" width="12" height="4" rx="1" />
@@ -10,14 +11,16 @@
             </svg>
             Schedule <span class="smt-badge">{{ $schedStats['tasks_total'] }}</span>
         </button>
-        <button class="smt-btn {{ $activeTab === 'work_orders' ? 'active' : '' }}" data-module="work_orders" onclick="switchModuleTab('work_orders')" wire:click="$set('activeTab','work_orders')">
+        <button class="smt-btn {{ $activeTab === 'work_orders' ? 'active' : '' }}" data-module="work_orders"
+            onclick="switchModuleTab('work_orders')" wire:click="$set('activeTab','work_orders')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round"
                     d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63" />
             </svg>
             Work Orders <span class="smt-badge wo">{{ $schedStats['wo_total'] }}</span>
         </button>
-        <button class="smt-btn {{ $activeTab === 'milestones' ? 'active' : '' }}" data-module="milestones" onclick="switchModuleTab('milestones')" wire:click="$set('activeTab','milestones')">
+        <button class="smt-btn {{ $activeTab === 'milestones' ? 'active' : '' }}" data-module="milestones"
+            onclick="switchModuleTab('milestones')" wire:click="$set('activeTab','milestones')">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 2l3 9h9l-7 5 3 9-8-6-8 6 3-9-7-5h9z" />
             </svg>
@@ -78,142 +81,122 @@
     {{-- ═══════════════ SCHEDULE TAB ═══════════════ --}}
     <div id="scheduleModule" class="module-content" style="display:{{ $activeTab === 'schedule' ? 'block' : 'none' }};">
         <div class="gantt-toolbar"
-            style="display:flex; flex-direction:column; gap:12px; align-items:stretch; flex-wrap:nowrap; padding-bottom:12px; border-bottom:1px solid var(--c-200,#e5e7eb); margin-bottom:12px;">
-            {{-- Toolbar Top Row --}}
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-                <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap; width:100%;">
-                    <div class="gantt-view-switcher">
-                        <button class="gantt-view-btn active" data-view="gantt" title="Gantt Chart">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <rect x="3" y="4" width="18" height="4" rx="1" />
-                                <rect x="3" y="10" width="12" height="4" rx="1" />
-                                <rect x="3" y="16" width="15" height="4" rx="1" />
-                            </svg>
-                            Gantt
-                        </button>
-                        <button class="gantt-view-btn" data-view="table" title="Table View">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <rect x="3" y="3" width="18" height="18" rx="2" />
-                                <line x1="3" y1="9" x2="21" y2="9" />
-                                <line x1="3" y1="15" x2="21" y2="15" />
-                                <line x1="9" y1="3" x2="9" y2="21" />
-                            </svg>
-                            Table
-                        </button>
-                        <button class="gantt-view-btn" data-view="board" title="Board View">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <rect x="3" y="3" width="5" height="18" rx="1" />
-                                <rect x="10" y="3" width="5" height="12" rx="1" />
-                                <rect x="17" y="3" width="5" height="15" rx="1" />
-                            </svg>
-                            Board
-                        </button>
-                    </div>
-
-                    <div class="gantt-indent-controls"
-                        style="display:flex;gap:4px;border-left:1px solid var(--c-300,#d1d5db);padding-left:12px">
-                        <button class="gantt-indent-btn"
-                            onclick="if(window.selectedTaskId) @this.outdentTask(window.selectedTaskId)"
-                            title="Outdent (Promote)"
-                            style="background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;color:var(--c-600,#4b5563)"
-                            onmouseover="this.style.background='var(--c-200,#e5e7eb)'"
-                            onmouseout="this.style.background='none'">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M11 18h10M7 6h14M11 12h10M3 12l4-4v8z" />
-                            </svg>
-                        </button>
-                        <button class="gantt-indent-btn"
-                            onclick="if(window.selectedTaskId) @this.indentTask(window.selectedTaskId)"
-                            title="Indent (Demote)"
-                            style="background:none;border:none;cursor:pointer;padding:4px;border-radius:4px;color:var(--c-600,#4b5563)"
-                            onmouseover="this.style.background='var(--c-200,#e5e7eb)'"
-                            onmouseout="this.style.background='none'">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M13 18h8M9 6h12M13 12h8M7 12l-4-4v8z" />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <div class="gantt-search-wrapper"
-                        style="position:relative; margin-left:8px; flex-grow:1; max-width:300px;">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2"
-                            style="position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--c-400,#94a3b8);pointer-events:none">
-                            <circle cx="11" cy="11" r="8" />
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                        </svg>
-                        <input type="text" id="ganttSearch" class="gantt-search-input" placeholder="Search tasks..."
-                            style="padding-left:28px; border-radius:8px; border:1px solid var(--c-300,#d1d5db); padding-top:6px; padding-bottom:6px; font-size:13px; outline:none; transition:box-shadow .2s; width:100%;" />
-                    </div>
-                    <span class="gantt-task-count" id="ganttTaskCount"
-                        style="font-size:12px; color:var(--c-500,#64748b); font-weight:600;"></span>
-                </div>
+            style="display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding-bottom:8px; border-bottom:1px solid var(--c-200,#e5e7eb); margin-bottom:8px;">
+            <div class="gantt-view-switcher">
+                <button class="gantt-view-btn active" data-view="gantt" title="Gantt Chart">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="4" width="18" height="4" rx="1" />
+                        <rect x="3" y="10" width="12" height="4" rx="1" />
+                        <rect x="3" y="16" width="15" height="4" rx="1" />
+                    </svg>
+                    Gantt
+                </button>
+                <button class="gantt-view-btn" data-view="table" title="Table View">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <line x1="3" y1="9" x2="21" y2="9" />
+                        <line x1="3" y1="15" x2="21" y2="15" />
+                        <line x1="9" y1="3" x2="9" y2="21" />
+                    </svg>
+                    Table
+                </button>
+                <button class="gantt-view-btn" data-view="board" title="Board View">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="5" height="18" rx="1" />
+                        <rect x="10" y="3" width="5" height="12" rx="1" />
+                        <rect x="17" y="3" width="5" height="15" rx="1" />
+                    </svg>
+                    Board
+                </button>
             </div>
 
-            {{-- Toolbar Bottom Row (Gantt Specifics) --}}
-            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; background:var(--c-50,#f8fafc); padding:8px 12px; border-radius:8px; border:1px solid var(--c-200,#e2e8f0);"
-                class="dark:!bg-gray-800 dark:!border-gray-700">
-                <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-                    <label class="gantt-toggle"
-                        style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;color:var(--c-600,#4b5563)">
-                        <input type="checkbox" id="showProgress" checked
-                            style="cursor:pointer;accent-color:#4f46e5;width:16px;height:16px;">
-                        <span style="display:flex;align-items:center;gap:4px;">
-                            <div style="width:12px;height:4px;background:#4f46e5;border-radius:2px"></div>Progress Bar
-                        </span>
-                    </label>
-                    <label class="gantt-toggle"
-                        style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;color:var(--c-600,#4b5563)">
-                        <input type="checkbox" id="showCritical"
-                            style="cursor:pointer;accent-color:#4f46e5;width:16px;height:16px;">
-                        <span style="display:flex;align-items:center;gap:4px;">
-                            <div style="width:12px;height:4px;background:#ef4444;border-radius:2px"></div>Critical Path
-                        </span>
-                    </label>
-                    <label class="gantt-toggle"
-                        style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600;color:var(--c-600,#4b5563)">
-                        <input type="checkbox" id="showBaseline"
-                            style="cursor:pointer;accent-color:#4f46e5;width:16px;height:16px;">
-                        <span style="display:flex;align-items:center;gap:4px;">
-                            <div style="width:12px;height:4px;background:#d1d5db;border-radius:2px"></div>Show Baseline
-                        </span>
-                    </label>
+            <div style="width:1px;height:20px;background:var(--c-300,#d1d5db)"></div>
+
+            <div class="gantt-indent-controls" style="display:flex;gap:2px;">
+                <button class="gantt-indent-btn"
+                    onclick="if(window.selectedTaskId) @this.outdentTask(window.selectedTaskId)" title="Outdent"
+                    style="background:none;border:none;cursor:pointer;padding:3px;border-radius:4px;color:var(--c-600,#4b5563)"
+                    onmouseover="this.style.background='var(--c-200,#e5e7eb)'"
+                    onmouseout="this.style.background='none'">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 18h10M7 6h14M11 12h10M3 12l4-4v8z" />
+                    </svg>
+                </button>
+                <button class="gantt-indent-btn"
+                    onclick="if(window.selectedTaskId) @this.indentTask(window.selectedTaskId)" title="Indent"
+                    style="background:none;border:none;cursor:pointer;padding:3px;border-radius:4px;color:var(--c-600,#4b5563)"
+                    onmouseover="this.style.background='var(--c-200,#e5e7eb)'"
+                    onmouseout="this.style.background='none'">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 18h8M9 6h12M13 12h8M7 12l-4-4v8z" />
+                    </svg>
+                </button>
+            </div>
+
+            <div style="width:1px;height:20px;background:var(--c-300,#d1d5db)"></div>
+
+            <label
+                style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;font-weight:500;color:var(--c-600,#4b5563);white-space:nowrap"
+                title="Toggle progress bars on Gantt bars">
+                <input type="checkbox" id="showProgress" checked
+                    onchange="window.ganttToggle('showProgress', this.checked)"
+                    style="cursor:pointer;accent-color:#4f46e5;width:14px;height:14px;">
+                <div style="width:10px;height:3px;background:#4f46e5;border-radius:2px"></div>Progress
+            </label>
+            <label
+                style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;font-weight:500;color:var(--c-600,#4b5563);white-space:nowrap"
+                title="Highlight critical path tasks">
+                <input type="checkbox" id="showCritical" onchange="window.ganttToggle('showCritical', this.checked)"
+                    style="cursor:pointer;accent-color:#ef4444;width:14px;height:14px;">
+                <div style="width:10px;height:3px;background:#ef4444;border-radius:2px"></div>Critical
+            </label>
+            <label
+                style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;font-weight:500;color:var(--c-600,#4b5563);white-space:nowrap"
+                title="Show baseline comparison bars">
+                <input type="checkbox" id="showBaseline" onchange="window.ganttToggle('showBaseline', this.checked)"
+                    style="cursor:pointer;accent-color:#9ca3af;width:14px;height:14px;">
+                <div style="width:10px;height:3px;background:#d1d5db;border-radius:2px"></div>Baseline
+            </label>
+
+            <div style="width:1px;height:20px;background:var(--c-300,#d1d5db)"></div>
+
+            <div class="gantt-search-wrapper" style="position:relative; flex-grow:1; max-width:200px; min-width:120px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="position:absolute;left:6px;top:50%;transform:translateY(-50%);color:var(--c-400,#94a3b8);pointer-events:none">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input type="text" id="ganttSearch" class="gantt-search-input" placeholder="Search..."
+                    style="padding-left:24px; border-radius:6px; border:1px solid var(--c-300,#d1d5db); padding-top:4px; padding-bottom:4px; font-size:12px; outline:none; transition:box-shadow .2s; width:100%;" />
+            </div>
+            <span class="gantt-task-count" id="ganttTaskCount"
+                style="font-size:11px; color:var(--c-500,#64748b); font-weight:600;"></span>
+
+            <div style="margin-left:auto; display:flex; align-items:center; gap:6px;">
+                <div class="gantt-zoom-controls">
+                    <button class="gantt-zoom-btn" data-zoom="day">Days</button>
+                    <button class="gantt-zoom-btn active" data-zoom="week">Weeks</button>
+                    <button class="gantt-zoom-btn" data-zoom="month">Months</button>
+                    <button class="gantt-zoom-btn" data-zoom="quarter">Quarters</button>
                 </div>
-
-                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
-                    <div class="gantt-zoom-controls">
-                        <button class="gantt-zoom-btn" data-zoom="day">Days</button>
-                        <button class="gantt-zoom-btn active" data-zoom="week">Weeks</button>
-                        <button class="gantt-zoom-btn" data-zoom="month">Months</button>
-                        <button class="gantt-zoom-btn" data-zoom="quarter">Quarters</button>
-                    </div>
-
-                    <div style="width:1px;height:24px;background:var(--c-300,#d1d5db);margin:0 4px"></div>
-
-                    <button onclick="window.toggleGanttFullscreen()" class="gantt-fullscreen-btn"
-                        title="Toggle Fullscreen"
-                        style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;border:1px solid var(--c-300,#d1d5db);background:white;color:var(--c-600,#4b5563);cursor:pointer;transition:all .2s;box-shadow:0 1px 2px rgba(0,0,0,0.05);">
-                        <svg id="fsExpandIcon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2">
-                            <polyline points="15 3 21 3 21 9" />
-                            <polyline points="9 21 3 21 3 15" />
-                            <line x1="21" y1="3" x2="14" y2="10" />
-                            <line x1="3" y1="21" x2="10" y2="14" />
-                        </svg>
-                        <svg id="fsCollapseIcon" width="16" height="16" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" style="display:none;">
-                            <polyline points="4 14 10 14 10 20" />
-                            <polyline points="20 10 14 10 14 4" />
-                            <line x1="14" y1="10" x2="21" y2="3" />
-                            <line x1="3" y1="21" x2="10" y2="14" />
-                        </svg>
-                    </button>
-                </div>
+                <div style="width:1px;height:20px;background:var(--c-300,#d1d5db)"></div>
+                <button onclick="window.toggleGanttFullscreen()" class="gantt-fullscreen-btn" title="Toggle Fullscreen"
+                    style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;border:1px solid var(--c-300,#d1d5db);background:white;color:var(--c-600,#4b5563);cursor:pointer;transition:all .2s;">
+                    <svg id="fsExpandIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <polyline points="15 3 21 3 21 9" />
+                        <polyline points="9 21 3 21 3 15" />
+                        <line x1="21" y1="3" x2="14" y2="10" />
+                        <line x1="3" y1="21" x2="10" y2="14" />
+                    </svg>
+                    <svg id="fsCollapseIcon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" style="display:none;">
+                        <polyline points="4 14 10 14 10 20" />
+                        <polyline points="20 10 14 10 14 4" />
+                        <line x1="14" y1="10" x2="21" y2="3" />
+                        <line x1="3" y1="21" x2="10" y2="14" />
+                    </svg>
+                </button>
             </div>
         </div>
 
@@ -255,17 +238,24 @@
 
     {{-- ═══════════════ WORK ORDERS TAB ═══════════════ --}}
     @php $woData = $this->getWorkOrdersData(); @endphp
-    <div id="workOrdersModule" class="module-content" style="display:{{ $activeTab === 'work_orders' ? 'block' : 'none' }};">
+    <div id="workOrdersModule" class="module-content"
+        style="display:{{ $activeTab === 'work_orders' ? 'block' : 'none' }};">
         {{-- Toolbar --}}
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
             <div style="position:relative;flex:1;min-width:200px;max-width:320px">
-                <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#9ca3af" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-                <input type="text" wire:model.live.debounce.300ms="woSearch" placeholder="Search work orders..." style="width:100%;padding:7px 10px 7px 32px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none">
+                <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#9ca3af"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input type="text" wire:model.live.debounce.300ms="woSearch" placeholder="Search work orders..."
+                    style="width:100%;padding:7px 10px 7px 32px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none">
             </div>
-            @php $woStatuses = [''=>'All','pending'=>'Pending','approved'=>'Approved','in_progress'=>'In Progress','on_hold'=>'On Hold','completed'=>'Completed','cancelled'=>'Cancelled']; @endphp
+            @php $woStatuses = ['' => 'All', 'pending' => 'Pending', 'approved' => 'Approved', 'in_progress' => 'In Progress', 'on_hold' => 'On Hold', 'completed' => 'Completed', 'cancelled' => 'Cancelled']; @endphp
             <div style="display:flex;gap:4px;flex-wrap:wrap">
                 @foreach($woStatuses as $val => $lbl)
-                    <button wire:click="$set('woStatusFilter','{{ $val }}')" style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid {{ $woStatusFilter === $val ? '#4f46e5' : '#e5e7eb' }};background:{{ $woStatusFilter === $val ? '#4f46e5' : 'white' }};color:{{ $woStatusFilter === $val ? 'white' : '#6b7280' }};cursor:pointer">{{ $lbl }}</button>
+                    <button wire:click="$set('woStatusFilter','{{ $val }}')"
+                        style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid {{ $woStatusFilter === $val ? '#4f46e5' : '#e5e7eb' }};background:{{ $woStatusFilter === $val ? '#4f46e5' : 'white' }};color:{{ $woStatusFilter === $val ? 'white' : '#6b7280' }};cursor:pointer">{{ $lbl }}</button>
                 @endforeach
             </div>
             <span style="font-size:12px;color:#9ca3af;margin-left:auto">{{ $woData['total'] }} total</span>
@@ -273,82 +263,133 @@
 
         {{-- Table --}}
         @if(count($woData['data']) > 0)
-        <div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:10px">
-            <table style="width:100%;border-collapse:collapse;font-size:13px">
-                <thead>
-                    <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">WO #</th>
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Title</th>
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Status</th>
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Priority</th>
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Assignee</th>
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Due Date</th>
-                        <th style="padding:10px 12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Cost</th>
-                        <th style="padding:10px 12px;text-align:center;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Items</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($woData['data'] as $wo)
-                    @php
-                        $sc = match($wo['status']) { 'in_progress'=>'#3b82f6','approved'=>'#6366f1','pending'=>'#94a3b8','on_hold'=>'#f59e0b','completed'=>'#059669','cancelled'=>'#ef4444', default=>'#94a3b8' };
-                        $pi = match($wo['priority'] ?? '') { 'urgent'=>'🔴','high'=>'🟠','medium'=>'🔵','low'=>'⚪', default=>'' };
-                    @endphp
-                    <tr style="border-bottom:1px solid #f3f4f6;{{ $wo['is_overdue'] ? 'background:#fef2f2' : '' }}" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='{{ $wo['is_overdue'] ? '#fef2f2' : '' }}'">
-                        <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#6b7280">{{ $wo['wo_number'] ?? '—' }}</td>
-                        <td style="padding:10px 12px;font-weight:600;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                            {{ $wo['title'] }}
-                            @if($wo['type'])<span style="font-size:10px;color:#9ca3af;font-weight:400;margin-left:4px">· {{ $wo['type'] }}</span>@endif
-                        </td>
-                        <td style="padding:10px 12px"><span style="padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;background:{{ $sc }}15;color:{{ $sc }}">{{ str_replace('_',' ',ucfirst($wo['status'])) }}</span></td>
-                        <td style="padding:10px 12px;font-size:12px">{{ $pi }} {{ ucfirst($wo['priority'] ?? '') }}</td>
-                        <td style="padding:10px 12px;font-size:12px;color:#6b7280">{{ $wo['assignee'] ?? '—' }}</td>
-                        <td style="padding:10px 12px;font-size:12px">
-                            {{ $wo['due_date'] ?? '—' }}
-                            @if($wo['is_overdue'])<span style="color:#ef4444;font-weight:600;font-size:10px;margin-left:4px">⚠ {{ abs($wo['days_until_due']) }}d late</span>@endif
-                        </td>
-                        <td style="padding:10px 12px;text-align:right;font-weight:700;color:#4f46e5">{{ \App\Support\CurrencyHelper::format($wo['items_cost'] ?? 0) }}</td>
-                        <td style="padding:10px 12px;text-align:center"><span style="padding:2px 8px;border-radius:8px;background:#f1f5f9;font-size:11px;font-weight:600">{{ $wo['items_count'] }}</span></td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Pagination --}}
-        @if($woData['pages'] > 1)
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12px;color:#6b7280">
-            <span>Showing {{ ($woData['page']-1) * $woData['per_page'] + 1 }}–{{ min($woData['page'] * $woData['per_page'], $woData['total']) }} of {{ $woData['total'] }}</span>
-            <div style="display:flex;gap:4px">
-                <button wire:click="woGoPage({{ max(1,$woData['page']-1) }})" @if($woData['page']<=1) disabled @endif style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;cursor:pointer;background:white{{ $woData['page']<=1 ? ';opacity:.4' : '' }}">← Prev</button>
-                @for($p = max(1,$woData['page']-2); $p <= min($woData['pages'],$woData['page']+2); $p++)
-                    <button wire:click="woGoPage({{ $p }})" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid {{ $p==$woData['page'] ? '#4f46e5' : '#e5e7eb' }};background:{{ $p==$woData['page'] ? '#4f46e5' : 'white' }};color:{{ $p==$woData['page'] ? 'white' : '#6b7280' }}">{{ $p }}</button>
-                @endfor
-                <button wire:click="woGoPage({{ min($woData['pages'],$woData['page']+1) }})" @if($woData['page']>=$woData['pages']) disabled @endif style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;cursor:pointer;background:white{{ $woData['page']>=$woData['pages'] ? ';opacity:.4' : '' }}">Next →</button>
+            <div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:10px">
+                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead>
+                        <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                WO #</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Title</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Status</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Priority</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Assignee</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Due Date</th>
+                            <th
+                                style="padding:10px 12px;text-align:right;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Cost</th>
+                            <th
+                                style="padding:10px 12px;text-align:center;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Items</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($woData['data'] as $wo)
+                            @php
+                                $sc = match ($wo['status']) { 'in_progress' => '#3b82f6', 'approved' => '#6366f1', 'pending' => '#94a3b8', 'on_hold' => '#f59e0b', 'completed' => '#059669', 'cancelled' => '#ef4444', default => '#94a3b8'};
+                                $pi = match ($wo['priority'] ?? '') { 'urgent' => '🔴', 'high' => '🟠', 'medium' => '🔵', 'low' => '⚪', default => ''};
+                            @endphp
+                            <tr style="border-bottom:1px solid #f3f4f6;{{ $wo['is_overdue'] ? 'background:#fef2f2' : '' }}"
+                                onmouseover="this.style.background='#f9fafb'"
+                                onmouseout="this.style.background='{{ $wo['is_overdue'] ? '#fef2f2' : '' }}'">
+                                <td style="padding:10px 12px;font-family:monospace;font-size:12px;color:#6b7280">
+                                    {{ $wo['wo_number'] ?? '—' }}</td>
+                                <td
+                                    style="padding:10px 12px;font-weight:600;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                                    {{ $wo['title'] }}
+                                    @if($wo['type'])<span style="font-size:10px;color:#9ca3af;font-weight:400;margin-left:4px">·
+                                    {{ $wo['type'] }}</span>@endif
+                                </td>
+                                <td style="padding:10px 12px"><span
+                                        style="padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;background:{{ $sc }}15;color:{{ $sc }}">{{ str_replace('_', ' ', ucfirst($wo['status'])) }}</span>
+                                </td>
+                                <td style="padding:10px 12px;font-size:12px">{{ $pi }} {{ ucfirst($wo['priority'] ?? '') }}</td>
+                                <td style="padding:10px 12px;font-size:12px;color:#6b7280">{{ $wo['assignee'] ?? '—' }}</td>
+                                <td style="padding:10px 12px;font-size:12px">
+                                    {{ $wo['due_date'] ?? '—' }}
+                                    @if($wo['is_overdue'])<span
+                                        style="color:#ef4444;font-weight:600;font-size:10px;margin-left:4px">⚠
+                                    {{ abs($wo['days_until_due']) }}d late</span>@endif
+                                </td>
+                                <td style="padding:10px 12px;text-align:right;font-weight:700;color:#4f46e5">
+                                    {{ \App\Support\CurrencyHelper::format($wo['items_cost'] ?? 0) }}</td>
+                                <td style="padding:10px 12px;text-align:center"><span
+                                        style="padding:2px 8px;border-radius:8px;background:#f1f5f9;font-size:11px;font-weight:600">{{ $wo['items_count'] }}</span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-        </div>
-        @endif
+
+            {{-- Pagination --}}
+            @if($woData['pages'] > 1)
+                <div
+                    style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12px;color:#6b7280">
+                    <span>Showing
+                        {{ ($woData['page'] - 1) * $woData['per_page'] + 1 }}–{{ min($woData['page'] * $woData['per_page'], $woData['total']) }}
+                        of {{ $woData['total'] }}</span>
+                    <div style="display:flex;gap:4px">
+                        <button wire:click="woGoPage({{ max(1, $woData['page'] - 1) }})" @if($woData['page'] <= 1) disabled @endif
+                            style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;cursor:pointer;background:white{{ $woData['page'] <= 1 ? ';opacity:.4' : '' }}">←
+                            Prev</button>
+                        @for($p = max(1, $woData['page'] - 2); $p <= min($woData['pages'], $woData['page'] + 2); $p++)
+                            <button wire:click="woGoPage({{ $p }})"
+                                style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid {{ $p == $woData['page'] ? '#4f46e5' : '#e5e7eb' }};background:{{ $p == $woData['page'] ? '#4f46e5' : 'white' }};color:{{ $p == $woData['page'] ? 'white' : '#6b7280' }}">{{ $p }}</button>
+                        @endfor
+                        <button wire:click="woGoPage({{ min($woData['pages'], $woData['page'] + 1) }})"
+                            @if($woData['page'] >= $woData['pages']) disabled @endif
+                            style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;cursor:pointer;background:white{{ $woData['page'] >= $woData['pages'] ? ';opacity:.4' : '' }}">Next
+                            →</button>
+                    </div>
+                </div>
+            @endif
         @else
-        <div style="text-align:center;padding:60px 20px;color:#9ca3af">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 12px"><path d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63"/></svg>
-            <div style="font-weight:700;font-size:15px;color:#6b7280">{{ $woSearch || $woStatusFilter ? 'No matching work orders' : 'No Work Orders' }}</div>
-            <div style="font-size:13px;margin-top:6px">{{ $woSearch || $woStatusFilter ? 'Try a different search or filter.' : 'Create work orders from the main module.' }}</div>
-        </div>
+            <div style="text-align:center;padding:60px 20px;color:#9ca3af">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                    style="margin:0 auto 12px">
+                    <path
+                        d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63" />
+                </svg>
+                <div style="font-weight:700;font-size:15px;color:#6b7280">
+                    {{ $woSearch || $woStatusFilter ? 'No matching work orders' : 'No Work Orders' }}</div>
+                <div style="font-size:13px;margin-top:6px">
+                    {{ $woSearch || $woStatusFilter ? 'Try a different search or filter.' : 'Create work orders from the main module.' }}
+                </div>
+            </div>
         @endif
     </div>
 
     {{-- ═══════════════ MILESTONES TAB ═══════════════ --}}
     @php $msData = $this->getMilestonesData(); @endphp
-    <div id="milestonesModule" class="module-content" style="display:{{ $activeTab === 'milestones' ? 'block' : 'none' }};">
+    <div id="milestonesModule" class="module-content"
+        style="display:{{ $activeTab === 'milestones' ? 'block' : 'none' }};">
         {{-- Toolbar --}}
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap">
             <div style="position:relative;flex:1;min-width:200px;max-width:320px">
-                <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#9ca3af" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"/></svg>
-                <input type="text" wire:model.live.debounce.300ms="msSearch" placeholder="Search milestones..." style="width:100%;padding:7px 10px 7px 32px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none">
+                <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#9ca3af"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="m21 21-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input type="text" wire:model.live.debounce.300ms="msSearch" placeholder="Search milestones..."
+                    style="width:100%;padding:7px 10px 7px 32px;border:1px solid #e5e7eb;border-radius:8px;font-size:13px;outline:none">
             </div>
-            @php $msStatuses = [''=>'All','in_progress'=>'In Progress','pending'=>'Pending','delayed'=>'Delayed','completed'=>'Completed','cancelled'=>'Cancelled']; @endphp
+            @php $msStatuses = ['' => 'All', 'in_progress' => 'In Progress', 'pending' => 'Pending', 'delayed' => 'Delayed', 'completed' => 'Completed', 'cancelled' => 'Cancelled']; @endphp
             <div style="display:flex;gap:4px;flex-wrap:wrap">
                 @foreach($msStatuses as $val => $lbl)
-                    <button wire:click="$set('msStatusFilter','{{ $val }}')" style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid {{ $msStatusFilter === $val ? '#4f46e5' : '#e5e7eb' }};background:{{ $msStatusFilter === $val ? '#4f46e5' : 'white' }};color:{{ $msStatusFilter === $val ? 'white' : '#6b7280' }};cursor:pointer">{{ $lbl }}</button>
+                    <button wire:click="$set('msStatusFilter','{{ $val }}')"
+                        style="padding:4px 12px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid {{ $msStatusFilter === $val ? '#4f46e5' : '#e5e7eb' }};background:{{ $msStatusFilter === $val ? '#4f46e5' : 'white' }};color:{{ $msStatusFilter === $val ? 'white' : '#6b7280' }};cursor:pointer">{{ $lbl }}</button>
                 @endforeach
             </div>
             <span style="font-size:12px;color:#9ca3af;margin-left:auto">{{ $msData['total'] }} total</span>
@@ -356,74 +397,111 @@
 
         {{-- Table --}}
         @if(count($msData['data']) > 0)
-        <div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:10px">
-            <table style="width:100%;border-collapse:collapse;font-size:13px">
-                <thead>
-                    <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Milestone</th>
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Status</th>
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Priority</th>
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Target Date</th>
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Actual Date</th>
-                        <th style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">Remaining</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($msData['data'] as $ms)
-                    @php
-                        $msc = match($ms['status']) { 'in_progress'=>'#6366f1','pending'=>'#94a3b8','delayed'=>'#ef4444','completed'=>'#059669','cancelled'=>'#6b7280', default=>'#94a3b8' };
-                        $mpc = match($ms['priority'] ?? '') { 'critical'=>'#ef4444','high'=>'#f59e0b','medium'=>'#6366f1','low'=>'#94a3b8', default=>'#94a3b8' };
-                    @endphp
-                    <tr style="border-bottom:1px solid #f3f4f6;{{ $ms['is_overdue'] ? 'background:#fef2f2' : '' }}" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='{{ $ms['is_overdue'] ? '#fef2f2' : '' }}'">
-                        <td style="padding:10px 12px">
-                            <div style="display:flex;align-items:center;gap:6px">
-                                <span style="color:{{ $msc }};font-size:12px">◆</span>
-                                <span style="font-weight:600">{{ $ms['name'] }}</span>
-                            </div>
-                            @if($ms['description'])<div style="font-size:11px;color:#9ca3af;margin-top:2px;margin-left:18px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ $ms['description'] }}</div>@endif
-                        </td>
-                        <td style="padding:10px 12px"><span style="padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;background:{{ $msc }}15;color:{{ $msc }}">{{ str_replace('_',' ',ucfirst($ms['status'])) }}</span></td>
-                        <td style="padding:10px 12px"><span style="padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;background:{{ $mpc }}12;color:{{ $mpc }}">{{ ucfirst($ms['priority'] ?? 'low') }}</span></td>
-                        <td style="padding:10px 12px;font-size:12px">{{ $ms['target_date'] ?? '—' }}</td>
-                        <td style="padding:10px 12px;font-size:12px">{{ $ms['actual_date'] ?? '—' }}</td>
-                        <td style="padding:10px 12px;font-size:12px">
-                            @if($ms['days_remaining'] !== null)
-                                @if($ms['days_remaining'] < 0)
-                                    <span style="color:#ef4444;font-weight:600">⚠ {{ abs($ms['days_remaining']) }}d overdue</span>
-                                @elseif($ms['days_remaining'] === 0)
-                                    <span style="color:#f59e0b;font-weight:600">📌 Due today</span>
-                                @else
-                                    <span style="color:#059669">{{ $ms['days_remaining'] }}d left</span>
-                                @endif
-                            @else
-                                —
-                            @endif
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Pagination --}}
-        @if($msData['pages'] > 1)
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12px;color:#6b7280">
-            <span>Showing {{ ($msData['page']-1) * $msData['per_page'] + 1 }}–{{ min($msData['page'] * $msData['per_page'], $msData['total']) }} of {{ $msData['total'] }}</span>
-            <div style="display:flex;gap:4px">
-                <button wire:click="msGoPage({{ max(1,$msData['page']-1) }})" @if($msData['page']<=1) disabled @endif style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;cursor:pointer;background:white{{ $msData['page']<=1 ? ';opacity:.4' : '' }}">← Prev</button>
-                @for($p = max(1,$msData['page']-2); $p <= min($msData['pages'],$msData['page']+2); $p++)
-                    <button wire:click="msGoPage({{ $p }})" style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid {{ $p==$msData['page'] ? '#4f46e5' : '#e5e7eb' }};background:{{ $p==$msData['page'] ? '#4f46e5' : 'white' }};color:{{ $p==$msData['page'] ? 'white' : '#6b7280' }}">{{ $p }}</button>
-                @endfor
-                <button wire:click="msGoPage({{ min($msData['pages'],$msData['page']+1) }})" @if($msData['page']>=$msData['pages']) disabled @endif style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;cursor:pointer;background:white{{ $msData['page']>=$msData['pages'] ? ';opacity:.4' : '' }}">Next →</button>
+            <div style="overflow-x:auto;border:1px solid #e5e7eb;border-radius:10px">
+                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead>
+                        <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb">
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Milestone</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Status</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Priority</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Target Date</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Actual Date</th>
+                            <th
+                                style="padding:10px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#6b7280">
+                                Remaining</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($msData['data'] as $ms)
+                            @php
+                                $msc = match ($ms['status']) { 'in_progress' => '#6366f1', 'pending' => '#94a3b8', 'delayed' => '#ef4444', 'completed' => '#059669', 'cancelled' => '#6b7280', default => '#94a3b8'};
+                                $mpc = match ($ms['priority'] ?? '') { 'critical' => '#ef4444', 'high' => '#f59e0b', 'medium' => '#6366f1', 'low' => '#94a3b8', default => '#94a3b8'};
+                            @endphp
+                            <tr style="border-bottom:1px solid #f3f4f6;{{ $ms['is_overdue'] ? 'background:#fef2f2' : '' }}"
+                                onmouseover="this.style.background='#f9fafb'"
+                                onmouseout="this.style.background='{{ $ms['is_overdue'] ? '#fef2f2' : '' }}'">
+                                <td style="padding:10px 12px">
+                                    <div style="display:flex;align-items:center;gap:6px">
+                                        <span style="color:{{ $msc }};font-size:12px">◆</span>
+                                        <span style="font-weight:600">{{ $ms['name'] }}</span>
+                                    </div>
+                                    @if($ms['description'])
+                                        <div
+                                            style="font-size:11px;color:#9ca3af;margin-top:2px;margin-left:18px;max-width:320px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                                    {{ $ms['description'] }}</div>@endif
+                                </td>
+                                <td style="padding:10px 12px"><span
+                                        style="padding:3px 10px;border-radius:10px;font-size:11px;font-weight:600;background:{{ $msc }}15;color:{{ $msc }}">{{ str_replace('_', ' ', ucfirst($ms['status'])) }}</span>
+                                </td>
+                                <td style="padding:10px 12px"><span
+                                        style="padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;background:{{ $mpc }}12;color:{{ $mpc }}">{{ ucfirst($ms['priority'] ?? 'low') }}</span>
+                                </td>
+                                <td style="padding:10px 12px;font-size:12px">{{ $ms['target_date'] ?? '—' }}</td>
+                                <td style="padding:10px 12px;font-size:12px">{{ $ms['actual_date'] ?? '—' }}</td>
+                                <td style="padding:10px 12px;font-size:12px">
+                                    @if($ms['days_remaining'] !== null)
+                                        @if($ms['days_remaining'] < 0)
+                                            <span style="color:#ef4444;font-weight:600">⚠ {{ abs($ms['days_remaining']) }}d
+                                                overdue</span>
+                                        @elseif($ms['days_remaining'] === 0)
+                                            <span style="color:#f59e0b;font-weight:600">📌 Due today</span>
+                                        @else
+                                            <span style="color:#059669">{{ $ms['days_remaining'] }}d left</span>
+                                        @endif
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-        </div>
-        @endif
+
+            {{-- Pagination --}}
+            @if($msData['pages'] > 1)
+                <div
+                    style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:12px;color:#6b7280">
+                    <span>Showing
+                        {{ ($msData['page'] - 1) * $msData['per_page'] + 1 }}–{{ min($msData['page'] * $msData['per_page'], $msData['total']) }}
+                        of {{ $msData['total'] }}</span>
+                    <div style="display:flex;gap:4px">
+                        <button wire:click="msGoPage({{ max(1, $msData['page'] - 1) }})" @if($msData['page'] <= 1) disabled @endif
+                            style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;cursor:pointer;background:white{{ $msData['page'] <= 1 ? ';opacity:.4' : '' }}">←
+                            Prev</button>
+                        @for($p = max(1, $msData['page'] - 2); $p <= min($msData['pages'], $msData['page'] + 2); $p++)
+                            <button wire:click="msGoPage({{ $p }})"
+                                style="padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;border:1px solid {{ $p == $msData['page'] ? '#4f46e5' : '#e5e7eb' }};background:{{ $p == $msData['page'] ? '#4f46e5' : 'white' }};color:{{ $p == $msData['page'] ? 'white' : '#6b7280' }}">{{ $p }}</button>
+                        @endfor
+                        <button wire:click="msGoPage({{ min($msData['pages'], $msData['page'] + 1) }})"
+                            @if($msData['page'] >= $msData['pages']) disabled @endif
+                            style="padding:4px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;cursor:pointer;background:white{{ $msData['page'] >= $msData['pages'] ? ';opacity:.4' : '' }}">Next
+                            →</button>
+                    </div>
+                </div>
+            @endif
         @else
-        <div style="text-align:center;padding:60px 20px;color:#9ca3af">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor" style="margin:0 auto 12px;color:#f59e0b"><path d="M12 2l3 9h9l-7 5 3 9-8-6-8 6 3-9-7-5h9z"/></svg>
-            <div style="font-weight:700;font-size:15px;color:#6b7280">{{ $msSearch || $msStatusFilter ? 'No matching milestones' : 'No Milestones Yet' }}</div>
-            <div style="font-size:13px;margin-top:6px">{{ $msSearch || $msStatusFilter ? 'Try a different search or filter.' : 'Add milestones using the button above.' }}</div>
-        </div>
+            <div style="text-align:center;padding:60px 20px;color:#9ca3af">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor"
+                    style="margin:0 auto 12px;color:#f59e0b">
+                    <path d="M12 2l3 9h9l-7 5 3 9-8-6-8 6 3-9-7-5h9z" />
+                </svg>
+                <div style="font-weight:700;font-size:15px;color:#6b7280">
+                    {{ $msSearch || $msStatusFilter ? 'No matching milestones' : 'No Milestones Yet' }}</div>
+                <div style="font-size:13px;margin-top:6px">
+                    {{ $msSearch || $msStatusFilter ? 'Try a different search or filter.' : 'Add milestones using the button above.' }}
+                </div>
+            </div>
         @endif
     </div>
 
@@ -1204,6 +1282,27 @@
             border-radius: 4px;
         }
 
+        .gantt-resize-handle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            cursor: col-resize;
+            border-radius: 0 4px 4px 0;
+            background: transparent;
+            transition: background .15s;
+            z-index: 3;
+        }
+
+        .gantt-bar:hover .gantt-resize-handle {
+            background: rgba(255, 255, 255, .45);
+        }
+
+        .gantt-resize-handle:hover {
+            background: rgba(59, 130, 246, .6) !important;
+        }
+
         .gantt-bar-label {
             position: absolute;
             right: -4px;
@@ -1908,10 +2007,12 @@
                             const progWidth = showProgress ? t.progress : 0;
                             const label = t.assignee ? t.assignee.split(' ')[0] : '';
                             const dragHandler = !isSummary ? `onmousedown="startDragBar(event, ${t.id}, '${start.toISOString()}')" style="cursor:ew-resize"` : '';
+                            const resizeHandle = !isSummary ? `<div class="gantt-resize-handle" onmousedown="event.stopPropagation(); startResizeBar(event, ${t.id}, '${start.toISOString()}', ${durationDays})"></div>` : '';
 
                             barHtml = `<div class="gantt-bar ${barClass}" style="left:${leftPx}px; width:${widthPx}px; ${!isSummary ? 'background:' + barColor + '; cursor:ew-resize' : ''}" title="${t.title}\n${t.progress}% · ${formatDate(start)} → ${formatDate(end)}\n${t.assignee || ''}" data-task-id="${t.id}" onclick="selectTask(${t.id})" ${dragHandler}>
                             ${showProgress && !isSummary ? `<div class="gantt-bar-progress ${progWidth >= 100 ? 'full' : ''}" style="width:${progWidth}%"></div>` : ''}
                             ${label ? `<span class="gantt-bar-label">${label}</span>` : ''}
+                            ${resizeHandle}
                         </div>`;
                         }
 
@@ -2138,6 +2239,62 @@
                 document.addEventListener('mouseup', onMouseUp);
             };
 
+            // ── Drag-to-Resize (change duration by dragging right edge) ──
+            window.startResizeBar = function (event, taskId, startStr, currentDuration) {
+                event.stopPropagation();
+                event.preventDefault();
+
+                const startX = event.clientX;
+                const bar = event.target.closest('.gantt-bar');
+                if (!bar) return;
+
+                const initialWidth = parseFloat(bar.style.width) || 20;
+
+                const bounds = getTimelineBounds();
+                const totalDays = daysBetween(bounds.start, bounds.end);
+                const body = document.getElementById('ganttChartBody');
+                const totalWidth = parseFloat(body.style.width) || 0;
+                const pxPerDay = totalWidth / (totalDays + 1);
+
+                let newDuration = currentDuration;
+
+                const onMouseMove = function (e) {
+                    window.isDraggingBar = true;
+                    const deltaX = e.clientX - startX;
+                    const newWidth = Math.max(pxPerDay * 0.5, initialWidth + deltaX);
+                    bar.style.width = newWidth + 'px';
+                    bar.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                    bar.style.zIndex = '10';
+                    newDuration = Math.max(1, Math.round(newWidth / pxPerDay));
+                };
+
+                const onMouseUp = async function (e) {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+
+                    setTimeout(() => { window.isDraggingBar = false; }, 50);
+
+                    bar.style.boxShadow = 'none';
+                    bar.style.zIndex = '1';
+
+                    if (newDuration !== currentDuration) {
+                        try {
+                            bar.style.opacity = '0.5';
+                            await @this.updateTaskField(taskId, 'duration_days', newDuration);
+                        } catch (err) {
+                            console.error('Resize failed', err);
+                            bar.style.width = initialWidth + 'px';
+                            bar.style.opacity = '1';
+                        }
+                    } else {
+                        bar.style.width = initialWidth + 'px';
+                    }
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            };
+
             window.selectTask = function (taskId) {
                 if (window.isDraggingBar) return; // Prevent selection if just dragged
 
@@ -2256,10 +2413,13 @@
                 });
             });
 
-            // ── Toggle controls ──
-            document.getElementById('showBaseline')?.addEventListener('change', (e) => { showBaseline = e.target.checked; render(); });
-            document.getElementById('showCritical')?.addEventListener('change', (e) => { showCritical = e.target.checked; render(); });
-            document.getElementById('showProgress')?.addEventListener('change', (e) => { showProgress = e.target.checked; render(); });
+            // ── Toggle controls (inline onchange calls this) ──
+            window.ganttToggle = function(key, val) {
+                if (key === 'showBaseline') showBaseline = val;
+                else if (key === 'showCritical') showCritical = val;
+                else if (key === 'showProgress') showProgress = val;
+                render();
+            };
 
             // ── Main render ──
             function render() {

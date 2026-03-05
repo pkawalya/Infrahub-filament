@@ -93,9 +93,21 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
             WHERE b.cde_project_id = ?
         ", [$pid]);
 
+        // Variance alert counts
+        $alertStats = \DB::selectOne("
+            SELECT
+                COUNT(*) as total_alerts,
+                SUM(CASE WHEN is_acknowledged = 0 AND severity IN ('high','critical') THEN 1 ELSE 0 END) as critical_unack,
+                SUM(CASE WHEN is_acknowledged = 0 THEN 1 ELSE 0 END) as total_unack
+            FROM boq_variance_alerts
+            WHERE cde_project_id = ?
+        ", [$pid]);
+
         $totalQty = (float) $itemStats->total_qty;
         $completedQty = (float) $itemStats->completed_qty;
         $progressPct = $totalQty > 0 ? round(($completedQty / $totalQty) * 100) : 0;
+        $criticalAlerts = (int) ($alertStats->critical_unack ?? 0);
+        $totalUnack = (int) ($alertStats->total_unack ?? 0);
 
         return [
             [
@@ -129,6 +141,15 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                 'sub_type' => 'info',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#3b82f6" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
                 'icon_bg' => '#eff6ff',
+            ],
+            [
+                'label' => 'Variance Alerts',
+                'value' => $totalUnack,
+                'full_value' => $totalUnack . ' unacknowledged',
+                'sub' => $criticalAlerts > 0 ? $criticalAlerts . ' critical/high' : 'No critical alerts',
+                'sub_type' => $criticalAlerts > 0 ? 'danger' : 'success',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="' . ($criticalAlerts > 0 ? '#ef4444' : '#10b981') . '" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>',
+                'icon_bg' => $criticalAlerts > 0 ? '#fef2f2' : '#ecfdf5',
             ],
         ];
     }
@@ -175,6 +196,44 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
         return $summary;
     }
 
+    /* ── Per-BOQ Category Summary (for expanded view) ── */
+
+    public function getBoqCategorySummary(int $boqId): array
+    {
+        $rows = \DB::select("
+            SELECT
+                COALESCE(bi.category, 'uncategorized') as category,
+                COUNT(bi.id) as item_count,
+                COALESCE(SUM(bi.amount), 0) as total,
+                COALESCE(SUM(bi.quantity), 0) as total_qty,
+                COALESCE(SUM(bi.quantity_completed), 0) as completed_qty,
+                COALESCE(SUM(CASE WHEN bi.is_variation = 1 THEN bi.amount ELSE 0 END), 0) as variation_amt
+            FROM boq_items bi
+            WHERE bi.boq_id = ?
+            GROUP BY bi.category
+            ORDER BY SUM(bi.amount) DESC
+        ", [$boqId]);
+
+        if (empty($rows))
+            return [];
+
+        $summary = [];
+        foreach ($rows as $row) {
+            $cat = $row->category;
+            $pct = (float) $row->total_qty > 0 ? round(((float) $row->completed_qty / (float) $row->total_qty) * 100) : 0;
+            $summary[] = [
+                'key' => $cat,
+                'label' => self::$categories[$cat] ?? ucfirst(str_replace('_', ' ', $cat)),
+                'total' => (float) $row->total,
+                'total_formatted' => CurrencyHelper::format($row->total, 0),
+                'count' => (int) $row->item_count,
+                'progress' => $pct,
+                'variations' => (float) $row->variation_amt,
+            ];
+        }
+        return $summary;
+    }
+
     /* ══════════════════ HELPER: Get items for a BOQ (for blade) ══════════════════ */
 
     public function getBoqItems(int $boqId): array
@@ -183,23 +242,52 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
         if (!$boq)
             return [];
 
-        return $boq->items()->orderBy('category')->orderBy('sort_order')->get()
-            ->map(fn(BoqItem $item) => [
-                'id' => $item->id,
-                'item_code' => $item->item_code,
-                'description' => $item->description,
-                'unit' => $item->unit,
-                'quantity' => number_format((float) $item->quantity, 2),
-                'quantity_completed' => number_format((float) $item->quantity_completed, 2),
-                'unit_rate' => CurrencyHelper::format($item->unit_rate),
-                'amount' => CurrencyHelper::format($item->amount),
-                'amount_raw' => (float) $item->amount,
-                'category' => self::$categories[$item->category] ?? ucfirst($item->category ?? 'Other'),
-                'category_key' => $item->category,
-                'is_variation' => $item->is_variation,
-                'progress_pct' => $item->quantity > 0 ? round(($item->quantity_completed / $item->quantity) * 100) : 0,
-                'remarks' => $item->remarks,
-            ])->toArray();
+        $items = $boq->items()->orderBy('category')->orderBy('sort_order')->get();
+        if ($items->isEmpty())
+            return [];
+
+        // ── Group by category into sections ──
+        $sectionIndex = 0;
+        $sectionLetters = range('A', 'Z');
+        $sections = [];
+
+        foreach ($items->groupBy('category') as $catKey => $catItems) {
+            $letter = $sectionLetters[$sectionIndex] ?? ($sectionIndex + 1);
+            $sectionIndex++;
+
+            $sectionTotal = $catItems->sum('amount');
+            $sectionQty = $catItems->sum('quantity');
+            $sectionCompleted = $catItems->sum('quantity_completed');
+            $sectionProgress = $sectionQty > 0 ? round(($sectionCompleted / $sectionQty) * 100) : 0;
+
+            $sections[] = [
+                'key' => $catKey,
+                'letter' => $letter,
+                'label' => self::$categories[$catKey] ?? ucfirst(str_replace('_', ' ', $catKey ?? 'Other')),
+                'subtotal' => (float) $sectionTotal,
+                'subtotal_formatted' => CurrencyHelper::format($sectionTotal, 0),
+                'item_count' => $catItems->count(),
+                'progress' => $sectionProgress,
+                'items' => $catItems->map(fn(BoqItem $item) => [
+                    'id' => $item->id,
+                    'item_code' => $item->item_code,
+                    'description' => $item->description,
+                    'unit' => $item->unit,
+                    'quantity' => number_format((float) $item->quantity, 2),
+                    'quantity_completed' => number_format((float) $item->quantity_completed, 2),
+                    'unit_rate' => CurrencyHelper::format($item->unit_rate),
+                    'amount' => CurrencyHelper::format($item->amount),
+                    'amount_raw' => (float) $item->amount,
+                    'category' => self::$categories[$item->category] ?? ucfirst($item->category ?? 'Other'),
+                    'category_key' => $item->category,
+                    'is_variation' => $item->is_variation,
+                    'progress_pct' => $item->quantity > 0 ? round(($item->quantity_completed / $item->quantity) * 100) : 0,
+                    'remarks' => $item->remarks,
+                ])->values()->toArray(),
+            ];
+        }
+
+        return $sections;
     }
 
     public function toggleBoqExpand(int $boqId): void
@@ -242,6 +330,65 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                     Boq::create($data);
                     Notification::make()->title('BOQ created')->success()->send();
                 }),
+
+            Action::make('syncVariance')
+                ->label('Sync Variance')->icon('heroicon-o-arrow-path')->color('warning')
+                ->requiresConfirmation()
+                ->modalHeading('Sync BOQ Variance')
+                ->modalDescription('This will queue a background job to recalculate all BOQ item usage from stores, requisitions, and issuances. Alerts will be generated for items exceeding budget thresholds.')
+                ->action(function (): void {
+                    \App\Jobs\SyncBoqVarianceProjectJob::dispatch($this->pid());
+                    Notification::make()->title('Variance Sync Queued')->body('BOQ variance recalculation has been dispatched. Alerts will update shortly.')->success()->send();
+                }),
+
+            Action::make('viewAlerts')
+                ->label('Alerts')->icon('heroicon-o-bell-alert')
+                ->color(fn() => \App\Models\BoqVarianceAlert::forProject($this->pid())->unacknowledged()->critical()->exists() ? 'danger' : 'gray')
+                ->badge(fn() => \App\Models\BoqVarianceAlert::forProject($this->pid())->unacknowledged()->count() ?: null)
+                ->modalWidth('5xl')
+                ->modalHeading('BOQ Variance Alerts')
+                ->modalSubmitAction(false)->modalCancelActionLabel('Close')
+                ->schema(function () {
+                    $alerts = \App\Models\BoqVarianceAlert::forProject($this->pid())
+                        ->unacknowledged()
+                        ->orderByRaw("FIELD(severity, 'critical', 'high', 'medium', 'low')")
+                        ->with(['boqItem', 'boq'])
+                        ->get();
+
+                    if ($alerts->isEmpty()) {
+                        return [
+                            Forms\Components\Placeholder::make('none')
+                                ->label('')
+                                ->content(fn() => new HtmlString('<div style="text-align:center;padding:2rem;color:#6b7280;"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:3rem;height:3rem;margin:0 auto 1rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg><p style="font-weight:600;">All Clear</p><p style="font-size:0.875rem;">No unacknowledged variance alerts.</p></div>'))
+                        ];
+                    }
+
+                    $sevColors = ['critical' => '#dc2626', 'high' => '#f59e0b', 'medium' => '#3b82f6', 'low' => '#6b7280'];
+                    $sevBgColors = ['critical' => '#fef2f2', 'high' => '#fffbeb', 'medium' => '#eff6ff', 'low' => '#f9fafb'];
+
+                    $html = '<div style="display:flex;flex-direction:column;gap:0.75rem;">';
+                    foreach ($alerts as $a) {
+                        $c = $sevColors[$a->severity] ?? '#6b7280';
+                        $bg = $sevBgColors[$a->severity] ?? '#f9fafb';
+                        $html .= '<div style="border-left:4px solid ' . $c . ';background:' . $bg . ';padding:0.75rem 1rem;border-radius:0.5rem;">';
+                        $html .= '<div style="display:flex;justify-content:space-between;align-items:flex-start;">';
+                        $html .= '<div><span style="font-weight:700;color:' . $c . ';font-size:0.75rem;text-transform:uppercase;">' . strtoupper($a->severity) . '</span>';
+                        $html .= ' <span style="font-size:0.75rem;color:#6b7280;"> · ' . e($a->boq?->name ?? 'BOQ') . '</span>';
+                        $html .= '<div style="font-weight:600;margin-top:0.25rem;">' . e($a->title) . '</div>';
+                        $html .= '<div style="font-size:0.8125rem;color:#4b5563;margin-top:0.25rem;">' . e($a->message) . '</div>';
+                        $html .= '</div>';
+                        $html .= '<span style="font-size:1.25rem;font-weight:800;color:' . $c . ';white-space:nowrap;">' . abs($a->variance_percent) . '%</span>';
+                        $html .= '</div></div>';
+                    }
+                    $html .= '</div>';
+
+                    return [
+                        Forms\Components\Placeholder::make('alerts_list')
+                            ->label($alerts->count() . ' Unacknowledged Alert(s)')
+                            ->content(fn() => new HtmlString($html))
+                            ->columnSpanFull(),
+                    ];
+                }),
         ];
     }
 
@@ -253,20 +400,138 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
         $byCategory = $items->groupBy('category');
         $record->load(['contract', 'creator']);
 
-        // ── Compact info bar instead of full Section with form fields ──
-        $infoCells = collect([
+        // ── Compact info bar ──
+        $infoFields = [
             ['BOQ', $record->boq_number],
             ['Status', Boq::$statuses[$record->status] ?? $record->status],
             ['Contract', $record->contract?->title ?? '—'],
             ['Currency', $record->currency],
             ['By', $record->creator?->name ?? '—'],
             ['Created', $record->created_at?->format('M d, Y')],
-        ])->map(
-                fn($c) =>
-                '<div style="display:flex;gap:3px;align-items:baseline;">' .
-                '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#9ca3af;">' . $c[0] . '</span>' .
-                '<span style="font-size:11px;font-weight:600;color:#1f2937;">' . e($c[1]) . '</span></div>'
-            )->join('');
+        ];
+        $infoCells = collect($infoFields)->map(
+            fn($c) =>
+            '<div style="display:flex;gap:3px;align-items:baseline;">' .
+            '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#9ca3af;">' . $c[0] . '</span>' .
+            '<span style="font-size:11px;font-weight:600;color:#1f2937;">' . e($c[1]) . '</span></div>'
+        )->join('');
+
+        // ── Build one unified table with section headers ──
+        $sectionLetters = range('A', 'Z');
+        $sectionIndex = 0;
+
+        $tableHtml = '<div style="max-height:520px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:8px;">';
+        $tableHtml .= '<table style="width:100%;border-collapse:collapse;font-size:11px;">';
+        $tableHtml .= '<thead><tr style="background:#f1f5f9;border-bottom:2px solid #cbd5e1;position:sticky;top:0;z-index:1;">' .
+            '<th style="text-align:left;padding:6px 8px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.3px;color:#475569;">Code</th>' .
+            '<th style="text-align:left;padding:6px 8px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.3px;color:#475569;">Description</th>' .
+            '<th style="text-align:center;padding:6px 8px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.3px;color:#475569;">Unit</th>' .
+            '<th style="text-align:right;padding:6px 8px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.3px;color:#475569;">Qty</th>' .
+            '<th style="text-align:right;padding:6px 8px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.3px;color:#475569;">Rate</th>' .
+            '<th style="text-align:right;padding:6px 8px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.3px;color:#475569;">Amount</th>' .
+            '<th style="text-align:center;padding:6px 8px;font-weight:700;font-size:9px;text-transform:uppercase;letter-spacing:0.3px;color:#475569;">Progress</th>' .
+            '</tr></thead><tbody>';
+
+        foreach ($byCategory as $cat => $catItems) {
+            $letter = $sectionLetters[$sectionIndex] ?? ($sectionIndex + 1);
+            $sectionIndex++;
+            $catLabel = self::$categories[$cat] ?? ucfirst(str_replace('_', ' ', $cat ?: 'Uncategorized'));
+            $catTotal = $catItems->sum('amount');
+            $catQty = $catItems->sum('quantity');
+            $catCompleted = $catItems->sum('quantity_completed');
+            $pct = $catQty > 0 ? round(($catCompleted / $catQty) * 100) : 0;
+
+            // Section header row
+            $tableHtml .= '<tr style="' . ($sectionIndex > 1 ? 'border-top:2px solid #e2e8f0;' : '') . '">' .
+                '<td colspan="7" style="padding:8px 8px 6px;font-weight:800;font-size:12px;color:#1e293b;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-bottom:1px solid #cbd5e1;">' .
+                '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:5px;background:#4f46e5;color:white;font-size:11px;font-weight:800;margin-right:8px;">' . $letter . '</span>' .
+                strtoupper(e($catLabel)) .
+                '<span style="font-weight:400;font-size:10px;color:#94a3b8;margin-left:8px;">' . $catItems->count() . ' item' . ($catItems->count() !== 1 ? 's' : '') . '</span>' .
+                '</td></tr>';
+
+            // Item rows
+            foreach ($catItems as $i) {
+                $itemPct = $i->quantity > 0 ? round(($i->quantity_completed / $i->quantity) * 100) : 0;
+                $pctColor = $itemPct >= 100 ? '#059669' : ($itemPct >= 50 ? '#2563eb' : '#94a3b8');
+                $barColor = $itemPct >= 100 ? '#059669' : ($itemPct >= 50 ? '#3b82f6' : '#6366f1');
+
+                $tableHtml .= '<tr style="border-bottom:1px solid #f1f5f9;content-visibility:auto;contain-intrinsic-size:auto 32px;"' . ($i->is_variation ? ' class="var"' : '') . '>' .
+                    '<td style="padding:4px 8px;font-family:monospace;font-size:10px;font-weight:600;white-space:nowrap;">' .
+                    ($i->is_variation ? '<span style="color:#f59e0b;margin-right:2px;">▸</span>' : '') . e($i->item_code) . '</td>' .
+                    '<td style="padding:4px 8px;max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' . e($i->description) . '">' . e(\Illuminate\Support\Str::limit($i->description, 50)) . '</td>' .
+                    '<td style="text-align:center;padding:4px 8px;font-size:10px;">' . e($i->unit) . '</td>' .
+                    '<td style="text-align:right;padding:4px 8px;font-variant-numeric:tabular-nums;">' . number_format((float) $i->quantity, 2) . '</td>' .
+                    '<td style="text-align:right;padding:4px 8px;font-variant-numeric:tabular-nums;">' . CurrencyHelper::format($i->unit_rate) . '</td>' .
+                    '<td style="text-align:right;padding:4px 8px;font-weight:600;font-variant-numeric:tabular-nums;">' . CurrencyHelper::format($i->amount) . '</td>' .
+                    '<td style="text-align:center;padding:4px 8px;">' .
+                    '<span style="display:inline-block;width:36px;height:3px;background:#e2e8f0;border-radius:2px;overflow:hidden;vertical-align:middle;margin-right:3px;">' .
+                    '<span style="display:block;height:100%;width:' . min($itemPct, 100) . '%;background:' . $barColor . ';border-radius:2px;"></span></span>' .
+                    '<span style="font-size:10px;font-weight:600;color:' . $pctColor . ';">' . $itemPct . '%</span>' .
+                    '</td></tr>';
+            }
+
+            // Subtotal row
+            $tableHtml .= '<tr style="background:#f8fafc;border-bottom:2px solid #e2e8f0;">' .
+                '<td colspan="5" style="text-align:right;padding:5px 8px;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:0.3px;color:#334155;">Sub-total: ' . e($catLabel) . '</td>' .
+                '<td style="text-align:right;padding:5px 8px;font-weight:700;font-size:12px;color:#334155;">' . CurrencyHelper::format($catTotal) . '</td>' .
+                '<td style="text-align:center;padding:5px 8px;">' .
+                ($pct > 0 ? '<span style="font-size:10px;font-weight:700;color:' . ($pct >= 100 ? '#059669' : ($pct >= 50 ? '#3b82f6' : '#6366f1')) . ';">' . $pct . '%</span>' : '<span style="color:#94a3b8;">—</span>') .
+                '</td></tr>';
+        }
+
+        // Grand total footer
+        $originalTotal = $items->where('is_variation', false)->sum('amount');
+        $variationTotal = $items->where('is_variation', true)->sum('amount');
+
+        $tableHtml .= '</tbody><tfoot>' .
+            '<tr style="border-top:3px double #cbd5e1;background:#f1f5f9;">' .
+            '<td colspan="5" style="text-align:right;padding:8px;font-weight:800;font-size:12px;color:#1e293b;">Grand Total (' . $items->count() . ' items across ' . $byCategory->count() . ' sections)</td>' .
+            '<td style="text-align:right;padding:8px;font-weight:800;font-size:14px;color:#059669;">' . CurrencyHelper::format($record->total_value) . '</td>' .
+            '<td></td></tr>';
+
+        if ($variationTotal > 0) {
+            $tableHtml .= '<tr style="background:#fffbeb;">' .
+                '<td colspan="5" style="text-align:right;padding:4px 8px;font-size:10px;color:#92400e;">Original: ' . CurrencyHelper::format($originalTotal) . ' + Variations: </td>' .
+                '<td style="text-align:right;padding:4px 8px;font-weight:700;font-size:11px;color:#d97706;">' . CurrencyHelper::format($variationTotal) . '</td>' .
+                '<td></td></tr>';
+        }
+
+        $tableHtml .= '</tfoot></table></div>';
+
+        // ── Per-BOQ section breakdown cards ──
+        $breakdownHtml = '';
+        if ($byCategory->count() > 1) {
+            $breakdownHtml = '<div style="margin-bottom:2px;">' .
+                '<div style="display:flex;align-items:center;gap:6px;margin-bottom:0.4rem;">' .
+                '<span style="font-size:0.7rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;">Section Breakdown</span>' .
+                '<span style="font-size:0.6rem;color:#9ca3af;">— ' . $byCategory->count() . ' sections</span>' .
+                '</div>' .
+                '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;">';
+
+            $sIdx = 0;
+            $letters = range('A', 'Z');
+            foreach ($byCategory as $cat => $catItems) {
+                $ltr = $letters[$sIdx] ?? ($sIdx + 1);
+                $sIdx++;
+                $catLabel = self::$categories[$cat] ?? ucfirst(str_replace('_', ' ', $cat ?: 'Uncategorized'));
+                $catTotal = $catItems->sum('amount');
+                $catQty = $catItems->sum('quantity');
+                $catDone = $catItems->sum('quantity_completed');
+                $pct = $catQty > 0 ? round(($catDone / $catQty) * 100) : 0;
+
+                $breakdownHtml .=
+                    '<div style="border-radius:0.5rem;padding:0.5rem 0.75rem;border:1px solid #e5e7eb;background:#f9fafb;min-width:130px;flex:1;max-width:190px;">' .
+                    '<div style="display:flex;align-items:center;gap:4px;margin-bottom:2px;">' .
+                    '<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:3px;background:#4f46e5;color:white;font-size:9px;font-weight:800;">' . $ltr . '</span>' .
+                    '<span style="font-weight:600;font-size:0.6rem;text-transform:uppercase;letter-spacing:0.04em;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' . e($catLabel) . '</span>' .
+                    '</div>' .
+                    '<div style="font-weight:700;font-size:0.85rem;color:#0f172a;">' . CurrencyHelper::format($catTotal, 0) . '</div>' .
+                    '<div style="font-size:0.55rem;color:#9ca3af;margin-top:1px;">' . $catItems->count() . ' item' . ($catItems->count() !== 1 ? 's' : '') .
+                    ($pct > 0 ? ' · ' . $pct . '% done' : '') . '</div>' .
+                    '</div>';
+            }
+            $breakdownHtml .= '</div></div>';
+        }
 
         $schema = [
             Forms\Components\Placeholder::make('info_bar')
@@ -276,65 +541,15 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                 ))->columnSpanFull(),
         ];
 
-        // ── Category item tables — compact ──
-        foreach ($byCategory as $cat => $catItems) {
-            $catLabel = self::$categories[$cat] ?? ucfirst(str_replace('_', ' ', $cat ?: 'Uncategorized'));
-            $catTotal = $catItems->sum('amount');
-            $catQty = $catItems->sum('quantity');
-            $catCompleted = $catItems->sum('quantity_completed');
-            $pct = $catQty > 0 ? round(($catCompleted / $catQty) * 100) : 0;
-
-            $tableHtml = '<table style="width:100%;border-collapse:collapse;font-size:10px;">' .
-                '<thead><tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' .
-                '<th style="text-align:left;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Code</th>' .
-                '<th style="text-align:left;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Description</th>' .
-                '<th style="text-align:center;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Unit</th>' .
-                '<th style="text-align:right;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Qty</th>' .
-                '<th style="text-align:right;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Rate</th>' .
-                '<th style="text-align:right;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">Amount</th>' .
-                '<th style="text-align:center;padding:2px 4px;font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:0.3px;color:#64748b;">%</th>' .
-                '</tr></thead><tbody>';
-
-            foreach ($catItems as $i) {
-                $itemPct = $i->quantity > 0 ? round(($i->quantity_completed / $i->quantity) * 100) : 0;
-                $pctColor = $itemPct >= 100 ? '#059669' : ($itemPct >= 50 ? '#2563eb' : '#94a3b8');
-                $tableHtml .= '<tr style="border-bottom:1px solid #f1f5f9;">' .
-                    '<td style="padding:2px 4px;font-family:monospace;font-size:9px;white-space:nowrap;">' . ($i->is_variation ? '🔸' : '') . e($i->item_code) . '</td>' .
-                    '<td style="padding:2px 4px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' . e($i->description) . '">' . e(\Illuminate\Support\Str::limit($i->description, 50)) . '</td>' .
-                    '<td style="text-align:center;padding:2px 4px;font-size:9px;">' . e($i->unit) . '</td>' .
-                    '<td style="text-align:right;padding:2px 4px;font-variant-numeric:tabular-nums;">' . number_format((float) $i->quantity, 2) . '</td>' .
-                    '<td style="text-align:right;padding:2px 4px;font-variant-numeric:tabular-nums;">' . number_format((float) $i->unit_rate, 2) . '</td>' .
-                    '<td style="text-align:right;padding:2px 4px;font-weight:600;font-variant-numeric:tabular-nums;">' . CurrencyHelper::format($i->amount) . '</td>' .
-                    '<td style="text-align:center;padding:2px 4px;color:' . $pctColor . ';font-weight:600;font-size:9px;">' . $itemPct . '%</td>' .
-                    '</tr>';
-            }
-
-            $tableHtml .= '<tr style="background:#f8fafc;font-weight:700;border-top:1px solid #e2e8f0;">' .
-                '<td colspan="5" style="padding:2px 4px;font-size:9px;">Subtotal — ' . $catItems->count() . ' items (' . $pct . '%)</td>' .
-                '<td style="text-align:right;padding:2px 4px;font-size:10px;">' . CurrencyHelper::format($catTotal) . '</td><td></td></tr>';
-            $tableHtml .= '</tbody></table>';
-
-            $schema[] = Section::make("{$catLabel} ({$catItems->count()}) — " . CurrencyHelper::format($catTotal))
-                ->schema([
-                    Forms\Components\Placeholder::make('cat_' . ($cat ?: 'uncategorized'))
-                        ->content(fn() => new HtmlString($tableHtml))
-                        ->columnSpanFull(),
-                ])->collapsible()->collapsed();
+        if ($breakdownHtml) {
+            $schema[] = Forms\Components\Placeholder::make('section_breakdown')
+                ->content(fn() => new HtmlString($breakdownHtml))
+                ->columnSpanFull();
         }
 
-        // ── Grand total — compact inline ──
-        $originalTotal = $items->where('is_variation', false)->sum('amount');
-        $variationTotal = $items->where('is_variation', true)->sum('amount');
-        $schema[] = Forms\Components\Placeholder::make('grand_summary')
-            ->content(fn() => new HtmlString(
-                '<div style="display:flex;gap:16px;padding:6px 10px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;align-items:center;justify-content:space-between;">' .
-                '<div style="display:flex;gap:12px;">' .
-                '<div><span style="font-size:8px;font-weight:700;text-transform:uppercase;color:#6b7280;">Original</span> <span style="font-size:13px;font-weight:800;">' . CurrencyHelper::format($originalTotal) . '</span></div>' .
-                ($variationTotal > 0 ? '<div><span style="font-size:8px;font-weight:700;text-transform:uppercase;color:#6b7280;">Variations</span> <span style="font-size:13px;font-weight:800;color:#d97706;">' . CurrencyHelper::format($variationTotal) . '</span></div>' : '') .
-                '</div>' .
-                '<div><span style="font-size:8px;font-weight:700;text-transform:uppercase;color:#059669;">Grand Total</span> <span style="font-size:15px;font-weight:800;color:#059669;">' . CurrencyHelper::format($record->total_value) . '</span> <span style="font-size:9px;color:#6b7280;">(' . $items->count() . ' items)</span></div>' .
-                '</div>'
-            ))->columnSpanFull();
+        $schema[] = Forms\Components\Placeholder::make('items_table')
+            ->content(fn() => new HtmlString($tableHtml))
+            ->columnSpanFull();
 
         return $schema;
     }
@@ -479,16 +694,17 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(Boq::$statuses)->multiple(),
             ])
+            ->recordAction('viewDetail')
             ->recordActions([
-                \Filament\Actions\ActionGroup::make([
+                /* ── View Detail (row-click target) ── */
+                \Filament\Actions\Action::make('viewDetail')
+                    ->label('View')->icon('heroicon-o-eye')->color('gray')->modalWidth('screen')
+                    ->modalHeading(fn(Boq $record) => $record->boq_number . ' — ' . $record->name)
+                    ->schema(fn(Boq $record) => $this->viewDetailSchema($record))
+                    ->fillForm(fn(Boq $record) => $this->viewDetailData($record))
+                    ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
 
-                    /* ── View Detail ── */
-                    \Filament\Actions\Action::make('viewDetail')
-                        ->label('View')->icon('heroicon-o-eye')->color('gray')->modalWidth('screen')
-                        ->modalHeading(fn(Boq $record) => $record->boq_number . ' — ' . $record->name)
-                        ->schema(fn(Boq $record) => $this->viewDetailSchema($record))
-                        ->fillForm(fn(Boq $record) => $this->viewDetailData($record))
-                        ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
+                \Filament\Actions\ActionGroup::make([
 
                     /* ═══════════════════════════════════════════
                        BULK ADD — Spreadsheet Paste (PRIMARY)

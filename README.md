@@ -12,11 +12,12 @@ InfraHub is an all-in-one project management solution designed for construction 
 
 - 🏗️ **Multi-project dashboard** with real-time stat cards and interactive project timeline
 - 🏢 **Multi-company tenancy** — each company manages its own users, roles, and projects
-- 📁 **10 integrated modules** per project (Documents, Tasks, SHEQ, BOQ, Contracts, and more)
+- 📁 **10+ integrated modules** per project (Documents, Tasks, SHEQ, BOQ, Inventory, Contracts, and more)
 - 🔐 **Dual-panel architecture** — Admin panel for super admins, App panel for company teams
 - 🎨 **Customizable UI** — per-user navigation style and color theme settings
 - 📊 **Dashboard widgets** — stats overview, project Gantt timeline with milestones
 - ⚡ **Compact, data-dense UI** — optimized tables, sticky actions, narrow sidebars
+- 📦 **Background jobs** — BOQ variance sync, loan alerts, queue processing
 
 ---
 
@@ -60,8 +61,8 @@ When viewing a project record, a collapsible sidebar (`SubNavigationPosition::St
 |-------|---------|
 | **Operations** | Core FSM (Work Orders), Tasks & Workflow, Planning & Progress |
 | **Site** | Field Logs, Inventory, SHEQ |
-| **Commercial** | Contracts, BOQ |
-| **Information** | Documents (CDE), Reports |
+| **Commercial** | Financials, Contracts, BOQ |
+| **Information** | Documents (CDE), RFIs & Submittals, Reports |
 
 ---
 
@@ -102,12 +103,36 @@ Each module page includes:
 - **Sticky action column** — actions column stays pinned to the right when scrolling horizontally
 - **Compact layout** — reduced row padding, smaller text, narrower sidebars for data-dense views
 
+### Inventory & Requisition Workflow
+
+- **Products, Stores, Assets** — full inventory management
+- **Material Requisitions** — create, approve, and issue against BOQ items
+- **Issuance enforcement** — materials can only be issued against approved requisitions
+- **Purchase Orders & GRN** — procurement lifecycle tracking
+- **Asset lifecycle** — checkout, check-in, maintenance, transfer, dispose
+
+### BOQ (Bill of Quantities)
+
+- **Multi-BOQ per project** linked to contracts
+- **Section headers** — grouped by category (A. Preliminaries, B. Substructure, etc.) with subtotals
+- **Excel/CSV bulk import** — paste from Excel or upload CSV files
+- **Variance tracking** — automated overrun/underrun alerts synced via background jobs
+- **Revision snapshots** — track changes over time
+- **Progress tracking** — quantity completed per line item with visual progress bars
+
+### SHEQ (Safety, Health, Environment, Quality & Social)
+
+- **Incidents, Inspections, Snags, Social records** — tabbed interface
+- **Social records** — grievances, stakeholder engagement, labour welfare, CSR activities
+- **Bulk actions** — resolve, delete across multiple records
+
 ### UI Personalization
 
 - **Navigation layout** — sidebar or top navigation
 - **Color theme** — customizable primary color per user
 - **Collapsible sidebar** on desktop
 - **SPA mode** for snappy navigation
+- **Fullscreen toggle** — global fullscreen mode across all pages
 
 ### UI Customizations (Custom CSS Theme)
 
@@ -134,20 +159,216 @@ The app uses a custom CSS theme (`resources/css/filament/app/theme.css`) with:
 | **Framework** | Laravel 12 |
 | **Admin UI** | Filament 4 |
 | **Auth & Permissions** | Spatie Permission + Filament Shield |
-| **Database** | MySQL / SQLite |
+| **Database** | MySQL 8+ |
 | **Frontend** | Blade, Alpine.js, Livewire |
 | **Styling** | Filament Design System + Custom CSS |
 | **Build** | Vite |
 | **Fonts** | Inter (Google Fonts) |
+| **Queue** | Database driver (Redis-ready) |
+| **Cache/Session** | Database driver |
 
 ---
 
 ## Requirements
 
 - PHP ≥ 8.2
-- Laravel 12
-- Composer
-- Node.js & npm
+- MySQL ≥ 8.0
+- Composer ≥ 2.x
+- Node.js ≥ 18.x & npm
+- Git
+
+---
+
+## Development Guide
+
+### Quick Start (One Command)
+
+```bash
+# Starts server, queue worker, log tail, and Vite — all in one terminal
+composer dev
+```
+
+This runs concurrently:
+- `php artisan serve` — Laravel dev server (http://localhost:8000)
+- `php artisan queue:listen --tries=1` — Queue worker for background jobs
+- `php artisan pail --timeout=0` — Real-time log streamer
+- `npm run dev` — Vite hot-reload for CSS/JS
+
+### Manual Start (Separate Terminals)
+
+If you prefer running services individually:
+
+**Terminal 1 — Web Server:**
+```bash
+php artisan serve
+```
+
+**Terminal 2 — Queue Worker:**
+```bash
+# Development (restarts on code changes, 1 try)
+php artisan queue:listen --tries=1
+
+# Production-like (persistent worker, 3 retries, 90s timeout)
+php artisan queue:work --tries=3 --timeout=90
+```
+
+**Terminal 3 — Vite (hot reload for CSS/JS):**
+```bash
+npm run dev
+```
+
+**Terminal 4 — Log Tail (optional):**
+```bash
+php artisan pail
+```
+
+### Common Development Commands
+
+```bash
+# ── Database ──
+php artisan migrate                          # Run pending migrations
+php artisan migrate:fresh --seed             # Reset DB + seed demo data
+php artisan migrate:status                   # Check migration status
+php artisan tinker                           # Interactive REPL
+
+# ── Cache & Views ──
+php artisan optimize:clear                   # Clear ALL caches (config, route, view, app)
+php artisan view:clear                       # Clear compiled Blade views
+php artisan cache:clear                      # Clear application cache
+php artisan config:clear                     # Clear config cache
+php artisan route:clear                      # Clear route cache
+
+# ── Permissions & Shield ──
+php artisan shield:generate --all            # Regenerate all permissions
+php artisan shield:super-admin               # Assign super_admin role
+php artisan shield:install                   # Install Shield (first time only)
+
+# ── Queue ──
+php artisan queue:work --tries=3 --timeout=90     # Process queue jobs
+php artisan queue:retry all                       # Retry all failed jobs
+php artisan queue:failed                          # List failed jobs
+php artisan queue:flush                           # Delete all failed jobs
+php artisan queue:prune-batches --hours=72        # Prune old batch records
+
+# ── Scheduled Jobs (Manual Trigger) ──
+php artisan boq:sync-variance --all               # Sync BOQ variance (all projects)
+php artisan boq:sync-variance --sync              # Run synchronously (for debugging)
+php artisan loan:process-alerts                   # Process loan alerts
+
+# ── Scheduler ──
+php artisan schedule:list                         # View scheduled jobs
+php artisan schedule:work                         # Run scheduler locally (dev)
+
+# ── Assets ──
+npm run build                                # Production build (CSS + JS)
+npm run dev                                  # Vite dev server with HMR
+php artisan storage:link                     # Create storage symlink
+
+# ── Code Quality ──
+php artisan test                             # Run test suite
+./vendor/bin/pint                            # Fix code style (Laravel Pint)
+php -l path/to/file.php                      # PHP syntax check
+```
+
+### Background Jobs & Scheduler
+
+InfraHub uses background jobs for heavy processing:
+
+| Job | Schedule | Description |
+|-----|----------|-------------|
+| `boq:sync-variance --all` | Daily 2:00 AM | Syncs BOQ variance across all projects |
+| `loan:process-alerts` | Daily 7:00 AM | Sends loan payment & overdue alerts |
+| `queue:prune-batches` | Sunday 3:00 AM | Cleans up old queue batch records |
+| `auth:clear-resets` | Daily | Removes expired password reset tokens |
+
+To run the scheduler in development:
+```bash
+php artisan schedule:work
+```
+
+### Project Structure
+
+```
+app/
+├── Console/Commands/               # Artisan commands
+│   ├── SyncBoqVariance.php         # BOQ variance sync command
+│   └── ProcessLoanAlerts.php       # Loan alerts command
+├── Filament/
+│   ├── Admin/                      # Admin panel (super admin)
+│   │   └── Resources/
+│   │       ├── CompanyResource
+│   │       ├── UserResource
+│   │       ├── RoleResource
+│   │       ├── EmailTemplateResource
+│   │       └── SubscriptionResource
+│   ├── App/                        # App panel (all users)
+│   │   ├── Concerns/               # Shared traits (ExportsTableCsv, etc.)
+│   │   ├── Pages/
+│   │   │   └── Dashboard.php       # Registers widgets (Stats + Timeline)
+│   │   ├── Resources/
+│   │   │   ├── CdeProjectResource/
+│   │   │   │   └── Pages/
+│   │   │   │       ├── ViewCdeProject
+│   │   │   │       ├── BaseModulePage     # Abstract base for modules
+│   │   │   │       └── Modules/           # Project module pages
+│   │   │   │           ├── CoreFsmPage           # Work Orders (FSM)
+│   │   │   │           ├── TaskWorkflowPage      # Tasks & Gantt
+│   │   │   │           ├── PlanningProgressPage   # Milestones & EVM
+│   │   │   │           ├── FieldManagementPage    # Daily Logs
+│   │   │   │           ├── InventoryPage          # Stock, POs, GRN, Requisitions
+│   │   │   │           ├── SheqPage               # Safety, Inspections, Social
+│   │   │   │           ├── FinancialsPage          # Cost tracking
+│   │   │   │           ├── CostContractsPage       # Contracts
+│   │   │   │           ├── BoqPage                 # Bill of Quantities
+│   │   │   │           ├── CdePage                 # Documents (ISO 19650)
+│   │   │   │           └── ReportingPage           # Reports & Analytics
+│   │   │   └── ... (Asset, Client, Invoice, Task, WorkOrder resources)
+│   │   └── Widgets/                # Dashboard widgets
+│   └── Pages/
+│       └── SystemSettings          # Global UI settings
+├── Jobs/                           # Queue jobs
+│   ├── SyncBoqVarianceProjectJob   # Per-project variance sync
+│   └── SyncBoqVarianceByProductJob # Per-product variance sync
+├── Models/                         # 60+ Eloquent models
+│   ├── User.php, Company.php, CdeProject.php
+│   ├── Boq.php, BoqItem.php, BoqRevision.php, BoqVarianceAlert.php
+│   ├── MaterialRequisition.php, MaterialIssuance.php
+│   ├── Product.php, Warehouse.php, Asset.php
+│   ├── Contract.php, Invoice.php, PurchaseOrder.php
+│   ├── SafetyIncident.php, SocialRecord.php
+│   └── ...
+├── Observers/                      # Model observers
+├── Policies/                       # Authorization policies (17+)
+├── Services/                       # Business logic services
+│   ├── BoqVarianceService.php
+│   └── LoanAlertService.php
+└── Support/
+    └── CurrencyHelper.php          # Currency formatting utility
+
+resources/
+├── css/filament/app/
+│   └── theme.css                   # Custom compact UI overrides
+├── views/filament/app/
+│   ├── widgets/                    # Dashboard widget views
+│   ├── pages/modules/              # Module Blade views
+│   │   ├── inventory.blade.php
+│   │   ├── sheq.blade.php
+│   │   ├── boq.blade.php
+│   │   └── ...
+│   └── components/                 # Reusable Blade components
+
+routes/
+├── web.php                         # Web routes
+├── api.php                         # API routes
+└── console.php                     # Scheduler & Artisan commands
+
+database/
+├── migrations/                     # Database migrations (100+)
+└── seeders/
+    ├── DatabaseSeeder.php
+    ├── SaasFoundationSeeder.php    # Full demo data
+    └── RolesAndPermissionsSeeder.php
+```
 
 ---
 
@@ -180,6 +401,10 @@ DB_PORT=3306
 DB_DATABASE=infrahub
 DB_USERNAME=root
 DB_PASSWORD=
+
+QUEUE_CONNECTION=database
+SESSION_DRIVER=database
+CACHE_STORE=database
 ```
 
 ### 4. Migrate & Seed
@@ -210,7 +435,14 @@ php artisan shield:super-admin
 
 ```bash
 npm run build
-php artisan serve
+composer dev     # Start all services (recommended)
+```
+
+Or manually:
+```bash
+php artisan serve                        # Terminal 1
+php artisan queue:work --tries=3 --timeout=90   # Terminal 2
+npm run dev                              # Terminal 3
 ```
 
 Access the application:
@@ -289,210 +521,422 @@ Company admins can create custom roles under **Settings > Roles**. These roles:
 ],
 ```
 
-### Navigation Groups (`AppPanelProvider.php`)
-
-```php
-->navigationGroups([
-    'Dashboard',
-    'Projects',
-    'Company',
-    'Settings',
-])
-```
-
----
-
-## Project Structure
-
-```
-app/
-├── Filament/
-│   ├── Admin/                    # Admin panel (super admin)
-│   │   └── Resources/
-│   │       ├── CompanyResource
-│   │       ├── UserResource
-│   │       ├── RoleResource
-│   │       ├── EmailTemplateResource
-│   │       └── SubscriptionResource
-│   ├── App/                      # App panel (all users)
-│   │   ├── Pages/
-│   │   │   └── Dashboard.php     # Registers widgets (Stats + Timeline)
-│   │   ├── Resources/
-│   │   │   ├── CdeProjectResource/
-│   │   │   │   └── Pages/
-│   │   │   │       ├── ViewCdeProject    # Project overview
-│   │   │   │       ├── CreateCdeProject
-│   │   │   │       ├── EditCdeProject
-│   │   │   │       ├── ListCdeProjects
-│   │   │   │       ├── BaseModulePage    # Abstract base for modules
-│   │   │   │       └── Modules/          # 10 module tab pages
-│   │   │   │           ├── CoreFsmPage
-│   │   │   │           ├── TaskWorkflowPage
-│   │   │   │           ├── PlanningProgressPage
-│   │   │   │           ├── FieldManagementPage
-│   │   │   │           ├── InventoryPage
-│   │   │   │           ├── SheqPage
-│   │   │   │           ├── CostContractsPage
-│   │   │   │           ├── BoqPage
-│   │   │   │           ├── CdePage
-│   │   │   │           └── ReportingPage
-│   │   │   ├── AssetResource
-│   │   │   ├── ClientResource
-│   │   │   ├── CompanyUserResource       # Company-scoped users
-│   │   │   ├── CompanyRoleResource       # Company-scoped roles
-│   │   │   ├── CompanyEmailTemplateResource
-│   │   │   ├── InvoiceResource
-│   │   │   ├── SafetyIncidentResource
-│   │   │   ├── TaskResource
-│   │   │   └── WorkOrderResource
-│   │   └── Widgets/
-│   │       ├── TenantDashboardOverview.php  # Stats cards
-│   │       └── ProjectTimelineWidget.php    # Gantt timeline
-│   └── Pages/
-│       └── SystemSettings                # UI settings (shared)
-├── Models/
-│   ├── User.php                  # With company scoping
-│   ├── Role.php                  # Custom Spatie Role with company_id
-│   ├── Company.php
-│   ├── CdeProject.php
-│   ├── Milestone.php             # Project milestones (timeline)
-│   ├── WorkOrder.php
-│   ├── Task.php
-│   ├── Contract.php
-│   ├── Boq.php / BoqItem.php
-│   ├── SafetyIncident.php / SafetyInspection.php
-│   ├── DailySiteLog.php
-│   ├── Invoice.php
-│   ├── PurchaseOrder.php
-│   ├── CdeDocument.php / CdeFolder.php
-│   ├── Module.php                # Module registry
-│   ├── Setting.php               # Per-user settings storage
-│   └── ... (60+ models total)
-├── Policies/                     # 17 policy files
-│   ├── UserPolicy.php            # before() for admin bypass
-│   ├── RolePolicy.php            # before() for admin bypass
-│   ├── CdeProjectPolicy.php
-│   └── ... (WorkOrder, Task, Invoice, etc.)
-└── Providers/
-    └── Filament/
-        ├── AdminPanelProvider.php
-        └── AppPanelProvider.php
-
-resources/
-├── css/filament/app/
-│   └── theme.css                 # Custom compact UI overrides
-├── views/filament/app/
-│   ├── widgets/
-│   │   └── project-timeline.blade.php   # Gantt timeline view
-│   ├── pages/modules/         # Module Blade views
-│   └── components/            # Custom Blade components
-└── ...
-
-public/
-└── docs/
-    ├── requirements.txt          # Full requirements specification
-    ├── index.html                # Requirements overview page
-    ├── Construction Management System - Requirements Document.pdf
-    ├── Construction Management System - Requirements Document.docx
-    └── implementation-plans/     # 11 module implementation plans
-        ├── 00-overview.md
-        ├── 01-system-wide-requirements.md
-        ├── 02-cde-module.md
-        ├── 03-field-management-module.md
-        ├── 04-task-workflow-module.md
-        ├── 05-cost-contracts-module.md
-        ├── 06-planning-progress-module.md
-        ├── 07-reporting-dashboards-module.md
-        ├── 08-user-access-module.md
-        ├── 09-integration-module.md
-        └── 10-compliance-module.md
-
-database/
-└── seeders/
-    ├── DatabaseSeeder.php
-    ├── SaasFoundationSeeder.php   # Full demo data seeder
-    ├── RoleSeeder.php
-    └── RolesAndPermissionsSeeder.php
-```
-
----
-
-## Requirements Documentation
-
-Full project requirements are available in `public/docs/`:
-
-| Document | Description |
-|----------|-------------|
-| **requirements.txt** | 974-line comprehensive requirements specification |
-| **Implementation Plans** (11 files) | Module-by-module implementation plans |
-| **Requirements PDF/DOCX** | Formatted requirements document |
-
-### Requirement Coverage by Module
-
-| Module | Req IDs | Key Areas |
-|--------|---------|-----------|
-| **System-Wide** | REQ-SYS-001 to 015 | Architecture, Performance, Security |
-| **CDE (Documents)** | REQ-CDE-001 to 076 | Repository, Versioning, Workflows, ISO 19650 |
-| **Field Management** | REQ-FIELD-001 to 028 | Daily Logs, Weather, Manpower, Offline |
-| **Quality & Safety** | REQ-QS-001 to 028 | Inspections, NCRs, Incidents, CAPA |
-| **RFIs & Submittals** | REQ-RFI/SUB-001 to 012 | RFI Management, Submittals, Response Tracking |
-| **Tasks & Workflow** | REQ-TASK-001 to 024 | Task Management, Assignments, Escalations |
-| **Cost & Contracts** | REQ-COST/CONT/PAY-001 to 035+ | Budgets, Commitments, Change Orders, Payments |
-| **Planning & Progress** | REQ-PLAN-001 to 027 | Scheduling, Milestones, Progress, S-Curves |
-| **Reporting** | REQ-DASH/REP-001 to 017 | Dashboards, Custom Reports, Exports |
-| **User & Access** | REQ-USER-001 to 031 | RBAC, Multi-project, 2FA, Audit Logs |
-| **Integration** | REQ-INT-001 to 013 | API, Import/Export, Third-party |
-| **Compliance** | REQ-COMP-001 to 010 | ISO 19650, GDPR, Security Standards |
-
----
-
-## Google Login Integration
-
-### Getting OAuth Credentials
-
-1. Visit [Google Cloud Console](https://console.cloud.google.com/)
-2. Create/select a project → Enable Google+ API
-3. Create OAuth 2.0 credentials (Web application)
-4. Add redirect URI: `http://localhost:8000/auth/google/callback`
-
-### Environment Configuration
-
-```env
-GOOGLE_CLIENT_ID=your_google_client_id_here
-GOOGLE_CLIENT_SECRET=your_google_client_secret_here
-```
-
----
-
-## Queue & Email Notifications
-
-### Configuration
+### Queue Configuration
 
 ```env
 QUEUE_CONNECTION=database
+```
+
+InfraHub uses the `database` queue driver by default. For production, consider switching to Redis:
+
+```env
+QUEUE_CONNECTION=redis
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+```
+
+### Mail Configuration
+
+```env
 MAIL_MAILER=smtp
 MAIL_HOST=smtp.gmail.com
 MAIL_PORT=587
 MAIL_USERNAME=your-email@gmail.com
 MAIL_PASSWORD=your-app-password
 MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@yourdomain.com
+MAIL_FROM_NAME="${APP_NAME}"
 ```
 
-### Running the Queue Worker
+### Google Login Integration
+
+```env
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+```
+
+1. Visit [Google Cloud Console](https://console.cloud.google.com/)
+2. Create/select a project → Enable Google+ API
+3. Create OAuth 2.0 credentials (Web application)
+4. Add redirect URI: `http://localhost:8000/auth/google/callback`
+
+---
+
+## Ubuntu Server Deployment Guide
+
+### Prerequisites
+
+- Ubuntu 22.04 or 24.04 LTS
+- Root or sudo access
+- Domain name pointed to server IP (e.g., `infrahub.yourdomain.com`)
+
+### Step 1 — Install System Dependencies
 
 ```bash
-# Development
-php artisan queue:work
+sudo apt update && sudo apt upgrade -y
 
-# Production (with Supervisor recommended)
-php artisan queue:work --daemon --tries=3 --timeout=60
+# Add PHP 8.3 repository
+sudo add-apt-repository ppa:ondrej/php -y
+sudo apt update
+
+# Install PHP 8.3 + required extensions
+sudo apt install -y php8.3 php8.3-fpm php8.3-cli php8.3-common \
+  php8.3-mysql php8.3-mbstring php8.3-xml php8.3-curl php8.3-zip \
+  php8.3-gd php8.3-intl php8.3-bcmath php8.3-redis php8.3-tokenizer
+
+# Install MySQL, Nginx, Node.js, and utilities
+sudo apt install -y mysql-server nginx git unzip curl supervisor
+
+# Install Composer
+curl -sS https://getcomposer.org/installer | php
+sudo mv composer.phar /usr/local/bin/composer
+
+# Install Node.js 20 LTS
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
 ```
 
-### Notification Types
+### Step 2 — Configure MySQL
 
-- **Project Assignment** — when added to a project
-- **Comment Notifications** — new comments on tickets
-- **Ticket Updates** — status changes
+```bash
+sudo mysql_secure_installation
+
+sudo mysql -u root -p
+```
+
+```sql
+CREATE DATABASE infrahub_production CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'infrahub'@'localhost' IDENTIFIED BY 'YOUR_STRONG_PASSWORD';
+GRANT ALL PRIVILEGES ON infrahub_production.* TO 'infrahub'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+### Step 3 — Deploy Application
+
+```bash
+# Create web directory
+sudo mkdir -p /var/www/infrahub
+sudo chown $USER:$USER /var/www/infrahub
+
+# Clone repository
+cd /var/www
+git clone <repository-url> infrahub
+cd infrahub
+
+# Install dependencies
+composer install --optimize-autoloader --no-dev
+npm install && npm run build
+
+# Environment setup
+cp .env.example .env
+php artisan key:generate
+```
+
+Edit `.env` for production:
+
+```env
+APP_NAME="InfraHub"
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://infrahub.yourdomain.com
+APP_TIMEZONE=Africa/Kampala
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=infrahub_production
+DB_USERNAME=infrahub
+DB_PASSWORD=YOUR_STRONG_PASSWORD
+
+QUEUE_CONNECTION=database
+SESSION_DRIVER=database
+CACHE_STORE=database
+
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.gmail.com
+MAIL_PORT=587
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@yourdomain.com
+MAIL_FROM_NAME="InfraHub"
+```
+
+```bash
+# Run migrations & seed
+php artisan migrate --force
+php artisan db:seed --force
+php artisan storage:link
+
+# Set permissions
+sudo chown -R www-data:www-data /var/www/infrahub
+sudo chmod -R 775 /var/www/infrahub/storage
+sudo chmod -R 775 /var/www/infrahub/bootstrap/cache
+
+# Optimize for production
+php artisan optimize
+php artisan filament:optimize
+php artisan view:cache
+php artisan icons:cache
+```
+
+### Step 4 — Configure Nginx
+
+```bash
+sudo nano /etc/nginx/sites-available/infrahub
+```
+
+```nginx
+server {
+    listen 80;
+    server_name infrahub.yourdomain.com;
+    root /var/www/infrahub/public;
+    index index.php;
+
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+    add_header X-XSS-Protection "1; mode=block";
+
+    # Max upload size (for CSV/Excel imports)
+    client_max_body_size 50M;
+
+    # Gzip compression
+    gzip on;
+    gzip_types text/css application/javascript application/json image/svg+xml;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+        fastcgi_read_timeout 300;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+
+    # Cache static assets
+    location ~* \.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        expires 30d;
+        add_header Cache-Control "public, immutable";
+    }
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/infrahub /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
+```
+
+### Step 5 — Configure SSL (Let's Encrypt)
+
+```bash
+sudo apt install -y certbot python3-certbot-nginx
+sudo certbot --nginx -d infrahub.yourdomain.com
+```
+
+### Step 6 — Setup Queue Worker (Supervisor)
+
+```bash
+sudo nano /etc/supervisor/conf.d/infrahub-worker.conf
+```
+
+```ini
+[program:infrahub-worker]
+process_name=%(program_name)s_%(process_num)02d
+command=php /var/www/infrahub/artisan queue:work database --sleep=3 --tries=3 --timeout=90 --max-time=3600
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+user=www-data
+numprocs=2
+redirect_stderr=true
+stdout_logfile=/var/www/infrahub/storage/logs/worker.log
+stdout_logfile_maxbytes=10MB
+stopwaitsecs=3600
+```
+
+```bash
+sudo supervisorctl reread
+sudo supervisorctl update
+sudo supervisorctl start infrahub-worker:*
+
+# Verify workers are running
+sudo supervisorctl status
+```
+
+### Step 7 — Setup Cron for Scheduler
+
+```bash
+sudo crontab -e -u www-data
+```
+
+Add this line:
+
+```cron
+* * * * * cd /var/www/infrahub && php artisan schedule:run >> /dev/null 2>&1
+```
+
+This triggers the Laravel scheduler every minute, which runs:
+- **BOQ Variance Sync** at 2:00 AM daily
+- **Loan Alerts** at 7:00 AM daily
+- **Queue Batch Pruning** on Sundays at 3:00 AM
+- **Auth Token Cleanup** daily
+
+### Step 8 — PHP-FPM Tuning (Optional)
+
+```bash
+sudo nano /etc/php/8.3/fpm/pool.d/www.conf
+```
+
+Recommended settings for a 2GB+ RAM server:
+
+```ini
+pm = dynamic
+pm.max_children = 20
+pm.start_servers = 5
+pm.min_spare_servers = 3
+pm.max_spare_servers = 10
+pm.max_requests = 500
+
+; Upload & execution limits
+php_admin_value[upload_max_filesize] = 50M
+php_admin_value[post_max_size] = 50M
+php_admin_value[max_execution_time] = 300
+php_admin_value[memory_limit] = 256M
+```
+
+```bash
+sudo systemctl restart php8.3-fpm
+```
+
+---
+
+## Production Maintenance
+
+### Deploying Updates
+
+```bash
+cd /var/www/infrahub
+
+# Pull latest code
+git pull origin main
+
+# Install/update dependencies
+composer install --optimize-autoloader --no-dev
+npm install && npm run build
+
+# Run migrations
+php artisan migrate --force
+
+# Clear and rebuild caches
+php artisan optimize:clear
+php artisan optimize
+php artisan filament:optimize
+php artisan view:cache
+php artisan icons:cache
+
+# Restart queue workers (picks up new code)
+sudo supervisorctl restart infrahub-worker:*
+
+# Restart PHP-FPM
+sudo systemctl restart php8.3-fpm
+```
+
+### Quick Deploy Script
+
+Create `/var/www/infrahub/deploy.sh`:
+
+```bash
+#!/bin/bash
+set -e
+
+echo "🚀 Deploying InfraHub..."
+
+cd /var/www/infrahub
+
+# Maintenance mode
+php artisan down --retry=60
+
+# Pull & install
+git pull origin main
+composer install --optimize-autoloader --no-dev
+npm install && npm run build
+
+# Database
+php artisan migrate --force
+
+# Caches
+php artisan optimize:clear
+php artisan optimize
+php artisan filament:optimize
+php artisan view:cache
+php artisan icons:cache
+
+# Restart services
+sudo supervisorctl restart infrahub-worker:*
+sudo systemctl restart php8.3-fpm
+
+# Go live
+php artisan up
+
+echo "✅ Deployment complete!"
+```
+
+```bash
+chmod +x /var/www/infrahub/deploy.sh
+```
+
+### Monitoring & Logs
+
+```bash
+# Application logs
+tail -f /var/www/infrahub/storage/logs/laravel.log
+
+# Queue worker logs
+tail -f /var/www/infrahub/storage/logs/worker.log
+
+# BOQ variance sync logs
+tail -f /var/www/infrahub/storage/logs/boq-variance.log
+
+# Nginx logs
+tail -f /var/log/nginx/access.log
+tail -f /var/log/nginx/error.log
+
+# Supervisor status
+sudo supervisorctl status
+
+# Failed queue jobs
+php artisan queue:failed
+php artisan queue:retry all
+
+# Disk usage
+du -sh /var/www/infrahub/storage/
+```
+
+### Backup Strategy
+
+```bash
+# Database backup
+mysqldump -u infrahub -p infrahub_production | gzip > ~/backups/infrahub_$(date +%Y%m%d_%H%M).sql.gz
+
+# Full backup (code + storage + DB)
+tar -czf ~/backups/infrahub_full_$(date +%Y%m%d).tar.gz \
+  /var/www/infrahub/storage/app \
+  /var/www/infrahub/.env
+
+# Automate daily backups via cron
+echo "0 4 * * * mysqldump -u infrahub -p'PASSWORD' infrahub_production | gzip > /home/ubuntu/backups/infrahub_\$(date +\%Y\%m\%d).sql.gz" | sudo tee -a /var/spool/cron/crontabs/root
+```
 
 ---
 
@@ -508,9 +952,14 @@ php artisan queue:work --daemon --tries=3 --timeout=60
 | CSS changes not visible | Run `npm run build` then `php artisan view:clear` and hard refresh |
 | Table actions cut off | Actions are grouped into ActionGroup dropdowns; the column is sticky on the right |
 | `Cannot redeclare non static $view` | Widget `$view` property must be non-static in Filament 4: `protected string $view = ...` |
+| Queue jobs not processing | Ensure `php artisan queue:work` is running; check `QUEUE_CONNECTION=database` in `.env` |
+| Supervisor workers stopped | Run `sudo supervisorctl restart infrahub-worker:*` |
+| 502 Bad Gateway (Nginx) | Check `php8.3-fpm` is running: `sudo systemctl status php8.3-fpm` |
+| Upload fails (large files) | Increase `client_max_body_size` in Nginx and `upload_max_filesize` in PHP |
+| Scheduler not running | Verify cron entry: `crontab -l -u www-data` |
 
 ---
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [GPL-3.0 License](LICENSE).

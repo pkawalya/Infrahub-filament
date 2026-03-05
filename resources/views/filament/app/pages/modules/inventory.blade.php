@@ -286,34 +286,34 @@
                 </thead>
                 <tbody>
                     @forelse($this->getRequisitions() as $req)
-                                                                        <tr style="border-bottom:1px solid #f3f4f6;transition:background .2s;" class="hover:bg-gray-50 dark:hover:bg-gray-800">
-                                                                            <td style="padding:12px 16px;font-weight:600;">{{ $req->requisition_number }}</td>
-                                                                            <td style="padding:12px 16px;">
-                                                                                <span style="padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;
-                                                                                    {{ $req->priority === 'high' || $req->priority === 'urgent' ? 'background:#fee2e2;color:#ef4444;' : 'background:#f3f4f6;color:#4b5563;' }}">
-                                                                                    {{ ucfirst($req->priority) }}
-                                                                                </span>
-                                                                            </td>
-                                                                            <td style="padding:12px 16px;">
-                                                                                <span style="padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;
-                                                                                    {{ $req->status === 'approved' ? 'background:#dcfce7;color:#16a34a;' :
+                                                                                                            <tr style="border-bottom:1px solid #f3f4f6;transition:background .2s;" class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                                                                                                                <td style="padding:12px 16px;font-weight:600;">{{ $req->requisition_number }}</td>
+                                                                                                                <td style="padding:12px 16px;">
+                                                                                                                    <span style="padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;
+                                                                                                                        {{ $req->priority === 'high' || $req->priority === 'urgent' ? 'background:#fee2e2;color:#ef4444;' : 'background:#f3f4f6;color:#4b5563;' }}">
+                                                                                                                        {{ ucfirst($req->priority) }}
+                                                                                                                    </span>
+                                                                                                                </td>
+                                                                                                                <td style="padding:12px 16px;">
+                                                                                                                    <span style="padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600;
+                                                                                                                        {{ $req->status === 'approved' ? 'background:#dcfce7;color:#16a34a;' :
                         ($req->status === 'issued' ? 'background:#dbeafe;color:#2563eb;' :
                             ($req->status === 'pending' ? 'background:#fef3c7;color:#d97706;' : 'background:#f3f4f6;color:#6b7280;')) }}">
-                                                                                    {{ ucfirst(str_replace('_', ' ', $req->status)) }}
-                                                                                </span>
-                                                                            </td>
-                                                                            <td style="padding:12px 16px;">{{ $req->requester->name ?? '—' }}</td>
-                                                                            <td style="padding:12px 16px;">{{ $req->warehouse->name ?? 'Any' }}</td>
-                                                                            <td style="padding:12px 16px;">{{ $req->required_date ? $req->required_date->format('M d, Y') : '—' }}</td>
-                                                                            <td style="padding:12px 16px;text-align:right;display:flex;justify-content:flex-end;gap:8px;">
-                                                                                @if($req->status === 'pending')
-                                                                                    <button wire:click="approveRequisition({{ $req->id }})" wire:confirm="Approve this requisition?" style="background:#10b981;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">Approve</button>
-                                                                                @endif
-                                                                                @if(in_array($req->status, ['approved', 'partially_issued']))
-                                                                                    <button wire:click="promptIssueRequisition({{ $req->id }})" style="background:#4f46e5;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">Issue</button>
-                                                                                @endif
-                                                                            </td>
-                                                                        </tr>
+                                                                                                                        {{ ucfirst(str_replace('_', ' ', $req->status)) }}
+                                                                                                                    </span>
+                                                                                                                </td>
+                                                                                                                <td style="padding:12px 16px;">{{ $req->requester->name ?? '—' }}</td>
+                                                                                                                <td style="padding:12px 16px;">{{ $req->warehouse->name ?? 'Any' }}</td>
+                                                                                                                <td style="padding:12px 16px;">{{ $req->required_date ? $req->required_date->format('M d, Y') : '—' }}</td>
+                                                                                                                <td style="padding:12px 16px;text-align:right;display:flex;justify-content:flex-end;gap:8px;">
+                                                                                                                    @if($req->status === 'pending')
+                                                                                                                        <button wire:click="approveRequisition({{ $req->id }})" wire:confirm="Approve this requisition?" style="background:#10b981;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">Approve</button>
+                                                                                                                    @endif
+                                                                                                                    @if(in_array($req->status, ['approved', 'partially_issued']))
+                                                                                                                        <button wire:click="promptIssueRequisition({{ $req->id }})" style="background:#4f46e5;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;">Issue</button>
+                                                                                                                    @endif
+                                                                                                                </td>
+                                                                                                            </tr>
                     @empty
                         <tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af;">No requisitions found.</td></tr>
                     @endforelse
@@ -406,10 +406,16 @@
 
     {{-- ═══════════════ MATERIAL ISSUANCES TAB ═══════════════ --}}
     @if($activeInventoryTab === 'issuances')
-        <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div style="font-size:11px; color:#9ca3af; font-style:italic;">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                Materials can only be issued against approved requisitions
+            </div>
             <button wire:click="$set('showIssuanceModal', true)"
                 style="display:inline-flex; align-items:center; gap:6px; padding:8px 16px; font-size:13px; font-weight:600; border-radius:8px; border:none; background:#d97706; color:white; cursor:pointer;">
-                {!! $iPlus !!} Issue Materials
+                {!! $iPlus !!} Issue from Requisition
             </button>
         </div>
 
@@ -1138,6 +1144,24 @@
                 </div>
                 <form wire:submit="submitIssuance">
                     <div style="display:grid;gap:12px">
+                        {{-- Requisition (MANDATORY) --}}
+                        <div style="background:#fffbeb;border:1px solid #fbbf24;border-radius:10px;padding:12px">
+                            <label style="display:block;font-size:12px;font-weight:700;margin-bottom:6px;color:#92400e">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:14px;height:14px;display:inline;vertical-align:text-bottom;">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                </svg>
+                                Approved Requisition * <span style="font-weight:400;color:#b45309">(required)</span>
+                            </label>
+                            @php $reqOptions = $this->getApprovedRequisitionOptions(); @endphp
+                            @if(count($reqOptions) > 0)
+                                <x-searchable-select :wire-model="'issuanceForm.requisition_id'"
+                                    :options="$reqOptions" placeholder="-- Select Approved Requisition --" :required="true" />
+                            @else
+                                <div style="padding:10px;background:#fef2f2;border-radius:8px;font-size:12px;color:#991b1b;text-align:center;">
+                                    No approved requisitions available. Create and approve a requisition first in the <strong>Requisitions</strong> tab.
+                                </div>
+                            @endif
+                        </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
                             <div>
                                 <label style="display:block;font-size:12px;font-weight:600;margin-bottom:4px">Issued To
@@ -3299,10 +3323,10 @@
                                 ['label' => 'Low Stock', 'value' => $smd['summary']['low_stock_count'], 'color' => $smd['summary']['low_stock_count'] > 0 ? '#f59e0b' : '#10b981'],
                                 ['label' => 'Out of Stock', 'value' => $smd['summary']['out_of_stock_count'], 'color' => $smd['summary']['out_of_stock_count'] > 0 ? '#ef4444' : '#10b981'],
                             ] as $card)
-                                                                    <div style="background:#f9fafb;border-radius:10px;padding:12px;text-align:center;border:1px solid #e5e7eb;">
-                                                                        <div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#9ca3af;letter-spacing:.05em">{{ $card['label'] }}</div>
-                                                                        <div style="font-size:20px;font-weight:800;color:{{ $card['color'] }};margin-top:4px;">{{ $card['value'] }}</div>
-                                                                    </div>
+                                                                                <div style="background:#f9fafb;border-radius:10px;padding:12px;text-align:center;border:1px solid #e5e7eb;">
+                                                                                    <div style="font-size:10px;text-transform:uppercase;font-weight:700;color:#9ca3af;letter-spacing:.05em">{{ $card['label'] }}</div>
+                                                                                    <div style="font-size:20px;font-weight:800;color:{{ $card['color'] }};margin-top:4px;">{{ $card['value'] }}</div>
+                                                                                </div>
                         @endforeach
                     </div>
 

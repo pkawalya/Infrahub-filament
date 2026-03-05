@@ -103,10 +103,11 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
         return $query->where('is_active', true);
     }
 
-    // ─── Email 2FA (Filament Native) ────────────────────────
+    // ─── Email 2FA (Filament Native) — MANDATORY ─────────────
     public function hasEmailAuthentication(): bool
     {
-        return (bool) $this->has_email_authentication;
+        // Enforced for all users — every login requires an email OTP code.
+        return true;
     }
 
     public function toggleEmailAuthentication(bool $condition): void

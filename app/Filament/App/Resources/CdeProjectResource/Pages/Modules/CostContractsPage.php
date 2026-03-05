@@ -3,8 +3,10 @@
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
+use App\Models\Boq;
 use App\Models\Certificate;
 use App\Models\Contract;
+use App\Models\ContractPayment;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Support\CurrencyHelper;
@@ -18,6 +20,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Illuminate\Support\HtmlString;
 
 use App\Filament\App\Concerns\ExportsTableCsv;
 
@@ -40,6 +43,9 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
         return $this->record->company_id;
     }
 
+    // ─────────────────────────────────────────────
+    // Stats — 5 cards including retainage
+    // ─────────────────────────────────────────────
     public function getStats(): array
     {
         $pid = $this->pid();
@@ -49,6 +55,7 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
         $origVal = (clone $base)->sum('original_value');
         $revisedVal = (clone $base)->sum('revised_value');
         $paid = (clone $base)->sum('amount_paid');
+        $retainageHeld = (clone $base)->sum('retainage_held');
 
         return [
             [
@@ -57,7 +64,7 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                 'sub' => $active . ' active',
                 'sub_type' => 'info',
                 'primary' => true,
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>'
+                'icon' => 'heroicon-o-document-text',
             ],
             [
                 'label' => 'Original Value',
@@ -65,8 +72,9 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                 'full_value' => CurrencyHelper::format($origVal, 0),
                 'sub' => 'Contract sum',
                 'sub_type' => 'neutral',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#6366f1" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                'icon_bg' => '#eef2ff'
+                'icon' => 'heroicon-o-currency-dollar',
+                'icon_color' => '#6366f1',
+                'icon_bg' => '#eef2ff',
             ],
             [
                 'label' => 'Revised Value',
@@ -74,8 +82,9 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                 'full_value' => CurrencyHelper::format($revisedVal, 0),
                 'sub' => $revisedVal > $origVal ? 'Exceeded original' : 'Within budget',
                 'sub_type' => $revisedVal > $origVal ? 'danger' : 'success',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#d97706" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" /></svg>',
-                'icon_bg' => '#fffbeb'
+                'icon' => 'heroicon-o-arrow-trending-up',
+                'icon_color' => '#d97706',
+                'icon_bg' => '#fffbeb',
             ],
             [
                 'label' => 'Amount Paid',
@@ -83,12 +92,26 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                 'full_value' => CurrencyHelper::format($paid, 0),
                 'sub' => $revisedVal > 0 ? round(($paid / $revisedVal) * 100) . '% of revised' : 'No contracts',
                 'sub_type' => 'info',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" /></svg>',
-                'icon_bg' => '#ecfdf5'
+                'icon' => 'heroicon-o-banknotes',
+                'icon_color' => '#059669',
+                'icon_bg' => '#ecfdf5',
+            ],
+            [
+                'label' => 'Retainage Held',
+                'value' => CurrencyHelper::formatCompact($retainageHeld),
+                'full_value' => CurrencyHelper::format($retainageHeld, 0),
+                'sub' => 'Across all contracts',
+                'sub_type' => 'neutral',
+                'icon' => 'heroicon-o-lock-closed',
+                'icon_color' => '#9333ea',
+                'icon_bg' => '#faf5ff',
             ],
         ];
     }
 
+    // ─────────────────────────────────────────────
+    // Contract Form Schema
+    // ─────────────────────────────────────────────
     private function contractFormSchema(bool $isCreate = false): array
     {
         $cid = $this->cid();
@@ -136,6 +159,181 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
+    // ─────────────────────────────────────────────
+    // Rich View Detail Modal
+    // ─────────────────────────────────────────────
+    private function viewDetailSchema(Contract $record): array
+    {
+        $record->load(['vendor', 'creator', 'payments.creator', 'boqs.items']);
+
+        // ── Info bar ──
+        $infoFields = [
+            ['Contract', $record->contract_number],
+            ['Status', Contract::$statuses[$record->status] ?? $record->status],
+            ['Type', ucfirst($record->type ?? '—')],
+            ['Vendor', $record->vendor?->name ?? '—'],
+            ['Start', $record->start_date?->format('M d, Y') ?? '—'],
+            ['End', $record->end_date?->format('M d, Y') ?? '—'],
+            ['By', $record->creator?->name ?? '—'],
+        ];
+        $infoCells = collect($infoFields)->map(
+            fn($c) =>
+            '<div style="display:flex;gap:3px;align-items:baseline;">' .
+            '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#9ca3af;">' . $c[0] . '</span>' .
+            '<span style="font-size:11px;font-weight:600;color:#1f2937;">' . e($c[1]) . '</span></div>'
+        )->join('');
+
+        // ── Financial summary cards ──
+        $balance = $record->balance;
+        $paidPct = $record->payment_progress;
+        $durationPct = $record->duration_progress;
+        $retHeld = (float) ($record->retainage_held ?? 0);
+        $retReleased = (float) ($record->retainage_released ?? 0);
+        $retRemaining = $retHeld - $retReleased;
+
+        $finCards = [
+            ['Original Value', CurrencyHelper::format($record->original_value, 0), '#6366f1', '#eef2ff'],
+            ['Revised Value', CurrencyHelper::format($record->revised_value, 0), '#d97706', '#fffbeb'],
+            ['Amount Paid', CurrencyHelper::format($record->amount_paid, 0), '#059669', '#ecfdf5'],
+            ['Balance', CurrencyHelper::format($balance, 0), $balance < 0 ? '#dc2626' : '#0ea5e9', $balance < 0 ? '#fef2f2' : '#f0f9ff'],
+        ];
+        $finHtml = '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0.5rem;margin-bottom:0.5rem;">';
+        foreach ($finCards as $fc) {
+            $finHtml .= '<div style="padding:0.5rem 0.75rem;border-radius:0.5rem;border:1px solid ' . $fc[2] . '22;background:' . $fc[3] . ';">' .
+                '<div style="font-size:0.55rem;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;color:#6b7280;margin-bottom:2px;">' . $fc[0] . '</div>' .
+                '<div style="font-size:0.95rem;font-weight:800;color:' . $fc[2] . ';">' . $fc[1] . '</div>' .
+                '</div>';
+        }
+        $finHtml .= '</div>';
+
+        // ── Payment progress bar ──
+        $barColor = $paidPct >= 100 ? '#059669' : ($paidPct >= 75 ? '#3b82f6' : ($paidPct >= 50 ? '#d97706' : '#6366f1'));
+        $finHtml .= '<div style="margin-bottom:0.5rem;">' .
+            '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:#6b7280;margin-bottom:3px;">' .
+            '<span>Payment Progress</span><span style="color:' . $barColor . ';">' . $paidPct . '%</span></div>' .
+            '<div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;">' .
+            '<div style="height:100%;width:' . min($paidPct, 100) . '%;background:' . $barColor . ';border-radius:3px;transition:width 0.3s;"></div>' .
+            '</div></div>';
+
+        // ── Duration progress bar ──
+        if ($durationPct !== null) {
+            $durColor = $durationPct >= 100 ? '#dc2626' : ($durationPct >= 75 ? '#d97706' : '#3b82f6');
+            $daysLeft = $record->end_date?->diffInDays(now(), false);
+            $durLabel = $daysLeft !== null && $daysLeft < 0 ? abs($daysLeft) . ' days left' : ($daysLeft > 0 ? $daysLeft . ' days overdue' : 'Ending today');
+            $finHtml .= '<div style="margin-bottom:0.5rem;">' .
+                '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:#6b7280;margin-bottom:3px;">' .
+                '<span>Contract Duration</span><span style="color:' . $durColor . ';">' . $durationPct . '% — ' . $durLabel . '</span></div>' .
+                '<div style="height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden;">' .
+                '<div style="height:100%;width:' . min($durationPct, 100) . '%;background:' . $durColor . ';border-radius:3px;"></div>' .
+                '</div></div>';
+        }
+
+        // ── Retainage summary ──
+        if ($retHeld > 0 || $record->retainage_percent > 0) {
+            $finHtml .= '<div style="display:flex;gap:16px;padding:6px 10px;background:#faf5ff;border:1px solid #e9d5ff;border-radius:6px;font-size:11px;margin-bottom:0.5rem;">' .
+                '<div><span style="font-size:8px;font-weight:700;text-transform:uppercase;color:#9ca3af;">Rate</span> <span style="font-weight:700;">' . ($record->retainage_percent ?? 0) . '%</span></div>' .
+                '<div><span style="font-size:8px;font-weight:700;text-transform:uppercase;color:#9ca3af;">Held</span> <span style="font-weight:700;">' . CurrencyHelper::format($retHeld) . '</span></div>' .
+                '<div><span style="font-size:8px;font-weight:700;text-transform:uppercase;color:#9ca3af;">Released</span> <span style="font-weight:700;">' . CurrencyHelper::format($retReleased) . '</span></div>' .
+                '<div><span style="font-size:8px;font-weight:700;text-transform:uppercase;color:#9ca3af;">Remaining</span> <span style="font-weight:700;color:#9333ea;">' . CurrencyHelper::format($retRemaining) . '</span></div>' .
+                '</div>';
+        }
+
+        // ── Linked BOQs ──
+        $boqHtml = '';
+        if ($record->boqs->isNotEmpty()) {
+            $boqHtml = '<div style="margin-bottom:0.5rem;">' .
+                '<div style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;margin-bottom:4px;">Linked BOQs</div>' .
+                '<div style="display:flex;flex-wrap:wrap;gap:0.4rem;">';
+            foreach ($record->boqs as $boq) {
+                $boqTotal = CurrencyHelper::format($boq->total_value, 0);
+                $boqItems = $boq->items->count();
+                $boqHtml .= '<div style="padding:4px 8px;border-radius:6px;border:1px solid #e5e7eb;background:#f9fafb;font-size:11px;">' .
+                    '<span style="font-weight:700;">' . e($boq->boq_number) . '</span> ' .
+                    '<span style="color:#6b7280;">' . e($boq->name) . '</span> · ' .
+                    '<span style="font-weight:600;color:#059669;">' . $boqTotal . '</span> · ' .
+                    '<span style="color:#9ca3af;">' . $boqItems . ' items</span>' .
+                    '</div>';
+            }
+            $boqHtml .= '</div></div>';
+        }
+
+        // ── Payment History ──
+        $payHtml = '';
+        $payments = $record->payments;
+        if ($payments->isNotEmpty()) {
+            $payHtml = '<div>' .
+                '<div style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;margin-bottom:4px;">Payment History (' . $payments->count() . ')</div>' .
+                '<div style="max-height:180px;overflow-y:auto;border:1px solid #e2e8f0;border-radius:6px;">' .
+                '<table style="width:100%;border-collapse:collapse;font-size:11px;">' .
+                '<thead><tr style="background:#f1f5f9;border-bottom:1px solid #cbd5e1;position:sticky;top:0;">' .
+                '<th style="text-align:left;padding:4px 8px;font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;">Date</th>' .
+                '<th style="text-align:left;padding:4px 8px;font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;">Ref</th>' .
+                '<th style="text-align:left;padding:4px 8px;font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;">Type</th>' .
+                '<th style="text-align:right;padding:4px 8px;font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;">Amount</th>' .
+                '<th style="text-align:left;padding:4px 8px;font-size:9px;font-weight:700;text-transform:uppercase;color:#64748b;">By</th>' .
+                '</tr></thead><tbody>';
+
+            foreach ($payments as $pay) {
+                $typeColor = match ($pay->type) {
+                    'deduction' => '#dc2626',
+                    'retention_release' => '#9333ea',
+                    'advance' => '#d97706',
+                    default => '#059669',
+                };
+                $payHtml .= '<tr style="border-bottom:1px solid #f1f5f9;">' .
+                    '<td style="padding:3px 8px;font-variant-numeric:tabular-nums;">' . $pay->payment_date->format('M d, Y') . '</td>' .
+                    '<td style="padding:3px 8px;font-family:monospace;font-size:10px;">' . e($pay->reference ?? '—') . '</td>' .
+                    '<td style="padding:3px 8px;"><span style="font-size:9px;font-weight:600;color:' . $typeColor . ';text-transform:uppercase;">' . (ContractPayment::$types[$pay->type] ?? $pay->type) . '</span></td>' .
+                    '<td style="padding:3px 8px;text-align:right;font-weight:600;font-variant-numeric:tabular-nums;">' . CurrencyHelper::format($pay->amount) . '</td>' .
+                    '<td style="padding:3px 8px;font-size:10px;color:#6b7280;">' . ($pay->creator?->name ?? '—') . '</td>' .
+                    '</tr>';
+            }
+
+            $payHtml .= '</tbody></table></div></div>';
+        } else {
+            $payHtml = '<div style="padding:12px;text-align:center;color:#9ca3af;font-size:11px;border:1px dashed #e2e8f0;border-radius:6px;">' .
+                'No payment records yet. Click ⋯ → <strong>Payment</strong> to record one.</div>';
+        }
+
+        // ── Scope of Work ──
+        $scopeHtml = '';
+        if (!empty($record->scope_of_work)) {
+            $scopeHtml = '<div style="margin-top:0.5rem;">' .
+                '<div style="font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#6b7280;margin-bottom:4px;">Scope of Work</div>' .
+                '<div style="padding:8px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;font-size:12px;color:#334155;white-space:pre-wrap;">' . e($record->scope_of_work) . '</div>' .
+                '</div>';
+        }
+
+        return [
+            Forms\Components\Placeholder::make('info_bar')
+                ->content(fn() => new HtmlString(
+                    '<div style="display:flex;flex-wrap:wrap;gap:8px 16px;padding:6px 10px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;">' .
+                    $infoCells . '</div>'
+                ))->columnSpanFull(),
+
+            Forms\Components\Placeholder::make('financials')
+                ->content(fn() => new HtmlString($finHtml))
+                ->columnSpanFull(),
+
+            Forms\Components\Placeholder::make('linked_boqs')
+                ->content(fn() => new HtmlString($boqHtml))
+                ->columnSpanFull()
+                ->visible($boqHtml !== ''),
+
+            Forms\Components\Placeholder::make('payment_history')
+                ->content(fn() => new HtmlString($payHtml))
+                ->columnSpanFull(),
+
+            Forms\Components\Placeholder::make('scope')
+                ->content(fn() => new HtmlString($scopeHtml))
+                ->columnSpanFull()
+                ->visible($scopeHtml !== ''),
+        ];
+    }
+
+    // ─────────────────────────────────────────────
+    // Header Actions
+    // ─────────────────────────────────────────────
     protected function getHeaderActions(): array
     {
         return [
@@ -195,14 +393,17 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
+    // ─────────────────────────────────────────────
+    // Table — with Balance column, duration bar, row-click
+    // ─────────────────────────────────────────────
     public function table(Table $table): Table
     {
         return $table
-            ->query(Contract::query()->where('cde_project_id', $this->pid())->with(['vendor', 'creator']))
+            ->query(Contract::query()->where('cde_project_id', $this->pid())->with(['vendor', 'creator', 'boqs']))
             ->columns([
                 Tables\Columns\TextColumn::make('contract_number')->label('Contract #')->searchable()->sortable()->weight('bold')->toggleable()
                     ->icon('heroicon-o-document-text')->copyable(),
-                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(Contract $record) => $record->title)->toggleable(),
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(35)->tooltip(fn(Contract $record) => $record->title)->toggleable(),
                 Tables\Columns\TextColumn::make('vendor.name')->label('Vendor')->placeholder('—')->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('type')->badge()->color('info')->toggleable(),
                 Tables\Columns\TextColumn::make('status')->badge()->toggleable()
@@ -211,11 +412,34 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('revised_value')->label('Revised')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->toggleable()
                     ->color(fn(Contract $record) => ($record->revised_value ?? 0) > ($record->original_value ?? 0) ? 'danger' : null),
                 Tables\Columns\TextColumn::make('amount_paid')->label('Paid')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->toggleable(),
+
+                // ── Balance Remaining (NEW) ──
+                Tables\Columns\TextColumn::make('balance_remaining')->label('Balance')->toggleable()
+                    ->state(fn(Contract $record) => CurrencyHelper::format($record->balance, 0))
+                    ->color(fn(Contract $record) => $record->balance < 0 ? 'danger' : ($record->balance == 0 ? 'success' : null)),
+
+                // ── Payment % (visual bar) ──
+                Tables\Columns\TextColumn::make('payment_progress')->label('% Paid')->toggleable()
+                    ->state(fn(Contract $record) => $record->payment_progress . '%')
+                    ->color(fn(Contract $record) => $record->payment_progress >= 100 ? 'success' : ($record->payment_progress >= 50 ? 'info' : null)),
+
+                // ── Contract Duration bar (NEW) ──
+                Tables\Columns\TextColumn::make('duration')->label('Duration')->toggleable()
+                    ->state(function (Contract $record) {
+                        if (!$record->start_date || !$record->end_date)
+                            return '—';
+                        $pct = $record->duration_progress;
+                        $daysLeft = $record->end_date->diffInDays(now(), false);
+                        $label = $daysLeft < 0 ? abs($daysLeft) . 'd left' : ($daysLeft > 0 ? $daysLeft . 'd over' : 'Today');
+                        return $pct . '% · ' . $label;
+                    })
+                    ->color(function (Contract $record) {
+                        $pct = $record->duration_progress;
+                        return $pct === null ? null : ($pct >= 100 ? 'danger' : ($pct >= 75 ? 'warning' : null));
+                    }),
+
                 Tables\Columns\TextColumn::make('retainage_held')->label('Ret. Held')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->toggleable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('payment_progress')->label('% Paid')->toggleable()
-                    ->state(fn(Contract $record) => $record->revised_value > 0 ? round(($record->amount_paid / $record->revised_value) * 100) . '%' : '—')
-                    ->toggleable(),
                 Tables\Columns\TextColumn::make('start_date')->date()->sortable()->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('end_date')->date()->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
@@ -232,56 +456,62 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Filters\SelectFilter::make('vendor_id')->label('Vendor')
                     ->options(fn() => Vendor::where('company_id', $this->cid())->pluck('name', 'id')),
             ])
+            ->recordAction('viewDetail')
             ->recordActions([
-                \Filament\Actions\ActionGroup::make([
-                    \Filament\Actions\Action::make('viewDetail')
-                        ->label('View')->icon('heroicon-o-eye')->color('gray')
-                        ->modalWidth('3xl')
-                        ->modalHeading(fn(Contract $record) => $record->contract_number . ' — ' . $record->title)
-                        ->schema(fn(Contract $record) => [
-                            Forms\Components\Placeholder::make('vendor')->label('Vendor')
-                                ->content($record->vendor?->name ?? '—'),
-                            Forms\Components\Placeholder::make('type')->label('Type')
-                                ->content(ucfirst($record->type ?? '—')),
-                            Forms\Components\Placeholder::make('status_display')->label('Status')
-                                ->content(Contract::$statuses[$record->status] ?? $record->status),
-                            Forms\Components\Placeholder::make('dates')->label('Duration')
-                                ->content(($record->start_date?->format('M d, Y') ?? '—') . ' → ' . ($record->end_date?->format('M d, Y') ?? '—')),
-                            Forms\Components\Placeholder::make('financials')->label('Financials')
-                                ->content(fn() => 'Original: ' . CurrencyHelper::format($record->original_value) .
-                                    ' | Revised: ' . CurrencyHelper::format($record->revised_value) .
-                                    ' | Paid: ' . CurrencyHelper::format($record->amount_paid) .
-                                    ' (' . ($record->revised_value > 0 ? round(($record->amount_paid / $record->revised_value) * 100) : 0) . '%)')
-                                ->columnSpanFull(),
-                            Forms\Components\Placeholder::make('retainage')->label('Retainage')
-                                ->content(fn() =>
-                                    'Rate: ' . ($record->retainage_percent ?? 0) . '% | ' .
-                                    'Held: ' . CurrencyHelper::format($record->retainage_held ?? 0) . ' | ' .
-                                    'Released: ' . CurrencyHelper::format($record->retainage_released ?? 0) . ' | ' .
-                                    'Remaining: ' . CurrencyHelper::format(($record->retainage_held ?? 0) - ($record->retainage_released ?? 0)))
-                                ->columnSpanFull(),
-                            Forms\Components\Placeholder::make('scope')->label('Scope of Work')
-                                ->content($record->scope_of_work ?: '—')
-                                ->columnSpanFull(),
-                        ])
-                        ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
+                /* ── View Detail (row-click target) ── */
+                \Filament\Actions\Action::make('viewDetail')
+                    ->label('View')->icon('heroicon-o-eye')->color('gray')->modalWidth('screen')
+                    ->modalHeading(fn(Contract $record) => $record->contract_number . ' — ' . $record->title)
+                    ->schema(fn(Contract $record) => $this->viewDetailSchema($record))
+                    ->fillForm(fn(Contract $record) => $record->toArray())
+                    ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
 
+                \Filament\Actions\ActionGroup::make([
+
+                    /* ── Record Payment (now with proper tracking) ── */
                     \Filament\Actions\Action::make('recordPayment')
                         ->label('Payment')->icon('heroicon-o-banknotes')->color('success')
                         ->schema([
-                            Forms\Components\TextInput::make('payment_amount')->label('Payment Amount')
+                            Forms\Components\TextInput::make('amount')->label('Payment Amount')
                                 ->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->required(),
-                            Forms\Components\Textarea::make('payment_note')->label('Note')->rows(2),
+                            Forms\Components\Select::make('type')->label('Payment Type')
+                                ->options(ContractPayment::$types)->required()->default('payment'),
+                            Forms\Components\DatePicker::make('payment_date')->required()->default(now()),
+                            Forms\Components\TextInput::make('reference')->label('Reference / Cheque #')->maxLength(100),
+                            Forms\Components\Select::make('payment_method')->label('Method')
+                                ->options(ContractPayment::$methods)->nullable(),
+                            Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
                         ])
-                        ->fillForm(fn(Contract $record) => ['payment_amount' => 0])
                         ->action(function (array $data, Contract $record): void {
-                            $newPaid = ($record->amount_paid ?? 0) + $data['payment_amount'];
-                            $notes = $record->description ? $record->description . "\n" : '';
-                            $notes .= '[Payment ' . now()->format('M d') . ' — ' . CurrencyHelper::format($data['payment_amount']) . ']';
-                            if (!empty($data['payment_note']))
-                                $notes .= ' ' . $data['payment_note'];
-                            $record->update(['amount_paid' => $newPaid, 'description' => $notes]);
-                            Notification::make()->title('Payment of ' . CurrencyHelper::format($data['payment_amount']) . ' recorded. Total paid: ' . CurrencyHelper::format($newPaid))->success()->send();
+                            $amt = (float) $data['amount'];
+                            // Record payment entry
+                            ContractPayment::create([
+                                'contract_id' => $record->id,
+                                'company_id' => $record->company_id,
+                                'amount' => $amt,
+                                'type' => $data['type'],
+                                'payment_date' => $data['payment_date'],
+                                'reference' => $data['reference'] ?? null,
+                                'payment_method' => $data['payment_method'] ?? null,
+                                'notes' => $data['notes'] ?? null,
+                                'created_by' => auth()->id(),
+                            ]);
+                            // Update contract totals
+                            if ($data['type'] === 'deduction') {
+                                $record->update(['amount_paid' => max(0, ($record->amount_paid ?? 0) - $amt)]);
+                            } elseif ($data['type'] === 'retention_release') {
+                                $record->update(['retainage_released' => ($record->retainage_released ?? 0) + $amt]);
+                            } else {
+                                $newPaid = ($record->amount_paid ?? 0) + $amt;
+                                $updateData = ['amount_paid' => $newPaid];
+                                // Auto-calculate retainage if rate is set
+                                if ($record->retainage_percent > 0) {
+                                    $retAmount = $amt * ($record->retainage_percent / 100);
+                                    $updateData['retainage_held'] = ($record->retainage_held ?? 0) + $retAmount;
+                                }
+                                $record->update($updateData);
+                            }
+                            Notification::make()->title(CurrencyHelper::format($amt) . ' recorded as ' . (ContractPayment::$types[$data['type']] ?? $data['type']))->success()->send();
                         }),
 
                     \Filament\Actions\Action::make('addVariation')
@@ -368,6 +598,9 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
             ->striped()->paginated([10, 25, 50]);
     }
 
+    // ─────────────────────────────────────────────
+    // Certificate Schema
+    // ─────────────────────────────────────────────
     private function getCertificateSchema(): array
     {
         $certs = Certificate::where('cde_project_id', $this->pid())
@@ -423,7 +656,7 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
 
         return [
             Forms\Components\Placeholder::make('cert_table')
-                ->content(fn() => new \Illuminate\Support\HtmlString($summary . $html))
+                ->content(fn() => new HtmlString($summary . $html))
                 ->columnSpanFull(),
         ];
     }

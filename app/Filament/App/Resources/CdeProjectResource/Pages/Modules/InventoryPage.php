@@ -814,6 +814,16 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             ->pluck('issuance_number', 'id')->toArray();
     }
 
+    public function getApprovedRequisitionOptions(): array
+    {
+        return MaterialRequisition::where('cde_project_id', $this->pid())
+            ->where('company_id', $this->cid())
+            ->whereIn('status', ['approved', 'partially_issued'])
+            ->get()
+            ->mapWithKeys(fn($r) => [$r->id => $r->requisition_number . ' — ' . ($r->requester?->name ?? 'Unknown') . ' (' . ucfirst(str_replace('_', ' ', $r->status)) . ')'])
+            ->toArray();
+    }
+
     // ─── Stock Monitor (comprehensive per-store) ────────────
     public function openStockMonitor(int $warehouseId): void
     {
@@ -1190,16 +1200,50 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         $this->storeForm = ['name' => '', 'code' => '', 'city' => '', 'address' => ''];
     }
 
-    // ─── Material Issuance ──────────────────────────────────
+    // ─── Material Issuance (requisition-backed only) ──────────
     public function submitIssuance(): void
     {
         $this->validate([
             'issuanceForm.warehouse_id' => 'required',
             'issuanceForm.product_id' => 'required',
             'issuanceForm.quantity' => 'required|integer|min:1',
+            'issuanceForm.requisition_id' => 'required',
+        ], [
+            'issuanceForm.requisition_id.required' => 'Materials can only be issued against an approved requisition.',
         ]);
 
         $data = $this->issuanceForm;
+
+        // ── Validate requisition is approved ──
+        $req = MaterialRequisition::with('items')->find($data['requisition_id']);
+        if (!$req || !in_array($req->status, ['approved', 'partially_issued'])) {
+            Notification::make()
+                ->title('Invalid Requisition')
+                ->body('Materials can only be issued against requisitions with status "Approved" or "Partially Issued".')
+                ->danger()->send();
+            return;
+        }
+
+        // ── Validate quantity does not exceed remaining ──
+        $reqItem = $req->items()->where('product_id', $data['product_id'])->first();
+        if (!$reqItem) {
+            Notification::make()
+                ->title('Product Not on Requisition')
+                ->body('The selected product is not part of the chosen requisition.')
+                ->danger()->send();
+            return;
+        }
+
+        $target = $reqItem->quantity_approved ?? $reqItem->quantity_requested;
+        $remaining = $target - $reqItem->quantity_issued;
+        if ($data['quantity'] > $remaining) {
+            Notification::make()
+                ->title('Quantity Exceeds Remaining')
+                ->body("Only {$remaining} remaining on this requisition item (approved: {$target}, already issued: {$reqItem->quantity_issued}).")
+                ->danger()->send();
+            return;
+        }
+
         $number = 'ISS-' . str_pad((string) (MaterialIssuance::where('company_id', $this->cid())->count() + 1), 5, '0', STR_PAD_LEFT);
 
         $issuance = MaterialIssuance::create([
@@ -1215,7 +1259,7 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             'expected_return_date' => $data['expected_return_date'] ?: null,
             'notes' => $data['notes'] ?: null,
             'created_by' => auth()->id(),
-            'material_requisition_id' => $data['requisition_id'] ?? null,
+            'material_requisition_id' => $req->id,
         ]);
 
         MaterialIssuanceItem::create([
@@ -1234,36 +1278,26 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             'material_issuance_id' => $issuance->id,
             'quantity' => $data['quantity'],
             'location' => Warehouse::find($data['warehouse_id'])?->name,
-            'notes' => 'Issued via ' . $number . ' — ' . ($data['purpose'] ?? ''),
+            'notes' => 'Issued via ' . $number . ' against ' . $req->requisition_number,
             'recorded_by' => auth()->id(),
         ]);
 
-        // Update Requisition if exists
-        if (!empty($data['requisition_id'])) {
-            $req = MaterialRequisition::find($data['requisition_id']);
-            if ($req) {
-                // Update quantity_issued on the item
-                $reqItem = $req->items()->where('product_id', $data['product_id'])->first();
-                if ($reqItem) {
-                    $reqItem->increment('quantity_issued', $data['quantity']);
-                }
+        // Update Requisition item + status
+        $reqItem->increment('quantity_issued', $data['quantity']);
 
-                // Check if all items are fully issued
-                $allIssued = true;
-                foreach ($req->items as $ri) {
-                    $target = $ri->quantity_approved ?? $ri->quantity_requested;
-                    if ($ri->quantity_issued < $target) {
-                        $allIssued = false;
-                        break;
-                    }
-                }
-                $req->update(['status' => $allIssued ? 'issued' : 'partially_issued']);
+        $allIssued = true;
+        foreach ($req->fresh()->items as $ri) {
+            $riTarget = $ri->quantity_approved ?? $ri->quantity_requested;
+            if ($ri->quantity_issued < $riTarget) {
+                $allIssued = false;
+                break;
             }
         }
+        $req->update(['status' => $allIssued ? 'issued' : 'partially_issued']);
 
         $this->showIssuanceModal = false;
         $this->issuanceForm = ['issued_to' => '', 'issued_to_name' => '', 'purpose' => 'site_use', 'warehouse_id' => '', 'issue_date' => '', 'expected_return_date' => '', 'product_id' => '', 'quantity' => 1, 'condition' => 'good', 'notes' => '', 'requisition_id' => null];
-        Notification::make()->title("Materials issued: {$number}")->success()->send();
+        Notification::make()->title("Materials issued: {$number}")->body("Against requisition {$req->requisition_number}")->success()->send();
     }
 
     // ─── Asset CRUD ─────────────────────────────────────────

@@ -440,6 +440,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
     public function openEditTaskModal(int $taskId): void
     {
+        /** @var Task|null $task */
         $task = Task::find($taskId);
         if (!$task)
             return;
@@ -449,8 +450,8 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
             'title' => $task->title,
             'status' => $task->status,
             'priority' => $task->priority,
-            'start_date' => $task->start_date?->format('Y-m-d'),
-            'due_date' => $task->due_date?->format('Y-m-d'),
+            'start_date' => $task->start_date ? \Carbon\Carbon::parse($task->start_date)->format('Y-m-d') : null,
+            'due_date' => $task->due_date ? \Carbon\Carbon::parse($task->due_date)->format('Y-m-d') : null,
             'assigned_to' => $task->assigned_to,
             'description' => $task->description ?? '',
         ];
@@ -520,10 +521,11 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
     public function doSaveBaseline(): void
     {
+        /** @var \Illuminate\Database\Eloquent\Collection<int, Task> $tasks */
         $tasks = Task::where('cde_project_id', $this->pid())->get();
-        foreach ($tasks as $task) {
+        $tasks->each(function (Task $task): void {
             $task->saveBaseline();
-        }
+        });
         $this->record->update(['baseline_saved_at' => now()]);
         Notification::make()
             ->title('Baseline saved for ' . $tasks->count() . ' tasks')
@@ -553,12 +555,14 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
             $value = max(0, (int) $value);
             $task->duration_days = $value;
             if ($value > 0 && $task->start_date) {
-                $task->due_date = Task::calculateFinishDate($task->start_date, $value)->format('Y-m-d');
+                $finish = Task::calculateFinishDate(\Carbon\Carbon::parse($task->start_date), $value);
+                $task->due_date = $finish->format('Y-m-d');
             }
         } elseif ($field === 'start_date') {
             $task->start_date = $value;
             if ($task->duration_days > 0) {
-                $task->due_date = Task::calculateFinishDate($task->start_date, $task->duration_days)->format('Y-m-d');
+                $finish = Task::calculateFinishDate(\Carbon\Carbon::parse($value), $task->duration_days);
+                $task->due_date = $finish->format('Y-m-d');
             }
         } elseif ($field === 'progress') {
             $value = min(100, max(0, (int) $value));
@@ -627,7 +631,8 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     {
         return $table
             ->query(
-                Task::query()->where('cde_project_id', $this->pid())
+                Task::query()
+                    ->where('cde_project_id', $this->pid())
                     ->with(['creator', 'assignee', 'parent', 'predecessorLinks'])
                     ->orderBy('sort_order')
                     ->orderBy('wbs_code')
@@ -664,14 +669,14 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                         // Calculate % time elapsed
                         $timeElapsed = 0;
                         if ($startDate && $dueDate) {
-                            $start = \Carbon\Carbon::parse($startDate);
-                            $end = \Carbon\Carbon::parse($dueDate);
+                            $start = \Carbon\Carbon::parse((string) $startDate);
+                            $end = \Carbon\Carbon::parse((string) $dueDate);
                             $totalDays = max(1, $start->diffInDays($end));
                             $daysSpent = max(0, $start->diffInDays(now()));
                             $timeElapsed = min(100, round(($daysSpent / $totalDays) * 100));
                         }
 
-                        $isOverdue = $dueDate && \Carbon\Carbon::parse($dueDate)->isPast() && !$isDone;
+                        $isOverdue = $dueDate && \Carbon\Carbon::parse((string) $dueDate)->isPast() && !$isDone;
                         $variance = $progress - $timeElapsed;
 
                         // Colors
@@ -1059,26 +1064,32 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
         $paginator = $query->paginate($this->woPerPage, ['*'], 'woPage', $this->woPage);
 
         return [
-            'data' => collect($paginator->items())->map(fn(WorkOrder $wo) => [
-                'id' => $wo->id,
-                'wo_number' => $wo->wo_number,
-                'title' => $wo->title,
-                'description' => $wo->description,
-                'status' => $wo->status,
-                'priority' => $wo->priority,
-                'assignee' => $wo->assignee?->name,
-                'client' => $wo->client?->name,
-                'type' => $wo->type?->name,
-                'due_date' => $wo->due_date?->format('M d, Y'),
-                'started_at' => $wo->started_at?->format('M d, Y'),
-                'completed_at' => $wo->completed_at?->format('M d, Y'),
-                'items_count' => $wo->items->count(),
-                'items_cost' => $wo->items->sum('amount'),
-                'tasks_count' => $wo->tasks->count(),
-                'notes' => $wo->notes,
-                'is_overdue' => $wo->due_date && $wo->due_date->isPast() && !in_array($wo->status, ['completed', 'cancelled']),
-                'days_until_due' => $wo->due_date ? (int) now()->diffInDays($wo->due_date, false) : null,
-            ])->toArray(),
+            'data' => collect($paginator->items())->map(function (WorkOrder $wo) {
+                $dueDate = $wo->due_date ? \Carbon\Carbon::parse($wo->due_date) : null;
+                $startedAt = $wo->started_at ? \Carbon\Carbon::parse($wo->started_at) : null;
+                $completedAt = $wo->completed_at ? \Carbon\Carbon::parse($wo->completed_at) : null;
+
+                return [
+                    'id' => $wo->id,
+                    'wo_number' => $wo->wo_number,
+                    'title' => $wo->title,
+                    'description' => $wo->description,
+                    'status' => $wo->status,
+                    'priority' => $wo->priority,
+                    'assignee' => $wo->assignee?->name,
+                    'client' => $wo->client?->name,
+                    'type' => $wo->type?->name,
+                    'due_date' => $dueDate?->format('M d, Y'),
+                    'started_at' => $startedAt?->format('M d, Y'),
+                    'completed_at' => $completedAt?->format('M d, Y'),
+                    'items_count' => $wo->items->count(),
+                    'items_cost' => $wo->items->sum('amount'),
+                    'tasks_count' => $wo->tasks->count(),
+                    'notes' => $wo->notes,
+                    'is_overdue' => $dueDate && $dueDate->isPast() && !in_array($wo->status, ['completed', 'cancelled']),
+                    'days_until_due' => $dueDate ? (int) now()->diffInDays($dueDate, false) : null,
+                ];
+            })->toArray(),
             'total' => $paginator->total(),
             'pages' => $paginator->lastPage(),
             'page' => $paginator->currentPage(),
@@ -1132,17 +1143,22 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
         $paginator = $query->paginate($this->msPerPage, ['*'], 'msPage', $this->msPage);
 
         return [
-            'data' => collect($paginator->items())->map(fn(Milestone $m) => [
-                'id' => $m->id,
-                'name' => $m->name,
-                'status' => $m->status,
-                'priority' => $m->priority,
-                'target_date' => $m->target_date?->format('M d, Y'),
-                'actual_date' => $m->actual_date?->format('M d, Y'),
-                'description' => $m->description,
-                'is_overdue' => $m->isOverdue(),
-                'days_remaining' => $m->target_date ? (int) now()->diffInDays($m->target_date, false) : null,
-            ])->toArray(),
+            'data' => collect($paginator->items())->map(function (Milestone $m) {
+                $targetDate = $m->target_date ? \Carbon\Carbon::parse($m->target_date) : null;
+                $actualDate = $m->actual_date ? \Carbon\Carbon::parse($m->actual_date) : null;
+
+                return [
+                    'id' => $m->id,
+                    'name' => $m->name,
+                    'status' => $m->status,
+                    'priority' => $m->priority,
+                    'target_date' => $targetDate?->format('M d, Y'),
+                    'actual_date' => $actualDate?->format('M d, Y'),
+                    'description' => $m->description,
+                    'is_overdue' => $m->isOverdue(),
+                    'days_remaining' => $targetDate ? (int) now()->diffInDays($targetDate, false) : null,
+                ];
+            })->toArray(),
             'total' => $paginator->total(),
             'pages' => $paginator->lastPage(),
             'page' => $paginator->currentPage(),

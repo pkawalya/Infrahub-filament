@@ -38,6 +38,10 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        // ── BOQ Variance auto-sync observers ──
+        \App\Models\MaterialIssuance::observe(\App\Observers\MaterialIssuanceObserver::class);
+        \App\Models\MaterialRequisitionItem::observe(\App\Observers\MaterialRequisitionItemObserver::class);
+
         // Livewire components
         if (class_exists(\App\Filament\Resources\TicketResource\Pages\EditCommentModal::class)) {
             Livewire::component('edit-comment-modal', \App\Filament\Resources\TicketResource\Pages\EditCommentModal::class);

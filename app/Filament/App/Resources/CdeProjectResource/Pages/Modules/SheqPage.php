@@ -7,6 +7,7 @@ use App\Models\InspectionTemplate;
 use App\Models\SafetyIncident;
 use App\Models\SafetyInspection;
 use App\Models\SnagItem;
+use App\Models\SocialRecord;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms;
@@ -28,7 +29,7 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
     protected static string $moduleCode = 'sheq';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
     protected static ?string $navigationLabel = 'SHEQ';
-    protected static ?string $title = 'Safety, Health, Environment & Quality';
+    protected static ?string $title = 'Safety, Health, Environment, Quality & Social';
     protected string $view = 'filament.app.pages.modules.sheq';
 
     public string $activeTab = 'incidents';
@@ -87,6 +88,8 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
         $thisMonth = (int) $stats->this_month;
         $resolved = (int) $stats->resolved;
 
+        $socialOpen = SocialRecord::where('cde_project_id', $pid)->whereIn('status', ['open', 'in_progress'])->count();
+
         return [
             [
                 'label' => 'Total Incidents',
@@ -119,6 +122,14 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                 'sub_type' => 'success',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>',
                 'icon_bg' => '#ecfdf5'
+            ],
+            [
+                'label' => 'Social / Community',
+                'value' => $socialOpen,
+                'sub' => $socialOpen > 0 ? $socialOpen . ' open issues' : 'All clear',
+                'sub_type' => $socialOpen > 0 ? 'warning' : 'success',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#8b5cf6" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>',
+                'icon_bg' => '#f5f3ff'
             ],
         ];
     }
@@ -222,6 +233,36 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                     SnagItem::create($data);
                     Notification::make()->title('Snag reported')->success()->send();
                 }),
+
+            Action::make('logSocial')
+                ->label('Log Social Record')->icon('heroicon-o-user-group')->color('primary')
+                ->modalWidth('3xl')
+                ->schema([
+                    Section::make('Social Record Details')->schema([
+                        Forms\Components\TextInput::make('record_number')->label('Record #')
+                            ->default(fn() => 'SOC-' . str_pad((string) (SocialRecord::where('cde_project_id', $this->pid())->count() + 1), 4, '0', STR_PAD_LEFT))
+                            ->required()->maxLength(50),
+                        Forms\Components\TextInput::make('title')->required()->maxLength(255)->columnSpanFull(),
+                        Forms\Components\Select::make('category')->options(SocialRecord::$categories)->required()->searchable(),
+                        Forms\Components\Select::make('priority')->options(SocialRecord::$priorities)->required()->default('normal'),
+                        Forms\Components\TextInput::make('affected_party')->label('Affected Party')->maxLength(255)
+                            ->placeholder('e.g. Local community, Workers, Landowners'),
+                        Forms\Components\TextInput::make('location')->maxLength(255),
+                        Forms\Components\DatePicker::make('record_date')->required()->default(now()),
+                        Forms\Components\Select::make('assigned_to')->label('Assign To')
+                            ->options(fn() => $this->teamOptions())->searchable()->nullable(),
+                        Forms\Components\RichEditor::make('description')->label('Description')
+                            ->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList'])->columnSpanFull(),
+                    ])->columns(2),
+                ])
+                ->action(function (array $data): void {
+                    $data['company_id'] = $this->cid();
+                    $data['cde_project_id'] = $this->pid();
+                    $data['reported_by'] = auth()->id();
+                    $data['status'] = 'open';
+                    SocialRecord::create($data);
+                    Notification::make()->title('Social record logged')->success()->send();
+                }),
         ];
     }
 
@@ -235,6 +276,11 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
         if ($this->activeTab === 'snags') {
             return $this->snagTable($table->query(
                 SnagItem::query()->where('cde_project_id', $this->pid())->with(['reporter', 'assignee'])
+            ));
+        }
+        if ($this->activeTab === 'social') {
+            return $this->socialTable($table->query(
+                SocialRecord::query()->where('cde_project_id', $this->pid())->with(['reporter', 'assignee'])
             ));
         }
         return $this->incidentTable($table->query(
@@ -580,6 +626,136 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
             ->emptyStateHeading('No Snag Items')
             ->emptyStateDescription('Use "Report Snag" above to log defects.')
             ->emptyStateIcon('heroicon-o-bug-ant')
+            ->striped()->paginated([10, 25, 50]);
+    }
+
+    /* ── Social Table ─────────────────────────────── */
+    private function socialTable(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('record_number')->label('#')->searchable()->sortable()->weight('bold')->copyable()->toggleable(),
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(SocialRecord $r) => $r->title)->toggleable(),
+                Tables\Columns\TextColumn::make('category')->badge()->color('info')->toggleable()
+                    ->formatStateUsing(fn($state) => SocialRecord::$categories[$state] ?? $state),
+                Tables\Columns\TextColumn::make('priority')->badge()->toggleable()
+                    ->color(fn(string $s) => match ($s) { 'urgent' => 'danger', 'high' => 'warning', 'normal' => 'info', default => 'gray'})->sortable(),
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
+                    ->color(fn(string $s) => match ($s) { 'open' => 'danger', 'in_progress' => 'warning', 'resolved' => 'success', 'closed' => 'gray', default => 'gray'})->sortable(),
+                Tables\Columns\TextColumn::make('affected_party')->label('Affected Party')->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('record_date')->date('M d, Y')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('reporter.name')->label('Reported By')->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->defaultSort('record_date', 'desc')
+            ->filters([
+                Tables\Filters\SelectFilter::make('category')->options(SocialRecord::$categories)->multiple(),
+                Tables\Filters\SelectFilter::make('status')->options(SocialRecord::$statuses)->multiple(),
+                Tables\Filters\SelectFilter::make('priority')->options(SocialRecord::$priorities),
+                Tables\Filters\Filter::make('open_only')->label('Open Only')
+                    ->query(fn($q) => $q->whereIn('status', ['open', 'in_progress']))->toggle(),
+            ])
+            ->recordActions([
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('viewSocialDetail')
+                        ->label('View')->icon('heroicon-o-eye')->color('gray')->modalWidth('3xl')
+                        ->modalHeading(fn(SocialRecord $r) => $r->record_number . ' — ' . $r->title)
+                        ->schema(fn(SocialRecord $r) => [
+                            Forms\Components\Placeholder::make('cat')->label('Category')
+                                ->content(SocialRecord::$categories[$r->category] ?? $r->category),
+                            Forms\Components\Placeholder::make('pri')->label('Priority')
+                                ->content(SocialRecord::$priorities[$r->priority] ?? $r->priority),
+                            Forms\Components\Placeholder::make('sta')->label('Status')
+                                ->content(SocialRecord::$statuses[$r->status] ?? $r->status),
+                            Forms\Components\Placeholder::make('party')->label('Affected Party')
+                                ->content($r->affected_party ?: '—'),
+                            Forms\Components\Placeholder::make('loc')->label('Location')
+                                ->content($r->location ?: '—'),
+                            Forms\Components\Placeholder::make('dt')->label('Date')
+                                ->content($r->record_date?->format('M d, Y') ?? '—'),
+                            Forms\Components\Placeholder::make('desc')->label('Description')
+                                ->content(fn() => new \Illuminate\Support\HtmlString($r->description ?: '<em>No description</em>'))
+                                ->columnSpanFull(),
+                            Forms\Components\Placeholder::make('res_notes')->label('Resolution Notes')
+                                ->content($r->resolution_notes ?: '— Not yet resolved')->columnSpanFull(),
+                            Forms\Components\Placeholder::make('follow_up')->label('Follow-up Actions')
+                                ->content($r->follow_up_actions ?: '— None recorded')->columnSpanFull(),
+                        ])
+                        ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
+
+                    \Filament\Actions\Action::make('resolveSocial')
+                        ->label('Resolve')->icon('heroicon-o-check-circle')->color('success')
+                        ->visible(fn(SocialRecord $r) => in_array($r->status, ['open', 'in_progress']))
+                        ->schema([
+                            Forms\Components\Textarea::make('resolution_notes')->label('Resolution Notes')->rows(3)->required(),
+                            Forms\Components\Textarea::make('follow_up_actions')->label('Follow-up Actions')->rows(3),
+                        ])
+                        ->fillForm(fn(SocialRecord $r) => ['resolution_notes' => $r->resolution_notes, 'follow_up_actions' => $r->follow_up_actions])
+                        ->action(function (array $data, SocialRecord $record): void {
+                            $record->update(array_merge($data, ['status' => 'resolved', 'resolution_date' => now()]));
+                            Notification::make()->title('Social record resolved')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('editSocial')
+                        ->label('Edit')->icon('heroicon-o-pencil')->modalWidth('3xl')
+                        ->schema([
+                            Section::make('Social Record Details')->schema([
+                                Forms\Components\TextInput::make('record_number')->label('#')->required(),
+                                Forms\Components\TextInput::make('title')->required()->columnSpanFull(),
+                                Forms\Components\Select::make('category')->options(SocialRecord::$categories)->required()->searchable(),
+                                Forms\Components\Select::make('priority')->options(SocialRecord::$priorities)->required(),
+                                Forms\Components\Select::make('status')->options(SocialRecord::$statuses)->required(),
+                                Forms\Components\TextInput::make('affected_party')->label('Affected Party'),
+                                Forms\Components\TextInput::make('location'),
+                                Forms\Components\DatePicker::make('record_date'),
+                                Forms\Components\Select::make('assigned_to')->label('Assign To')
+                                    ->options(fn() => $this->teamOptions())->searchable()->nullable(),
+                                Forms\Components\RichEditor::make('description')
+                                    ->toolbarButtons(['bold', 'italic', 'bulletList'])->columnSpanFull(),
+                                Forms\Components\Textarea::make('resolution_notes')->label('Resolution Notes')->rows(2)->columnSpanFull(),
+                                Forms\Components\Textarea::make('follow_up_actions')->label('Follow-up Actions')->rows(2)->columnSpanFull(),
+                            ])->columns(2),
+                        ])
+                        ->fillForm(fn(SocialRecord $r) => $r->toArray())
+                        ->action(function (array $data, SocialRecord $record): void {
+                            $record->update($data);
+                            Notification::make()->title('Social record updated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('deleteSocial')
+                        ->label('Delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                        ->action(fn(SocialRecord $r) => $r->delete()),
+                ]),
+            ])
+            ->toolbarActions([
+                $this->exportCsvAction('social_records', fn() => SocialRecord::query()->where('cde_project_id', $this->pid())->with(['reporter', 'assignee']), [
+                    'record_number' => 'Record #',
+                    'title' => 'Title',
+                    'category' => 'Category',
+                    'priority' => 'Priority',
+                    'status' => 'Status',
+                    'affected_party' => 'Affected Party',
+                    'location' => 'Location',
+                    'record_date' => 'Date',
+                    'reporter.name' => 'Reported By',
+                    'assignee.name' => 'Assigned To',
+                    'resolution_date' => 'Resolved',
+                    'created_at' => 'Created At',
+                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\BulkAction::make('bulkResolveSocial')->label('Resolve')->icon('heroicon-o-check-circle')->color('success')
+                        ->requiresConfirmation()
+                        ->action(function ($records): void {
+                            foreach ($records as $r)
+                                $r->update(['status' => 'resolved', 'resolution_date' => now()]);
+                            Notification::make()->title($records->count() . ' records resolved')->success()->send();
+                        })->deselectRecordsAfterCompletion(),
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ]),
+            ])
+            ->emptyStateHeading('No Social Records')
+            ->emptyStateDescription('Use "Log Social Record" above to track community and social matters.')
+            ->emptyStateIcon('heroicon-o-user-group')
             ->striped()->paginated([10, 25, 50]);
     }
 }

@@ -252,9 +252,10 @@
 }
 
 .mod-stat-card {
+    container-type: inline-size;
     position: relative;
     border-radius: 1rem;
-    padding: 1.25rem 1.5rem;
+    padding: clamp(0.75rem, 6cqw, 1.25rem) clamp(0.75rem, 6cqw, 1.5rem);
     overflow: hidden;
     transition: transform 250ms cubic-bezier(.4, 0, .2, 1), box-shadow 250ms cubic-bezier(.4, 0, .2, 1);
     background: white;
@@ -307,11 +308,11 @@
 }
 
 .mod-stat-label {
-    font-size: 0.6875rem;
+    font-size: clamp(0.5625rem, 4cqw, 0.6875rem);
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    margin-bottom: 0.25rem;
+    margin-bottom: clamp(0.125rem, 1.5cqw, 0.25rem);
     color: #6b7280;
 }
 
@@ -324,7 +325,7 @@
 }
 
 .mod-stat-value {
-    font-size: clamp(1.1rem, 2.5vw, 2rem);
+    font-size: clamp(0.9375rem, 8cqw, 1.875rem);
     font-weight: 800;
     line-height: 1.1;
     color: #111827;
@@ -345,8 +346,8 @@
 }
 
 .mod-stat-sub {
-    font-size: 0.75rem;
-    margin-top: 0.25rem;
+    font-size: clamp(0.625rem, 5cqw, 0.75rem);
+    margin-top: clamp(0.125rem, 1.5cqw, 0.25rem);
     font-weight: 500;
     color: #6b7280;
 }
@@ -387,9 +388,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 0.75rem;
+    width: clamp(1.75rem, 14cqw, 2.75rem);
+    height: clamp(1.75rem, 14cqw, 2.75rem);
+    border-radius: clamp(0.5rem, 4cqw, 0.75rem);
     flex-shrink: 0;
     transition: transform 300ms;
 }

@@ -56,4 +56,35 @@ class Boq extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+    public function varianceAlerts()
+    {
+        return $this->hasMany(BoqVarianceAlert::class);
+    }
+    public function materialUsages()
+    {
+        return $this->hasManyThrough(BoqMaterialUsage::class, BoqItem::class);
+    }
+
+    // ── Aggregation ──
+
+    /**
+     * Recalculate BOQ totals from items.
+     */
+    public function recalculateTotals(): void
+    {
+        $this->update([
+            'total_value' => $this->items()->sum('amount'),
+        ]);
+    }
+
+    /**
+     * Count of unacknowledged high/critical alerts.
+     */
+    public function getUnacknowledgedAlertCountAttribute(): int
+    {
+        return $this->varianceAlerts()
+            ->where('is_acknowledged', false)
+            ->whereIn('severity', ['high', 'critical'])
+            ->count();
+    }
 }
