@@ -523,7 +523,8 @@
                     <button wire:click="navigateToFolder({{ $sf->id }})" class="cde-folder-card">
                         <div class="cde-folder-icon-wrap">
                             <svg class="cde-folder-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                                <path d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15zM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z" />
+                                <path
+                                    d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15zM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z" />
                             </svg>
                         </div>
                         <div class="cde-folder-info">
@@ -601,6 +602,171 @@
                                 </span>
                                 <div style="font-size:11px; color:var(--gray-400,#9ca3af); margin-top:4px;">
                                     {{ $tr->created_at->format('M d, Y') }}
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </x-filament::section>
+        </div>
+    @endif
+
+    {{-- ── RFIs Section ──────────────────────────────────────────────── --}}
+    @php $rfis = $this->getRfis(); @endphp
+    @if($rfis->isNotEmpty())
+        <div style="margin-top: 1.25rem;">
+            <x-filament::section icon="heroicon-o-question-mark-circle" icon-color="warning" collapsible>
+                <x-slot name="heading">Requests for Information (RFIs)</x-slot>
+                <x-slot name="description">{{ $rfis->whereNotIn('status', ['closed', 'void'])->count() }} open ·
+                    {{ $rfis->count() }} total</x-slot>
+
+                <div style="display: grid; gap: 10px;">
+                    @foreach($rfis as $rfi)
+                        @php
+                            $rfiStatusStyle = match ($rfi->status) {
+                                'open' => 'background:rgba(59,130,246,0.1);color:#3b82f6;',
+                                'under_review' => 'background:rgba(245,158,11,0.1);color:#f59e0b;',
+                                'answered' => 'background:rgba(16,185,129,0.1);color:#10b981;',
+                                'closed' => 'background:rgba(107,114,128,0.1);color:#6b7280;',
+                                'void' => 'background:rgba(239,68,68,0.1);color:#ef4444;',
+                                default => 'background:rgba(107,114,128,0.1);color:#6b7280;',
+                            };
+                            $rfiPriorityStyle = match ($rfi->priority) {
+                                'urgent' => 'background:#fef2f2;color:#dc2626;border:1px solid #fecaca;',
+                                'high' => 'background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;',
+                                'medium' => 'background:#fffbeb;color:#d97706;border:1px solid #fde68a;',
+                                'low' => 'background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;',
+                                default => 'background:#f9fafb;color:#6b7280;',
+                            };
+                        @endphp
+                        <div x-data="{ expanded: false }"
+                            style="border-radius:10px; background:var(--gray-50, #f9fafb); border:1px solid var(--gray-200, #e5e7eb); overflow:hidden;">
+                            {{-- RFI Header Row --}}
+                            <div @click="expanded = !expanded"
+                                style="display:flex; align-items:center; gap:14px; padding:14px 18px; cursor:pointer; transition:background .15s;"
+                                :style="expanded ? 'background:rgba(99,102,241,0.03)' : ''">
+                                {{-- Icon --}}
+                                <div
+                                    style="flex-shrink:0; width:40px; height:40px; border-radius:10px; background:rgba(245,158,11,0.08); display:flex; align-items:center; justify-content:center;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                        stroke="#d97706" style="width:20px;height:20px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                                    </svg>
+                                </div>
+
+                                {{-- Info --}}
+                                <div style="flex:1; min-width:0;">
+                                    <div
+                                        style="font-weight:600; font-size:14px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                                        <span>{{ $rfi->rfi_number }}</span>
+                                        <span style="color:var(--gray-400,#9ca3af);">—</span>
+                                        <span
+                                            style="flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ $rfi->subject }}</span>
+                                    </div>
+                                    <div
+                                        style="font-size:12px; color:var(--gray-400,#9ca3af); margin-top:3px; display:flex; gap:8px; flex-wrap:wrap;">
+                                        @if($rfi->submitter) <span>By: {{ $rfi->submitter->name }}</span> @endif
+                                        @if($rfi->assignee) <span>· To: {{ $rfi->assignee->name }}</span> @endif
+                                        @if($rfi->due_date)
+                                            <span>· Due: {{ $rfi->due_date->format('M d, Y') }}</span>
+                                        @endif
+                                    </div>
+                                </div>
+
+                                {{-- Badges --}}
+                                <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+                                    <span
+                                        style="padding:3px 8px; border-radius:99px; font-size:10px; font-weight:700; text-transform:uppercase; {{ $rfiPriorityStyle }}">
+                                        {{ $rfi->priority }}
+                                    </span>
+                                    <span
+                                        style="padding:3px 10px; border-radius:99px; font-size:11px; font-weight:600; text-transform:uppercase; {{ $rfiStatusStyle }}">
+                                        {{ \App\Models\Rfi::$statuses[$rfi->status] ?? $rfi->status }}
+                                    </span>
+                                </div>
+
+                                {{-- Chevron --}}
+                                <svg :class="expanded ? 'rotate-180' : ''"
+                                    style="width:16px;height:16px;color:#9ca3af;transition:transform .2s;flex-shrink:0;"
+                                    fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                </svg>
+                            </div>
+
+                            {{-- Expanded Detail --}}
+                            <div x-show="expanded" x-collapse
+                                style="padding:0 18px 16px; border-top:1px solid var(--gray-200, #e5e7eb);">
+
+                                {{-- Question --}}
+                                <div style="margin-top:14px;">
+                                    <div
+                                        style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#64748b; margin-bottom:6px;">
+                                        Question</div>
+                                    <div
+                                        style="font-size:13px; color:var(--gray-700,#374151); line-height:1.6; padding:10px 14px; background:white; border-radius:8px; border:1px solid #e5e7eb;">
+                                        {{ $rfi->question }}
+                                    </div>
+                                </div>
+
+                                {{-- Answer --}}
+                                @if($rfi->answer)
+                                    <div style="margin-top:12px;">
+                                        <div
+                                            style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#10b981; margin-bottom:6px;">
+                                            Answer</div>
+                                        <div
+                                            style="font-size:13px; color:var(--gray-700,#374151); line-height:1.6; padding:10px 14px; background:#f0fdf4; border-radius:8px; border:1px solid #bbf7d0;">
+                                            {{ $rfi->answer }}
+                                        </div>
+                                        @if($rfi->answered_at)
+                                            <div style="font-size:11px; color:#9ca3af; margin-top:4px;">Answered
+                                                {{ $rfi->answered_at->diffForHumans() }}</div>
+                                        @endif
+                                    </div>
+                                @endif
+
+                                {{-- Actions --}}
+                                <div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">
+                                    @if(in_array($rfi->status, ['open', 'under_review']))
+                                        <div x-data="{ showForm: false }">
+                                            <button @click="showForm = !showForm"
+                                                style="padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; background:#10b981; color:white; border:none; cursor:pointer;">
+                                                ✎ Answer
+                                            </button>
+                                            <div x-show="showForm" x-collapse style="margin-top:8px; width:100%;">
+                                                <form wire:submit.prevent="answerRfi({{ $rfi->id }}, $event.target.answer.value)">
+                                                    <textarea name="answer" rows="3" placeholder="Type your answer..."
+                                                        style="width:100%; padding:10px; border-radius:8px; border:1px solid #d1d5db; font-size:13px; resize:vertical;"></textarea>
+                                                    <button type="submit"
+                                                        style="margin-top:6px; padding:6px 16px; border-radius:6px; font-size:12px; font-weight:600; background:#4f46e5; color:white; border:none; cursor:pointer;">
+                                                        Submit Answer
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    @if($rfi->status === 'answered')
+                                        <button wire:click="closeRfi({{ $rfi->id }})"
+                                            style="padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; background:#6b7280; color:white; border:none; cursor:pointer;">
+                                            ✓ Close RFI
+                                        </button>
+                                    @endif
+
+                                    @if($rfi->status === 'closed')
+                                        <button wire:click="reopenRfi({{ $rfi->id }})"
+                                            style="padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; background:#f59e0b; color:white; border:none; cursor:pointer;">
+                                            ↻ Reopen
+                                        </button>
+                                    @endif
+                                </div>
+
+                                {{-- Meta --}}
+                                <div style="margin-top:10px; font-size:11px; color:#9ca3af;">
+                                    Created {{ $rfi->created_at->format('M d, Y') }}
+                                    @if($rfi->cost_impact) · Cost Impact @endif
+                                    @if($rfi->schedule_impact) · Schedule Impact @endif
                                 </div>
                             </div>
                         </div>

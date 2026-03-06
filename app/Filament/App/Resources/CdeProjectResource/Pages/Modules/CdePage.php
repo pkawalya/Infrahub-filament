@@ -10,6 +10,7 @@ use App\Models\CdeProject;
 use App\Models\DocumentShare;
 use App\Models\Transmittal;
 use App\Models\TransmittalItem;
+use App\Models\Rfi;
 use App\Models\User;
 use Filament\Actions\Action;
 use Filament\Forms;
@@ -191,6 +192,41 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                     }
                 }),
 
+            Action::make('createRfi')
+                ->label('New RFI')
+                ->icon('heroicon-o-question-mark-circle')
+                ->color('warning')
+                ->modalWidth('2xl')
+                ->schema([
+                    Section::make('Request For Information')->schema([
+                        Forms\Components\TextInput::make('rfi_number')->label('RFI #')
+                            ->default(fn() => 'RFI-' . str_pad((string) (Rfi::where('cde_project_id', $this->record->id)->count() + 1), 4, '0', STR_PAD_LEFT))
+                            ->required()->maxLength(50),
+                        Forms\Components\Select::make('priority')->options(Rfi::$priorities)->default('medium')->required(),
+                        Forms\Components\TextInput::make('subject')->required()->maxLength(255)->columnSpanFull(),
+                        Forms\Components\Textarea::make('question')->required()->rows(4)->columnSpanFull(),
+                        Forms\Components\Select::make('assigned_to')->label('Assign To')
+                            ->options(fn() => User::where('company_id', $this->record->company_id)->pluck('name', 'id'))
+                            ->searchable()->nullable(),
+                        Forms\Components\DatePicker::make('due_date')->label('Due Date')->nullable(),
+                    ])->columns(2),
+                ])
+                ->action(function (array $data): void {
+                    Rfi::create([
+                        'company_id' => $this->record->company_id,
+                        'cde_project_id' => $this->record->id,
+                        'rfi_number' => $data['rfi_number'],
+                        'subject' => $data['subject'],
+                        'question' => $data['question'],
+                        'priority' => $data['priority'],
+                        'assigned_to' => $data['assigned_to'] ?? null,
+                        'due_date' => $data['due_date'] ?? null,
+                        'raised_by' => auth()->id(),
+                        'status' => 'open',
+                    ]);
+                    Notification::make()->title('RFI created successfully.')->success()->send();
+                }),
+
             Action::make('createTransmittal')
                 ->label('Create Transmittal')
                 ->icon('heroicon-o-paper-airplane')
@@ -278,6 +314,8 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
         $totalFolders = $p->folders()->count();
         $recentUploads = $p->documents()->where('created_at', '>=', now()->subDays(7))->count();
         $transmittalCount = Transmittal::where('cde_project_id', $p->id)->count();
+        $openRfis = Rfi::where('cde_project_id', $p->id)->whereNotIn('status', ['closed', 'void'])->count();
+        $totalRfis = Rfi::where('cde_project_id', $p->id)->count();
 
         return [
             [
@@ -304,12 +342,12 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 'icon_bg' => '#f5f3ff'
             ],
             [
-                'label' => 'Recent Uploads',
-                'value' => $recentUploads,
-                'sub' => 'Last 7 days',
-                'sub_type' => $recentUploads > 0 ? 'success' : 'neutral',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>',
-                'icon_bg' => '#ecfdf5'
+                'label' => 'Open RFIs',
+                'value' => $openRfis,
+                'sub' => $totalRfis . ' total',
+                'sub_type' => $openRfis > 0 ? 'warning' : 'success',
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#d97706" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" /></svg>',
+                'icon_bg' => '#fffbeb'
             ],
         ];
     }
@@ -321,6 +359,46 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
             ->orderByDesc('created_at')
             ->limit(30)
             ->get();
+    }
+
+    public function getRfis(): \Illuminate\Database\Eloquent\Collection
+    {
+        return Rfi::where('cde_project_id', $this->record->id)
+            ->with(['submitter:id,name', 'assignee:id,name'])
+            ->orderByDesc('created_at')
+            ->limit(30)
+            ->get();
+    }
+
+    public function answerRfi(int $rfiId, string $answer): void
+    {
+        $rfi = Rfi::find($rfiId);
+        if ($rfi) {
+            $rfi->update([
+                'answer' => $answer,
+                'status' => 'answered',
+                'answered_at' => now(),
+            ]);
+            Notification::make()->title('RFI answered.')->success()->send();
+        }
+    }
+
+    public function closeRfi(int $rfiId): void
+    {
+        $rfi = Rfi::find($rfiId);
+        if ($rfi) {
+            $rfi->update(['status' => 'closed']);
+            Notification::make()->title('RFI closed.')->success()->send();
+        }
+    }
+
+    public function reopenRfi(int $rfiId): void
+    {
+        $rfi = Rfi::find($rfiId);
+        if ($rfi) {
+            $rfi->update(['status' => 'open', 'answer' => null, 'answered_at' => null]);
+            Notification::make()->title('RFI reopened.')->warning()->send();
+        }
     }
 
     // ─── Sharing & Download ──────────────────────────────────────────
