@@ -138,22 +138,127 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
     {
         $pid = $this->pid();
         $lastIncident = SafetyIncident::where('cde_project_id', $pid)->latest('incident_date')->value('incident_date');
-        $safeDays = $lastIncident ? max(0, now()->diffInDays($lastIncident)) : null;
+        $safeDays = $lastIncident ? max(0, (int) now()->diffInDays($lastIncident)) : null;
 
         $total = SafetyIncident::where('cde_project_id', $pid)->count();
         $resolved = SafetyIncident::where('cde_project_id', $pid)->whereIn('status', ['resolved', 'closed'])->count();
         $resolutionRate = $total > 0 ? round(($resolved / $total) * 100) : 100;
 
+        // Average resolution time (days) for resolved incidents
+        $avgResolution = SafetyIncident::where('cde_project_id', $pid)
+            ->whereIn('status', ['resolved', 'closed'])
+            ->whereNotNull('updated_at') // use updated_at as proxy for resolution date
+            ->selectRaw('AVG(DATEDIFF(updated_at, incident_date)) as avg_days')
+            ->value('avg_days');
+
         $inspTotal = SafetyInspection::where('cde_project_id', $pid)->count();
-        $inspPassed = SafetyInspection::where('cde_project_id', $pid)->where('result', 'pass')->count();
-        $inspRate = $inspTotal > 0 ? round(($inspPassed / $inspTotal) * 100) : 0;
+        $inspCompleted = SafetyInspection::where('cde_project_id', $pid)->where('status', 'completed')->count();
+        $inspCompletionRate = $inspTotal > 0 ? round(($inspCompleted / $inspTotal) * 100) : 0;
+        $avgScore = SafetyInspection::where('cde_project_id', $pid)->where('status', 'completed')
+            ->whereNotNull('score')->avg('score');
+        $upcomingInsp = SafetyInspection::where('cde_project_id', $pid)
+            ->where('status', 'scheduled')
+            ->where('scheduled_date', '>=', now())
+            ->where('scheduled_date', '<=', now()->addDays(7))->count();
+        $overdueInsp = SafetyInspection::where('cde_project_id', $pid)
+            ->whereIn('status', ['scheduled', 'in_progress'])
+            ->where('scheduled_date', '<', now())->count();
+
+        // Severity breakdown
+        $severities = SafetyIncident::where('cde_project_id', $pid)
+            ->selectRaw("severity, COUNT(*) as cnt")
+            ->groupBy('severity')->pluck('cnt', 'severity')->toArray();
+
+        // Open snag counts
+        $openSnags = SnagItem::where('cde_project_id', $pid)->whereIn('status', ['open', 'in_progress'])->count();
+        $overdueSnags = SnagItem::where('cde_project_id', $pid)
+            ->whereIn('status', ['open', 'in_progress'])
+            ->whereNotNull('due_date')->where('due_date', '<', now())->count();
 
         return [
             'safe_days' => $safeDays,
             'resolution_rate' => $resolutionRate,
-            'inspection_pass_rate' => $inspRate,
+            'avg_resolution_days' => $avgResolution ? round($avgResolution, 1) : null,
             'total_inspections' => $inspTotal,
+            'inspection_completion_rate' => $inspCompletionRate,
+            'avg_inspection_score' => $avgScore ? round($avgScore) : null,
+            'upcoming_inspections' => $upcomingInsp,
+            'overdue_inspections' => $overdueInsp,
+            'severities' => $severities,
+            'open_snags' => $openSnags,
+            'overdue_snags' => $overdueSnags,
         ];
+    }
+
+    /**
+     * Monthly incident trend — last 6 months.
+     */
+    public function getIncidentTrend(): array
+    {
+        $pid = $this->pid();
+        $trend = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $start = $month->copy()->startOfMonth();
+            $end = $month->copy()->endOfMonth();
+
+            $count = SafetyIncident::where('cde_project_id', $pid)
+                ->whereBetween('incident_date', [$start, $end])->count();
+            $critical = SafetyIncident::where('cde_project_id', $pid)
+                ->whereIn('severity', ['critical', 'fatal'])
+                ->whereBetween('incident_date', [$start, $end])->count();
+
+            $trend[] = [
+                'label' => $month->format('M'),
+                'count' => $count,
+                'critical' => $critical,
+            ];
+        }
+        return $trend;
+    }
+
+    /**
+     * Critical/Fatal incidents that are still open — needs immediate attention.
+     */
+    public function getCriticalAlerts(): \Illuminate\Database\Eloquent\Collection
+    {
+        return SafetyIncident::where('cde_project_id', $this->pid())
+            ->whereIn('severity', ['critical', 'fatal'])
+            ->whereNotIn('status', ['resolved', 'closed'])
+            ->with('reporter:id,name')
+            ->orderByDesc('incident_date')
+            ->limit(10)
+            ->get();
+    }
+
+    /**
+     * Overdue snags for alert display.
+     */
+    public function getOverdueSnags(): \Illuminate\Database\Eloquent\Collection
+    {
+        return SnagItem::where('cde_project_id', $this->pid())
+            ->whereIn('status', ['open', 'in_progress'])
+            ->whereNotNull('due_date')
+            ->where('due_date', '<', now())
+            ->with('assignee:id,name')
+            ->orderBy('due_date')
+            ->limit(10)
+            ->get();
+    }
+
+    /**
+     * Upcoming inspections within 7 days.
+     */
+    public function getUpcomingInspections(): \Illuminate\Database\Eloquent\Collection
+    {
+        return SafetyInspection::where('cde_project_id', $this->pid())
+            ->whereIn('status', ['scheduled', 'in_progress'])
+            ->where('scheduled_date', '>=', now()->subDays(3)) // include up to 3 days overdue
+            ->where('scheduled_date', '<=', now()->addDays(7))
+            ->with('inspector:id,name')
+            ->orderBy('scheduled_date')
+            ->limit(10)
+            ->get();
     }
 
     private function incidentFormSchema(bool $isCreate = false): array
