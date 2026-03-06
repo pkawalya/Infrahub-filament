@@ -304,6 +304,65 @@
 
     @include('filament.app.pages.modules.partials.stat-cards', ['stats' => $this->getStats()])
 
+    {{-- Executive RAG Health Dashboard --}}
+    @php $health = $this->getProjectHealth(); @endphp
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px;">
+        @foreach($health as $h)
+            @php
+                $ragColors = [
+                    'green' => ['bg' => 'rgba(16,185,129,0.08)', 'border' => 'rgba(16,185,129,0.2)', 'dot' => '#10b981', 'text' => '#059669'],
+                    'amber' => ['bg' => 'rgba(245,158,11,0.08)', 'border' => 'rgba(245,158,11,0.2)', 'dot' => '#f59e0b', 'text' => '#d97706'],
+                    'red' => ['bg' => 'rgba(239,68,68,0.08)', 'border' => 'rgba(239,68,68,0.2)', 'dot' => '#ef4444', 'text' => '#dc2626'],
+                ];
+                $c = $ragColors[$h['status']] ?? $ragColors['green'];
+            @endphp
+            <div style="padding:12px 14px;border-radius:8px;background:{{ $c['bg'] }};border:1px solid {{ $c['border'] }};">
+                <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:{{ $c['dot'] }};flex-shrink:0;"></div>
+                    <span
+                        style="font-size:12px;font-weight:700;color:{{ $c['text'] }};text-transform:uppercase;letter-spacing:0.04em;">{{ $h['dimension'] }}</span>
+                </div>
+                <div style="font-size:11px;color:#64748b;">{{ $h['detail'] }}</div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- Monthly Activity Trend --}}
+    @php
+        $trend = $this->getMonthlyTrend();
+        $maxTrend = max(1, max(array_column($trend, 'tasks_completed')), max(array_column($trend, 'logs')));
+    @endphp
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;background:white;">
+            <div
+                style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;margin-bottom:8px;">
+                Tasks Completed · 6 Month Trend</div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:60px;">
+                @foreach($trend as $t)
+                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+                        <div style="width:100%;background:#6366f1;border-radius:3px 3px 0 0;height:{{ max(2, ($t['tasks_completed'] / $maxTrend) * 50) }}px;transition:height .3s;"
+                            title="{{ $t['tasks_completed'] }}"></div>
+                        <div style="font-size:8px;color:#94a3b8;margin-top:2px;">{{ $t['label'] }}</div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        <div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 16px;background:white;">
+            <div
+                style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;margin-bottom:8px;">
+                Daily Site Logs · 6 Month Trend</div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:60px;">
+                @foreach($trend as $t)
+                    <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+                        <div style="width:100%;background:#0891b2;border-radius:3px 3px 0 0;height:{{ max(2, ($t['logs'] / $maxTrend) * 50) }}px;transition:height .3s;"
+                            title="{{ $t['logs'] }}"></div>
+                        <div style="font-size:8px;color:#94a3b8;margin-top:2px;">{{ $t['label'] }}</div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
     @php
         $taskBreakdown = $this->getTaskBreakdown();
         $totalTasks = array_sum($taskBreakdown);

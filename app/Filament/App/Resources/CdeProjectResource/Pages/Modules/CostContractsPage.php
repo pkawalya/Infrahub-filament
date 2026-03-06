@@ -109,6 +109,30 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
+    public function getContractSummary(): array
+    {
+        $pid = $this->pid();
+        $contracts = Contract::where('cde_project_id', $pid)->get();
+        $totalOriginal = $contracts->sum('original_value');
+        $totalRevised = $contracts->sum('revised_value');
+        $totalPaid = $contracts->sum('amount_paid');
+        $totalRetainage = $contracts->sum('retainage_held');
+        $balance = max(0, $totalRevised - $totalPaid);
+        $paidPercent = $totalRevised > 0 ? round(($totalPaid / $totalRevised) * 100) : 0;
+
+        return [
+            'original' => $totalOriginal,
+            'revised' => $totalRevised,
+            'paid' => $totalPaid,
+            'retainage' => $totalRetainage,
+            'balance' => $balance,
+            'paid_percent' => $paidPercent,
+            'active' => $contracts->where('status', 'active')->count(),
+            'completed' => $contracts->where('status', 'completed')->count(),
+            'total' => $contracts->count(),
+        ];
+    }
+
     // ─────────────────────────────────────────────
     // Contract Form Schema
     // ─────────────────────────────────────────────

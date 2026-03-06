@@ -113,6 +113,29 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
+    public function getRfiPipeline(): array
+    {
+        $rfis = Rfi::where('cde_project_id', $this->pid());
+        return [
+            ['label' => 'Open', 'count' => (clone $rfis)->where('status', 'open')->count(), 'bg' => '#dbeafe', 'color' => '#2563eb'],
+            ['label' => 'Review', 'count' => (clone $rfis)->where('status', 'under_review')->count(), 'bg' => '#fef3c7', 'color' => '#d97706'],
+            ['label' => 'Answered', 'count' => (clone $rfis)->where('status', 'answered')->count(), 'bg' => '#dcfce7', 'color' => '#16a34a'],
+            ['label' => 'Closed', 'count' => (clone $rfis)->where('status', 'closed')->count(), 'bg' => '#f1f5f9', 'color' => '#475569'],
+        ];
+    }
+
+    public function getSubmittalPipeline(): array
+    {
+        $subs = Submittal::where('cde_project_id', $this->pid());
+        return [
+            ['label' => 'Pending', 'count' => (clone $subs)->where('status', 'pending')->count(), 'bg' => '#fef3c7', 'color' => '#d97706'],
+            ['label' => 'Review', 'count' => (clone $subs)->where('status', 'under_review')->count(), 'bg' => '#dbeafe', 'color' => '#2563eb'],
+            ['label' => 'Approved', 'count' => (clone $subs)->where('status', 'approved')->count(), 'bg' => '#dcfce7', 'color' => '#16a34a'],
+            ['label' => 'Rejected', 'count' => (clone $subs)->where('status', 'rejected')->count(), 'bg' => '#fef2f2', 'color' => '#ef4444'],
+            ['label' => 'Revised', 'count' => (clone $subs)->where('status', 'revised')->count(), 'bg' => '#f3e8ff', 'color' => '#7c3aed'],
+        ];
+    }
+
     /* ────────────── RFI form schema ────────────── */
 
     private function rfiFormSchema(bool $isCreate = false): array

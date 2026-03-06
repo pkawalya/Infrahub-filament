@@ -1,6 +1,44 @@
 <x-filament-panels::page>
     @include('filament.app.pages.modules.partials.stat-cards', ['stats' => $this->getStats()])
 
+    {{-- Safety KPI Strip --}}
+    @php $kpi = $this->getSafetyKPIs(); @endphp
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:16px;">
+        <div style="padding:14px 16px;border-radius:8px;background:white;border:1px solid #e2e8f0;text-align:center;">
+            <div
+                style="font-size:28px;font-weight:800;color:{{ $kpi['safe_days'] !== null ? ($kpi['safe_days'] > 30 ? '#10b981' : ($kpi['safe_days'] > 7 ? '#d97706' : '#ef4444')) : '#94a3b8' }};line-height:1.1;">
+                {{ $kpi['safe_days'] !== null ? $kpi['safe_days'] : '∞' }}
+            </div>
+            <div
+                style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;margin-top:2px;">
+                Safe Days</div>
+        </div>
+        <div style="padding:14px 16px;border-radius:8px;background:white;border:1px solid #e2e8f0;text-align:center;">
+            <div
+                style="font-size:28px;font-weight:800;color:{{ $kpi['resolution_rate'] >= 80 ? '#10b981' : ($kpi['resolution_rate'] >= 50 ? '#d97706' : '#ef4444') }};line-height:1.1;">
+                {{ $kpi['resolution_rate'] }}%
+            </div>
+            <div
+                style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;margin-top:2px;">
+                Resolution Rate</div>
+        </div>
+        <div style="padding:14px 16px;border-radius:8px;background:white;border:1px solid #e2e8f0;text-align:center;">
+            <div style="font-size:28px;font-weight:800;color:#6366f1;line-height:1.1;">{{ $kpi['total_inspections'] }}
+            </div>
+            <div
+                style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;margin-top:2px;">
+                Inspections</div>
+        </div>
+        <div style="padding:14px 16px;border-radius:8px;background:white;border:1px solid #e2e8f0;text-align:center;">
+            <div
+                style="font-size:28px;font-weight:800;color:{{ $kpi['inspection_pass_rate'] >= 80 ? '#10b981' : '#d97706' }};line-height:1.1;">
+                {{ $kpi['inspection_pass_rate'] }}%</div>
+            <div
+                style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;margin-top:2px;">
+                Pass Rate</div>
+        </div>
+    </div>
+
     @push('styles')
         <style>
             /* ─── SHEQ Tab Navigation ─── */

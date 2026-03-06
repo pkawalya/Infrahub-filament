@@ -134,6 +134,28 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
+    public function getSafetyKPIs(): array
+    {
+        $pid = $this->pid();
+        $lastIncident = SafetyIncident::where('cde_project_id', $pid)->latest('incident_date')->value('incident_date');
+        $safeDays = $lastIncident ? max(0, now()->diffInDays($lastIncident)) : null;
+
+        $total = SafetyIncident::where('cde_project_id', $pid)->count();
+        $resolved = SafetyIncident::where('cde_project_id', $pid)->whereIn('status', ['resolved', 'closed'])->count();
+        $resolutionRate = $total > 0 ? round(($resolved / $total) * 100) : 100;
+
+        $inspTotal = SafetyInspection::where('cde_project_id', $pid)->count();
+        $inspPassed = SafetyInspection::where('cde_project_id', $pid)->where('result', 'pass')->count();
+        $inspRate = $inspTotal > 0 ? round(($inspPassed / $inspTotal) * 100) : 0;
+
+        return [
+            'safe_days' => $safeDays,
+            'resolution_rate' => $resolutionRate,
+            'inspection_pass_rate' => $inspRate,
+            'total_inspections' => $inspTotal,
+        ];
+    }
+
     private function incidentFormSchema(bool $isCreate = false): array
     {
         return [

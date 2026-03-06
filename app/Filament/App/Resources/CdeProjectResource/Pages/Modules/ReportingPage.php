@@ -178,4 +178,67 @@ class ReportingPage extends BaseModulePage
             'variance' => $contractRevised - $contractOriginal,
         ];
     }
+
+    /**
+     * RAG (Red/Amber/Green) health status for each project dimension.
+     */
+    public function getProjectHealth(): array
+    {
+        $r = $this->record;
+        $totalTasks = $r->tasks()->count();
+        $doneTasks = $r->tasks()->where('status', 'done')->count();
+        $blockedTasks = $r->tasks()->where('status', 'blocked')->count();
+        $overdueTasks = $r->tasks()->where('status', '!=', 'done')
+            ->whereNotNull('due_date')->where('due_date', '<', now())->count();
+        $taskPct = $totalTasks > 0 ? round(($doneTasks / $totalTasks) * 100) : 0;
+
+        // Schedule health
+        $overdueRatio = $totalTasks > 0 ? $overdueTasks / $totalTasks : 0;
+        $scheduleStatus = $overdueRatio > 0.2 ? 'red' : ($overdueRatio > 0.05 ? 'amber' : 'green');
+
+        // Cost health
+        $contractOriginal = $r->contracts()->sum('original_value');
+        $contractRevised = $r->contracts()->sum('revised_value');
+        $costVariance = $contractOriginal > 0 ? (($contractRevised - $contractOriginal) / $contractOriginal) * 100 : 0;
+        $costStatus = $costVariance > 10 ? 'red' : ($costVariance > 3 ? 'amber' : 'green');
+
+        // Quality health (based on snag resolution)
+        $openSnags = $r->snagItems()->whereIn('status', ['open', 'in_progress'])->count();
+        $qualityStatus = $openSnags > 20 ? 'red' : ($openSnags > 5 ? 'amber' : 'green');
+
+        // Safety health
+        $openIncidents = $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count();
+        $criticalIncidents = $r->safetyIncidents()->whereIn('severity', ['critical', 'fatal'])->whereNotIn('status', ['closed', 'resolved'])->count();
+        $safetyStatus = $criticalIncidents > 0 ? 'red' : ($openIncidents > 3 ? 'amber' : 'green');
+
+        return [
+            ['dimension' => 'Schedule', 'status' => $scheduleStatus, 'detail' => "$overdueTasks overdue / $totalTasks tasks ({$taskPct}% done)"],
+            ['dimension' => 'Cost', 'status' => $costStatus, 'detail' => 'Variance: ' . ($costVariance >= 0 ? '+' : '') . round($costVariance, 1) . '%'],
+            ['dimension' => 'Quality', 'status' => $qualityStatus, 'detail' => "$openSnags open snags/defects"],
+            ['dimension' => 'Safety', 'status' => $safetyStatus, 'detail' => "$openIncidents open incidents" . ($criticalIncidents > 0 ? " ($criticalIncidents critical)" : '')],
+        ];
+    }
+
+    /**
+     * Monthly activity trend for the last 6 months.
+     */
+    public function getMonthlyTrend(): array
+    {
+        $trend = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $start = $month->copy()->startOfMonth();
+            $end = $month->copy()->endOfMonth();
+
+            $trend[] = [
+                'label' => $month->format('M'),
+                'tasks_completed' => $this->record->tasks()
+                    ->where('status', 'done')
+                    ->whereBetween('completed_at', [$start, $end])->count(),
+                'logs' => $this->record->dailySiteLogs()
+                    ->whereBetween('log_date', [$start, $end])->count(),
+            ];
+        }
+        return $trend;
+    }
 }

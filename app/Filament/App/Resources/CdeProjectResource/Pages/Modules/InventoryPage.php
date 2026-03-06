@@ -666,6 +666,18 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             ->get();
     }
 
+    public function getPOPipeline(): array
+    {
+        $base = PurchaseOrder::where('cde_project_id', $this->pid());
+        return [
+            ['label' => 'Draft', 'count' => (clone $base)->where('status', 'draft')->count(), 'bg' => '#f1f5f9', 'color' => '#475569'],
+            ['label' => 'Sent', 'count' => (clone $base)->where('status', 'sent')->count(), 'bg' => '#dbeafe', 'color' => '#2563eb'],
+            ['label' => 'Partial', 'count' => (clone $base)->where('status', 'partially_received')->count(), 'bg' => '#fef3c7', 'color' => '#d97706'],
+            ['label' => 'Received', 'count' => (clone $base)->where('status', 'received')->count(), 'bg' => '#dcfce7', 'color' => '#16a34a'],
+            ['label' => 'Cancelled', 'count' => (clone $base)->where('status', 'cancelled')->count(), 'bg' => '#fef2f2', 'color' => '#ef4444'],
+        ];
+    }
+
     public function getAvailablePOs()
     {
         return PurchaseOrder::where('cde_project_id', $this->pid())

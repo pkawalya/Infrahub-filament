@@ -119,6 +119,41 @@ class FieldManagementPage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
+    public function getWeeklySummary(): array
+    {
+        $pid = $this->pid();
+        $weekLogs = DailySiteLog::where('cde_project_id', $pid)
+            ->whereBetween('log_date', [now()->startOfWeek(), now()->endOfWeek()])
+            ->with('taskEntries')
+            ->get();
+
+        $totalHours = $weekLogs->flatMap->taskEntries->sum('hours_worked');
+        $totalWorkers = $weekLogs->sum('workers_on_site');
+        $avgWorkers = $weekLogs->count() > 0 ? round($totalWorkers / $weekLogs->count()) : 0;
+        $pending = $weekLogs->where('status', 'draft')->count();
+        $approved = $weekLogs->where('status', 'approved')->count();
+
+        $weatherCounts = $weekLogs->groupBy('weather')->map->count()->toArray();
+
+        return [
+            'total_logs' => $weekLogs->count(),
+            'total_hours' => round($totalHours, 1),
+            'avg_workers' => $avgWorkers,
+            'pending' => $pending,
+            'approved' => $approved,
+            'weather' => $weatherCounts,
+        ];
+    }
+
+    public function getRecentLogs(): \Illuminate\Database\Eloquent\Collection
+    {
+        return DailySiteLog::where('cde_project_id', $this->pid())
+            ->with(['creator:id,name', 'taskEntries'])
+            ->orderByDesc('log_date')
+            ->limit(7)
+            ->get();
+    }
+
     private function logFormSchema(bool $isCreate = false): array
     {
         return [
