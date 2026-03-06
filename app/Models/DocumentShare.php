@@ -7,7 +7,18 @@ use Illuminate\Support\Str;
 
 class DocumentShare extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'cde_document_id',
+        'shared_by',
+        'shared_with',
+        'share_token',
+        'permission',
+        'expires_at',
+        'is_active',
+        'access_count',
+        'last_accessed_at',
+        'message',
+    ];
 
     protected $casts = [
         'expires_at' => 'datetime',

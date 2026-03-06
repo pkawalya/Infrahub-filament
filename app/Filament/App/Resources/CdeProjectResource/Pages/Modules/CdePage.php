@@ -85,6 +85,27 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                         ->label('Select File')
                         ->directory('cde-uploads/' . $this->record->id)
                         ->maxSize(51200) // 50MB
+                        ->acceptedFileTypes([
+                            'application/pdf',
+                            'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                            'application/vnd.ms-excel',
+                            'application/vnd.ms-powerpoint',
+                            'image/jpeg',
+                            'image/png',
+                            'image/gif',
+                            'image/webp',
+                            'image/svg+xml',
+                            'application/zip',
+                            'application/x-rar-compressed',
+                            'text/plain',
+                            'text/csv',
+                            'application/dxf',
+                            'application/dwg',
+                            'image/vnd.dwg',
+                        ])
                         ->required(),
                     Forms\Components\TextInput::make('title')
                         ->required()->maxLength(255)
@@ -330,6 +351,22 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                         ->directory('submission-uploads/' . ($this->record->id ?? 0))
                         ->disk('public')
                         ->maxSize(51200) // 50MB
+                        ->acceptedFileTypes([
+                            'application/pdf',
+                            'application/msword',
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                            'application/vnd.ms-excel',
+                            'application/vnd.ms-powerpoint',
+                            'image/jpeg',
+                            'image/png',
+                            'image/gif',
+                            'image/webp',
+                            'application/zip',
+                            'text/plain',
+                            'text/csv',
+                        ])
                         ->required(),
                     Forms\Components\Textarea::make('review_notes')
                         ->label('Notes (optional)')
@@ -941,7 +978,29 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                             Forms\Components\FileUpload::make('file')
                                 ->label('Updated File')
                                 ->directory('cde-uploads/' . $this->record->id)
-                                ->maxSize(51200)->required(),
+                                ->maxSize(51200)
+                                ->acceptedFileTypes([
+                                    'application/pdf',
+                                    'application/msword',
+                                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                                    'application/vnd.ms-excel',
+                                    'application/vnd.ms-powerpoint',
+                                    'image/jpeg',
+                                    'image/png',
+                                    'image/gif',
+                                    'image/webp',
+                                    'image/svg+xml',
+                                    'application/zip',
+                                    'application/x-rar-compressed',
+                                    'text/plain',
+                                    'text/csv',
+                                    'application/dxf',
+                                    'application/dwg',
+                                    'image/vnd.dwg',
+                                ])
+                                ->required(),
                             Forms\Components\Select::make('revision')->options([
                                 'P01' => 'P01',
                                 'P02' => 'P02',

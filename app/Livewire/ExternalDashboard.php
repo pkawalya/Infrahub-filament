@@ -108,10 +108,12 @@ class ExternalDashboard extends Component
                 $q->where('priority_id', $this->selectedPriority);
             })
             ->when($this->searchTerm, function ($q) {
-                $q->where(function ($query) {
-                    $query->where('name', 'like', '%' . $this->searchTerm . '%')
-                        ->orWhere('description', 'like', '%' . $this->searchTerm . '%')
-                        ->orWhere('uuid', 'like', '%' . $this->searchTerm . '%');
+                // Escape LIKE wildcards to prevent pattern abuse
+                $safe = str_replace(['%', '_'], ['\\%', '\\_'], $this->searchTerm);
+                $q->where(function ($query) use ($safe) {
+                    $query->where('name', 'like', '%' . $safe . '%')
+                        ->orWhere('description', 'like', '%' . $safe . '%')
+                        ->orWhere('uuid', 'like', '%' . $safe . '%');
                 });
             })
             ->orderBy('id', 'asc');
@@ -254,6 +256,11 @@ class ExternalDashboard extends Component
 
     public function switchTab($tabName)
     {
+        $allowed = ['tasks', 'dashboard', 'timeline', 'activities'];
+        if (!in_array($tabName, $allowed)) {
+            return;
+        }
+
         $this->activeTab = $tabName;
 
         if ($tabName === 'timeline') {

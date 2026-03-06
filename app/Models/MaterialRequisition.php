@@ -6,7 +6,20 @@ use Illuminate\Database\Eloquent\Model;
 
 class MaterialRequisition extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'company_id',
+        'cde_project_id',
+        'warehouse_id',
+        'requisition_number',
+        'requester_id',
+        'status',
+        'priority',
+        'required_date',
+        'purpose',
+        'notes',
+        'approved_by',
+        'approved_at',
+    ];
 
     protected $casts = [
         'required_date' => 'date',

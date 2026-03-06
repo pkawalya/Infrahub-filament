@@ -6,7 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class MaterialRequisitionItem extends Model
 {
-    protected $guarded = [];
+    protected $fillable = [
+        'material_requisition_id',
+        'product_id',
+        'quantity_requested',
+        'quantity_approved',
+        'quantity_issued',
+        'unit',
+        'notes',
+    ];
 
     public function requisition()
     {
