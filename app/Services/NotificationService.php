@@ -9,6 +9,7 @@ use App\Models\Project;
 use App\Models\Ticket;
 use App\Models\TicketComment;
 use App\Models\User;
+use App\Services\EmailService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -19,9 +20,9 @@ class NotificationService
     {
         $ticket = $comment->ticket;
         $commenter = $comment->user;
-        
+
         $usersToNotify = $this->getUsersToNotifyForComment($ticket, $commenter);
-        
+
         foreach ($usersToNotify as $user) {
             Notification::create([
                 'user_id' => $user->id,
@@ -42,9 +43,9 @@ class NotificationService
     {
         $ticket = $comment->ticket;
         $commenter = $comment->user;
-        
+
         $usersToNotify = $this->getUsersToNotifyForComment($ticket, $commenter);
-        
+
         foreach ($usersToNotify as $user) {
             Notification::create([
                 'user_id' => $user->id,
@@ -64,14 +65,14 @@ class NotificationService
     private function getUsersToNotifyForComment(Ticket $ticket, User $commenter): Collection
     {
         $usersToNotify = collect();
-        
+
         if ($ticket->creator && $ticket->creator->id !== $commenter->id) {
             $usersToNotify->push($ticket->creator);
         }
-        
+
         $assignedUsers = $ticket->assignees()->where('users.id', '!=', $commenter->id)->get();
         $usersToNotify = $usersToNotify->merge($assignedUsers);
-        
+
         $commenters = $ticket->comments()
             ->with('user')
             ->where('user_id', '!=', $commenter->id)
@@ -79,7 +80,7 @@ class NotificationService
             ->pluck('user')
             ->unique('id');
         $usersToNotify = $usersToNotify->merge($commenters);
-        
+
         return $usersToNotify->unique('id');
     }
 
@@ -88,12 +89,12 @@ class NotificationService
         $notification = Notification::where('id', $notificationId)
             ->where('user_id', $userId)
             ->first();
-            
+
         if ($notification) {
             $notification->markAsRead();
             return true;
         }
-        
+
         return false;
     }
 
@@ -106,6 +107,7 @@ class NotificationService
 
     public function notifyProjectAssignment(Project $project, User $assignedUser, User $assignedBy): void
     {
+        // In-app notification
         try {
             Notification::create([
                 'user_id' => $assignedUser->id,
@@ -126,11 +128,24 @@ class NotificationService
             ]);
         }
 
+        // Email — try template system first, fall back to hardcoded Mailable
         try {
-            $mail = new ProjectAssignmentNotification($project, $assignedUser, $assignedBy);
-            Mail::to($assignedUser->email)->send($mail);
+            $emailService = app(EmailService::class);
+            $sent = $emailService->send('project-assigned', $assignedUser, [
+                'project_name' => $project->name,
+                'project_code' => $project->code ?? '',
+                'project_status' => $project->status ?? 'active',
+                'assigned_by' => $assignedBy->name,
+                'project_url' => config('app.url') . '/app',
+                'role_in_project' => 'Team Member',
+            ]);
+
+            // Fall back to hardcoded Mailable if no template found
+            if (!$sent) {
+                $mail = new ProjectAssignmentNotification($project, $assignedUser, $assignedBy);
+                Mail::to($assignedUser->email)->send($mail);
+            }
         } catch (Exception $e) {
-            // Log error but don't fail the assignment
             Log::error('Failed to send project assignment email: ' . $e->getMessage(), [
                 'project_id' => $project->id,
                 'user_id' => $assignedUser->id,

@@ -195,6 +195,87 @@ class EmailTemplateResource extends Resource
             ->actions([
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
+                Actions\Action::make('preview')
+                    ->icon('heroicon-o-eye')
+                    ->color('info')
+                    ->modalHeading('Template Preview')
+                    ->modalWidth('2xl')
+                    ->modalContent(function (EmailTemplate $record) {
+                        $emailService = app(\App\Services\EmailService::class);
+                        $result = $emailService->preview($record->slug, [], $record->company_id);
+
+                        if (!$result) {
+                            return new \Illuminate\Support\HtmlString('<p class="text-gray-500">Template could not be rendered.</p>');
+                        }
+
+                        $html = '<div style="margin-bottom:16px;">'
+                            . '<p style="font-weight:600;color:#374151;">Subject:</p>'
+                            . '<p style="color:#6b7280;margin-top:4px;">' . e($result['subject']) . '</p>'
+                            . '</div>'
+                            . '<div style="border:1px solid #e5e7eb;border-radius:8px;padding:20px;background:#fafafa;">'
+                            . $result['body']
+                            . '</div>'
+                            . '<div style="margin-top:16px;">'
+                            . '<p style="font-size:12px;color:#9ca3af;">Available variables: '
+                            . collect($result['variables_used'])->map(fn($v) => '<code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:11px;">{{' . $v . '}}</code>')->join(' ')
+                            . '</p></div>';
+
+                        return new \Illuminate\Support\HtmlString($html);
+                    })
+                    ->modalSubmitAction(false),
+                Actions\Action::make('sendTest')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('success')
+                    ->label('Send Test')
+                    ->requiresConfirmation()
+                    ->modalHeading('Send Test Email')
+                    ->modalDescription(fn(EmailTemplate $record) => "Send a test email for \"{$record->name}\" to your email address (" . auth()->user()?->email . ")?")
+                    ->action(function (EmailTemplate $record) {
+                        $user = auth()->user();
+                        $emailService = app(\App\Services\EmailService::class);
+                        $sent = $emailService->send($record->slug, $user, [
+                            'project_name' => 'Sample Project',
+                            'project_code' => 'PROJ-001',
+                            'project_status' => 'Active',
+                            'project_url' => config('app.url') . '/app',
+                            'assigned_by' => 'Admin User',
+                            'role_in_project' => 'Project Manager',
+                            'task_title' => 'Sample Task',
+                            'task_description' => 'This is a test task for email preview.',
+                            'task_status' => 'In Progress',
+                            'task_priority' => 'High',
+                            'task_due_date' => now()->addDays(7)->format('d M Y'),
+                            'task_url' => config('app.url') . '/app',
+                            'notification_title' => 'Test Notification',
+                            'notification_body' => 'This is a test notification body.',
+                            'action_url' => config('app.url'),
+                            'plan_name' => 'Professional',
+                            'amount' => '$99.00',
+                            'billing_cycle' => 'Monthly',
+                            'expiry_date' => now()->addMonth()->format('d M Y'),
+                            'invoice_url' => config('app.url') . '/invoices',
+                            'reset_link' => config('app.url') . '/reset-password/test',
+                            'verification_link' => config('app.url') . '/verify/test',
+                            'login_url' => config('app.url') . '/login',
+                            'report_name' => 'Monthly Summary',
+                            'report_period' => now()->format('F Y'),
+                            'report_url' => config('app.url') . '/reports',
+                        ], $record->company_id);
+
+                        if ($sent) {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Test email queued!')
+                                ->body("Sent to {$user->email}")
+                                ->success()
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->title('Failed to send test email')
+                                ->body('Check application logs for details.')
+                                ->danger()
+                                ->send();
+                        }
+                    }),
                 Actions\Action::make('duplicate')
                     ->icon('heroicon-o-document-duplicate')
                     ->color('gray')
