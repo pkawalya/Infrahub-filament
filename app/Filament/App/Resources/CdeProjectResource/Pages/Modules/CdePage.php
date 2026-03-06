@@ -306,6 +306,20 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
             ->get();
     }
 
+    // ── ISO 19650 Status Pipeline ─────────────────────────────────────
+    public function getStatusPipeline(): array
+    {
+        $docs = CdeDocument::where('cde_project_id', $this->record->id);
+
+        return [
+            ['label' => 'WIP', 'count' => (clone $docs)->where('status', 'S0')->count(), 'bg' => '#f1f5f9', 'color' => '#475569'],
+            ['label' => 'For Review', 'count' => (clone $docs)->whereIn('status', ['S1', 'S2'])->count(), 'bg' => '#dbeafe', 'color' => '#2563eb'],
+            ['label' => 'Under Review', 'count' => (clone $docs)->where('status', 'S3')->count(), 'bg' => '#fef3c7', 'color' => '#d97706'],
+            ['label' => 'Approved', 'count' => (clone $docs)->whereIn('status', ['S4', 'S6'])->count(), 'bg' => '#dcfce7', 'color' => '#16a34a'],
+            ['label' => 'Published', 'count' => (clone $docs)->where('status', 'S7')->count(), 'bg' => '#f3e8ff', 'color' => '#7c3aed'],
+        ];
+    }
+
     // ── Stats ──────────────────────────────────────────────────────────
     public function getStats(): array
     {
