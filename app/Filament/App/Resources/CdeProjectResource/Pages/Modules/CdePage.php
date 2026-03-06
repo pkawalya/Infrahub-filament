@@ -8,6 +8,7 @@ use App\Models\CdeDocument;
 use App\Models\CdeFolder;
 use App\Models\CdeProject;
 use App\Models\DocumentShare;
+use App\Models\DocumentSubmission;
 use App\Models\Transmittal;
 use App\Models\TransmittalItem;
 use App\Models\Rfi;
@@ -43,6 +44,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
     public string $folderPath = 'Root';
     public bool $showShareModal = false;
     public ?int $sharingDocumentId = null;
+    public string $activeDocTab = 'files';
 
     public function mount(int|string $record): void
     {
@@ -284,6 +286,62 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
 
                     Notification::make()->title('Transmittal created with ' . count($data['document_ids'] ?? []) . ' document(s)')->success()->send();
                 }),
+
+            Action::make('addRequiredSubmission')
+                ->label('Add Required Submission')
+                ->icon('heroicon-o-clipboard-document-check')
+                ->color('info')
+                ->modalWidth('xl')
+                ->schema([
+                    Section::make('Required Deliverable')->schema([
+                        Forms\Components\TextInput::make('title')
+                            ->label('Document / Report Title')
+                            ->placeholder('e.g. Site Investigation Report')
+                            ->required()->maxLength(255),
+                        Forms\Components\Select::make('stage')
+                            ->label('Project Stage')
+                            ->options(DocumentSubmission::$stages)
+                            ->required(),
+                        Forms\Components\Select::make('discipline')
+                            ->options(DocumentSubmission::$disciplines)
+                            ->nullable()
+                            ->searchable(),
+                        Forms\Components\DatePicker::make('due_date')
+                            ->label('Due Date')
+                            ->nullable(),
+                        Forms\Components\Textarea::make('description')
+                            ->label('Description / Requirements')
+                            ->rows(3)
+                            ->columnSpanFull(),
+                    ])->columns(2),
+                ])
+                ->action(function (array $data): void {
+                    $this->addSubmission($data);
+                }),
+
+            Action::make('submitDocumentAction')
+                ->label('Submit Document')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('primary')
+                ->modalWidth('lg')
+                ->schema([
+                    Forms\Components\FileUpload::make('file_path')
+                        ->label('Upload Document')
+                        ->directory('submission-uploads/' . ($this->record->id ?? 0))
+                        ->disk('public')
+                        ->maxSize(51200) // 50MB
+                        ->required(),
+                    Forms\Components\Textarea::make('review_notes')
+                        ->label('Notes (optional)')
+                        ->rows(2),
+                ])
+                ->action(function (array $data, array $arguments): void {
+                    $submissionId = $arguments['submissionId'] ?? null;
+                    if ($submissionId) {
+                        $this->submitDeliverable((int) $submissionId, $data);
+                    }
+                })
+                ->hidden(),
         ];
     }
 
@@ -591,6 +649,149 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
             ->with(['sharedWith:id,name,email', 'sharedBy:id,name'])
             ->latest()
             ->get();
+    }
+
+    // ── Required Submissions / Deliverables ─────────────────────────────
+
+    /**
+     * Get submissions for the current project, optionally filtered by stage.
+     */
+    public function getSubmissions(?string $stage = null): \Illuminate\Database\Eloquent\Collection
+    {
+        $q = DocumentSubmission::where('cde_project_id', $this->record->id)
+            ->with(['submitter:id,name', 'reviewer:id,name'])
+            ->orderByRaw("FIELD(status, 'rejected','overdue','pending','submitted','approved','waived')")
+            ->orderBy('due_date');
+
+        if ($stage) {
+            $q->where('stage', $stage);
+        }
+
+        return $q->get();
+    }
+
+    /**
+     * Stage-by-stage submission stats.
+     */
+    public function getSubmissionStats(): array
+    {
+        $pid = $this->record->id;
+        $all = DocumentSubmission::where('cde_project_id', $pid)->get();
+
+        $stats = [];
+        foreach (DocumentSubmission::$stages as $key => $label) {
+            $stageDocs = $all->where('stage', $key);
+            $total = $stageDocs->count();
+            $submitted = $stageDocs->whereIn('status', ['submitted', 'approved'])->count();
+            $approved = $stageDocs->where('status', 'approved')->count();
+            $overdue = $stageDocs->filter(fn($d) => $d->isOverdue())->count();
+            $rejected = $stageDocs->where('status', 'rejected')->count();
+
+            $stats[] = [
+                'key' => $key,
+                'label' => $label,
+                'total' => $total,
+                'submitted' => $submitted,
+                'approved' => $approved,
+                'overdue' => $overdue,
+                'rejected' => $rejected,
+                'completion' => $total > 0 ? round(($approved / $total) * 100) : 0,
+            ];
+        }
+
+        return $stats;
+    }
+
+    /**
+     * Add a required submission.
+     */
+    public function addSubmission(array $data): void
+    {
+        DocumentSubmission::create([
+            'company_id' => $this->record->company_id,
+            'cde_project_id' => $this->record->id,
+            'title' => $data['title'],
+            'description' => $data['description'] ?? null,
+            'discipline' => $data['discipline'] ?? null,
+            'stage' => $data['stage'],
+            'due_date' => $data['due_date'] ?? null,
+            'status' => 'pending',
+        ]);
+
+        Notification::make()->title('Required submission added.')->success()->send();
+    }
+
+    /**
+     * Upload file and mark as submitted.
+     */
+    public function submitDeliverable(int $submissionId, array $data): void
+    {
+        $sub = DocumentSubmission::find($submissionId);
+        if (!$sub)
+            return;
+
+        $updates = [
+            'status' => 'submitted',
+            'submitted_at' => now(),
+            'submitted_by' => auth()->id(),
+        ];
+
+        if (isset($data['file_path']) && $data['file_path']) {
+            $filePath = $data['file_path'];
+            if (is_array($filePath)) {
+                $filePath = reset($filePath);
+            }
+            $updates['file_path'] = $filePath;
+            $updates['file_name'] = basename($filePath);
+            $updates['file_size'] = Storage::disk('public')->exists($filePath)
+                ? Storage::disk('public')->size($filePath) : null;
+        }
+
+        if (isset($data['review_notes'])) {
+            $updates['review_notes'] = $data['review_notes'];
+        }
+
+        $sub->update($updates);
+        Notification::make()->title('Document submitted successfully.')->success()->send();
+    }
+
+    /**
+     * Approve or reject a submission.
+     */
+    public function reviewSubmission(int $submissionId, string $decision, ?string $reason = null): void
+    {
+        $sub = DocumentSubmission::find($submissionId);
+        if (!$sub)
+            return;
+
+        $sub->update([
+            'status' => $decision, // 'approved' or 'rejected'
+            'reviewed_at' => now(),
+            'reviewed_by' => auth()->id(),
+            'rejection_reason' => $decision === 'rejected' ? $reason : null,
+        ]);
+
+        $msg = $decision === 'approved' ? 'Submission approved.' : 'Submission rejected.';
+        Notification::make()->title($msg)->{$decision === 'approved' ? 'success' : 'danger'}()->send();
+    }
+
+    /**
+     * Download the uploaded submission file.
+     */
+    public function downloadSubmission(int $submissionId)
+    {
+        $sub = DocumentSubmission::find($submissionId);
+        if (!$sub || !$sub->file_path) {
+            Notification::make()->title('No file available.')->warning()->send();
+            return null;
+        }
+
+        if (!Storage::disk('public')->exists($sub->file_path)) {
+            Notification::make()->title('File not found on disk.')->danger()->send();
+            return null;
+        }
+
+        return Storage::disk('public')->download($sub->file_path, $sub->file_name ?? basename($sub->file_path));
     }
 
     // ── Document table ─────────────────────────────────────────────────

@@ -385,7 +385,26 @@
         </div>
     @endif
 
-    {{-- ── Submission Tracking Matrix ──────────────────────────────────── --}}
+    {{-- ══ Tab Switcher: Files | Required Submissions ════════════════════ --}}
+    @php $subStats = $this->getSubmissionStats(); $totalSubs = array_sum(array_column($subStats, 'total')); @endphp
+    <div style="display:flex;gap:4px;border-bottom:2px solid var(--cde-border);margin-bottom:14px;overflow-x:auto;">
+        <button wire:click="$set('activeDocTab', 'files')"
+            style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;border-radius:8px 8px 0 0;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;{{ $this->activeDocTab === 'files' ? 'background:var(--cde-accent,#4f46e5);color:white;' : 'background:transparent;color:var(--cde-muted);' }}">
+            <svg style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
+            Files & Documents
+        </button>
+        <button wire:click="$set('activeDocTab', 'submissions')"
+            style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;border-radius:8px 8px 0 0;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;{{ $this->activeDocTab === 'submissions' ? 'background:var(--cde-accent,#4f46e5);color:white;' : 'background:transparent;color:var(--cde-muted);' }}">
+            <svg style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75"/></svg>
+            Required Submissions
+            @if($totalSubs > 0)
+                <span style="font-size:10px;padding:2px 7px;border-radius:99px;margin-left:2px;{{ $this->activeDocTab === 'submissions' ? 'background:rgba(255,255,255,0.2);color:white;' : 'background:rgba(99,102,241,0.12);color:#6366f1;' }}">{{ $totalSubs }}</span>
+            @endif
+        </button>
+    </div>
+
+    @if($this->activeDocTab === 'files')
+    {{-- ══ Submission Tracking Matrix ════════════════════════════════════ --}}
     @php $sm = $this->getSubmissionMatrix(); @endphp
     @if($sm['total_docs'] > 0 && count($sm['matrix']) > 1)
         <x-filament::section collapsible collapsed>
@@ -463,8 +482,6 @@
             </div>
         </x-filament::section>
     @endif
-
-    {{-- ── Command Bar ────────────────────────────────────────────────── --}}
     <div class="cde-cmdbar" x-data="{ viewMode: 'grid' }">
         {{-- Filament header actions render here --}}
         <div style="display:flex;align-items:center;gap:4px;">
@@ -724,5 +741,164 @@
             </div>
         @endif
     @endif
+
+    @else
+    {{-- ══════════════════════════════════════════════════════════════════
+         REQUIRED SUBMISSIONS TAB
+         ══════════════════════════════════════════════════════════════════ --}}
+
+    {{-- Stage Progress Cards --}}
+    @php $subStats = $this->getSubmissionStats(); @endphp
+    <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:8px;margin-bottom:16px;">
+        @foreach($subStats as $s)
+            @if($s['total'] > 0)
+                <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center;">
+                    <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:6px;">{{ $s['label'] }}</div>
+                    <div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;margin-bottom:6px;">
+                        <div style="width:{{ $s['completion'] }}%;height:100%;background:{{ $s['completion'] >= 80 ? '#10b981' : ($s['completion'] >= 40 ? '#d97706' : '#ef4444') }};border-radius:3px;transition:width .3s;"></div>
+                    </div>
+                    <div style="display:flex;justify-content:center;gap:8px;font-size:10px;">
+                        <span style="color:#10b981;font-weight:700;">{{ $s['approved'] }}<span style="font-weight:400;color:#94a3b8;"> ✓</span></span>
+                        <span style="color:#475569;font-weight:700;">{{ $s['total'] }}<span style="font-weight:400;color:#94a3b8;"> total</span></span>
+                        @if($s['overdue'] > 0)
+                            <span style="color:#ef4444;font-weight:700;">{{ $s['overdue'] }}<span style="font-weight:400;"> late</span></span>
+                        @endif
+                    </div>
+                </div>
+            @endif
+        @endforeach
+    </div>
+
+    {{-- Submissions by Stage --}}
+    @foreach(\App\Models\DocumentSubmission::$stages as $stageKey => $stageLabel)
+        @php $stageSubs = $this->getSubmissions($stageKey); @endphp
+        @if($stageSubs->isNotEmpty())
+            <x-filament::section collapsible>
+                <x-slot name="heading">
+                    <span style="display:flex;align-items:center;gap:6px;">
+                        {{ $stageLabel }}
+                        <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:rgba(99,102,241,0.1);color:#6366f1;">{{ $stageSubs->count() }}</span>
+                        @php
+                            $stageApproved = $stageSubs->where('status', 'approved')->count();
+                            $stagePct = $stageSubs->count() > 0 ? round(($stageApproved / $stageSubs->count()) * 100) : 0;
+                        @endphp
+                        @if($stageSubs->count() > 0)
+                            <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:{{ $stagePct >= 80 ? '#dcfce7' : ($stagePct >= 40 ? '#fef3c7' : '#f1f5f9') }};color:{{ $stagePct >= 80 ? '#16a34a' : ($stagePct >= 40 ? '#d97706' : '#64748b') }};">
+                                {{ $stagePct }}%
+                            </span>
+                        @endif
+                    </span>
+                </x-slot>
+
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;font-size:12px;border-collapse:collapse;">
+                        <thead>
+                            <tr style="border-bottom:2px solid #e2e8f0;">
+                                <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">Document / Report</th>
+                                <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">Discipline</th>
+                                <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">Due Date</th>
+                                <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">Status</th>
+                                <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">File</th>
+                                <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($stageSubs as $sub)
+                                @php
+                                    $statusColors = [
+                                        'pending' => ['bg' => '#f1f5f9', 'text' => '#475569'],
+                                        'submitted' => ['bg' => '#dbeafe', 'text' => '#2563eb'],
+                                        'approved' => ['bg' => '#dcfce7', 'text' => '#16a34a'],
+                                        'rejected' => ['bg' => '#fef2f2', 'text' => '#dc2626'],
+                                        'overdue' => ['bg' => '#fef2f2', 'text' => '#dc2626'],
+                                        'waived' => ['bg' => '#f5f3ff', 'text' => '#7c3aed'],
+                                    ];
+                                    $sc = $statusColors[$sub->status] ?? $statusColors['pending'];
+                                    $isOverdue = $sub->isOverdue();
+                                @endphp
+                                <tr style="border-bottom:1px solid #f1f5f9;{{ $isOverdue ? 'background:rgba(239,68,68,0.02);' : '' }}">
+                                    <td style="padding:8px 10px;font-weight:600;color:#334155;">
+                                        {{ $sub->title }}
+                                        @if($sub->description)
+                                            <div style="font-size:10px;font-weight:400;color:#94a3b8;margin-top:1px;">{{ \Illuminate\Support\Str::limit($sub->description, 60) }}</div>
+                                        @endif
+                                    </td>
+                                    <td style="padding:8px 10px;color:#64748b;">
+                                        {{ \App\Models\DocumentSubmission::$disciplines[$sub->discipline] ?? $sub->discipline ?? '—' }}
+                                    </td>
+                                    <td style="text-align:center;padding:8px 10px;white-space:nowrap;">
+                                        @if($sub->due_date)
+                                            <span style="color:{{ $isOverdue ? '#ef4444' : '#475569' }};font-weight:{{ $isOverdue ? '700' : '400' }};">
+                                                {{ $sub->due_date->format('M d, Y') }}
+                                            </span>
+                                            @if($isOverdue)
+                                                <div style="font-size:9px;color:#ef4444;font-weight:700;">{{ $sub->due_date->diffForHumans() }}</div>
+                                            @endif
+                                        @else
+                                            <span style="color:#e2e8f0;">—</span>
+                                        @endif
+                                    </td>
+                                    <td style="text-align:center;padding:8px 10px;">
+                                        <span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:10px;font-weight:700;background:{{ $sc['bg'] }};color:{{ $sc['text'] }};">
+                                            {{ ucfirst($sub->status) }}
+                                        </span>
+                                        @if($sub->status === 'rejected' && $sub->rejection_reason)
+                                            <div style="font-size:9px;color:#ef4444;margin-top:2px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ $sub->rejection_reason }}">
+                                                {{ $sub->rejection_reason }}
+                                            </div>
+                                        @endif
+                                    </td>
+                                    <td style="text-align:center;padding:8px 10px;">
+                                        @if($sub->file_path)
+                                            <button wire:click="downloadSubmission({{ $sub->id }})" style="background:none;border:none;cursor:pointer;color:#2563eb;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:3px;" title="{{ $sub->file_name }}">
+                                                <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                                                {{ $sub->formattedSize() }}
+                                            </button>
+                                        @else
+                                            <span style="color:#e2e8f0;font-size:11px;">No file</span>
+                                        @endif
+                                    </td>
+                                    <td style="text-align:center;padding:8px 10px;">
+                                        <div style="display:flex;gap:4px;justify-content:center;">
+                                            @if(in_array($sub->status, ['pending', 'rejected']))
+                                                {{-- Upload / Submit button --}}
+                                                <button
+                                                    wire:click="mountAction('submitDocumentAction', {submissionId: {{ $sub->id }}})"
+                                                    style="background:#2563eb;color:white;border:none;padding:4px 10px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"
+                                                    title="Upload & Submit"
+                                                >
+                                                    <svg style="width:12px;height:12px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                                                    Submit
+                                                </button>
+                                            @endif
+                                            @if($sub->status === 'submitted')
+                                                <button wire:click="reviewSubmission({{ $sub->id }}, 'approved')" style="background:#10b981;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;" title="Approve">✓</button>
+                                                <button wire:click="reviewSubmission({{ $sub->id }}, 'rejected')" style="background:#ef4444;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;" title="Reject">✕</button>
+                                            @endif
+                                            @if($sub->status === 'approved')
+                                                <span style="color:#10b981;font-size:11px;">✓ Done</span>
+                                            @endif
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </x-filament::section>
+        @endif
+    @endforeach
+
+    @php $anySubmissions = \App\Models\DocumentSubmission::where('cde_project_id', $this->record->id)->exists(); @endphp
+    @if(!$anySubmissions)
+        <div style="text-align:center;padding:40px 20px;color:#94a3b8;">
+            <svg style="width:48px;height:48px;margin:0 auto 12px;opacity:0.3;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75"/></svg>
+            <div style="font-size:15px;font-weight:600;color:#64748b;margin-bottom:4px;">No Required Submissions Yet</div>
+            <div style="font-size:12px;max-width:400px;margin:0 auto;">
+                Use the <strong>"Add Required Submission"</strong> button above to define which reports and documents must be submitted at each project stage.
+            </div>
+        </div>
+    @endif
+    @endif {{-- end activeDocTab --}}
 
 </x-filament-panels::page>
