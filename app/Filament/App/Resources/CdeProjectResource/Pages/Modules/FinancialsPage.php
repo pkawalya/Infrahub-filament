@@ -7,6 +7,8 @@ use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\InvoicePayment;
+use App\Models\Quotation;
+use App\Models\QuotationItem;
 use App\Models\Client;
 use App\Models\User;
 use App\Models\WorkOrder;
@@ -411,6 +413,90 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                     Expense::create($data);
                     Notification::make()->title('Expense logged')->success()->send();
                 }),
+
+            Action::make('createQuotation')
+                ->label('Create Quotation')->icon('heroicon-o-clipboard-document-list')->color('success')
+                ->modalWidth('5xl')
+                ->schema([
+                    Section::make('Quotation Information')->schema([
+                        Forms\Components\TextInput::make('quotation_number')->label('Quotation #')
+                            ->default(fn() => ($this->record->company->getInvoiceConfig()['quotation_prefix'] ?? 'QTN-') . str_pad((string) (Quotation::where('company_id', $this->cid())->count() + 1), 5, '0', STR_PAD_LEFT))
+                            ->required()->maxLength(50),
+                        Forms\Components\TextInput::make('title')->placeholder('e.g. Construction Works - Phase 1')->maxLength(255),
+                        Forms\Components\Select::make('client_id')->label('Client')
+                            ->options(Client::where('company_id', $this->cid())->pluck('name', 'id'))
+                            ->searchable()->nullable()->default($this->record->client_id),
+                        Forms\Components\Select::make('status')->options(Quotation::$statuses)->required()->default('draft'),
+                        Forms\Components\DatePicker::make('issue_date')->required()->default(now()),
+                        Forms\Components\DatePicker::make('valid_until')->label('Valid Until')
+                            ->default(now()->addDays($this->record->company->getInvoiceConfig()['quotation_validity_days'] ?? 30)),
+                    ])->columns(3),
+                    Section::make('Line Items')->schema([
+                        Forms\Components\Repeater::make('items')->schema([
+                            Forms\Components\TextInput::make('description')->required()->columnSpan(3),
+                            Forms\Components\TextInput::make('quantity')->numeric()->default(1)->minValue(0.01)->columnSpan(1),
+                            Forms\Components\TextInput::make('unit')->placeholder('pcs, hrs…')->maxLength(20)->columnSpan(1),
+                            Forms\Components\TextInput::make('unit_price')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0)->columnSpan(1)
+                                ->reactive()
+                                ->afterStateUpdated(function ($state, Set $set, Get $get) {
+                                    $qty = max(0.01, floatval($get('quantity') ?? 1));
+                                    $set('amount', number_format($qty * floatval($state), 2, '.', ''));
+                                }),
+                            Forms\Components\TextInput::make('amount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0)->readOnly()->columnSpan(1),
+                        ])->columns(7)->defaultItems(1)->addActionLabel('+ Add Line Item')->reorderable()->collapsible()->columnSpanFull(),
+                    ]),
+                    Section::make('Totals & Terms')->schema([
+                        Forms\Components\TextInput::make('subtotal')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->required()->default(0),
+                        Forms\Components\TextInput::make('tax_rate')->label('Tax Rate (%)')->numeric()->default($this->record->company->getInvoiceConfig()['default_tax_rate'] ?? 18),
+                        Forms\Components\TextInput::make('discount_amount')->label('Discount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->default(0),
+                        Forms\Components\TextInput::make('total_amount')->numeric()->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())->required()->default(0),
+                    ])->columns(4),
+                    Section::make('Additional')->schema([
+                        Forms\Components\Textarea::make('scope_of_work')->label('Scope of Work')->rows(3),
+                        Forms\Components\Textarea::make('notes')->rows(2)->default($this->record->company->getInvoiceConfig()['default_notes'] ?? ''),
+                        Forms\Components\Textarea::make('terms_and_conditions')->label('Terms & Conditions')->rows(2)
+                            ->default($this->record->company->getInvoiceConfig()['default_payment_terms'] ?? ''),
+                    ])->columns(1)->collapsed(),
+                ])
+                ->action(function (array $data): void {
+                    $items = $data['items'] ?? [];
+                    unset($data['items']);
+                    $data['company_id'] = $this->cid();
+                    $data['cde_project_id'] = $this->pid();
+                    $data['created_by'] = auth()->id();
+
+                    // Calculate totals
+                    $subtotal = collect($items)->sum(fn($i) => ($i['quantity'] ?? 1) * ($i['unit_price'] ?? 0));
+                    $taxAmount = $subtotal * (floatval($data['tax_rate'] ?? 0) / 100);
+                    $data['subtotal'] = $subtotal;
+                    $data['tax_amount'] = $taxAmount;
+                    $data['total_amount'] = $subtotal + $taxAmount - floatval($data['discount_amount'] ?? 0);
+
+                    $quote = Quotation::create($data);
+                    foreach ($items as $i => $item) {
+                        $item['sort_order'] = $i;
+                        $item['amount'] = ($item['quantity'] ?? 1) * ($item['unit_price'] ?? 0);
+                        $quote->items()->create($item);
+                    }
+                    Notification::make()->title('Quotation ' . $quote->quotation_number . ' created')->success()->send();
+                }),
+
+            Action::make('convertQuotation')
+                ->label('Convert to Invoice')->icon('heroicon-o-arrow-path')->color('warning')
+                ->schema([
+                    Forms\Components\Select::make('quotation_id')->label('Select Accepted Quotation')
+                        ->options(Quotation::where('cde_project_id', $this->pid())->where('status', 'accepted')->whereNull('converted_invoice_id')->pluck('quotation_number', 'id'))
+                        ->required()->searchable(),
+                ])
+                ->action(function (array $data): void {
+                    $quote = Quotation::find($data['quotation_id']);
+                    if ($quote && $quote->canConvert()) {
+                        $invoice = $quote->convertToInvoice();
+                        Notification::make()->title('Quotation converted to Invoice ' . $invoice->invoice_number)->success()->send();
+                    } else {
+                        Notification::make()->title('Quotation cannot be converted')->danger()->send();
+                    }
+                }),
         ];
     }
 
@@ -419,19 +505,20 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
     // ─────────────────────────────────────────────
     public function table(Table $table): Table
     {
-        if ($this->activeTab === 'receipts') {
-            return $this->receiptsTable($table->query(
+        return match ($this->activeTab) {
+            'receipts' => $this->receiptsTable($table->query(
                 InvoicePayment::query()->where('cde_project_id', $this->pid())->with(['invoice.client', 'recorder'])
-            ));
-        }
-        if ($this->activeTab === 'expenses') {
-            return $this->expensesTable($table->query(
+            )),
+            'expenses' => $this->expensesTable($table->query(
                 Expense::query()->where('cde_project_id', $this->pid())->with(['recorder'])
-            ));
-        }
-        return $this->invoicesTable($table->query(
-            Invoice::query()->where('cde_project_id', $this->pid())->with(['client', 'creator', 'items'])
-        ));
+            )),
+            'quotations' => $this->quotationsTable($table->query(
+                Quotation::query()->where('cde_project_id', $this->pid())->with(['client', 'creator', 'items'])
+            )),
+            default => $this->invoicesTable($table->query(
+                Invoice::query()->where('cde_project_id', $this->pid())->with(['client', 'creator', 'items'])
+            )),
+        };
     }
 
     /* ══════════════════════════════════════════════════════════════
@@ -844,6 +931,129 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
             ->emptyStateHeading('No Expenses')
             ->emptyStateDescription('Log project expenses to track costs.')
             ->emptyStateIcon('heroicon-o-credit-card')
+            ->striped()->paginated([10, 25, 50]);
+    }
+
+    /* ══════════════════════════════════════════════════════════════
+       QUOTATIONS TABLE
+       ══════════════════════════════════════════════════════════════ */
+    private function quotationsTable(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('quotation_number')->label('Quote #')->searchable()->sortable()->weight('bold')->toggleable()
+                    ->icon('heroicon-o-clipboard-document-list')->copyable(),
+                Tables\Columns\TextColumn::make('title')->label('Title')->searchable()->limit(30)->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('client.name')->label('Client')->searchable()->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('total_amount')->label('Total')->formatStateUsing(CurrencyHelper::formatter(0))->sortable()->weight('bold')->toggleable(),
+                Tables\Columns\TextColumn::make('status')->badge()
+                    ->color(fn(string $state) => match ($state) {
+                        'draft' => 'gray',
+                        'sent' => 'info',
+                        'viewed' => 'warning',
+                        'accepted' => 'success',
+                        'rejected' => 'danger',
+                        'expired' => 'gray',
+                        'invoiced' => 'primary',
+                        'cancelled' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn($state) => Quotation::$statuses[$state] ?? ucfirst($state))
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('issue_date')->date('M d, Y')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('valid_until')->label('Valid Until')->date('M d, Y')->sortable()->toggleable()
+                    ->color(fn($record) => $record->isExpired() ? 'danger' : null),
+                Tables\Columns\TextColumn::make('creator.name')->label('Created By')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->recordAction('viewQuotation')
+            ->recordActions([
+                \Filament\Actions\Action::make('viewQuotation')
+                    ->label('View')->icon('heroicon-o-eye')->color('gray')
+                    ->modalWidth('3xl')
+                    ->modalHeading(fn(Quotation $record) => 'Quotation ' . $record->quotation_number)
+                    ->schema(fn(Quotation $record) => [
+                        Forms\Components\Placeholder::make('client')->label('Client')
+                            ->content($record->client?->name ?? '—'),
+                        Forms\Components\Placeholder::make('title_ph')->label('Title')
+                            ->content($record->title ?? '—'),
+                        Forms\Components\Placeholder::make('status_ph')->label('Status')
+                            ->content(new HtmlString('<span style="padding:2px 10px;border-radius:99px;font-size:11px;font-weight:700;background:' . match ($record->status) {
+                                'draft' => '#f1f5f9',
+                                'sent' => '#dbeafe',
+                                'accepted' => '#dcfce7',
+                                'rejected' => '#fef2f2',
+                                'invoiced' => '#eff6ff',
+                                default => '#f1f5f9',
+                            } . ';color:' . match ($record->status) {
+                                'draft' => '#475569',
+                                'sent' => '#2563eb',
+                                'accepted' => '#16a34a',
+                                'rejected' => '#dc2626',
+                                'invoiced' => '#4f46e5',
+                                default => '#475569',
+                            } . ';">' . (Quotation::$statuses[$record->status] ?? $record->status) . '</span>')),
+                        Forms\Components\Placeholder::make('dates')->label('Dates')
+                            ->content('Issued: ' . ($record->issue_date?->format('M d, Y') ?? '—') . ' | Valid Until: ' . ($record->valid_until?->format('M d, Y') ?? '—')),
+                        Forms\Components\Placeholder::make('items_list')->label('Line Items')
+                            ->content(new HtmlString(
+                                '<table style="width:100%;font-size:12px;border-collapse:collapse;">' .
+                                '<tr style="border-bottom:1px solid #e2e8f0;"><th style="text-align:left;padding:4px;">Description</th><th style="text-align:right;padding:4px;">Qty</th><th style="text-align:right;padding:4px;">Unit Price</th><th style="text-align:right;padding:4px;">Amount</th></tr>' .
+                                $record->items->map(fn($i) => '<tr style="border-bottom:1px solid #f8fafc;"><td style="padding:4px;">' . e($i->description) . '</td><td style="text-align:right;padding:4px;">' . $i->quantity . ' ' . ($i->unit ?? '') . '</td><td style="text-align:right;padding:4px;">' . CurrencyHelper::format($i->unit_price) . '</td><td style="text-align:right;padding:4px;font-weight:600;">' . CurrencyHelper::format($i->amount) . '</td></tr>')->implode('') .
+                                '<tr style="border-top:2px solid #e2e8f0;"><td colspan="3" style="text-align:right;padding:4px;font-weight:700;">Total</td><td style="text-align:right;padding:4px;font-weight:700;">' . CurrencyHelper::format($record->total_amount) . '</td></tr>' .
+                                '</table>'
+                            )),
+                        Forms\Components\Placeholder::make('scope')->label('Scope of Work')
+                            ->content($record->scope_of_work ?? '—')
+                            ->visible((bool) $record->scope_of_work),
+                        Forms\Components\Placeholder::make('notes_ph')->label('Notes')
+                            ->content($record->notes ?? '—')
+                            ->visible((bool) $record->notes),
+                    ]),
+                \Filament\Actions\Action::make('acceptQuotation')
+                    ->label('Accept')->icon('heroicon-o-check-circle')->color('success')
+                    ->visible(fn(Quotation $record) => in_array($record->status, ['sent', 'viewed']))
+                    ->requiresConfirmation()
+                    ->action(function (Quotation $record): void {
+                        $record->update(['status' => 'accepted', 'accepted_at' => now()]);
+                        Notification::make()->title('Quotation accepted.')->success()->send();
+                    }),
+                \Filament\Actions\Action::make('rejectQuotation')
+                    ->label('Reject')->icon('heroicon-o-x-circle')->color('danger')
+                    ->visible(fn(Quotation $record) => in_array($record->status, ['sent', 'viewed']))
+                    ->requiresConfirmation()
+                    ->action(function (Quotation $record): void {
+                        $record->update(['status' => 'rejected']);
+                        Notification::make()->title('Quotation rejected.')->danger()->send();
+                    }),
+                \Filament\Actions\Action::make('convertToInvoice')
+                    ->label('→ Invoice')->icon('heroicon-o-arrow-path')->color('warning')
+                    ->visible(fn(Quotation $record) => $record->canConvert())
+                    ->requiresConfirmation()
+                    ->action(function (Quotation $record): void {
+                        $invoice = $record->convertToInvoice();
+                        Notification::make()->title('Converted to ' . $invoice->invoice_number)->success()->send();
+                    }),
+                \Filament\Actions\Action::make('delete')
+                    ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                    ->action(fn(Quotation $record) => $record->delete()),
+            ])
+            ->toolbarActions([
+                $this->exportCsvAction('quotations', fn() => Quotation::query()->where('cde_project_id', $this->pid())->with(['client', 'creator']), [
+                    'quotation_number' => 'Quotation #',
+                    'title' => 'Title',
+                    'client.name' => 'Client',
+                    'total_amount' => 'Total',
+                    'status' => 'Status',
+                    'issue_date' => 'Issue Date',
+                    'valid_until' => 'Valid Until',
+                    'creator.name' => 'Created By',
+                ]),
+                \Filament\Actions\DeleteBulkAction::make(),
+            ])
+            ->emptyStateHeading('No Quotations')
+            ->emptyStateDescription('Create a quotation to send to clients. Accepted quotations can be converted to invoices.')
+            ->emptyStateIcon('heroicon-o-clipboard-document-list')
             ->striped()->paginated([10, 25, 50]);
     }
 }

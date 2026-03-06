@@ -14,6 +14,7 @@
             .financials-tab .badge-danger { background:rgba(239,68,68,.15); color:#ef4444; }
             .financials-tab .badge-warning { background:rgba(245,158,11,.15); color:#f59e0b; }
             .financials-tab .badge-success { background:rgba(16,185,129,.15); color:#10b981; }
+            .financials-tab .badge-info { background:rgba(59,130,246,.15); color:#3b82f6; }
 
             /* ─── Summary Strip ─── */
             .fin-summary-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:1rem; }
@@ -148,6 +149,7 @@
     <div class="financials-tabs">
         @foreach([
             'invoices' => ['icon' => 'heroicon-o-document-text', 'label' => 'Invoices'],
+            'quotations' => ['icon' => 'heroicon-o-clipboard-document-list', 'label' => 'Quotations'],
             'receipts' => ['icon' => 'heroicon-o-banknotes', 'label' => 'Receipts'],
             'expenses' => ['icon' => 'heroicon-o-credit-card', 'label' => 'Expenses'],
         ] as $tab => $meta)
@@ -162,6 +164,11 @@
                         <span class="badge badge-danger">{{ $overdueCount }}</span>
                     @elseif($draftCount > 0)
                         <span class="badge badge-warning">{{ $draftCount }}</span>
+                    @endif
+                @elseif($tab === 'quotations')
+                    @php $activeQuotes = \App\Models\Quotation::where('cde_project_id', $this->record->id)->whereIn('status', ['draft', 'sent', 'accepted'])->count(); @endphp
+                    @if($activeQuotes > 0)
+                        <span class="badge badge-info">{{ $activeQuotes }}</span>
                     @endif
                 @elseif($tab === 'receipts')
                     @php $receiptCount = \App\Models\InvoicePayment::where('cde_project_id', $this->record->id)->count(); @endphp
@@ -303,6 +310,56 @@
                 <div class="stat-num" style="font-size:16px;">{{ $lastRec?->payment_date?->format('M d, Y') ?? '—' }}</div>
                 <div class="stat-label fin-muted">Last Payment</div>
             </div>
+        </div>
+        {{ $this->table }}
+
+    @elseif($this->activeTab === 'quotations')
+        {{-- Quotation summary strip --}}
+        @php
+            $qBase = \App\Models\Quotation::where('cde_project_id', $this->record->id);
+            $totalQ = (clone $qBase)->count();
+            $totalQAmt = (clone $qBase)->sum('total_amount');
+            $acceptedQ = (clone $qBase)->where('status', 'accepted')->count();
+            $pendingQ = (clone $qBase)->whereIn('status', ['draft', 'sent'])->count();
+            $convertedQ = (clone $qBase)->where('status', 'invoiced')->count();
+            $acceptRate = $totalQ > 0 ? round(($acceptedQ + $convertedQ) / $totalQ * 100) : 0;
+        @endphp
+        <div class="fin-summary-strip">
+            <div class="fin-summary-stat default">
+                <div class="stat-num">{{ $totalQ }}</div>
+                <div class="stat-label fin-muted">Total Quotes</div>
+            </div>
+            <div class="fin-summary-stat" style="background:rgba(59,130,246,0.05);border:1px solid rgba(59,130,246,0.1);">
+                <div class="stat-num" style="color:#3b82f6;">{{ \App\Support\CurrencyHelper::formatCompact($totalQAmt) }}</div>
+                <div class="stat-label" style="color:#3b82f6;">Total Value</div>
+            </div>
+            <div class="fin-summary-stat" style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.1);">
+                <div class="stat-num" style="color:#10b981;">{{ $acceptRate }}%</div>
+                <div class="stat-label" style="color:#10b981;">Acceptance Rate</div>
+            </div>
+            <div class="fin-summary-stat default">
+                <div class="stat-num">{{ $pendingQ }}</div>
+                <div class="stat-label fin-muted">Pending</div>
+            </div>
+        </div>
+
+        {{-- Quotation status pipeline --}}
+        @php
+            $qPipe = [
+                ['label' => 'Draft', 'count' => (clone $qBase)->where('status', 'draft')->count(), 'bg' => '#f1f5f9', 'color' => '#475569'],
+                ['label' => 'Sent', 'count' => (clone $qBase)->where('status', 'sent')->count(), 'bg' => '#dbeafe', 'color' => '#2563eb'],
+                ['label' => 'Accepted', 'count' => $acceptedQ, 'bg' => '#dcfce7', 'color' => '#16a34a'],
+                ['label' => 'Rejected', 'count' => (clone $qBase)->where('status', 'rejected')->count(), 'bg' => '#fef2f2', 'color' => '#ef4444'],
+                ['label' => 'Invoiced', 'count' => $convertedQ, 'bg' => '#eff6ff', 'color' => '#4f46e5'],
+            ];
+        @endphp
+        <div style="display:flex;gap:2px;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:4px;margin-bottom:14px;">
+            @foreach($qPipe as $p)
+                <div style="flex:1;min-width:60px;text-align:center;padding:6px 4px;border-radius:6px;background:{{ $p['bg'] }};color:{{ $p['color'] }};">
+                    <div style="font-size:16px;font-weight:800;line-height:1.2;">{{ $p['count'] }}</div>
+                    <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-top:1px;opacity:0.7;">{{ $p['label'] }}</div>
+                </div>
+            @endforeach
         </div>
         {{ $this->table }}
 

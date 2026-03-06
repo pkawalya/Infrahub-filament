@@ -50,11 +50,13 @@ class Company extends Model
         'suspended_at',
         'suspension_reason',
         'settings',
+        'invoice_config',
         'notes',
     ];
 
     protected $casts = [
         'settings' => 'array',
+        'invoice_config' => 'array',
         'subscription_starts_at' => 'datetime',
         'subscription_expires_at' => 'datetime',
         'trial_ends_at' => 'datetime',
@@ -88,6 +90,37 @@ class Company extends Model
     public function projects()
     {
         return $this->hasMany(CdeProject::class);
+    }
+    public function quotations()
+    {
+        return $this->hasMany(Quotation::class);
+    }
+
+    /**
+     * Get invoice configuration with defaults.
+     */
+    public function getInvoiceConfig(): array
+    {
+        $defaults = [
+            'default_tax_rate' => 18,
+            'tax_label' => 'VAT',
+            'payment_terms_days' => 30,
+            'default_payment_terms' => "Payment is due within 30 days of invoice date.\nLate payments may attract interest at 2% per month.",
+            'default_notes' => '',
+            'bank_name' => '',
+            'bank_account_name' => '',
+            'bank_account_number' => '',
+            'bank_branch' => '',
+            'bank_swift' => '',
+            'show_bank_details' => true,
+            'quotation_validity_days' => 30,
+            'quotation_prefix' => 'QTN-',
+            'invoice_prefix' => 'INV-',
+            'show_logo' => true,
+            'footer_text' => '',
+        ];
+
+        return array_merge($defaults, $this->invoice_config ?? []);
     }
 
     // ─── Module Management ───────────────────────────────────────

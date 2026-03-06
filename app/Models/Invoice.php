@@ -15,6 +15,7 @@ class Invoice extends Model
         'cde_project_id',
         'invoice_number',
         'work_order_id',
+        'quotation_id',
         'client_id',
         'subtotal',
         'tax_rate',
@@ -75,6 +76,11 @@ class Invoice extends Model
     public function cdeProject()
     {
         return $this->belongsTo(CdeProject::class, 'cde_project_id');
+    }
+
+    public function quotation()
+    {
+        return $this->belongsTo(Quotation::class);
     }
 
     public function getBalanceDueAttribute(): float
