@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Invoice {{ $invoice->invoice_number }}</title>
+    @php $brandColor = $company->primary_color ?? '#4f46e5'; @endphp
     <style>
         @page {
             size: A4;
@@ -37,13 +38,17 @@
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 40px;
-            border-bottom: 3px solid #4f46e5;
+            border-bottom: 3px solid
+                {{ $brandColor }}
+            ;
             padding-bottom: 24px;
         }
 
         .company-info h1 {
             font-size: 24px;
-            color: #4f46e5;
+            color:
+                {{ $brandColor }}
+            ;
             margin-bottom: 4px;
         }
 
@@ -59,7 +64,9 @@
         .invoice-badge h2 {
             font-size: 32px;
             font-weight: 800;
-            color: #4f46e5;
+            color:
+                {{ $brandColor }}
+            ;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
@@ -181,7 +188,9 @@
         }
 
         .items-table thead th {
-            background: #4f46e5;
+            background:
+                {{ $brandColor }}
+            ;
             color: white;
             padding: 12px 16px;
             text-align: left;
@@ -241,8 +250,12 @@
         .items-table tfoot .total-row td {
             font-size: 16px;
             font-weight: 800;
-            color: #4f46e5;
-            border-top: 2px solid #4f46e5;
+            color:
+                {{ $brandColor }}
+            ;
+            border-top: 2px solid
+                {{ $brandColor }}
+            ;
         }
 
         /* ── Summary ── */
@@ -265,11 +278,15 @@
         }
 
         .summary-line.total {
-            border-top: 2px solid #4f46e5;
+            border-top: 2px solid
+                {{ $brandColor }}
+            ;
             border-bottom: none;
             font-size: 18px;
             font-weight: 800;
-            color: #4f46e5;
+            color:
+                {{ $brandColor }}
+            ;
             padding: 12px 0;
         }
 
@@ -341,7 +358,9 @@
             }
 
             .items-table thead th {
-                background: #4f46e5 !important;
+                background:
+                    {{ $brandColor }}
+                    !important;
                 color: white !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
@@ -359,7 +378,7 @@
     <div class="no-print"
         style="background: #f3f4f6; padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb;">
         <button onclick="window.print()"
-            style="background: #4f46e5; color: white; border: none; padding: 10px 28px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; margin-right: 8px;">🖨️
+            style="background: {{ $brandColor }}; color: white; border: none; padding: 10px 28px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; margin-right: 8px;">🖨️
             Print Invoice</button>
         <button onclick="window.history.back()"
             style="background: #6b7280; color: white; border: none; padding: 10px 28px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px;">←
@@ -370,7 +389,11 @@
         {{-- Header --}}
         <div class="invoice-header">
             <div class="company-info">
-                <h1>{{ $company->name ?? config('app.name') }}</h1>
+                @if($company->getLogoUrl())
+                    <img src="{{ $company->getLogoUrl() }}" alt="{{ $company->name }}"
+                        style="max-height:48px;max-width:200px;margin-bottom:8px;">
+                @endif
+                <h1 style="color: {{ $brandColor }};">{{ $company->name ?? config('app.name') }}</h1>
                 @if($company->address ?? false)
                 <p>{{ $company->address }}</p>@endif
                 @if($company->email ?? false)

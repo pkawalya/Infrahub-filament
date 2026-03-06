@@ -51,6 +51,7 @@ class EmailService
             'user_name' => $recipient->name,
             'user_email' => $recipient->email,
             'company_name' => $recipient->company?->name ?? config('app.name'),
+            'company_id' => $companyId,
         ], $variables);
 
         return $this->dispatch($recipient->email, $template, $variables);

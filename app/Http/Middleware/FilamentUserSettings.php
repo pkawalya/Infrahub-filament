@@ -15,17 +15,67 @@ class FilamentUserSettings
     public function handle(Request $request, Closure $next)
     {
         if (auth()->check()) {
-            $userId = auth()->id();
-            
-            $savedColor = $this->getSavedColor($userId);
-            FilamentColor::register([
-                'primary' => $this->getColorConstant($savedColor),
-            ]);
+            $user = auth()->user();
+            $userId = $user->id;
 
+            // ── 1. User color preference ─────────────────────────
+            $savedColor = $this->getSavedColor($userId);
+
+            // ── 2. Company branding override ─────────────────────
+            $company = $user->company;
+
+            if ($company && $company->primary_color) {
+                // Company brand color takes priority
+                FilamentColor::register([
+                    'primary' => Color::hex($company->primary_color),
+                ]);
+            } else {
+                // Fall back to user's personal color preference
+                FilamentColor::register([
+                    'primary' => $this->getColorConstant($savedColor),
+                ]);
+            }
+
+            // ── 3. Company logo branding ─────────────────────────
+            if ($company) {
+                $this->applyCompanyBranding($company);
+            }
+
+            // ── 4. Navigation style ──────────────────────────────
             $this->setNavigationStyle($userId);
+
+            // ── 5. Share branding with views ─────────────────────
+            view()->share('companyBranding', $company ? $company->getBranding() : []);
         }
 
         return $next($request);
+    }
+
+    private function applyCompanyBranding($company): void
+    {
+        $panel = Filament::getCurrentPanel();
+        if (!$panel) {
+            return;
+        }
+
+        // Apply company logo if uploaded
+        $logoUrl = $company->getLogoUrl();
+        if ($logoUrl) {
+            $panel->brandLogo($logoUrl);
+            $panel->darkModeBrandLogo($logoUrl);
+            $panel->brandLogoHeight('2.5rem');
+        }
+
+        // Apply company name as brand name
+        if ($company->name) {
+            $panel->brandName($company->name);
+        }
+
+        // Apply favicon if uploaded
+        $faviconUrl = $company->getFaviconUrl();
+        if ($faviconUrl) {
+            $panel->favicon($faviconUrl);
+        }
     }
 
     private function getSavedColor($userId): string
@@ -41,9 +91,9 @@ class FilamentUserSettings
     {
         try {
             $navigationStyle = Setting::getUserValue('filament_navigation_style', 'sidebar', $userId);
-            
+
             $panel = Filament::getCurrentPanel();
-            
+
             if ($panel) {
                 if ($navigationStyle === 'top') {
                     $panel->topNavigation();

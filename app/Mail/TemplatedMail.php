@@ -51,13 +51,27 @@ class TemplatedMail extends Mailable implements ShouldQueue
 
     public function content()
     {
-        // Use a generic email layout with the rendered HTML body
+        // Resolve company branding for the email
+        $companyId = $this->template->company_id;
+        $company = $companyId ? \App\Models\Company::find($companyId) : null;
+
+        // Also try to find company from variables
+        if (!$company && isset($this->variables['company_id'])) {
+            $company = \App\Models\Company::find($this->variables['company_id']);
+        }
+
+        $branding = $company ? $company->getBranding() : [];
+
         return new \Illuminate\Mail\Mailables\Content(
             view: 'emails.templated',
             with: [
                 'body' => $this->renderedBody,
                 'templateName' => $this->template->name,
-                'companyName' => $this->variables['company_name'] ?? config('app.name'),
+                'companyName' => $branding['name'] ?? $this->variables['company_name'] ?? config('app.name'),
+                'companyLogoUrl' => $branding['logo_url'] ?? null,
+                'companyPrimaryColor' => $branding['primary_color'] ?? '#4f46e5',
+                'companyEmail' => $branding['email'] ?? null,
+                'companyWebsite' => $branding['website'] ?? null,
             ],
         );
     }

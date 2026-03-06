@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Receipt — {{ $payment->invoice->invoice_number ?? 'Payment' }}</title>
+    @php $brandColor = $company->primary_color ?? '#059669'; @endphp
     <style>
         @page {
             size: auto;
@@ -34,13 +35,17 @@
         .receipt-header {
             text-align: center;
             margin-bottom: 32px;
-            border-bottom: 3px solid #059669;
+            border-bottom: 3px solid
+                {{ $brandColor }}
+            ;
             padding-bottom: 24px;
         }
 
         .receipt-header h1 {
             font-size: 28px;
-            color: #059669;
+            color:
+                {{ $brandColor }}
+            ;
             letter-spacing: 3px;
             text-transform: uppercase;
             font-weight: 800;
@@ -104,10 +109,14 @@
 
         .receipt-stamp .stamp {
             display: inline-block;
-            border: 3px solid #059669;
+            border: 3px solid
+                {{ $brandColor }}
+            ;
             border-radius: 12px;
             padding: 8px 32px;
-            color: #059669;
+            color:
+                {{ $brandColor }}
+            ;
             font-size: 20px;
             font-weight: 800;
             text-transform: uppercase;
@@ -150,7 +159,7 @@
     <div class="no-print"
         style="background: #f3f4f6; padding: 12px; text-align: center; border-bottom: 1px solid #e5e7eb;">
         <button onclick="window.print()"
-            style="background: #059669; color: white; border: none; padding: 10px 28px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; margin-right: 8px;">🖨️
+            style="background: {{ $brandColor }}; color: white; border: none; padding: 10px 28px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; margin-right: 8px;">🖨️
             Print Receipt</button>
         <button onclick="window.history.back()"
             style="background: #6b7280; color: white; border: none; padding: 10px 28px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px;">←
@@ -159,7 +168,11 @@
 
     <div class="receipt-container">
         <div class="receipt-header">
-            <h1>Payment Receipt</h1>
+            @if($company->getLogoUrl())
+                <img src="{{ $company->getLogoUrl() }}" alt="{{ $company->name }}"
+                    style="max-height:48px;max-width:200px;margin-bottom:12px;">
+            @endif
+            <h1 style="color: {{ $brandColor }};">Payment Receipt</h1>
             <div class="company-name">{{ $company->name ?? config('app.name') }}</div>
             <div class="rec-meta">
                 @if($company->address ?? false){{ $company->address }} · @endif

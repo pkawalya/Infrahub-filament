@@ -104,6 +104,54 @@ class Company extends Model
         return $this->projects()->where('billing_status', 'active');
     }
 
+    // ─── Branding Helpers ────────────────────────────────────────
+
+    public function getLogoUrl(): ?string
+    {
+        if (!$this->logo) {
+            return null;
+        }
+        return \Illuminate\Support\Str::startsWith($this->logo, 'http')
+            ? $this->logo
+            : asset('storage/' . $this->logo);
+    }
+
+    public function getFaviconUrl(): ?string
+    {
+        if (!$this->favicon) {
+            return null;
+        }
+        return \Illuminate\Support\Str::startsWith($this->favicon, 'http')
+            ? $this->favicon
+            : asset('storage/' . $this->favicon);
+    }
+
+    public function getBrandName(): string
+    {
+        return $this->name ?: config('app.name', 'InfraHub');
+    }
+
+    /**
+     * Get all branding properties as an array.
+     * Used by middleware, emails, printed documents, etc.
+     */
+    public function getBranding(): array
+    {
+        return [
+            'name' => $this->getBrandName(),
+            'logo_url' => $this->getLogoUrl(),
+            'favicon_url' => $this->getFaviconUrl(),
+            'primary_color' => $this->primary_color,
+            'secondary_color' => $this->secondary_color,
+            'email' => $this->email,
+            'phone' => $this->phone,
+            'website' => $this->website,
+            'address' => $this->address,
+            'city' => $this->city,
+            'country' => $this->country,
+        ];
+    }
+
     /**
      * Get invoice configuration with defaults.
      */
