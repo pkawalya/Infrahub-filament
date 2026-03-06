@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\App\Pages\Dashboard;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Http\Middleware\FilamentUserSettings;
+use App\Http\Middleware\ForcePasswordChange;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -74,6 +75,7 @@ class AppPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
                 FilamentUserSettings::class,
+                ForcePasswordChange::class,
             ])
             ->plugins([
                 FilamentShieldPlugin::make(),

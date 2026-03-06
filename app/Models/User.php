@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Observers\UserObserver;
 use Database\Factories\UserFactory;
 use Filament\Auth\MultiFactor\Email\Contracts\HasEmailAuthentication;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -15,16 +17,24 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 
+#[ObservedBy(UserObserver::class)]
 class User extends Authenticatable implements FilamentUser, HasEmailAuthentication
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasRoles, Notifiable, HasPanelShield, HasApiTokens;
+
+    /**
+     * Temporarily holds the plain-text password so the Observer
+     * can include it in the welcome email. Never persisted.
+     */
+    public ?string $plainPassword = null;
 
     protected $fillable = [
         'name',
         'email',
         'email_verified_at',
         'password',
+        'must_change_password',
         'google_id',
         'company_id',
         'user_type',
@@ -48,6 +58,7 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
             'last_login_at' => 'datetime',
             'is_active' => 'boolean',
             'has_email_authentication' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
     }
 

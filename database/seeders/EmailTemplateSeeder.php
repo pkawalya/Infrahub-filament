@@ -140,6 +140,45 @@ class EmailTemplateSeeder extends Seeder
                     . '<p style="color:#9ca3af;font-size:13px;">If you didn\'t create this account, you can safely ignore this email.</p>',
                 'available_variables' => ['user_name', 'user_email', 'company_name', 'app_name', 'login_url'],
             ],
+            [
+                'name' => 'New User Credentials',
+                'slug' => 'welcome-new-user',
+                'category' => 'authentication',
+                'subject' => 'Your {{app_name}} account is ready — Login Details Inside',
+                'body' => '<h2 style="color:#1f2937;margin:0 0 16px;">Your Account is Ready! 🔑</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;"><strong>{{creator_name}}</strong> has created an account for you at <strong>{{company_name}}</strong> on {{app_name}}.</p>'
+                    . '<div style="background:#f0f9ff;border:1px solid #bfdbfe;border-radius:12px;padding:24px;margin:24px 0;">'
+                    . '<h3 style="color:#1e40af;margin:0 0 16px;font-size:16px;">Your Login Credentials</h3>'
+                    . '<table style="width:100%;border-collapse:collapse;">'
+                    . '<tr><td style="padding:8px 0;color:#6b7280;width:100px;">Email:</td><td style="padding:8px 0;color:#1f2937;font-weight:600;">{{user_email}}</td></tr>'
+                    . '<tr><td style="padding:8px 0;color:#6b7280;">Password:</td><td style="padding:8px 0;color:#1f2937;font-weight:600;font-family:monospace;letter-spacing:1px;">{{user_password}}</td></tr>'
+                    . '<tr><td style="padding:8px 0;color:#6b7280;">Role:</td><td style="padding:8px 0;color:#1f2937;font-weight:600;">{{user_role}}</td></tr>'
+                    . '</table>'
+                    . '</div>'
+                    . '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin:0 0 24px;">'
+                    . '<p style="color:#92400e;margin:0;font-size:13px;">⚠️ <strong>Important:</strong> You will be asked to change your password when you first log in. Please keep these credentials safe until then.</p>'
+                    . '</div>'
+                    . '<p style="text-align:center;margin:24px 0;"><a href="{{login_url}}" style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg,#3b82f6,#4f46e5);color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">Log In Now →</a></p>'
+                    . '<p style="color:#9ca3af;font-size:12px;text-align:center;">If you did not expect this email, please contact your administrator.</p>',
+                'available_variables' => ['user_name', 'user_email', 'company_name', 'app_name', 'login_url', 'user_password', 'user_role', 'creator_name'],
+            ],
+
+            // ─── Invoice Alerts ─────────────────────────────────
+            [
+                'name' => 'Invoice Overdue Notice',
+                'slug' => 'invoice-overdue',
+                'category' => 'billing',
+                'subject' => '⚠️ {{overdue_count}} overdue invoice(s) — {{company_name}}',
+                'body' => '<h2 style="color:#dc2626;margin:0 0 16px;">Overdue Invoices ⚠️</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">You have <strong>{{overdue_count}}</strong> overdue invoice(s) totaling <strong>{{total_overdue_amount}}</strong>.</p>'
+                    . '<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:16px;margin:20px 0;">'
+                    . '<p style="color:#991b1b;margin:0;font-weight:600;">Overdue: {{invoice_numbers}}</p>'
+                    . '</div>'
+                    . '<p style="text-align:center;margin:24px 0;"><a href="{{app_url}}/app" style="display:inline-block;padding:12px 32px;background:#dc2626;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">Review Invoices</a></p>',
+                'available_variables' => ['user_name', 'company_name', 'app_name', 'app_url', 'overdue_count', 'total_overdue_amount', 'invoice_numbers'],
+            ],
         ];
 
         foreach ($templates as $templateData) {
