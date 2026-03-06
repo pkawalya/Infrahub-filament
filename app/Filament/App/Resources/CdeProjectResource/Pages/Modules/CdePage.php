@@ -366,6 +366,106 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
+    /**
+     * Submission matrix — tracks documents per discipline × status level.
+     * Shows how many documents each discipline has submitted to each gate.
+     */
+    public function getSubmissionMatrix(): array
+    {
+        $pid = $this->record->id;
+        $docs = CdeDocument::where('cde_project_id', $pid)->get();
+
+        // Status levels ordered by progression
+        $levels = [
+            'wip' => ['label' => 'WIP', 'color' => '#94a3b8'],
+            'draft' => ['label' => 'Draft', 'color' => '#475569'],
+            'under_review' => ['label' => 'Under Review', 'color' => '#d97706'],
+            'approved' => ['label' => 'Approved', 'color' => '#16a34a'],
+            'revision' => ['label' => 'Revision', 'color' => '#ef4444'],
+            'published' => ['label' => 'Published', 'color' => '#7c3aed'],
+            'archived' => ['label' => 'Archived', 'color' => '#64748b'],
+        ];
+
+        // Group by discipline
+        $disciplines = $docs->groupBy(fn($d) => $d->discipline ?: 'General');
+        $matrix = [];
+
+        foreach ($disciplines as $discipline => $disciplineDocs) {
+            $row = ['discipline' => $discipline, 'total' => $disciplineDocs->count()];
+            foreach (array_keys($levels) as $status) {
+                $row[$status] = $disciplineDocs->where('status', $status)->count();
+            }
+            // Calculate completion — docs at approved/published/archived
+            $completed = $row['approved'] + $row['published'] + $row['archived'];
+            $row['completion_pct'] = $row['total'] > 0 ? round(($completed / $row['total']) * 100) : 0;
+            $row['needs_action'] = $row['wip'] + $row['draft'] + $row['revision'];
+            $matrix[] = $row;
+        }
+
+        // Sort by completion (lowest first, so needs-attention is at top)
+        usort($matrix, fn($a, $b) => $a['completion_pct'] <=> $b['completion_pct']);
+
+        // Overall summary
+        $total = $docs->count();
+        $levelTotals = [];
+        foreach (array_keys($levels) as $status) {
+            $levelTotals[$status] = $docs->where('status', $status)->count();
+        }
+
+        return [
+            'levels' => $levels,
+            'matrix' => $matrix,
+            'totals' => $levelTotals,
+            'total_docs' => $total,
+            'overall_completion' => $total > 0
+                ? round((($levelTotals['approved'] + $levelTotals['published'] + $levelTotals['archived']) / $total) * 100)
+                : 0,
+        ];
+    }
+
+    /**
+     * Document health indicators.
+     */
+    public function getDocumentHealth(): array
+    {
+        $pid = $this->record->id;
+
+        // Stale documents — haven't been updated in 30+ days and not in final state
+        $stale = CdeDocument::where('cde_project_id', $pid)
+            ->whereNotIn('status', ['published', 'archived', 'approved'])
+            ->where('updated_at', '<', now()->subDays(30))
+            ->count();
+
+        // Review backlog — documents waiting for review
+        $reviewBacklog = CdeDocument::where('cde_project_id', $pid)
+            ->where('status', 'under_review')
+            ->count();
+
+        // Revision required — documents needing correction
+        $needsRevision = CdeDocument::where('cde_project_id', $pid)
+            ->where('status', 'revision')
+            ->count();
+
+        // Recent uploads (7 days)
+        $recentUploads = CdeDocument::where('cde_project_id', $pid)
+            ->where('created_at', '>=', now()->subDays(7))
+            ->count();
+
+        // Recent status changes (7 days)
+        $recentUpdates = CdeDocument::where('cde_project_id', $pid)
+            ->where('updated_at', '>=', now()->subDays(7))
+            ->where('created_at', '<', now()->subDays(1)) // exclude brand-new
+            ->count();
+
+        return [
+            'stale' => $stale,
+            'review_backlog' => $reviewBacklog,
+            'needs_revision' => $needsRevision,
+            'recent_uploads' => $recentUploads,
+            'recent_updates' => $recentUpdates,
+        ];
+    }
+
     public function getTransmittals(): \Illuminate\Database\Eloquent\Collection
     {
         return Transmittal::where('cde_project_id', $this->record->id)

@@ -80,6 +80,70 @@
         </div>
     @endif
 
+    {{-- Budget vs Actuals + P&L --}}
+    @php $bva = $this->getBudgetVsActuals(); @endphp
+    @if($bva['budget'] > 0)
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+            {{-- Budget Progress --}}
+            <div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:16px;">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:10px;display:flex;align-items:center;gap:5px;">
+                    <x-heroicon-o-calculator style="width:13px;height:13px;" />
+                    Budget vs Actuals · {{ $bva['budget_fmt'] }} Budget
+                </div>
+                @foreach([
+                    ['Invoiced', $bva['invoiced_pct'], $bva['invoiced_fmt'], '#6366f1'],
+                    ['Received', $bva['received_pct'], $bva['received_fmt'], '#10b981'],
+                    ['Expenses', $bva['expenses_pct'], $bva['expenses_fmt'], '#ef4444'],
+                ] as [$label, $pct, $fmt, $color])
+                    <div style="margin-bottom:8px;">
+                        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px;">
+                            <span style="font-weight:600;color:#475569;">{{ $label }}</span>
+                            <span style="font-weight:700;color:{{ $color }};">{{ $fmt }} <span style="font-weight:400;color:#94a3b8;">({{ $pct }}%)</span></span>
+                        </div>
+                        <div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;">
+                            <div style="width:{{ min($pct, 100) }}%;height:100%;background:{{ $color }};border-radius:3px;transition:width .4s;"></div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+
+            {{-- Profit / Loss Summary --}}
+            <div style="background:white;border:1px solid #e2e8f0;border-radius:10px;padding:16px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;">
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:8px;">
+                    Net Position
+                </div>
+                <div style="font-size:36px;font-weight:800;color:{{ $bva['profit_positive'] ? '#10b981' : '#ef4444' }};line-height:1.1;letter-spacing:-0.02em;">
+                    {{ $bva['profit_positive'] ? '+' : '-' }}{{ $bva['profit_fmt'] }}
+                </div>
+                <div style="font-size:11px;color:#94a3b8;margin-top:4px;">
+                    {{ $bva['profit_positive'] ? '🟢 Profit' : '🔴 Loss' }} · Received {{ $bva['received_fmt'] }} − Expenses {{ $bva['expenses_fmt'] }}
+                </div>
+                {{-- Mini gauge --}}
+                <div style="width:100%;max-width:200px;margin-top:12px;">
+                    <div style="display:flex;justify-content:space-between;font-size:9px;color:#94a3b8;margin-bottom:2px;">
+                        <span>Expenses</span>
+                        <span>Received</span>
+                    </div>
+                    <div style="height:8px;background:#fef2f2;border-radius:4px;overflow:hidden;position:relative;">
+                        @php $ratio = ($bva['received'] + $bva['expenses']) > 0 ? ($bva['received'] / ($bva['received'] + $bva['expenses'])) * 100 : 50; @endphp
+                        <div style="width:{{ $ratio }}%;height:100%;background:#10b981;border-radius:4px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Invoice Pipeline Bar --}}
+    @php $invPipe = $this->getInvoicePipeline(); @endphp
+    <div style="display:flex;gap:2px;background:white;border:1px solid #e2e8f0;border-radius:8px;padding:4px;margin-bottom:14px;">
+        @foreach($invPipe as $p)
+            <div style="flex:1;min-width:60px;text-align:center;padding:6px 4px;border-radius:6px;background:{{ $p['bg'] }};color:{{ $p['color'] }};">
+                <div style="font-size:16px;font-weight:800;line-height:1.2;">{{ $p['count'] }}</div>
+                <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-top:1px;opacity:0.7;">{{ $p['label'] }}</div>
+            </div>
+        @endforeach
+    </div>
+
     {{-- Tab Navigation --}}
     <div class="financials-tabs">
         @foreach([

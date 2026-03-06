@@ -360,6 +360,110 @@
         @endforeach
     </div>
 
+    {{-- ── Document Health Alerts ──────────────────────────────────────── --}}
+    @php $docHealth = $this->getDocumentHealth(); @endphp
+    @if($docHealth['needs_revision'] > 0 || $docHealth['stale'] > 0)
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+            @if($docHealth['needs_revision'] > 0)
+                <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:12px;">
+                    <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"/></svg>
+                    <strong>{{ $docHealth['needs_revision'] }}</strong> doc{{ $docHealth['needs_revision'] > 1 ? 's' : '' }} need revision
+                </div>
+            @endif
+            @if($docHealth['review_backlog'] > 0)
+                <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:12px;">
+                    <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <strong>{{ $docHealth['review_backlog'] }}</strong> awaiting review
+                </div>
+            @endif
+            @if($docHealth['stale'] > 0)
+                <div style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;font-size:12px;">
+                    <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286z"/></svg>
+                    <strong>{{ $docHealth['stale'] }}</strong> stale (30+ days)
+                </div>
+            @endif
+        </div>
+    @endif
+
+    {{-- ── Submission Tracking Matrix ──────────────────────────────────── --}}
+    @php $sm = $this->getSubmissionMatrix(); @endphp
+    @if($sm['total_docs'] > 0 && count($sm['matrix']) > 1)
+        <x-filament::section collapsible collapsed>
+            <x-slot name="heading">
+                <span style="display:flex;align-items:center;gap:6px;">
+                    <svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z"/></svg>
+                    Submission Tracker by Discipline
+                    <span style="background:{{ $sm['overall_completion'] >= 80 ? '#dcfce7' : ($sm['overall_completion'] >= 40 ? '#fef3c7' : '#fef2f2') }};color:{{ $sm['overall_completion'] >= 80 ? '#16a34a' : ($sm['overall_completion'] >= 40 ? '#d97706' : '#ef4444') }};font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;">
+                        {{ $sm['overall_completion'] }}% Complete
+                    </span>
+                </span>
+            </x-slot>
+            <x-slot name="description">Track document submissions per discipline across status gates</x-slot>
+
+            <div style="overflow-x:auto;">
+                <table style="width:100%;font-size:12px;border-collapse:collapse;">
+                    <thead>
+                        <tr style="border-bottom:2px solid #e2e8f0;">
+                            <th style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;">Discipline</th>
+                            @foreach($sm['levels'] as $key => $level)
+                                <th style="text-align:center;padding:8px 6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:{{ $level['color'] }};min-width:45px;">{{ $level['label'] }}</th>
+                            @endforeach
+                            <th style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;min-width:100px;">Progress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($sm['matrix'] as $row)
+                            <tr style="border-bottom:1px solid #f1f5f9;">
+                                <td style="padding:8px 10px;font-weight:600;color:#334155;white-space:nowrap;">
+                                    {{ $row['discipline'] }}
+                                    <span style="font-size:10px;font-weight:400;color:#94a3b8;margin-left:4px;">{{ $row['total'] }}</span>
+                                </td>
+                                @foreach(array_keys($sm['levels']) as $status)
+                                    <td style="text-align:center;padding:8px 6px;">
+                                        @if($row[$status] > 0)
+                                            <span style="display:inline-block;min-width:22px;padding:2px 6px;border-radius:4px;font-weight:700;font-size:11px;background:{{ $sm['levels'][$status]['color'] }}15;color:{{ $sm['levels'][$status]['color'] }};">
+                                                {{ $row[$status] }}
+                                            </span>
+                                        @else
+                                            <span style="color:#e2e8f0;">—</span>
+                                        @endif
+                                    </td>
+                                @endforeach
+                                <td style="padding:8px 10px;">
+                                    <div style="display:flex;align-items:center;gap:6px;">
+                                        <div style="flex:1;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;">
+                                            <div style="width:{{ $row['completion_pct'] }}%;height:100%;background:{{ $row['completion_pct'] >= 80 ? '#10b981' : ($row['completion_pct'] >= 40 ? '#d97706' : '#ef4444') }};border-radius:3px;transition:width .3s;"></div>
+                                        </div>
+                                        <span style="font-size:10px;font-weight:700;color:{{ $row['completion_pct'] >= 80 ? '#10b981' : ($row['completion_pct'] >= 40 ? '#d97706' : '#ef4444') }};min-width:28px;text-align:right;">{{ $row['completion_pct'] }}%</span>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                        {{-- Totals row --}}
+                        <tr style="border-top:2px solid #e2e8f0;background:#f8fafc;">
+                            <td style="padding:8px 10px;font-weight:700;color:#1e293b;">
+                                Total <span style="font-size:10px;font-weight:400;color:#94a3b8;">{{ $sm['total_docs'] }}</span>
+                            </td>
+                            @foreach(array_keys($sm['levels']) as $status)
+                                <td style="text-align:center;padding:8px 6px;font-weight:700;font-size:12px;color:#334155;">
+                                    {{ $sm['totals'][$status] > 0 ? $sm['totals'][$status] : '—' }}
+                                </td>
+                            @endforeach
+                            <td style="padding:8px 10px;">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <div style="flex:1;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;">
+                                        <div style="width:{{ $sm['overall_completion'] }}%;height:100%;background:#6366f1;border-radius:3px;"></div>
+                                    </div>
+                                    <span style="font-size:10px;font-weight:700;color:#6366f1;min-width:28px;text-align:right;">{{ $sm['overall_completion'] }}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </x-filament::section>
+    @endif
+
     {{-- ── Command Bar ────────────────────────────────────────────────── --}}
     <div class="cde-cmdbar" x-data="{ viewMode: 'grid' }">
         {{-- Filament header actions render here --}}

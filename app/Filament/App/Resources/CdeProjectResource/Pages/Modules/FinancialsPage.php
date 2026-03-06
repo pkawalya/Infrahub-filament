@@ -222,6 +222,96 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
+    // ─────────────────────────────────────────────
+    // Budget vs Actuals
+    // ─────────────────────────────────────────────
+    public function getBudgetVsActuals(): array
+    {
+        $pid = $this->pid();
+        $r = $this->record;
+
+        $contractBudget = (float) $r->contracts()->sum('revised_value') ?: (float) $r->contracts()->sum('original_value');
+        $boqBudget = (float) $r->boqs()->sum('total_value');
+        $budget = max($contractBudget, $boqBudget);
+
+        $invoiced = (float) Invoice::where('cde_project_id', $pid)->sum('total_amount');
+        $received = (float) InvoicePayment::where('cde_project_id', $pid)->sum('amount');
+        $expenses = (float) Expense::where('cde_project_id', $pid)->where('status', '!=', 'rejected')->sum('amount');
+        $profit = $received - $expenses;
+
+        return [
+            'budget' => $budget,
+            'budget_fmt' => CurrencyHelper::formatCompact($budget),
+            'invoiced' => $invoiced,
+            'invoiced_fmt' => CurrencyHelper::formatCompact($invoiced),
+            'received' => $received,
+            'received_fmt' => CurrencyHelper::formatCompact($received),
+            'expenses' => $expenses,
+            'expenses_fmt' => CurrencyHelper::formatCompact($expenses),
+            'profit' => $profit,
+            'profit_fmt' => CurrencyHelper::formatCompact(abs($profit)),
+            'profit_positive' => $profit >= 0,
+            'invoiced_pct' => $budget > 0 ? round(($invoiced / $budget) * 100) : 0,
+            'received_pct' => $budget > 0 ? round(($received / $budget) * 100) : 0,
+            'expenses_pct' => $budget > 0 ? round(($expenses / $budget) * 100) : 0,
+        ];
+    }
+
+    // ─────────────────────────────────────────────
+    // Monthly Collection Rate Trend (6 months)
+    // ─────────────────────────────────────────────
+    public function getCollectionTrend(): array
+    {
+        $pid = $this->pid();
+        $trend = [];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $yr = $month->year;
+            $mo = $month->month;
+
+            $inv = (float) Invoice::where('cde_project_id', $pid)
+                ->whereYear('issue_date', $yr)->whereMonth('issue_date', $mo)->sum('total_amount');
+            $rec = (float) InvoicePayment::where('cde_project_id', $pid)
+                ->whereYear('payment_date', $yr)->whereMonth('payment_date', $mo)->sum('amount');
+            $exp = (float) Expense::where('cde_project_id', $pid)
+                ->where('status', '!=', 'rejected')
+                ->whereYear('expense_date', $yr)->whereMonth('expense_date', $mo)->sum('amount');
+
+            $trend[] = [
+                'label' => $month->format('M'),
+                'invoiced' => $inv,
+                'received' => $rec,
+                'expenses' => $exp,
+                'net' => $rec - $exp,
+                'collection_rate' => $inv > 0 ? round(($rec / $inv) * 100) : ($rec > 0 ? 100 : 0),
+            ];
+        }
+
+        return $trend;
+    }
+
+    // ─────────────────────────────────────────────
+    // Invoice Status Pipeline
+    // ─────────────────────────────────────────────
+    public function getInvoicePipeline(): array
+    {
+        $base = Invoice::where('cde_project_id', $this->pid());
+        return [
+            ['label' => 'Draft', 'count' => (clone $base)->where('status', 'draft')->count(), 'bg' => '#f1f5f9', 'color' => '#475569'],
+            ['label' => 'Sent', 'count' => (clone $base)->where('status', 'sent')->count(), 'bg' => '#dbeafe', 'color' => '#2563eb'],
+            ['label' => 'Partial', 'count' => (clone $base)->where('status', 'partially_paid')->count(), 'bg' => '#fef3c7', 'color' => '#d97706'],
+            ['label' => 'Paid', 'count' => (clone $base)->where('status', 'paid')->count(), 'bg' => '#dcfce7', 'color' => '#16a34a'],
+            [
+                'label' => 'Overdue',
+                'count' => (clone $base)->whereNotIn('status', ['paid', 'cancelled'])
+                    ->whereNotNull('due_date')->where('due_date', '<', now())->count(),
+                'bg' => '#fef2f2',
+                'color' => '#ef4444'
+            ],
+        ];
+    }
+
     protected function getHeaderActions(): array
     {
         return [
