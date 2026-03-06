@@ -1034,6 +1034,10 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                         $invoice = $record->convertToInvoice();
                         Notification::make()->title('Converted to ' . $invoice->invoice_number)->success()->send();
                     }),
+                \Filament\Actions\Action::make('printQuotation')
+                    ->label('Print')->icon('heroicon-o-printer')->color('gray')
+                    ->url(fn(Quotation $record) => route('print.quotation', $record))
+                    ->openUrlInNewTab(),
                 \Filament\Actions\Action::make('delete')
                     ->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
                     ->action(fn(Quotation $record) => $record->delete()),

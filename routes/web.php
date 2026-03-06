@@ -41,4 +41,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('print.invoice');
     Route::get('/print/receipt/{payment}', [\App\Http\Controllers\FinancialPrintController::class, 'printReceipt'])
         ->name('print.receipt');
+    Route::get('/print/quotation/{quotation}', [\App\Http\Controllers\FinancialPrintController::class, 'printQuotation'])
+        ->name('print.quotation');
 });

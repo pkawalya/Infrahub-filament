@@ -27,12 +27,44 @@ class SubscriptionResource extends Resource
                 Forms\Components\TextInput::make('name')->required(),
                 Forms\Components\TextInput::make('slug')->unique(ignoreRecord: true),
                 Forms\Components\Textarea::make('description')->rows(2),
-                Forms\Components\TextInput::make('monthly_price')->numeric()->prefix('$'),
-                Forms\Components\TextInput::make('yearly_price')->numeric()->prefix('$'),
                 Forms\Components\Toggle::make('is_active')->default(true),
                 Forms\Components\Toggle::make('is_popular'),
                 Forms\Components\TextInput::make('sort_order')->numeric()->default(0),
             ])->columns(2),
+
+            Schemas\Components\Section::make('Traditional Pricing')
+                ->description('Classic per-plan subscription pricing.')
+                ->schema([
+                    Forms\Components\TextInput::make('monthly_price')->numeric()->prefix('$'),
+                    Forms\Components\TextInput::make('yearly_price')->numeric()->prefix('$'),
+                ])->columns(2),
+
+            Schemas\Components\Section::make('Per-Project Pricing')
+                ->description('Hybrid billing model: base platform fee + charge per active project beyond the included allowance.')
+                ->icon('heroicon-o-calculator')
+                ->schema([
+                    Forms\Components\TextInput::make('base_platform_price')
+                        ->label('Base Platform Fee')
+                        ->numeric()
+                        ->prefix('$')
+                        ->helperText('Fixed monthly fee charged to the company regardless of project count.'),
+                    Forms\Components\TextInput::make('per_project_price')
+                        ->label('Per Project Price')
+                        ->numeric()
+                        ->prefix('$')
+                        ->helperText('Monthly cost per active project beyond the included allowance.'),
+                    Forms\Components\TextInput::make('included_projects')
+                        ->label('Included Projects')
+                        ->numeric()
+                        ->default(0)
+                        ->helperText('Number of projects included in the base fee (no extra charge).'),
+                    Forms\Components\KeyValue::make('module_prices')
+                        ->label('Per-Module Pricing')
+                        ->keyLabel('Module Code')
+                        ->valueLabel('Monthly Price ($)')
+                        ->helperText('Optional per-module monthly fees. Use module codes (e.g. cde, tasks, planning).'),
+                ])->columns(2)
+                ->collapsed(),
 
             Schemas\Components\Section::make('Limits')->schema([
                 Forms\Components\TextInput::make('max_users')->numeric()->default(5),
@@ -54,8 +86,11 @@ class SubscriptionResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')->sortable()->searchable(),
-                Tables\Columns\TextColumn::make('monthly_price')->money('USD')->sortable(),
-                Tables\Columns\TextColumn::make('yearly_price')->money('USD')->sortable(),
+                Tables\Columns\TextColumn::make('monthly_price')->money('USD')->sortable()->label('Monthly'),
+                Tables\Columns\TextColumn::make('yearly_price')->money('USD')->sortable()->label('Yearly'),
+                Tables\Columns\TextColumn::make('base_platform_price')->money('USD')->label('Base Fee')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('per_project_price')->money('USD')->label('Per Project')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('included_projects')->label('Incl. Projects')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('max_users')->label('Users'),
                 Tables\Columns\TextColumn::make('max_projects')->label('Projects'),
                 Tables\Columns\TextColumn::make('companies_count')->counts('companies')->label('Companies'),

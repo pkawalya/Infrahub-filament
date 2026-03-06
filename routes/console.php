@@ -45,3 +45,10 @@ Schedule::command('queue:prune-batches --hours=72')
 // ── Clear expired password reset tokens (daily) ──
 Schedule::command('auth:clear-resets')
     ->daily();
+
+// ── Monthly Billing Generation (1st of month at 1 AM) ──
+Schedule::command('billing:generate --finalize')
+    ->monthlyOn(1, '01:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/billing.log'));
