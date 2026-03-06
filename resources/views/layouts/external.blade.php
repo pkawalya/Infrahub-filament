@@ -36,9 +36,14 @@
     <nav class="bg-white border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-6">
             <div class="flex justify-between items-center h-16">
-                <div class="flex items-center">
+                <div class="flex items-center gap-3">
+                    @if(!empty($companyBranding['logo_url']))
+                        <img src="{{ $companyBranding['logo_url'] }}"
+                            alt="{{ $companyBranding['name'] ?? config('app.name') }}"
+                            style="max-height:36px;max-width:180px;">
+                    @endif
                     <h1 class="text-lg font-medium text-gray-900">
-                        {{ config('app.name') }}
+                        {{ $companyBranding['name'] ?? config('app.name') }}
                     </h1>
                 </div>
                 <div class="flex items-center">
@@ -59,7 +64,11 @@
     <footer class="bg-white border-t border-gray-200 mt-auto">
         <div class="max-w-7xl mx-auto py-6 px-6">
             <div class="text-center text-sm text-gray-500">
-                <p>&copy; {{ date('Y') }} Dewakoding Project Management. All rights reserved.</p>
+                <p>&copy; {{ date('Y') }} {{ $companyBranding['name'] ?? config('app.name') }}. All rights reserved.</p>
+                @if(!empty($companyBranding['website']))
+                    <p class="mt-1"><a href="{{ $companyBranding['website'] }}"
+                            class="text-blue-600 hover:underline">{{ $companyBranding['website'] }}</a></p>
+                @endif
             </div>
         </div>
     </footer>

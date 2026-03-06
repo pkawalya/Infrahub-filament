@@ -52,3 +52,10 @@ Schedule::command('billing:generate --finalize')
     ->withoutOverlapping()
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/billing.log'));
+
+// ── Financial Alerts: overdue invoices + subscription expiry (daily 6 AM) ──
+Schedule::command('financial:process-alerts')
+    ->dailyAt('06:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/financial-alerts.log'));

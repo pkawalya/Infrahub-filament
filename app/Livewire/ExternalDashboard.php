@@ -85,6 +85,10 @@ class ExternalDashboard extends Component
 
         $this->project = $externalAccess->project;
 
+        // Share company branding with the external layout
+        $company = $this->project->company ?? null;
+        view()->share('companyBranding', $company ? $company->getBranding() : []);
+
         $this->statuses = TicketStatus::where('project_id', $this->project->id)
             ->orderBy('sort_order')
             ->orderBy('name')
