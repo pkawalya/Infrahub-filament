@@ -18,6 +18,11 @@ class CdeProject extends Model
         'client_id',
         'manager_id',
         'status',
+        'billing_status',
+        'monthly_rate',
+        'billing_started_at',
+        'billing_paused_at',
+        'billing_notes',
         'start_date',
         'end_date',
         'budget',
@@ -34,6 +39,9 @@ class CdeProject extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'budget' => 'decimal:2',
+        'monthly_rate' => 'decimal:2',
+        'billing_started_at' => 'datetime',
+        'billing_paused_at' => 'datetime',
     ];
 
     // position: 'before' = $100, 'after' = 100 UGX
@@ -62,6 +70,36 @@ class CdeProject extends Model
         'completed' => 'Completed',
         'cancelled' => 'Cancelled',
     ];
+
+    public static array $billingStatuses = [
+        'active' => 'Active (Billed)',
+        'paused' => 'Paused (Not Billed)',
+        'archived' => 'Archived',
+    ];
+
+    // ─── Billing Helpers ────────────────────────────────────────
+
+    public function isBillable(): bool
+    {
+        return $this->billing_status === 'active';
+    }
+
+    public function pauseBilling(?string $reason = null): void
+    {
+        $this->update([
+            'billing_status' => 'paused',
+            'billing_paused_at' => now(),
+            'billing_notes' => $reason,
+        ]);
+    }
+
+    public function resumeBilling(): void
+    {
+        $this->update([
+            'billing_status' => 'active',
+            'billing_paused_at' => null,
+        ]);
+    }
 
     /**
      * Get the currency symbol for this project.

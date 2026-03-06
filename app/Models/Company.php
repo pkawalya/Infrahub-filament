@@ -95,6 +95,14 @@ class Company extends Model
     {
         return $this->hasMany(Quotation::class);
     }
+    public function billingRecords()
+    {
+        return $this->hasMany(BillingRecord::class)->orderByDesc('period');
+    }
+    public function activeProjects()
+    {
+        return $this->projects()->where('billing_status', 'active');
+    }
 
     /**
      * Get invoice configuration with defaults.
@@ -225,7 +233,7 @@ class Company extends Model
 
     /**
      * Apply a subscription plan, updating base limits from the plan.
-     * Keeps extra addons intact.
+     * Keeps extra addons intact. Works with both legacy and per-project billing.
      */
     public function applyPlan(Subscription $plan, string $billingCycle = 'monthly'): void
     {
@@ -241,6 +249,14 @@ class Company extends Model
         ]);
 
         $this->syncModulesFromSubscription();
+    }
+
+    /**
+     * Get estimated monthly bill using the BillingService.
+     */
+    public function getEstimatedMonthlyBill(): array
+    {
+        return app(\App\Services\BillingService::class)->getCompanyCostSummary($this);
     }
 
     // ─── Actions ─────────────────────────────────────────────────
