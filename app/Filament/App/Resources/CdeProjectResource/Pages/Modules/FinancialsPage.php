@@ -489,7 +489,7 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                         ->required()->searchable(),
                 ])
                 ->action(function (array $data): void {
-                    $quote = Quotation::find($data['quotation_id']);
+                    $quote = Quotation::where('company_id', $this->cid())->find($data['quotation_id']);
                     if ($quote && $quote->canConvert()) {
                         $invoice = $quote->convertToInvoice();
                         Notification::make()->title('Quotation converted to Invoice ' . $invoice->invoice_number)->success()->send();

@@ -12,7 +12,7 @@ Route::get('/', function () {
 
 // Company Onboarding
 Route::get('/get-started', [OnboardingController::class, 'show'])->name('onboarding');
-Route::post('/get-started', [OnboardingController::class, 'store'])->name('onboarding.store');
+Route::post('/get-started', [OnboardingController::class, 'store'])->middleware('throttle:5,1')->name('onboarding.store');
 Route::get('/get-started/success', [OnboardingController::class, 'success'])->name('onboarding.success');
 
 // Schedule a Call

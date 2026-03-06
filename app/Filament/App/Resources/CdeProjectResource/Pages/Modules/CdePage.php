@@ -726,8 +726,8 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
      */
     public function submitDeliverable(int $submissionId, array $data): void
     {
-        $sub = DocumentSubmission::find($submissionId);
-        if (!$sub)
+        $sub = DocumentSubmission::where('cde_project_id', $this->record->id)->find($submissionId);
+        if (!$sub || !in_array($sub->status, ['pending', 'rejected']))
             return;
 
         $updates = [
@@ -760,12 +760,16 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
      */
     public function reviewSubmission(int $submissionId, string $decision, ?string $reason = null): void
     {
-        $sub = DocumentSubmission::find($submissionId);
-        if (!$sub)
+        if (!in_array($decision, ['approved', 'rejected'])) {
+            return;
+        }
+
+        $sub = DocumentSubmission::where('cde_project_id', $this->record->id)->find($submissionId);
+        if (!$sub || $sub->status !== 'submitted')
             return;
 
         $sub->update([
-            'status' => $decision, // 'approved' or 'rejected'
+            'status' => $decision,
             'reviewed_at' => now(),
             'reviewed_by' => auth()->id(),
             'rejection_reason' => $decision === 'rejected' ? $reason : null,
@@ -780,18 +784,25 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
      */
     public function downloadSubmission(int $submissionId)
     {
-        $sub = DocumentSubmission::find($submissionId);
+        $sub = DocumentSubmission::where('cde_project_id', $this->record->id)->find($submissionId);
         if (!$sub || !$sub->file_path) {
             Notification::make()->title('No file available.')->warning()->send();
             return null;
         }
 
-        if (!Storage::disk('public')->exists($sub->file_path)) {
+        // Prevent directory traversal
+        $safePath = ltrim($sub->file_path, '/');
+        if (str_contains($safePath, '..') || str_starts_with($safePath, '/')) {
+            Notification::make()->title('Invalid file path.')->danger()->send();
+            return null;
+        }
+
+        if (!Storage::disk('public')->exists($safePath)) {
             Notification::make()->title('File not found on disk.')->danger()->send();
             return null;
         }
 
-        return Storage::disk('public')->download($sub->file_path, $sub->file_name ?? basename($sub->file_path));
+        return Storage::disk('public')->download($safePath, $sub->file_name ?? basename($safePath));
     }
 
     // ── Document table ─────────────────────────────────────────────────
