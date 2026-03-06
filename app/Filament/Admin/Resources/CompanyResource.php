@@ -98,8 +98,22 @@ class CompanyResource extends Resource
 
                 Schemas\Components\Tabs\Tab::make('Settings')->schema([
                     Schemas\Components\Section::make('Branding')->schema([
-                        Forms\Components\FileUpload::make('logo')->image()->directory('companies/logos'),
-                        Forms\Components\FileUpload::make('favicon')->image()->directory('companies/favicons'),
+                        Forms\Components\FileUpload::make('logo')
+                            ->image()
+                            ->directory('companies/logos')
+                            ->imageResizeMode('contain')
+                            ->imageCropAspectRatio('497:228')
+                            ->imageResizeTargetWidth('497')
+                            ->imageResizeTargetHeight('228')
+                            ->maxSize(2048)
+                            ->helperText('Auto-resized to 497×228px to match sidebar logo size.')
+                            ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp']),
+                        Forms\Components\FileUpload::make('favicon')
+                            ->image()
+                            ->directory('companies/favicons')
+                            ->imageResizeTargetWidth('64')
+                            ->imageResizeTargetHeight('64')
+                            ->acceptedFileTypes(['image/png', 'image/x-icon', 'image/vnd.microsoft.icon']),
                         Forms\Components\ColorPicker::make('primary_color'),
                         Forms\Components\ColorPicker::make('secondary_color'),
                     ])->columns(2),

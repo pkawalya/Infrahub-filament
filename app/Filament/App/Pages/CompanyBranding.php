@@ -61,11 +61,12 @@ class CompanyBranding extends Page implements HasForms
                                 ->image()
                                 ->directory('companies/logos')
                                 ->imageResizeMode('contain')
-                                ->imageCropAspectRatio(null)
-                                ->imageResizeTargetWidth('400')
-                                ->imageResizeTargetHeight('120')
-                                ->helperText('Recommended: 400×120px (PNG or SVG). This appears in the sidebar, emails, and documents.')
-                                ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp']),
+                                ->imageCropAspectRatio('497:228')
+                                ->imageResizeTargetWidth('497')
+                                ->imageResizeTargetHeight('228')
+                                ->maxSize(2048)
+                                ->helperText('Will be resized to 497×228px to match the standard sidebar logo size. PNG or JPEG recommended.')
+                                ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp']),
 
                             Forms\Components\FileUpload::make('favicon')
                                 ->label('Favicon')
