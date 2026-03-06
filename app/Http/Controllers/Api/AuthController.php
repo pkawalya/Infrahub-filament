@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends BaseApiController
@@ -22,6 +23,14 @@ class AuthController extends BaseApiController
             'device_name' => 'string|max:255',
         ]);
 
+        // Rate limiting: 5 attempts per minute per email
+        $rateLimitKey = 'api-login:' . strtolower($request->email);
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
+            $seconds = RateLimiter::availableIn($rateLimitKey);
+            return $this->error("Too many login attempts. Try again in {$seconds} seconds.", 429);
+        }
+        RateLimiter::hit($rateLimitKey, 60);
+
         $user = User::where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -33,6 +42,13 @@ class AuthController extends BaseApiController
         if (!$user->is_active) {
             return $this->error('Account is deactivated. Contact your administrator.', 403);
         }
+
+        // SaaS: Verify the user's company is active
+        if ($user->company && !$user->company->is_active) {
+            return $this->error('Your company account is inactive. Contact support.', 403);
+        }
+
+        RateLimiter::clear($rateLimitKey);
 
         $deviceName = $request->device_name ?? ($request->userAgent() ?: 'api-token');
 
@@ -60,12 +76,25 @@ class AuthController extends BaseApiController
      */
     public function register(Request $request): JsonResponse
     {
+        // SECURITY: Public registration is disabled in production SaaS.
+        // Users must be invited by their company admin via the Filament panel.
+        // To re-enable, set ALLOW_API_REGISTRATION=true in .env
+        if (!config('app.allow_api_registration', false)) {
+            return $this->error('Public registration is disabled. Contact your company admin for an invitation.', 403);
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
             'company_id' => 'required|exists:companies,id',
         ]);
+
+        // Verify the company is active and accepting registrations
+        $company = \App\Models\Company::find($data['company_id']);
+        if (!$company || !$company->is_active) {
+            return $this->error('This company is not accepting registrations.', 403);
+        }
 
         $user = User::create([
             'name' => $data['name'],
@@ -139,9 +168,17 @@ class AuthController extends BaseApiController
             'abilities.*' => 'string',
         ]);
 
+        // Restrict abilities to safe operations (never allow wildcard from user input)
+        $allowedAbilities = ['read', 'write', 'projects:read', 'projects:write', 'documents:read', 'documents:write', 'tasks:read', 'tasks:write'];
+        $requestedAbilities = $request->abilities ?? ['read'];
+        $safeAbilities = array_intersect($requestedAbilities, $allowedAbilities);
+        if (empty($safeAbilities)) {
+            $safeAbilities = ['read'];
+        }
+
         $token = $request->user()->createToken(
             $request->name,
-            $request->abilities ?? ['*'],
+            $safeAbilities,
         );
 
         return $this->success([
