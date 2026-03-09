@@ -35,21 +35,26 @@ class AppServiceProvider extends ServiceProvider
         config(['mail.default' => 'infrahub']);
 
         \Illuminate\Support\Facades\Mail::extend('infrahub', function () {
-            $host = Setting::getValue('mail_host') ?: config('mail.mailers.smtp.host', 'smtp.gmail.com');
-            $port = (int) (Setting::getValue('mail_port') ?: config('mail.mailers.smtp.port', 587));
-            $username = Setting::getValue('mail_username') ?: config('mail.mailers.smtp.username', '');
-            $password = Setting::getValue('mail_password') ?: config('mail.mailers.smtp.password', '');
-            $fromAddress = Setting::getValue('mail_from_address') ?: config('mail.from.address', '');
-            $fromName = Setting::getValue('mail_from_name') ?: config('mail.from.name', config('app.name'));
+            // Cache mail settings for 1 hour to avoid DB queries on every request
+            $mailConfig = cache()->remember('mail_settings', 3600, function () {
+                return [
+                    'host' => Setting::getValue('mail_host') ?: config('mail.mailers.smtp.host', 'smtp.gmail.com'),
+                    'port' => (int) (Setting::getValue('mail_port') ?: config('mail.mailers.smtp.port', 587)),
+                    'username' => Setting::getValue('mail_username') ?: config('mail.mailers.smtp.username', ''),
+                    'password' => Setting::getValue('mail_password') ?: config('mail.mailers.smtp.password', ''),
+                    'from_address' => Setting::getValue('mail_from_address') ?: config('mail.from.address', ''),
+                    'from_name' => Setting::getValue('mail_from_name') ?: config('mail.from.name', config('app.name')),
+                ];
+            });
 
-            $tls = ($port !== 465);
-            $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport($host, $port, $tls);
-            $transport->setUsername($username);
-            $transport->setPassword($password);
+            $tls = ($mailConfig['port'] !== 465);
+            $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport($mailConfig['host'], $mailConfig['port'], $tls);
+            $transport->setUsername($mailConfig['username']);
+            $transport->setPassword($mailConfig['password']);
 
             config([
-                'mail.from.address' => $fromAddress,
-                'mail.from.name' => $fromName,
+                'mail.from.address' => $mailConfig['from_address'],
+                'mail.from.name' => $mailConfig['from_name'],
             ]);
 
             return $transport;
