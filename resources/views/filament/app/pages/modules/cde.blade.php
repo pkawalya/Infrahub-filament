@@ -2,140 +2,135 @@
 
     @push('styles')
         <style>
-            /* ═══════════ CDE — OneDrive / Asite Inspired ═══════════ */
+            /* ═══════════ CDE — Professional Document Management ═══════════ */
             :root {
                 --cde-bg: #ffffff;
                 --cde-surface: #f8fafc;
-                --cde-border: #e2e8f0;
-                --cde-text: #1e293b;
-                --cde-muted: #64748b;
-                --cde-subtle: #94a3b8;
+                --cde-border: #e5e7eb;
+                --cde-text: #111827;
+                --cde-muted: #6b7280;
+                --cde-subtle: #9ca3af;
                 --cde-accent: #4f46e5;
-                --cde-accent-bg: #eef2ff;
-                --cde-hover: #f1f5f9;
-                --cde-radius: 8px;
+                --cde-accent-light: #eef2ff;
+                --cde-hover: #f9fafb;
+                --cde-radius: 10px;
+                --cde-shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
+                --cde-shadow-md: 0 4px 12px rgba(0, 0, 0, .07);
             }
 
             .dark {
                 --cde-bg: #111827;
-                --cde-surface: rgba(30, 41, 59, 0.6);
+                --cde-surface: rgba(30, 41, 59, 0.5);
                 --cde-border: rgba(255, 255, 255, 0.08);
                 --cde-text: #f1f5f9;
                 --cde-muted: #94a3b8;
                 --cde-subtle: #64748b;
                 --cde-accent: #818cf8;
-                --cde-accent-bg: rgba(99, 102, 241, 0.1);
-                --cde-hover: rgba(255, 255, 255, 0.04);
+                --cde-accent-light: rgba(99, 102, 241, 0.1);
+                --cde-hover: rgba(255, 255, 255, 0.03);
+                --cde-shadow: 0 1px 3px rgba(0, 0, 0, .2);
+                --cde-shadow-md: 0 4px 12px rgba(0, 0, 0, .3);
             }
 
             /* ── Status Pipeline ─────────────────────── */
             .cde-pipeline {
-                display: flex;
-                gap: 2px;
-                background: var(--cde-surface);
-                border: 1px solid var(--cde-border);
-                border-radius: var(--cde-radius);
-                padding: 4px;
-                margin-bottom: 16px;
-                overflow-x: auto;
+                display: grid;
+                grid-template-columns: repeat(5, 1fr);
+                gap: 6px;
+                margin-bottom: 20px;
             }
 
             .cde-pipe-item {
-                flex: 1;
-                min-width: 80px;
                 text-align: center;
-                padding: 8px 6px;
-                border-radius: 6px;
-                font-size: 11px;
-                font-weight: 600;
-                transition: all .15s;
+                padding: 14px 8px 12px;
+                border-radius: var(--cde-radius);
+                transition: transform .15s, box-shadow .15s;
                 cursor: default;
-                position: relative;
+                border: 1px solid transparent;
+            }
+
+            .cde-pipe-item:hover {
+                transform: translateY(-1px);
+                box-shadow: var(--cde-shadow-md);
             }
 
             .cde-pipe-count {
                 display: block;
-                font-size: 18px;
+                font-size: 22px;
                 font-weight: 800;
-                line-height: 1.2;
-                letter-spacing: -0.02em;
+                line-height: 1;
+                letter-spacing: -0.03em;
             }
 
             .cde-pipe-label {
                 display: block;
                 font-size: 10px;
-                font-weight: 600;
+                font-weight: 700;
                 text-transform: uppercase;
-                letter-spacing: 0.05em;
-                margin-top: 2px;
-                opacity: 0.7;
+                letter-spacing: 0.06em;
+                margin-top: 4px;
+                opacity: 0.75;
             }
 
-            /* ── Command Bar (OneDrive-style) ────────── */
+            /* ── Command Bar ────────── */
             .cde-cmdbar {
                 display: flex;
                 align-items: center;
                 gap: 6px;
-                padding: 8px 12px;
+                padding: 6px 12px;
                 background: var(--cde-bg);
                 border: 1px solid var(--cde-border);
                 border-radius: var(--cde-radius);
-                margin-bottom: 12px;
+                margin-bottom: 14px;
+                box-shadow: var(--cde-shadow);
             }
 
             .cde-cmdbar-sep {
                 width: 1px;
-                height: 24px;
+                height: 22px;
                 background: var(--cde-border);
-                margin: 0 4px;
+                margin: 0 2px;
             }
 
             .cde-cmd-btn {
                 display: inline-flex;
                 align-items: center;
-                gap: 5px;
-                padding: 6px 12px;
-                font-size: 13px;
-                font-weight: 500;
-                color: var(--cde-text);
+                justify-content: center;
+                width: 32px;
+                height: 32px;
                 background: none;
-                border: none;
+                border: 1px solid transparent;
                 border-radius: 6px;
                 cursor: pointer;
-                transition: background .12s;
-                white-space: nowrap;
+                transition: all .12s;
+                color: var(--cde-muted);
             }
 
             .cde-cmd-btn:hover {
                 background: var(--cde-hover);
+                border-color: var(--cde-border);
             }
 
             .cde-cmd-btn svg {
                 width: 16px;
                 height: 16px;
-                color: var(--cde-muted);
             }
 
             .cde-cmd-btn.active {
-                background: var(--cde-accent-bg);
+                background: var(--cde-accent-light);
                 color: var(--cde-accent);
-            }
-
-            .cde-cmd-btn.active svg {
-                color: var(--cde-accent);
+                border-color: var(--cde-accent-light);
             }
 
             .cde-cmd-spacer {
                 flex: 1;
             }
 
-            /* ── Breadcrumb (compact) ──────────────────── */
+            /* ── Breadcrumb ──────────────────── */
             .cde-path {
                 display: flex;
                 align-items: center;
-                gap: 4px;
-                padding: 6px 0;
-                margin-bottom: 12px;
+                gap: 2px;
                 font-size: 13px;
                 overflow-x: auto;
             }
@@ -146,34 +141,34 @@
                 background: none;
                 border: none;
                 cursor: pointer;
-                padding: 2px 6px;
-                border-radius: 4px;
+                padding: 3px 8px;
+                border-radius: 5px;
                 transition: background .12s;
                 white-space: nowrap;
             }
 
             .cde-path-item:hover {
-                background: var(--cde-accent-bg);
+                background: var(--cde-accent-light);
             }
 
             .cde-path-current {
                 color: var(--cde-text);
                 font-weight: 700;
-                padding: 2px 6px;
+                padding: 3px 8px;
                 white-space: nowrap;
             }
 
             .cde-path-sep {
                 color: var(--cde-subtle);
-                font-size: 12px;
+                font-size: 11px;
             }
 
-            /* ── Folder Grid ──────────────────────────── */
+            /* ── Folder Grid ──────────────────── */
             .cde-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
                 gap: 10px;
-                margin-bottom: 16px;
+                margin-bottom: 18px;
             }
 
             .cde-grid.list-mode {
@@ -185,36 +180,37 @@
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                padding: 12px 14px;
+                padding: 14px 16px;
                 background: var(--cde-bg);
                 border: 1px solid var(--cde-border);
                 border-radius: var(--cde-radius);
                 cursor: pointer;
-                transition: all .12s;
-                position: relative;
+                transition: all .15s;
+                box-shadow: var(--cde-shadow);
             }
 
             .cde-item:hover {
-                background: var(--cde-hover);
                 border-color: var(--cde-accent);
-                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+                box-shadow: var(--cde-shadow-md);
+                transform: translateY(-1px);
             }
 
             .cde-grid.list-mode .cde-item {
-                border-radius: 4px;
+                border-radius: 6px;
                 padding: 10px 14px;
+                box-shadow: none;
                 border-color: transparent;
                 border-bottom-color: var(--cde-border);
             }
 
             .cde-grid.list-mode .cde-item:hover {
                 background: var(--cde-hover);
+                transform: none;
+                box-shadow: none;
                 border-color: transparent;
                 border-bottom-color: var(--cde-border);
-                box-shadow: none;
             }
 
-            /* Folder icon */
             .cde-ficon {
                 width: 36px;
                 height: 36px;
@@ -225,19 +221,14 @@
             }
 
             .cde-ficon svg {
-                width: 32px;
-                height: 32px;
+                width: 30px;
+                height: 30px;
             }
 
             .cde-ficon-yellow {
                 color: #f59e0b;
             }
 
-            .cde-ficon-blue {
-                color: #3b82f6;
-            }
-
-            /* Item details */
             .cde-item-info {
                 flex: 1;
                 min-width: 0;
@@ -255,7 +246,7 @@
             .cde-item-meta {
                 font-size: 11px;
                 color: var(--cde-muted);
-                margin-top: 1px;
+                margin-top: 2px;
                 display: flex;
                 align-items: center;
                 gap: 6px;
@@ -264,41 +255,31 @@
             .cde-item-badge {
                 font-size: 9px;
                 font-weight: 700;
-                padding: 1px 5px;
-                border-radius: 3px;
-                background: var(--cde-accent-bg);
+                padding: 2px 6px;
+                border-radius: 4px;
+                background: var(--cde-accent-light);
                 color: var(--cde-accent);
                 text-transform: uppercase;
                 letter-spacing: 0.03em;
             }
 
-            .cde-item-shared {
-                color: var(--cde-subtle);
-                display: flex;
-                align-items: center;
-            }
-
-            .cde-item-shared svg {
-                width: 14px;
-                height: 14px;
-            }
-
-            /* ── Documents Section ────────────────────── */
+            /* ── Documents Section ────────────── */
             .cde-docs-wrap {
                 background: var(--cde-bg);
                 border: 1px solid var(--cde-border);
                 border-radius: var(--cde-radius);
                 overflow: hidden;
-                margin-bottom: 16px;
+                margin-bottom: 18px;
+                box-shadow: var(--cde-shadow);
             }
 
             .cde-docs-toolbar {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                padding: 10px 16px;
+                padding: 12px 18px;
                 border-bottom: 1px solid var(--cde-border);
-                font-size: 13px;
+                font-size: 14px;
                 font-weight: 600;
                 color: var(--cde-text);
             }
@@ -312,23 +293,70 @@
             .cde-docs-toolbar .count {
                 font-size: 11px;
                 font-weight: 700;
-                background: var(--cde-accent-bg);
+                background: var(--cde-accent-light);
                 color: var(--cde-accent);
-                padding: 1px 8px;
+                padding: 2px 8px;
                 border-radius: 99px;
             }
 
-            /* ── Collapsible Sections ────────────────── */
             .cde-section-wrap {
-                margin-bottom: 12px;
+                margin-bottom: 14px;
             }
 
-            /* ── Share Overlay ────────────────────────── */
+            /* ── Tabs ────────────────────────── */
+            .cde-tabs {
+                display: flex;
+                gap: 2px;
+                border-bottom: 2px solid var(--cde-border);
+                margin-bottom: 18px;
+                overflow-x: auto;
+            }
+
+            .cde-tab {
+                padding: 10px 22px;
+                font-size: 13px;
+                font-weight: 600;
+                border: none;
+                cursor: pointer;
+                border-radius: 8px 8px 0 0;
+                transition: all .15s;
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                white-space: nowrap;
+                background: transparent;
+                color: var(--cde-muted);
+                position: relative;
+            }
+
+            .cde-tab:hover {
+                color: var(--cde-text);
+                background: var(--cde-hover);
+            }
+
+            .cde-tab.active {
+                background: var(--cde-accent);
+                color: white;
+            }
+
+            .cde-tab svg {
+                width: 15px;
+                height: 15px;
+            }
+
+            .cde-tab-badge {
+                font-size: 10px;
+                padding: 1px 7px;
+                border-radius: 99px;
+                font-weight: 700;
+            }
+
+            /* ── Share Modal ────────────────── */
             .cde-share-overlay {
                 position: fixed;
                 inset: 0;
-                background: rgba(0, 0, 0, .45);
-                backdrop-filter: blur(3px);
+                background: rgba(0, 0, 0, .5);
+                backdrop-filter: blur(4px);
                 z-index: 99999;
                 display: flex;
                 align-items: center;
@@ -340,8 +368,8 @@
                 background: var(--cde-bg);
                 width: 100%;
                 max-width: 560px;
-                border-radius: 12px;
-                box-shadow: 0 25px 60px -10px rgba(0, 0, 0, .25);
+                border-radius: 14px;
+                box-shadow: 0 25px 60px -10px rgba(0, 0, 0, .3);
                 overflow: hidden;
             }
 
@@ -459,7 +487,7 @@
 
     @push('scripts')
         <script>
-            document.addEventListener('livewire:init', () => {
+            document.addEventListen            er('livewire:init', () => {
                 Livewire.on('copy-to-clipboard', ({ text }) => {
                     navigator.clipboard.writeText(text).catch(() => prompt('Copy this link:', text));
                 });
@@ -521,28 +549,19 @@
         </div>
     @endif
 
-    {{-- ══ Tab Switcher: Files | Required Submissions ════════════════════ --}}
+    {{-- ══ Tab Switcher════════════════════ --}}
     @php $subStats = $this->getSubmissionStats();
     $totalSubs = array_sum(array_column($subStats, 'total')); @endphp
-    <div style="display:flex;gap:4px;border-bottom:2px solid var(--cde-border);margin-bottom:14px;overflow-x:auto;">
-        <button wire:click="$set('activeDocTab', 'files')"
-            style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;border-radius:8px 8px 0 0;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;{{ $this->activeDocTab === 'files' ? 'background:var(--cde-accent,#4f46e5);color:white;' : 'background:transparent;color:var(--cde-muted);' }}">
-            <svg style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-            </svg>
+    <div class="cde-tabs">
+        <button wire:click="$set('activeDocTab', 'files')" class="cde-tab {{ $this->activeDocTab === 'files' ? 'active' : '' }}">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
             Files & Documents
         </button>
-        <button wire:click="$set('activeDocTab', 'submissions')"
-            style="padding:10px 20px;font-size:13px;font-weight:600;border:none;cursor:pointer;border-radius:8px 8px 0 0;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;{{ $this->activeDocTab === 'submissions' ? 'background:var(--cde-accent,#4f46e5);color:white;' : 'background:transparent;color:var(--cde-muted);' }}">
-            <svg style="width:15px;height:15px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75" />
-            </svg>
+        <button wire:click="$set('activeDocTab', 'submissions')" class="cde-tab {{ $this->activeDocTab === 'submissions' ? 'active' : '' }}">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75"/></svg>
             Required Submissions
             @if($totalSubs > 0)
-                <span
-                    style="font-size:10px;padding:2px 7px;border-radius:99px;margin-left:2px;{{ $this->activeDocTab === 'submissions' ? 'background:rgba(255,255,255,0.2);color:white;' : 'background:rgba(99,102,241,0.12);color:#6366f1;' }}">{{ $totalSubs }}</span>
+                <span class="cde-tab-badge" style="{{ $this->activeDocTab === 'submissions' ? 'background:rgba(255,255,255,0.2);color:white;' : 'background:rgba(99,102,241,0.12);color:#6366f1;' }}">{{ $totalSubs }}</span>
             @endif
         </button>
     </div>
@@ -646,7 +665,8 @@
                 </div>
             </x-filament::section>
         @endif
-        <div class="cde-cmdbar" x-data="{ viewMode: 'grid' }">
+        <div x-data="{ viewMode: 'grid' }">
+        <div class="cde-cmdbar">
             <div class="cde-cmd-spacer"></div>
             <div class="cde-cmdbar-sep"></div>
             {{-- View Toggle --}}
@@ -696,11 +716,12 @@
                 @endif
             </div>
         </div>
+        </div>
 
         {{-- ── Subfolders Grid ──────────────────────────────────────────── --}}
         @php $subfolders = $this->getSubfolders(); @endphp
         @if($subfolders->isNotEmpty())
-            <div class="cde-grid" x-data :class="viewMode === 'list' ? 'list-mode' : ''">
+            <div class="cde-grid" :class="viewMode === 'list' ? 'list-mode' : ''">
                 @foreach($subfolders as $sf)
                     <button wire:click="navigateToFolder({{ $sf->id }})" class="cde-item">
                         <div class="cde-ficon cde-ficon-yellow">
