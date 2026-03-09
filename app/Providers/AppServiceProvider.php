@@ -28,6 +28,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // ── Force SMTP scheme to prevent smtps/ssl override ──
+        config(['mail.mailers.smtp.scheme' => 'smtp']);
+
         // ── Make ALL Select dropdowns searchable by default ──
         Select::configureUsing(fn(Select $select) => $select->searchable());
 
