@@ -12,6 +12,7 @@ use Filament\Resources\Resource;
 use Filament\Widgets\Widget;
 use Filament\Forms\Components\Select;
 use Illuminate\Support\Str;
+use App\Models\Setting;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,15 +21,28 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // ── Override SMTP mail transport to bypass config scheme issues ──
+        // ── Override SMTP transport: reads from DB settings first, .env fallback ──
         $this->app->afterResolving('mail.manager', function ($manager) {
             $manager->extend('smtp', function () {
-                $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport(
-                    config('mail.mailers.smtp.host', 'smtp.gmail.com'),
-                    (int) config('mail.mailers.smtp.port', 587),
-                );
-                $transport->setUsername(config('mail.mailers.smtp.username', ''));
-                $transport->setPassword(config('mail.mailers.smtp.password', ''));
+                // DB settings (group=email) take priority over .env
+                $host = Setting::getValue('mail_host') ?: config('mail.mailers.smtp.host', 'smtp.gmail.com');
+                $port = (int) (Setting::getValue('mail_port') ?: config('mail.mailers.smtp.port', 587));
+                $username = Setting::getValue('mail_username') ?: config('mail.mailers.smtp.username', '');
+                $password = Setting::getValue('mail_password') ?: config('mail.mailers.smtp.password', '');
+                $fromAddress = Setting::getValue('mail_from_address') ?: config('mail.from.address', '');
+                $fromName = Setting::getValue('mail_from_name') ?: config('mail.from.name', config('app.name'));
+
+                // Build transport with STARTTLS (port 587) or SSL (port 465)
+                $tls = ($port !== 465); // port 465 = implicit SSL, others = STARTTLS
+                $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport($host, $port, $tls);
+                $transport->setUsername($username);
+                $transport->setPassword($password);
+
+                // Apply from address to config so Laravel uses it
+                config([
+                    'mail.from.address' => $fromAddress,
+                    'mail.from.name' => $fromName,
+                ]);
 
                 return $transport;
             });
