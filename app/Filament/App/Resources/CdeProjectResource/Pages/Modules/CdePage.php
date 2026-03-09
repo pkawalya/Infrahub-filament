@@ -39,6 +39,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
     protected static ?string $navigationLabel = 'Documents';
     protected static ?string $title = 'Document Management';
     protected string $view = 'filament.app.pages.modules.cde';
+    protected bool $hasHeaderActions = false; // rendered manually in command bar
 
     public ?int $currentFolderId = null;
     public string $folderPath = 'Root';
