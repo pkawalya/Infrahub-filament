@@ -186,7 +186,7 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
         $pid = $this->pid();
         $invoices = Invoice::where('cde_project_id', $pid)
             ->whereNotIn('status', ['paid', 'cancelled'])
-            ->where('balance_due', '>', 0)
+            ->whereRaw('(total_amount - amount_paid) > 0')
             ->get();
 
         $buckets = ['current' => 0, '1_30' => 0, '31_60' => 0, '61_90' => 0, '90_plus' => 0];
@@ -196,7 +196,7 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
             $days = $inv->due_date ? (int) now()->diffInDays($inv->due_date, false) : 0;
             $overdueDays = max(0, -$days); // negative means overdue
 
-            $balance = (float) $inv->balance_due;
+            $balance = (float) ($inv->total_amount - $inv->amount_paid);
             if ($overdueDays <= 0) {
                 $buckets['current'] += $balance;
                 $counts['current']++;
