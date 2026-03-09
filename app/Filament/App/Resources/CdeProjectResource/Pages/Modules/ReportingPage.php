@@ -4,6 +4,10 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\CdeActivityLog;
+use App\Models\Contract;
+use App\Models\Expense;
+use App\Models\Invoice;
+use App\Models\InvoicePayment;
 use App\Models\Task;
 use App\Support\CurrencyHelper;
 use Carbon\Carbon;
@@ -16,6 +20,40 @@ class ReportingPage extends BaseModulePage
     protected static ?string $title = 'Reporting & Dashboards';
     protected string $view = 'filament.app.pages.modules.reporting';
 
+    // ── Date Range Filter ──
+    public ?string $dateFrom = null;
+    public ?string $dateTo = null;
+    public string $activeReport = 'summary';
+
+    public function mount(int|string $record): void
+    {
+        parent::mount($record);
+        $this->dateFrom = now()->startOfYear()->format('Y-m-d');
+        $this->dateTo = now()->format('Y-m-d');
+    }
+
+    public function updatedDateFrom(): void
+    { /* triggers Livewire re-render */
+    }
+    public function updatedDateTo(): void
+    { /* triggers Livewire re-render */
+    }
+    public function updatedActiveReport(): void
+    { /* triggers Livewire re-render */
+    }
+
+    private function from(): Carbon
+    {
+        return Carbon::parse($this->dateFrom ?? now()->startOfYear());
+    }
+    private function to(): Carbon
+    {
+        return Carbon::parse($this->dateTo ?? now())->endOfDay();
+    }
+
+    // ═══════════════════════════════════════════
+    // Stats Cards
+    // ═══════════════════════════════════════════
     public function getStats(): array
     {
         $r = $this->record;
@@ -26,187 +64,416 @@ class ReportingPage extends BaseModulePage
         $contractValue = $r->contracts()->sum('original_value');
 
         return [
-            [
-                'label' => 'Project Progress',
-                'value' => $progress . '%',
-                'sub' => $doneTasks . '/' . $totalTasks . ' tasks',
-                'sub_type' => $progress >= 75 ? 'success' : ($progress >= 40 ? 'warning' : 'neutral'),
-                'primary' => true,
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>'
-            ],
-            [
-                'label' => 'BOQ Value',
-                'value' => CurrencyHelper::format($boqValue, 0),
-                'sub' => $r->boqs()->count() . ' BOQs',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                'icon_bg' => '#ecfdf5'
-            ],
-            [
-                'label' => 'Contract Value',
-                'value' => CurrencyHelper::format($contractValue, 0),
-                'sub' => $r->contracts()->where('status', 'active')->count() . ' active contracts',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2563eb" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>',
-                'icon_bg' => '#eff6ff'
-            ],
-            [
-                'label' => 'Safety Incidents',
-                'value' => $r->safetyIncidents()->count(),
-                'sub' => $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count() . ' open',
-                'sub_type' => $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count() > 0 ? 'danger' : 'success',
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#d97706" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>',
-                'icon_bg' => '#fffbeb'
-            ],
+            ['label' => 'Progress', 'value' => $progress . '%', 'sub' => $doneTasks . '/' . $totalTasks . ' tasks', 'sub_type' => $progress >= 75 ? 'success' : ($progress >= 40 ? 'warning' : 'neutral'), 'primary' => true, 'icon' => 'heroicon-o-chart-bar'],
+            ['label' => 'BOQ Value', 'value' => CurrencyHelper::formatCompact($boqValue), 'full_value' => CurrencyHelper::format($boqValue, 0), 'sub' => $r->boqs()->count() . ' BOQs', 'icon' => 'heroicon-o-currency-dollar', 'icon_color' => '#059669', 'icon_bg' => '#ecfdf5'],
+            ['label' => 'Contract Value', 'value' => CurrencyHelper::formatCompact($contractValue), 'full_value' => CurrencyHelper::format($contractValue, 0), 'sub' => $r->contracts()->where('status', 'active')->count() . ' active', 'icon' => 'heroicon-o-document-text', 'icon_color' => '#2563eb', 'icon_bg' => '#eff6ff'],
+            ['label' => 'Safety Incidents', 'value' => $r->safetyIncidents()->count(), 'sub' => $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count() . ' open', 'sub_type' => $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count() > 0 ? 'danger' : 'success', 'icon' => 'heroicon-o-shield-exclamation', 'icon_color' => '#d97706', 'icon_bg' => '#fffbeb'],
         ];
     }
 
-    /**
-     * Get task status breakdown for the project.
-     */
-    public function getTaskBreakdown(): array
+    // ═══════════════════════════════════════════
+    // Report: Project Summary
+    // ═══════════════════════════════════════════
+    public function getProjectSummaryReport(): array
     {
         $r = $this->record;
-        $statuses = ['todo' => 0, 'in_progress' => 0, 'review' => 0, 'done' => 0, 'blocked' => 0];
-        $tasks = $r->tasks()->selectRaw('status, count(*) as cnt')->groupBy('status')->pluck('cnt', 'status');
+        $from = $this->from();
+        $to = $this->to();
 
-        foreach ($tasks as $status => $count) {
-            $statuses[$status] = $count;
+        $taskBreakdown = ['todo' => 0, 'in_progress' => 0, 'review' => 0, 'done' => 0, 'blocked' => 0];
+        $tasks = $r->tasks()->selectRaw('status, count(*) as cnt')->groupBy('status')->pluck('cnt', 'status');
+        foreach ($tasks as $s => $c) {
+            $taskBreakdown[$s] = $c;
         }
 
-        return $statuses;
+        $health = $this->getProjectHealth();
+        $milestones = $r->milestones()->orderBy('target_date')->limit(20)->get(['name', 'target_date', 'actual_date', 'status']);
+        $moduleSummary = $this->getModuleSummary();
+
+        $trend = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $month = now()->subMonths($i);
+            $start = $month->copy()->startOfMonth();
+            $end = $month->copy()->endOfMonth();
+            $trend[] = [
+                'label' => $month->format('M'),
+                'tasks_completed' => $r->tasks()->where('status', 'done')->whereBetween('completed_at', [$start, $end])->count(),
+                'logs' => $r->dailySiteLogs()->whereBetween('log_date', [$start, $end])->count(),
+            ];
+        }
+
+        return [
+            'task_breakdown' => $taskBreakdown,
+            'total_tasks' => array_sum($taskBreakdown),
+            'health' => $health,
+            'milestones' => $milestones->map(fn($m) => [
+                'title' => $m->name,
+                'target' => $m->target_date?->format('M d'),
+                'actual' => $m->actual_date?->format('M d'),
+                'status' => $m->status,
+                'is_late' => $m->target_date && !$m->actual_date && $m->target_date->isPast(),
+            ])->toArray(),
+            'module_summary' => $moduleSummary,
+            'trend' => $trend,
+        ];
     }
 
-    /**
-     * Get milestone progress overview.
-     */
-    public function getMilestoneOverview(): array
+    // ═══════════════════════════════════════════
+    // Report: Financial
+    // ═══════════════════════════════════════════
+    public function getFinancialReport(): array
     {
-        $milestones = $this->record->milestones()
-            ->orderBy('target_date')
-            ->limit(20)
-            ->get(['name', 'target_date', 'actual_date', 'status']);
+        $r = $this->record;
+        $pid = $r->id;
+        $from = $this->from();
+        $to = $this->to();
 
-        return $milestones->map(fn($m) => [
-            'title' => $m->name,
-            'target' => $m->target_date?->format('M d'),
-            'actual' => $m->actual_date?->format('M d'),
-            'status' => $m->status,
-            'is_late' => $m->target_date && !$m->actual_date && $m->target_date->isPast(),
+        $invoiced = (float) Invoice::where('cde_project_id', $pid)->whereBetween('issue_date', [$from, $to])->sum('total_amount');
+        $received = (float) InvoicePayment::where('cde_project_id', $pid)->whereBetween('payment_date', [$from, $to])->sum('amount');
+        $expenses = (float) Expense::where('cde_project_id', $pid)->where('status', '!=', 'rejected')->whereBetween('expense_date', [$from, $to])->sum('amount');
+        $outstanding = (float) Invoice::where('cde_project_id', $pid)->whereNotIn('status', ['paid', 'cancelled'])->selectRaw('SUM(total_amount - amount_paid) as total')->value('total');
+        $overdue = Invoice::where('cde_project_id', $pid)->whereNotIn('status', ['paid', 'cancelled'])->whereNotNull('due_date')->where('due_date', '<', now())->count();
+
+        // Invoices by status
+        $byStatus = Invoice::where('cde_project_id', $pid)->whereBetween('issue_date', [$from, $to])
+            ->selectRaw('status, count(*) as cnt, sum(total_amount) as total')
+            ->groupBy('status')->get()->map(fn($r) => ['status' => $r->status, 'count' => $r->cnt, 'total' => (float) $r->total])->toArray();
+
+        // Monthly cash flow
+        $cashFlow = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $m = now()->subMonths($i);
+            $cashFlow[] = [
+                'label' => $m->format('M'),
+                'invoiced' => (float) Invoice::where('cde_project_id', $pid)->whereYear('issue_date', $m->year)->whereMonth('issue_date', $m->month)->sum('total_amount'),
+                'received' => (float) InvoicePayment::where('cde_project_id', $pid)->whereYear('payment_date', $m->year)->whereMonth('payment_date', $m->month)->sum('amount'),
+                'expenses' => (float) Expense::where('cde_project_id', $pid)->where('status', '!=', 'rejected')->whereYear('expense_date', $m->year)->whereMonth('expense_date', $m->month)->sum('amount'),
+            ];
+        }
+
+        // Expense breakdown
+        $expenseBreakdown = Expense::where('cde_project_id', $pid)->where('status', '!=', 'rejected')
+            ->whereBetween('expense_date', [$from, $to])
+            ->selectRaw('category, SUM(amount) as total, COUNT(*) as cnt')
+            ->groupBy('category')->orderByDesc('total')->get()
+            ->map(fn($r) => ['category' => ucfirst(str_replace('_', ' ', $r->category)), 'total' => (float) $r->total, 'total_fmt' => CurrencyHelper::format($r->total, 0), 'count' => $r->cnt])->toArray();
+
+        return compact('invoiced', 'received', 'expenses', 'outstanding', 'overdue', 'byStatus', 'cashFlow', 'expenseBreakdown');
+    }
+
+    // ═══════════════════════════════════════════
+    // Report: Tasks
+    // ═══════════════════════════════════════════
+    public function getTaskReport(): array
+    {
+        $r = $this->record;
+        $from = $this->from();
+        $to = $this->to();
+
+        $tasks = $r->tasks()->whereBetween('created_at', [$from, $to])->with('assignee')->get();
+        $byStatus = $tasks->groupBy('status')->map->count()->toArray();
+        $byPriority = $tasks->groupBy('priority')->map->count()->toArray();
+        $byAssignee = $tasks->groupBy(fn($t) => $t->assignee?->name ?? 'Unassigned')
+            ->map(fn($group) => ['total' => $group->count(), 'done' => $group->where('status', 'done')->count()])
+            ->sortByDesc('total')->take(15)->toArray();
+
+        $overdue = $r->tasks()->where('status', '!=', 'done')
+            ->whereNotNull('due_date')->where('due_date', '<', now())
+            ->with('assignee')->limit(20)->get()
+            ->map(fn($t) => [
+                'title' => $t->title,
+                'assignee' => $t->assignee?->name ?? '—',
+                'due' => $t->due_date?->format('M d, Y'),
+                'days_overdue' => $t->due_date ? (int) now()->diffInDays($t->due_date) : 0,
+                'priority' => $t->priority ?? 'medium',
+            ])->toArray();
+
+        $completedInRange = $r->tasks()->where('status', 'done')
+            ->whereBetween('completed_at', [$from, $to])->count();
+        $createdInRange = $tasks->count();
+
+        return compact('byStatus', 'byPriority', 'byAssignee', 'overdue', 'completedInRange', 'createdInRange');
+    }
+
+    // ═══════════════════════════════════════════
+    // Report: Documents
+    // ═══════════════════════════════════════════
+    public function getDocumentReport(): array
+    {
+        $r = $this->record;
+        $from = $this->from();
+        $to = $this->to();
+
+        $docs = $r->documents()->whereBetween('created_at', [$from, $to])->get();
+        $byStatus = $docs->groupBy('status')->map->count()->toArray();
+        $byDiscipline = $docs->groupBy('discipline')->map->count()->sortDesc()->toArray();
+        $bySuitability = $docs->groupBy('suitability_code')->map->count()->toArray();
+
+        $recentUploads = $r->documents()->whereBetween('created_at', [$from, $to])
+            ->with('uploader')->latest()->limit(15)->get()
+            ->map(fn($d) => [
+                'title' => $d->title,
+                'doc_number' => $d->document_number,
+                'status' => $d->status,
+                'suitability' => $d->suitability_code,
+                'uploaded_by' => $d->uploader?->name ?? '—',
+                'date' => $d->created_at->format('M d, Y'),
+                'revision' => $d->revision,
+            ])->toArray();
+
+        return [
+            'total' => $docs->count(),
+            'by_status' => $byStatus,
+            'by_discipline' => $byDiscipline,
+            'by_suitability' => $bySuitability,
+            'recent_uploads' => $recentUploads,
+        ];
+    }
+
+    // ═══════════════════════════════════════════
+    // Report: Contracts
+    // ═══════════════════════════════════════════
+    public function getContractReport(): array
+    {
+        $r = $this->record;
+        $contracts = $r->contracts()->with('vendor')->get();
+
+        $byStatus = $contracts->groupBy('status')->map->count()->toArray();
+        $byType = $contracts->groupBy('type')->map->count()->toArray();
+        $totalOriginal = $contracts->sum('original_value');
+        $totalRevised = $contracts->sum('revised_value');
+        $totalPaid = $contracts->sum('amount_paid');
+        $variance = $totalRevised - $totalOriginal;
+
+        $details = $contracts->map(fn($c) => [
+            'number' => $c->contract_number,
+            'title' => $c->title,
+            'vendor' => $c->vendor?->name ?? '—',
+            'type' => $c->type,
+            'status' => $c->status,
+            'original' => CurrencyHelper::format($c->original_value, 0),
+            'revised' => CurrencyHelper::format($c->revised_value, 0),
+            'paid' => CurrencyHelper::format($c->amount_paid, 0),
+            'pct' => $c->revised_value > 0 ? round(($c->amount_paid / $c->revised_value) * 100) : 0,
         ])->toArray();
+
+        return compact('byStatus', 'byType', 'totalOriginal', 'totalRevised', 'totalPaid', 'variance', 'details');
     }
 
-    /**
-     * Get module-by-module record counts (project health summary).
-     */
-    public function getModuleSummary(): array
+    // ═══════════════════════════════════════════
+    // Report: Safety
+    // ═══════════════════════════════════════════
+    public function getSafetyReport(): array
     {
         $r = $this->record;
+        $from = $this->from();
+        $to = $this->to();
 
-        return [
-            ['module' => 'Tasks', 'icon' => '📋', 'total' => $r->tasks()->count(), 'open' => $r->tasks()->whereNotIn('status', ['done'])->count()],
-            ['module' => 'Documents', 'icon' => '📁', 'total' => $r->documents()->count(), 'open' => $r->documents()->where('status', 'draft')->count()],
-            ['module' => 'RFIs', 'icon' => '❓', 'total' => $r->rfis()->count(), 'open' => $r->rfis()->whereIn('status', ['open', 'submitted'])->count()],
-            ['module' => 'Contracts', 'icon' => '📝', 'total' => $r->contracts()->count(), 'open' => $r->contracts()->where('status', 'active')->count()],
-            ['module' => 'Work Orders', 'icon' => '🔧', 'total' => $r->workOrders()->count(), 'open' => $r->workOrders()->whereNotIn('status', ['completed', 'closed', 'cancelled'])->count()],
-            ['module' => 'Safety Incidents', 'icon' => '🛡️', 'total' => $r->safetyIncidents()->count(), 'open' => $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count()],
-            ['module' => 'Daily Logs', 'icon' => '📊', 'total' => $r->dailySiteLogs()->count(), 'open' => null],
-            ['module' => 'Milestones', 'icon' => '🎯', 'total' => $r->milestones()->count(), 'open' => $r->milestones()->whereIn('status', ['pending', 'in_progress'])->count()],
-        ];
+        $incidents = $r->safetyIncidents()->whereBetween('created_at', [$from, $to])->get();
+        $bySeverity = $incidents->groupBy('severity')->map->count()->toArray();
+        $byStatus = $incidents->groupBy('status')->map->count()->toArray();
+        $byType = $incidents->groupBy('type')->map->count()->toArray();
+
+        $details = $incidents->sortByDesc('created_at')->take(20)->map(fn($i) => [
+            'title' => $i->title,
+            'type' => $i->type,
+            'severity' => $i->severity,
+            'status' => $i->status,
+            'date' => $i->incident_date?->format('M d, Y') ?? $i->created_at->format('M d, Y'),
+            'location' => $i->location ?? '—',
+        ])->values()->toArray();
+
+        // Monthly trend
+        $trend = [];
+        for ($i = 5; $i >= 0; $i--) {
+            $m = now()->subMonths($i);
+            $trend[] = [
+                'label' => $m->format('M'),
+                'count' => $r->safetyIncidents()->whereYear('created_at', $m->year)->whereMonth('created_at', $m->month)->count(),
+            ];
+        }
+
+        return compact('bySeverity', 'byStatus', 'byType', 'details', 'trend');
     }
 
-    /**
-     * Get recent activity logs scoped to this project's records.
-     */
-    public function getActivityLogs(): \Illuminate\Support\Collection
-    {
-        $pid = $this->record->id;
-
-        // Gather IDs of project-related models for scoping
-        $scopes = [];
-        $modelMap = [
-            \App\Models\Task::class => fn() => $this->record->tasks()->pluck('id'),
-            \App\Models\Contract::class => fn() => $this->record->contracts()->pluck('id'),
-            \App\Models\CdeDocument::class => fn() => $this->record->documents()->pluck('id'),
-            \App\Models\Rfi::class => fn() => $this->record->rfis()->pluck('id'),
-            \App\Models\WorkOrder::class => fn() => $this->record->workOrders()->pluck('id'),
-            \App\Models\SafetyIncident::class => fn() => $this->record->safetyIncidents()->pluck('id'),
-            \App\Models\Boq::class => fn() => $this->record->boqs()->pluck('id'),
-        ];
-
-        $query = CdeActivityLog::where('company_id', $this->record->company_id)
-            ->where(function ($q) use ($modelMap) {
-                foreach ($modelMap as $modelClass => $idsFn) {
-                    $q->orWhere(function ($sub) use ($modelClass, $idsFn) {
-                        $sub->where('loggable_type', $modelClass)
-                            ->whereIn('loggable_id', $idsFn());
-                    });
-                }
-                // Also include logs directly about the project itself
-                $q->orWhere(function ($sub) {
-                    $sub->where('loggable_type', \App\Models\CdeProject::class)
-                        ->where('loggable_id', $this->record->id);
-                });
-            })
-            ->with('user')
-            ->latest()
-            ->limit(50)
-            ->get();
-
-        return $query;
-    }
-
-    /**
-     * Get financial overview for the project.
-     */
-    public function getFinancialSummary(): array
+    // ═══════════════════════════════════════════
+    // Report: RFIs
+    // ═══════════════════════════════════════════
+    public function getRfiReport(): array
     {
         $r = $this->record;
-        $contractOriginal = $r->contracts()->sum('original_value');
-        $contractRevised = $r->contracts()->sum('revised_value');
-        $contractPaid = $r->contracts()->sum('amount_paid');
-        $boqValue = $r->boqs()->sum('total_value');
-        $poTotal = $r->purchaseOrders()->sum('total_amount');
-        $poReceived = $r->purchaseOrders()->where('status', 'received')->sum('total_amount');
+        $from = $this->from();
+        $to = $this->to();
 
-        return [
-            'contract_original' => $contractOriginal,
-            'contract_revised' => $contractRevised,
-            'contract_paid' => $contractPaid,
-            'contract_pct' => $contractRevised > 0 ? round(($contractPaid / $contractRevised) * 100) : 0,
-            'boq_value' => $boqValue,
-            'po_total' => $poTotal,
-            'po_received' => $poReceived,
-            'variance' => $contractRevised - $contractOriginal,
-        ];
+        $rfis = $r->rfis()->whereBetween('created_at', [$from, $to])->with('assignee')->get();
+        $byStatus = $rfis->groupBy('status')->map->count()->toArray();
+        $avgResponseDays = $rfis->filter(fn($r) => $r->responded_at)->avg(fn($r) => $r->created_at->diffInDays($r->responded_at));
+
+        $details = $rfis->sortByDesc('created_at')->take(20)->map(fn($r) => [
+            'number' => $r->rfi_number ?? '—',
+            'subject' => $r->subject,
+            'status' => $r->status,
+            'assignee' => $r->assignee?->name ?? '—',
+            'date' => $r->created_at->format('M d, Y'),
+            'response_days' => $r->responded_at ? $r->created_at->diffInDays($r->responded_at) : null,
+        ])->values()->toArray();
+
+        return ['total' => $rfis->count(), 'by_status' => $byStatus, 'avg_response_days' => round($avgResponseDays ?? 0, 1), 'details' => $details];
     }
 
-    /**
-     * RAG (Red/Amber/Green) health status for each project dimension.
-     */
+    // ═══════════════════════════════════════════
+    // CSV Export
+    // ═══════════════════════════════════════════
+    public function exportReport(string $reportType): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $filename = $this->record->name . '_' . $reportType . '_' . now()->format('Y-m-d') . '.csv';
+
+        return response()->streamDownload(function () use ($reportType) {
+            $handle = fopen('php://output', 'w');
+
+            match ($reportType) {
+                'financial' => $this->exportFinancialCsv($handle),
+                'tasks' => $this->exportTasksCsv($handle),
+                'documents' => $this->exportDocumentsCsv($handle),
+                'contracts' => $this->exportContractsCsv($handle),
+                'safety' => $this->exportSafetyCsv($handle),
+                'rfis' => $this->exportRfisCsv($handle),
+                default => $this->exportSummaryCsv($handle),
+            };
+
+            fclose($handle);
+        }, $filename, ['Content-Type' => 'text/csv']);
+    }
+
+    private function exportFinancialCsv($handle): void
+    {
+        $r = $this->record;
+        $pid = $r->id;
+        $from = $this->from();
+        $to = $this->to();
+        fputcsv($handle, ['Financial Report - ' . $r->name, 'From: ' . $from->format('M d, Y'), 'To: ' . $to->format('M d, Y')]);
+        fputcsv($handle, []);
+
+        // Invoices
+        fputcsv($handle, ['INVOICES']);
+        fputcsv($handle, ['Invoice #', 'Client', 'Status', 'Issue Date', 'Due Date', 'Total', 'Paid', 'Balance']);
+        $invoices = Invoice::where('cde_project_id', $pid)->whereBetween('issue_date', [$from, $to])->with('client')->get();
+        foreach ($invoices as $inv) {
+            fputcsv($handle, [$inv->invoice_number, $inv->client?->name, $inv->status, $inv->issue_date?->format('Y-m-d'), $inv->due_date?->format('Y-m-d'), $inv->total_amount, $inv->amount_paid, $inv->total_amount - $inv->amount_paid]);
+        }
+        fputcsv($handle, []);
+
+        // Expenses
+        fputcsv($handle, ['EXPENSES']);
+        fputcsv($handle, ['Title', 'Category', 'Amount', 'Date', 'Status']);
+        $expenses = Expense::where('cde_project_id', $pid)->whereBetween('expense_date', [$from, $to])->get();
+        foreach ($expenses as $exp) {
+            fputcsv($handle, [$exp->title, $exp->category, $exp->amount, $exp->expense_date?->format('Y-m-d'), $exp->status]);
+        }
+    }
+
+    private function exportTasksCsv($handle): void
+    {
+        $r = $this->record;
+        $from = $this->from();
+        $to = $this->to();
+        fputcsv($handle, ['Task Report - ' . $r->name, 'From: ' . $from->format('M d, Y'), 'To: ' . $to->format('M d, Y')]);
+        fputcsv($handle, []);
+        fputcsv($handle, ['Title', 'Status', 'Priority', 'Assignee', 'Due Date', 'Created', 'Completed']);
+        $tasks = $r->tasks()->whereBetween('created_at', [$from, $to])->with('assignee')->get();
+        foreach ($tasks as $t) {
+            fputcsv($handle, [$t->title, $t->status, $t->priority, $t->assignee?->name, $t->due_date?->format('Y-m-d'), $t->created_at->format('Y-m-d'), $t->completed_at?->format('Y-m-d')]);
+        }
+    }
+
+    private function exportDocumentsCsv($handle): void
+    {
+        $r = $this->record;
+        $from = $this->from();
+        $to = $this->to();
+        fputcsv($handle, ['Document Report - ' . $r->name, 'From: ' . $from->format('M d, Y'), 'To: ' . $to->format('M d, Y')]);
+        fputcsv($handle, []);
+        fputcsv($handle, ['Doc #', 'Title', 'Discipline', 'Status', 'Suitability', 'Revision', 'Uploaded By', 'Date']);
+        $docs = $r->documents()->whereBetween('created_at', [$from, $to])->with('uploader')->get();
+        foreach ($docs as $d) {
+            fputcsv($handle, [$d->document_number, $d->title, $d->discipline, $d->status, $d->suitability_code, $d->revision, $d->uploader?->name, $d->created_at->format('Y-m-d')]);
+        }
+    }
+
+    private function exportContractsCsv($handle): void
+    {
+        $r = $this->record;
+        fputcsv($handle, ['Contract Report - ' . $r->name]);
+        fputcsv($handle, []);
+        fputcsv($handle, ['Contract #', 'Title', 'Vendor', 'Type', 'Status', 'Original Value', 'Revised Value', 'Paid', '% Paid']);
+        $contracts = $r->contracts()->with('vendor')->get();
+        foreach ($contracts as $c) {
+            fputcsv($handle, [$c->contract_number, $c->title, $c->vendor?->name, $c->type, $c->status, $c->original_value, $c->revised_value, $c->amount_paid, $c->revised_value > 0 ? round(($c->amount_paid / $c->revised_value) * 100) . '%' : '0%']);
+        }
+    }
+
+    private function exportSafetyCsv($handle): void
+    {
+        $r = $this->record;
+        $from = $this->from();
+        $to = $this->to();
+        fputcsv($handle, ['Safety Report - ' . $r->name, 'From: ' . $from->format('M d, Y'), 'To: ' . $to->format('M d, Y')]);
+        fputcsv($handle, []);
+        fputcsv($handle, ['Title', 'Type', 'Severity', 'Status', 'Date', 'Location']);
+        $incidents = $r->safetyIncidents()->whereBetween('created_at', [$from, $to])->get();
+        foreach ($incidents as $i) {
+            fputcsv($handle, [$i->title, $i->type, $i->severity, $i->status, $i->incident_date?->format('Y-m-d') ?? $i->created_at->format('Y-m-d'), $i->location]);
+        }
+    }
+
+    private function exportRfisCsv($handle): void
+    {
+        $r = $this->record;
+        $from = $this->from();
+        $to = $this->to();
+        fputcsv($handle, ['RFI Report - ' . $r->name, 'From: ' . $from->format('M d, Y'), 'To: ' . $to->format('M d, Y')]);
+        fputcsv($handle, []);
+        fputcsv($handle, ['RFI #', 'Subject', 'Status', 'Assignee', 'Created', 'Response Days']);
+        $rfis = $r->rfis()->whereBetween('created_at', [$from, $to])->with('assignee')->get();
+        foreach ($rfis as $rfi) {
+            fputcsv($handle, [$rfi->rfi_number, $rfi->subject, $rfi->status, $rfi->assignee?->name, $rfi->created_at->format('Y-m-d'), $rfi->responded_at ? $rfi->created_at->diffInDays($rfi->responded_at) : '—']);
+        }
+    }
+
+    private function exportSummaryCsv($handle): void
+    {
+        $r = $this->record;
+        fputcsv($handle, ['Project Summary - ' . $r->name]);
+        fputcsv($handle, []);
+        $summary = $this->getModuleSummary();
+        fputcsv($handle, ['Module', 'Total', 'Open/Active']);
+        foreach ($summary as $m) {
+            fputcsv($handle, [$m['module'], $m['total'], $m['open'] ?? '—']);
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    // Helpers (kept from original)
+    // ═══════════════════════════════════════════
     public function getProjectHealth(): array
     {
         $r = $this->record;
         $totalTasks = $r->tasks()->count();
         $doneTasks = $r->tasks()->where('status', 'done')->count();
-        $blockedTasks = $r->tasks()->where('status', 'blocked')->count();
-        $overdueTasks = $r->tasks()->where('status', '!=', 'done')
-            ->whereNotNull('due_date')->where('due_date', '<', now())->count();
+        $overdueTasks = $r->tasks()->where('status', '!=', 'done')->whereNotNull('due_date')->where('due_date', '<', now())->count();
         $taskPct = $totalTasks > 0 ? round(($doneTasks / $totalTasks) * 100) : 0;
 
-        // Schedule health
         $overdueRatio = $totalTasks > 0 ? $overdueTasks / $totalTasks : 0;
         $scheduleStatus = $overdueRatio > 0.2 ? 'red' : ($overdueRatio > 0.05 ? 'amber' : 'green');
 
-        // Cost health
         $contractOriginal = $r->contracts()->sum('original_value');
         $contractRevised = $r->contracts()->sum('revised_value');
         $costVariance = $contractOriginal > 0 ? (($contractRevised - $contractOriginal) / $contractOriginal) * 100 : 0;
         $costStatus = $costVariance > 10 ? 'red' : ($costVariance > 3 ? 'amber' : 'green');
 
-        // Quality health (based on snag resolution)
         $openSnags = $r->snagItems()->whereIn('status', ['open', 'in_progress'])->count();
         $qualityStatus = $openSnags > 20 ? 'red' : ($openSnags > 5 ? 'amber' : 'green');
 
-        // Safety health
         $openIncidents = $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count();
         $criticalIncidents = $r->safetyIncidents()->whereIn('severity', ['critical', 'fatal'])->whereNotIn('status', ['closed', 'resolved'])->count();
         $safetyStatus = $criticalIncidents > 0 ? 'red' : ($openIncidents > 3 ? 'amber' : 'green');
@@ -219,26 +486,18 @@ class ReportingPage extends BaseModulePage
         ];
     }
 
-    /**
-     * Monthly activity trend for the last 6 months.
-     */
-    public function getMonthlyTrend(): array
+    public function getModuleSummary(): array
     {
-        $trend = [];
-        for ($i = 5; $i >= 0; $i--) {
-            $month = now()->subMonths($i);
-            $start = $month->copy()->startOfMonth();
-            $end = $month->copy()->endOfMonth();
-
-            $trend[] = [
-                'label' => $month->format('M'),
-                'tasks_completed' => $this->record->tasks()
-                    ->where('status', 'done')
-                    ->whereBetween('completed_at', [$start, $end])->count(),
-                'logs' => $this->record->dailySiteLogs()
-                    ->whereBetween('log_date', [$start, $end])->count(),
-            ];
-        }
-        return $trend;
+        $r = $this->record;
+        return [
+            ['module' => 'Tasks', 'icon' => '📋', 'total' => $r->tasks()->count(), 'open' => $r->tasks()->whereNotIn('status', ['done'])->count()],
+            ['module' => 'Documents', 'icon' => '📁', 'total' => $r->documents()->count(), 'open' => $r->documents()->where('status', 'draft')->count()],
+            ['module' => 'RFIs', 'icon' => '❓', 'total' => $r->rfis()->count(), 'open' => $r->rfis()->whereIn('status', ['open', 'submitted'])->count()],
+            ['module' => 'Contracts', 'icon' => '📝', 'total' => $r->contracts()->count(), 'open' => $r->contracts()->where('status', 'active')->count()],
+            ['module' => 'Work Orders', 'icon' => '🔧', 'total' => $r->workOrders()->count(), 'open' => $r->workOrders()->whereNotIn('status', ['completed', 'closed', 'cancelled'])->count()],
+            ['module' => 'Safety', 'icon' => '🛡️', 'total' => $r->safetyIncidents()->count(), 'open' => $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count()],
+            ['module' => 'Daily Logs', 'icon' => '📊', 'total' => $r->dailySiteLogs()->count(), 'open' => null],
+            ['module' => 'Milestones', 'icon' => '🎯', 'total' => $r->milestones()->count(), 'open' => $r->milestones()->whereIn('status', ['pending', 'in_progress'])->count()],
+        ];
     }
 }
