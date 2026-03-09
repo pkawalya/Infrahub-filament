@@ -31,86 +31,99 @@ class CdeProjectResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
-            Schemas\Components\Section::make('Project Details')->schema([
-                Forms\Components\TextInput::make('name')->required(),
-                Forms\Components\TextInput::make('code')->label('Project Code'),
-                Forms\Components\Select::make('client_id')
-                    ->relationship('client', 'name')->searchable()->preload(),
-                Forms\Components\Select::make('manager_id')
-                    ->relationship('manager', 'name')->searchable()->preload()->label('Project Manager'),
-                Forms\Components\Select::make('status')
-                    ->options(CdeProject::$statuses)->default('planning'),
-                Forms\Components\Select::make('currency')
-                    ->label('Project Currency')
-                    ->options(
-                        collect(CdeProject::$currencies)
-                            ->mapWithKeys(fn($def, $code) => [$code => $def['symbol'] . ' — ' . $def['name'] . ' (' . ($def['position'] === 'before' ? $def['symbol'] . '100' : '100 ' . $def['symbol']) . ')'])
-                            ->toArray()
-                    )
-                    ->searchable()
-                    ->placeholder('Inherit from company')
-                    ->reactive()
-                    ->afterStateUpdated(function ($state, callable $set) {
-                        if ($state && isset(CdeProject::$currencies[$state])) {
-                            $def = CdeProject::$currencies[$state];
-                            $set('currency_symbol', $def['symbol']);
-                            $set('currency_position', $def['position']);
-                        } else {
-                            $set('currency_symbol', null);
-                            $set('currency_position', 'before');
-                        }
-                    })
-                    ->helperText('Leave empty to use company default'),
-                Forms\Components\Hidden::make('currency_symbol'),
-                Forms\Components\Hidden::make('currency_position'),
-                Forms\Components\TextInput::make('budget')->numeric()
-                    ->prefix(fn($get) => ($get('currency_position') ?? 'before') === 'before' ? ($get('currency_symbol') ?? CurrencyHelper::symbol()) : null)
-                    ->suffix(fn($get) => ($get('currency_position') ?? 'before') === 'after' ? ($get('currency_symbol') ?? CurrencyHelper::symbol()) : null),
-                Forms\Components\DatePicker::make('start_date'),
-                Forms\Components\DatePicker::make('end_date'),
-                Forms\Components\RichEditor::make('description')->columnSpanFull(),
-            ])->columns(2),
+            Schemas\Components\Tabs::make('Project')
+                ->columnSpanFull()
+                ->tabs([
+                    Schemas\Components\Tabs\Tab::make('Details')
+                        ->icon('heroicon-o-document-text')
+                        ->schema([
+                            Forms\Components\TextInput::make('name')->required(),
+                            Forms\Components\TextInput::make('code')->label('Project Code'),
+                            Forms\Components\Select::make('client_id')
+                                ->relationship('client', 'name')->searchable()->preload(),
+                            Forms\Components\Select::make('manager_id')
+                                ->relationship('manager', 'name')->searchable()->preload()->label('Project Manager'),
+                            Forms\Components\Select::make('status')
+                                ->options(CdeProject::$statuses)->default('planning'),
+                            Forms\Components\Select::make('currency')
+                                ->label('Project Currency')
+                                ->options(
+                                    collect(CdeProject::$currencies)
+                                        ->mapWithKeys(fn($def, $code) => [$code => $def['symbol'] . ' — ' . $def['name'] . ' (' . ($def['position'] === 'before' ? $def['symbol'] . '100' : '100 ' . $def['symbol']) . ')'])
+                                        ->toArray()
+                                )
+                                ->searchable()
+                                ->placeholder('Inherit from company')
+                                ->reactive()
+                                ->afterStateUpdated(function ($state, callable $set) {
+                                    if ($state && isset(CdeProject::$currencies[$state])) {
+                                        $def = CdeProject::$currencies[$state];
+                                        $set('currency_symbol', $def['symbol']);
+                                        $set('currency_position', $def['position']);
+                                    } else {
+                                        $set('currency_symbol', null);
+                                        $set('currency_position', 'before');
+                                    }
+                                })
+                                ->helperText('Leave empty to use company default'),
+                            Forms\Components\Hidden::make('currency_symbol'),
+                            Forms\Components\Hidden::make('currency_position'),
+                            Forms\Components\TextInput::make('budget')->numeric()
+                                ->prefix(fn($get) => ($get('currency_position') ?? 'before') === 'before' ? ($get('currency_symbol') ?? CurrencyHelper::symbol()) : null)
+                                ->suffix(fn($get) => ($get('currency_position') ?? 'before') === 'after' ? ($get('currency_symbol') ?? CurrencyHelper::symbol()) : null),
+                            Forms\Components\DatePicker::make('start_date'),
+                            Forms\Components\DatePicker::make('end_date'),
+                        ])->columns(2),
 
-            Schemas\Components\Section::make('Location')->schema([
-                Forms\Components\TextInput::make('address'),
-                Forms\Components\TextInput::make('city'),
-                Forms\Components\TextInput::make('country'),
-                Forms\Components\FileUpload::make('image')->image()->directory('projects/images'),
-            ])->columns(2)->collapsible(),
+                    Schemas\Components\Tabs\Tab::make('Location & Media')
+                        ->icon('heroicon-o-map-pin')
+                        ->schema([
+                            Forms\Components\TextInput::make('address'),
+                            Forms\Components\TextInput::make('city'),
+                            Forms\Components\TextInput::make('country'),
+                            Forms\Components\FileUpload::make('image')->image()->directory('projects/images'),
+                        ])->columns(2),
 
-            Schemas\Components\Section::make('Project Modules')
-                ->description('Select which modules to enable for this project. Only modules activated for your company are shown.')
-                ->icon('heroicon-o-puzzle-piece')
-                ->schema([
-                    Forms\Components\CheckboxList::make('modules')
-                        ->label('Enabled Modules')
-                        ->options(function () {
-                            $user = auth()->user();
-                            if (!$user || !$user->company_id) {
-                                return collect(Module::$availableModules)
-                                    ->mapWithKeys(fn($def, $code) => [$code => $def['name'] . ' — ' . $def['description']]);
-                            }
+                    Schemas\Components\Tabs\Tab::make('Description')
+                        ->icon('heroicon-o-pencil-square')
+                        ->schema([
+                            Forms\Components\RichEditor::make('description')->columnSpanFull(),
+                        ]),
 
-                            $companyModules = $user->company->getEnabledModules();
+                    Schemas\Components\Tabs\Tab::make('Modules')
+                        ->icon('heroicon-o-puzzle-piece')
+                        ->badge(fn($record) => $record ? count($record->getEnabledModules()) : null)
+                        ->schema([
+                            Forms\Components\CheckboxList::make('modules')
+                                ->label('Enabled Modules')
+                                ->options(function () {
+                                    $user = auth()->user();
+                                    if (!$user || !$user->company_id) {
+                                        return collect(Module::$availableModules)
+                                            ->mapWithKeys(fn($def, $code) => [$code => $def['name'] . ' — ' . $def['description']]);
+                                    }
 
-                            return collect(Module::$availableModules)
-                                ->filter(fn($def, $code) => in_array($code, $companyModules))
-                                ->mapWithKeys(fn($def, $code) => [$code => $def['name'] . ' — ' . $def['description']]);
-                        })
-                        ->descriptions(
-                            collect(Module::$availableModules)
-                                ->mapWithKeys(fn($def, $code) => [$code => $def['description']])
-                                ->toArray()
-                        )
-                        ->columns(2)
-                        ->gridDirection('row')
-                        ->bulkToggleable()
-                        ->afterStateHydrated(function (Forms\Components\CheckboxList $component, $record) {
-                            if ($record) {
-                                $component->state($record->getEnabledModules());
-                            }
-                        }),
-                ])->collapsible(),
+                                    $companyModules = $user->company->getEnabledModules();
+
+                                    return collect(Module::$availableModules)
+                                        ->filter(fn($def, $code) => in_array($code, $companyModules))
+                                        ->mapWithKeys(fn($def, $code) => [$code => $def['name'] . ' — ' . $def['description']]);
+                                })
+                                ->descriptions(
+                                    collect(Module::$availableModules)
+                                        ->mapWithKeys(fn($def, $code) => [$code => $def['description']])
+                                        ->toArray()
+                                )
+                                ->columns(2)
+                                ->gridDirection('row')
+                                ->bulkToggleable()
+                                ->afterStateHydrated(function (Forms\Components\CheckboxList $component, $record) {
+                                    if ($record) {
+                                        $component->state($record->getEnabledModules());
+                                    }
+                                }),
+                        ]),
+                ]),
         ]);
     }
 

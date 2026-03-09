@@ -17,172 +17,182 @@ class ProjectTimelineWidget extends Widget
 
     public function getViewData(): array
     {
-        $companyId = auth()->user()?->company_id;
+        try {
+            $companyId = auth()->user()?->company_id;
 
-        $projects = CdeProject::query()
-            ->when($companyId, fn($q) => $q->where('company_id', $companyId))
-            ->whereNotNull('start_date')
-            ->whereNotNull('end_date')
-            ->with(['milestones' => fn($q) => $q->orderBy('target_date')]) // Eager load milestones
-            ->orderBy('start_date')
-            ->get();
+            $projects = CdeProject::query()
+                ->when($companyId, fn($q) => $q->where('company_id', $companyId))
+                ->whereNotNull('start_date')
+                ->whereNotNull('end_date')
+                ->with(['milestones' => fn($q) => $q->whereNotNull('target_date')->orderBy('target_date')])
+                ->orderBy('start_date')
+                ->get();
 
-        if ($projects->isEmpty()) {
-            return ['projects' => collect(), 'timelineStart' => now(), 'timelineEnd' => now(), 'months' => collect()];
-        }
-
-        // Calculate the overall timeline range
-        $timelineStart = $projects->min('start_date')->copy()->startOfMonth();
-        $timelineEnd = $projects->max('end_date')->copy()->endOfMonth();
-        $totalDays = $timelineStart->diffInDays($timelineEnd) ?: 1;
-
-        // Generate month labels
-        $months = collect();
-        $cursor = $timelineStart->copy();
-        while ($cursor->lte($timelineEnd)) {
-            $monthStart = $cursor->copy();
-            $monthEnd = $cursor->copy()->endOfMonth();
-            $monthDays = $monthStart->diffInDays($monthEnd->min($timelineEnd)) + 1;
-
-            $months->push([
-                'label' => $cursor->format('M Y'),
-                'short' => $cursor->format('M'),
-                'width' => round(($monthDays / $totalDays) * 100, 2),
-                'isCurrent' => $cursor->isSameMonth(now()),
-            ]);
-            $cursor->addMonth()->startOfMonth();
-        }
-
-        // Build project timeline data
-        $projectData = $projects->map(function (CdeProject $project) use ($timelineStart, $totalDays) {
-            $start = $project->start_date;
-            $end = $project->end_date;
-
-            $leftPercent = round(($timelineStart->diffInDays($start) / $totalDays) * 100, 2);
-            $widthPercent = round(($start->diffInDays($end) / $totalDays) * 100, 2);
-
-            $totalProjectDays = $start->diffInDays($end) ?: 1;
-
-            // Expected progress — where it should be based on elapsed calendar time
-            if ($start->isFuture()) {
-                $expectedProgress = 0;
-            } elseif (now()->gte($end)) {
-                $expectedProgress = 100;
-            } else {
-                $elapsed = $start->diffInDays(now());
-                $expectedProgress = min(100, round(($elapsed / $totalProjectDays) * 100));
+            if ($projects->isEmpty()) {
+                return ['projects' => collect(), 'timelineStart' => now(), 'timelineEnd' => now(), 'months' => collect()];
             }
 
-            // Actual progress — use eager-loaded milestones (no extra queries)
-            $projectMilestones = $project->milestones;
-            $milestoneCount = $projectMilestones->count();
-            $completedMilestones = $projectMilestones->where('status', 'completed')->count();
+            // Calculate the overall timeline range
+            $timelineStart = $projects->min('start_date')->copy()->startOfMonth();
+            $timelineEnd = $projects->max('end_date')->copy()->endOfMonth();
+            $totalDays = $timelineStart->diffInDays($timelineEnd) ?: 1;
 
-            if ($project->status === 'completed') {
-                $actualProgress = 100;
-            } elseif ($project->status === 'planning') {
-                $actualProgress = min(5, $expectedProgress);
-            } elseif ($project->status === 'on_hold' || $project->status === 'cancelled') {
-                // Frozen at whatever point they stopped
-                $actualProgress = $milestoneCount > 0
-                    ? round(($completedMilestones / $milestoneCount) * 100)
-                    : max(0, $expectedProgress - 15);
-            } elseif ($milestoneCount > 0) {
-                // Use milestone completion ratio
-                $actualProgress = round(($completedMilestones / $milestoneCount) * 100);
-            } else {
-                // No milestones — use elapsed time as a proxy
-                $actualProgress = $expectedProgress;
+            // Generate month labels
+            $months = collect();
+            $cursor = $timelineStart->copy();
+            while ($cursor->lte($timelineEnd)) {
+                $monthStart = $cursor->copy();
+                $monthEnd = $cursor->copy()->endOfMonth();
+                $monthDays = $monthStart->diffInDays($monthEnd->min($timelineEnd)) + 1;
+
+                $months->push([
+                    'label' => $cursor->format('M Y'),
+                    'short' => $cursor->format('M'),
+                    'width' => round(($monthDays / $totalDays) * 100, 2),
+                    'isCurrent' => $cursor->isSameMonth(now()),
+                ]);
+                $cursor->addMonth()->startOfMonth();
             }
 
-            // Variance: positive = ahead, negative = behind
-            $variance = $actualProgress - $expectedProgress;
-            if ($project->status === 'completed') {
-                $varianceLabel = 'Complete';
-                $varianceColor = '#10b981';
-            } elseif ($project->status === 'on_hold') {
-                $varianceLabel = 'On Hold';
-                $varianceColor = '#f59e0b';
-            } elseif (abs($variance) <= 5) {
-                $varianceLabel = 'On Track';
-                $varianceColor = '#10b981';
-            } elseif ($variance > 0) {
-                $varianceLabel = abs($variance) . '% Ahead';
-                $varianceColor = '#3b82f6';
-            } else {
-                $varianceLabel = abs($variance) . '% Behind';
-                $varianceColor = '#ef4444';
-            }
+            // Build project timeline data
+            $projectData = $projects->map(function (CdeProject $project) use ($timelineStart, $totalDays) {
+                $start = $project->start_date;
+                $end = $project->end_date;
 
-            // Use eager-loaded milestones (no extra queries)
-            $milestones = $projectMilestones->map(function (Milestone $m) use ($timelineStart, $totalDays) {
-                $pos = round(($timelineStart->diffInDays($m->target_date) / $totalDays) * 100, 2);
+                $leftPercent = round(($timelineStart->diffInDays($start) / $totalDays) * 100, 2);
+                $widthPercent = round(($start->diffInDays($end) / $totalDays) * 100, 2);
+
+                $totalProjectDays = $start->diffInDays($end) ?: 1;
+
+                // Expected progress — where it should be based on elapsed calendar time
+                if ($start->isFuture()) {
+                    $expectedProgress = 0;
+                } elseif (now()->gte($end)) {
+                    $expectedProgress = 100;
+                } else {
+                    $elapsed = $start->diffInDays(now());
+                    $expectedProgress = min(100, round(($elapsed / $totalProjectDays) * 100));
+                }
+
+                // Actual progress — use eager-loaded milestones (no extra queries)
+                $projectMilestones = $project->milestones;
+                $milestoneCount = $projectMilestones->count();
+                $completedMilestones = $projectMilestones->where('status', 'completed')->count();
+
+                if ($project->status === 'completed') {
+                    $actualProgress = 100;
+                } elseif ($project->status === 'planning') {
+                    $actualProgress = min(5, $expectedProgress);
+                } elseif ($project->status === 'on_hold' || $project->status === 'cancelled') {
+                    // Frozen at whatever point they stopped
+                    $actualProgress = $milestoneCount > 0
+                        ? round(($completedMilestones / $milestoneCount) * 100)
+                        : max(0, $expectedProgress - 15);
+                } elseif ($milestoneCount > 0) {
+                    // Use milestone completion ratio
+                    $actualProgress = round(($completedMilestones / $milestoneCount) * 100);
+                } else {
+                    // No milestones — use elapsed time as a proxy
+                    $actualProgress = $expectedProgress;
+                }
+
+                // Variance: positive = ahead, negative = behind
+                $variance = $actualProgress - $expectedProgress;
+                if ($project->status === 'completed') {
+                    $varianceLabel = 'Complete';
+                    $varianceColor = '#10b981';
+                } elseif ($project->status === 'on_hold') {
+                    $varianceLabel = 'On Hold';
+                    $varianceColor = '#f59e0b';
+                } elseif (abs($variance) <= 5) {
+                    $varianceLabel = 'On Track';
+                    $varianceColor = '#10b981';
+                } elseif ($variance > 0) {
+                    $varianceLabel = abs($variance) . '% Ahead';
+                    $varianceColor = '#3b82f6';
+                } else {
+                    $varianceLabel = abs($variance) . '% Behind';
+                    $varianceColor = '#ef4444';
+                }
+
+                // Use eager-loaded milestones (no extra queries) — filter out any with null dates
+                $milestones = $projectMilestones->filter(fn($m) => $m->target_date !== null)->map(function (Milestone $m) use ($timelineStart, $totalDays) {
+                    $pos = round(($timelineStart->diffInDays($m->target_date) / $totalDays) * 100, 2);
+                    return [
+                        'name' => $m->name,
+                        'date' => $m->target_date->format('M d, Y'),
+                        'status' => $m->status,
+                        'priority' => $m->priority ?? 'medium',
+                        'position' => $pos,
+                        'isOverdue' => $m->status !== 'completed' && $m->target_date->isPast(),
+                    ];
+                });
+
+                $statusColors = [
+                    'planning' => '#6366f1',   // indigo
+                    'active' => '#10b981',     // emerald
+                    'on_hold' => '#f59e0b',    // amber
+                    'completed' => '#6b7280',  // gray
+                    'cancelled' => '#ef4444',  // red
+                ];
+
                 return [
-                    'name' => $m->name,
-                    'date' => $m->target_date->format('M d, Y'),
-                    'status' => $m->status,
-                    'priority' => $m->priority,
-                    'position' => $pos,
-                    'isOverdue' => $m->status !== 'completed' && $m->target_date->isPast(),
+                    'id' => $project->id,
+                    'name' => $project->name,
+                    'code' => $project->code,
+                    'status' => $project->status,
+                    'statusLabel' => CdeProject::$statuses[$project->status] ?? ucfirst($project->status),
+                    'startDate' => $start->format('M d, Y'),
+                    'endDate' => $end->format('M d, Y'),
+                    'leftPercent' => max(0, $leftPercent),
+                    'widthPercent' => max(1, $widthPercent),
+                    'progress' => $actualProgress,
+                    'expectedProgress' => $expectedProgress,
+                    'variance' => $variance,
+                    'varianceLabel' => $varianceLabel,
+                    'varianceColor' => $varianceColor,
+                    'color' => $statusColors[$project->status] ?? '#6366f1',
+                    'milestones' => $milestones,
+                    'url' => route('filament.app.resources.cde-projects.view', $project),
+                    'budget' => $project->budget ? '$' . number_format($project->budget, 0) : null,
                 ];
             });
 
-            $statusColors = [
-                'planning' => '#6366f1',   // indigo
-                'active' => '#10b981',     // emerald
-                'on_hold' => '#f59e0b',    // amber
-                'completed' => '#6b7280',  // gray
-                'cancelled' => '#ef4444',  // red
-            ];
+            // Today marker position
+            $todayPercent = null;
+            if (now()->between($timelineStart, $timelineEnd)) {
+                $todayPercent = round(($timelineStart->diffInDays(now()) / $totalDays) * 100, 2);
+            }
+
+            // Summary stats for fullscreen view (computed from already-loaded data)
+            $totalProjects = $projectData->count();
+            $activeProjects = $projectData->where('status', 'active')->count();
+            $behindProjects = $projectData->filter(fn($p) => $p['variance'] < -5)->count();
+            $aheadProjects = $projectData->filter(fn($p) => $p['variance'] > 5)->count();
+            $totalBudget = $projects->sum('budget');
+            $avgProgress = $totalProjects > 0 ? round($projectData->avg('progress')) : 0;
 
             return [
-                'id' => $project->id,
-                'name' => $project->name,
-                'code' => $project->code,
-                'status' => $project->status,
-                'statusLabel' => CdeProject::$statuses[$project->status] ?? $project->status,
-                'startDate' => $start->format('M d, Y'),
-                'endDate' => $end->format('M d, Y'),
-                'leftPercent' => max(0, $leftPercent),
-                'widthPercent' => max(1, $widthPercent),
-                'progress' => $actualProgress,
-                'expectedProgress' => $expectedProgress,
-                'variance' => $variance,
-                'varianceLabel' => $varianceLabel,
-                'varianceColor' => $varianceColor,
-                'color' => $statusColors[$project->status] ?? '#6366f1',
-                'milestones' => $milestones,
-                'url' => route('filament.app.resources.cde-projects.view', $project),
-                'budget' => $project->budget ? '$' . number_format($project->budget, 0) : null,
+                'projects' => $projectData,
+                'months' => $months,
+                'todayPercent' => $todayPercent,
+                'summaryStats' => [
+                    'totalProjects' => $totalProjects,
+                    'activeProjects' => $activeProjects,
+                    'behindProjects' => $behindProjects,
+                    'aheadProjects' => $aheadProjects,
+                    'totalBudget' => $totalBudget ? '$' . number_format($totalBudget, 0) : '$0',
+                    'avgProgress' => $avgProgress,
+                ],
             ];
-        });
-
-        // Today marker position
-        $todayPercent = null;
-        if (now()->between($timelineStart, $timelineEnd)) {
-            $todayPercent = round(($timelineStart->diffInDays(now()) / $totalDays) * 100, 2);
+        } catch (\Throwable $e) {
+            report($e);
+            return [
+                'projects' => collect(),
+                'months' => collect(),
+                'todayPercent' => null,
+                'summaryStats' => ['totalProjects' => 0, 'activeProjects' => 0, 'behindProjects' => 0, 'aheadProjects' => 0, 'totalBudget' => '$0', 'avgProgress' => 0],
+            ];
         }
-
-        // Summary stats for fullscreen view (computed from already-loaded data)
-        $totalProjects = $projectData->count();
-        $activeProjects = $projectData->where('status', 'active')->count();
-        $behindProjects = $projectData->filter(fn($p) => $p['variance'] < -5)->count();
-        $aheadProjects = $projectData->filter(fn($p) => $p['variance'] > 5)->count();
-        $totalBudget = $projects->sum('budget');
-        $avgProgress = $totalProjects > 0 ? round($projectData->avg('progress')) : 0;
-
-        return [
-            'projects' => $projectData,
-            'months' => $months,
-            'todayPercent' => $todayPercent,
-            'summaryStats' => [
-                'totalProjects' => $totalProjects,
-                'activeProjects' => $activeProjects,
-                'behindProjects' => $behindProjects,
-                'aheadProjects' => $aheadProjects,
-                'totalBudget' => $totalBudget ? '$' . number_format($totalBudget, 0) : '$0',
-                'avgProgress' => $avgProgress,
-            ],
-        ];
     }
 }
