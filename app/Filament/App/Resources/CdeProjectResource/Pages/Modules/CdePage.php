@@ -39,7 +39,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
     protected static ?string $navigationLabel = 'Documents';
     protected static ?string $title = 'Document Management';
     protected string $view = 'filament.app.pages.modules.cde';
-    protected bool $hasHeaderActions = false; // rendered manually in command bar
+
 
     public ?int $currentFolderId = null;
     public string $folderPath = 'Root';
@@ -72,8 +72,14 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
         $this->folderPath = 'Root';
     }
 
-    // ── Header actions: Upload + Create Folder + Navigate Up ──────────
+    // ── Empty header actions (buttons are rendered in command bar below) ──
     protected function getHeaderActions(): array
+    {
+        return [];
+    }
+
+    // ── Command bar actions: Upload + Create Folder + Navigate Up ────────
+    public function getCommandBarActions(): array
     {
         return [
             Action::make('uploadDocument')
