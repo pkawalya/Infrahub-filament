@@ -85,6 +85,10 @@ class AdminPanelProvider extends PanelProvider
                 \Filament\View\PanelsRenderHook::BODY_END,
                 fn() => view('components.loading-overlay'),
             )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::BODY_END,
+                fn() => view('components.fullscreen-toggle'),
+            )
             ->viteTheme('resources/css/filament/admin/theme.css');
     }
 }
