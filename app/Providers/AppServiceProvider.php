@@ -20,7 +20,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // ── Override SMTP mail transport to bypass config scheme issues ──
+        $this->app->afterResolving('mail.manager', function ($manager) {
+            $manager->extend('smtp', function () {
+                $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport(
+                    config('mail.mailers.smtp.host', 'smtp.gmail.com'),
+                    (int) config('mail.mailers.smtp.port', 587),
+                );
+                $transport->setUsername(config('mail.mailers.smtp.username', ''));
+                $transport->setPassword(config('mail.mailers.smtp.password', ''));
+
+                return $transport;
+            });
+        });
     }
 
     /**
@@ -28,8 +40,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // ── Force SMTP scheme to prevent smtps/ssl override ──
-        config(['mail.mailers.smtp.scheme' => 'smtp']);
 
         // ── Make ALL Select dropdowns searchable by default ──
         Select::configureUsing(fn(Select $select) => $select->searchable());
