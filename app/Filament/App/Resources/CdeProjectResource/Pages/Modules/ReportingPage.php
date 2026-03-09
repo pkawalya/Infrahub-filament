@@ -210,13 +210,13 @@ class ReportingPage extends BaseModulePage
         $bySuitability = $docs->groupBy('suitability_code')->map->count()->toArray();
 
         $recentUploads = $r->documents()->whereBetween('created_at', [$from, $to])
-            ->with('uploader')->latest()->limit(15)->get()
+            ->with('uploadedBy')->latest()->limit(15)->get()
             ->map(fn($d) => [
                 'title' => $d->title,
                 'doc_number' => $d->document_number,
                 'status' => $d->status,
                 'suitability' => $d->suitability_code,
-                'uploaded_by' => $d->uploader?->name ?? '—',
+                'uploaded_by' => $d->uploadedBy?->name ?? '—',
                 'date' => $d->created_at->format('M d, Y'),
                 'revision' => $d->revision,
             ])->toArray();
@@ -394,9 +394,9 @@ class ReportingPage extends BaseModulePage
         fputcsv($handle, ['Document Report - ' . $r->name, 'From: ' . $from->format('M d, Y'), 'To: ' . $to->format('M d, Y')]);
         fputcsv($handle, []);
         fputcsv($handle, ['Doc #', 'Title', 'Discipline', 'Status', 'Suitability', 'Revision', 'Uploaded By', 'Date']);
-        $docs = $r->documents()->whereBetween('created_at', [$from, $to])->with('uploader')->get();
+        $docs = $r->documents()->whereBetween('created_at', [$from, $to])->with('uploadedBy')->get();
         foreach ($docs as $d) {
-            fputcsv($handle, [$d->document_number, $d->title, $d->discipline, $d->status, $d->suitability_code, $d->revision, $d->uploader?->name, $d->created_at->format('Y-m-d')]);
+            fputcsv($handle, [$d->document_number, $d->title, $d->discipline, $d->status, $d->suitability_code, $d->revision, $d->uploadedBy?->name, $d->created_at->format('Y-m-d')]);
         }
     }
 
