@@ -482,10 +482,6 @@
                 white-space: nowrap;
                 color: var(--cde-muted);
             }
-            /* ── Compact Header Action Buttons ──── */
-            .fi-header-actions .fi-btn { padding: 4px 8px !important; font-size: 10px !important; gap: 3px !important; min-height: unset !important; }
-            .fi-header-actions .fi-btn .fi-btn-icon { width: 12px !important; height: 12px !important; }
-            .fi-header-actions .fi-btn-label { font-size: 10px !important; }
         </style>
     @endpush
 
