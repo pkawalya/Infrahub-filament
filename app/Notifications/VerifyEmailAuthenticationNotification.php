@@ -2,22 +2,19 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Log;
 
 /**
- * Branded 2FA sign-in code notification.
+ * 2FA sign-in code notification.
  *
- * Replaces Filament's default plain-text email with a branded
- * template that uses the InfraHub email layout, includes the logo,
- * and renders the OTP code in a large, easy-to-copy format.
+ * Sent SYNCHRONOUSLY (not queued) because the user is actively
+ * waiting at the login screen. Queuing adds latency and failure
+ * risk if the queue worker is down or misconfigured.
  */
-class VerifyEmailAuthenticationNotification extends Notification implements ShouldQueue
+class VerifyEmailAuthenticationNotification extends Notification
 {
-    use Queueable;
-
     public function __construct(
         public string $code,
         public int $codeExpiryMinutes,
@@ -34,8 +31,10 @@ class VerifyEmailAuthenticationNotification extends Notification implements Shou
 
     public function toMail(object $notifiable): MailMessage
     {
+        Log::info('Sending 2FA code to: ' . ($notifiable->email ?? 'unknown'));
+
         return (new MailMessage)
-            ->subject('Your Sign-In Code — ' . config('app.name', 'InfraHub'))
+            ->subject('Your Sign-In Code — ' . config('app.name', 'App'))
             ->view('emails.auth.sign-in-code', [
                 'code' => $this->code,
                 'expiryMinutes' => $this->codeExpiryMinutes,
