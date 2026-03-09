@@ -21,35 +21,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // ── Custom SMTP transport that bypasses Laravel's broken scheme detection ──
-        $this->app->afterResolving('mail.manager', function ($manager) {
-            $manager->extend('infrahub', function () {
-                // DB settings (group=email) take priority over .env
-                $host = Setting::getValue('mail_host') ?: config('mail.mailers.smtp.host', 'smtp.gmail.com');
-                $port = (int) (Setting::getValue('mail_port') ?: config('mail.mailers.smtp.port', 587));
-                $username = Setting::getValue('mail_username') ?: config('mail.mailers.smtp.username', '');
-                $password = Setting::getValue('mail_password') ?: config('mail.mailers.smtp.password', '');
-                $fromAddress = Setting::getValue('mail_from_address') ?: config('mail.from.address', '');
-                $fromName = Setting::getValue('mail_from_name') ?: config('mail.from.name', config('app.name'));
-
-                // Build transport — STARTTLS on 587, implicit SSL on 465
-                $tls = ($port !== 465);
-                $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport($host, $port, $tls);
-                $transport->setUsername($username);
-                $transport->setPassword($password);
-
-                // Apply from address to config
-                config([
-                    'mail.from.address' => $fromAddress,
-                    'mail.from.name' => $fromName,
-                ]);
-
-                return $transport;
-            });
-
-            // Set our custom transport as the default mailer
-            config(['mail.default' => 'infrahub']);
-        });
+        //
     }
 
     /**
@@ -57,7 +29,31 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // ── Custom SMTP transport that bypasses Laravel's broken scheme detection ──
+        // Register the 'infrahub' mailer in config so Laravel knows about it
+        config(['mail.mailers.infrahub' => ['transport' => 'infrahub']]);
+        config(['mail.default' => 'infrahub']);
 
+        \Illuminate\Support\Facades\Mail::extend('infrahub', function () {
+            $host = Setting::getValue('mail_host') ?: config('mail.mailers.smtp.host', 'smtp.gmail.com');
+            $port = (int) (Setting::getValue('mail_port') ?: config('mail.mailers.smtp.port', 587));
+            $username = Setting::getValue('mail_username') ?: config('mail.mailers.smtp.username', '');
+            $password = Setting::getValue('mail_password') ?: config('mail.mailers.smtp.password', '');
+            $fromAddress = Setting::getValue('mail_from_address') ?: config('mail.from.address', '');
+            $fromName = Setting::getValue('mail_from_name') ?: config('mail.from.name', config('app.name'));
+
+            $tls = ($port !== 465);
+            $transport = new \Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport($host, $port, $tls);
+            $transport->setUsername($username);
+            $transport->setPassword($password);
+
+            config([
+                'mail.from.address' => $fromAddress,
+                'mail.from.name' => $fromName,
+            ]);
+
+            return $transport;
+        });
         // ── Make ALL Select dropdowns searchable by default ──
         Select::configureUsing(fn(Select $select) => $select->searchable());
 
