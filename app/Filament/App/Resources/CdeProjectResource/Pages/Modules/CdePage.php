@@ -80,6 +80,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 ->label('Upload Document')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('primary')
+                ->size('xs')
                 ->modalWidth('2xl')
                 ->schema([
                     Forms\Components\FileUpload::make('file')
@@ -175,6 +176,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 ->label('New Folder')
                 ->icon('heroicon-o-folder-plus')
                 ->color('gray')
+                ->size('xs')
                 ->schema([
                     Forms\Components\TextInput::make('name')
                         ->label('Folder Name')
@@ -208,6 +210,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 ->label('Go Up')
                 ->icon('heroicon-o-arrow-up')
                 ->color('gray')
+                ->size('xs')
                 ->visible(fn() => $this->currentFolderId !== null)
                 ->action(function (): void {
                     if ($this->currentFolderId) {
@@ -220,6 +223,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 ->label('New RFI')
                 ->icon('heroicon-o-question-mark-circle')
                 ->color('warning')
+                ->size('xs')
                 ->modalWidth('2xl')
                 ->schema([
                     Section::make('Request For Information')->schema([
@@ -255,6 +259,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 ->label('Create Transmittal')
                 ->icon('heroicon-o-paper-airplane')
                 ->color('success')
+                ->size('xs')
                 ->modalWidth('3xl')
                 ->schema([
                     Section::make('Transmittal Details')->schema([
@@ -313,6 +318,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 ->label('Add Required Submission')
                 ->icon('heroicon-o-clipboard-document-check')
                 ->color('info')
+                ->size('xs')
                 ->modalWidth('xl')
                 ->schema([
                     Section::make('Required Deliverable')->schema([
@@ -345,6 +351,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 ->label('Submit Document')
                 ->icon('heroicon-o-arrow-up-tray')
                 ->color('primary')
+                ->size('xs')
                 ->modalWidth('lg')
                 ->schema([
                     Forms\Components\FileUpload::make('file_path')
