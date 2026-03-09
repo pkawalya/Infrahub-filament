@@ -72,14 +72,8 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
         $this->folderPath = 'Root';
     }
 
-    // ── Empty header actions (buttons are rendered in command bar below) ──
+    // ── Header actions: Upload + Create Folder + Navigate Up ──────────
     protected function getHeaderActions(): array
-    {
-        return [];
-    }
-
-    // ── Command bar actions: Upload + Create Folder + Navigate Up ────────
-    public function getCommandBarActions(): array
     {
         return [
             Action::make('uploadDocument')

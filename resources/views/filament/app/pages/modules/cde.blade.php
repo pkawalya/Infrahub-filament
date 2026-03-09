@@ -647,12 +647,6 @@
             </x-filament::section>
         @endif
         <div class="cde-cmdbar" x-data="{ viewMode: 'grid' }">
-            {{-- Filament header actions render here --}}
-            <div style="display:flex;align-items:center;gap:4px;">
-                @foreach ($this->getCommandBarActions() as $action)
-                    {{ $action }}
-                @endforeach
-            </div>
             <div class="cde-cmd-spacer"></div>
             <div class="cde-cmdbar-sep"></div>
             {{-- View Toggle --}}
