@@ -2,6 +2,8 @@
 
 namespace App\Notifications;
 
+use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Log;
@@ -9,16 +11,26 @@ use Illuminate\Support\Facades\Log;
 /**
  * 2FA sign-in code notification.
  *
- * Sent SYNCHRONOUSLY (not queued) because the user is actively
- * waiting at the login screen. Queuing adds latency and failure
- * risk if the queue worker is down or misconfigured.
+ * Queued for speed (so the login page responds instantly).
+ * If the queue worker is down, Laravel will still attempt to
+ * process it once the worker comes back up.
  */
-class VerifyEmailAuthenticationNotification extends Notification
+class VerifyEmailAuthenticationNotification extends Notification implements ShouldQueue
 {
+    use Queueable;
+
+    /**
+     * Retry up to 3 times, timeout after 30 seconds.
+     */
+    public int $tries = 3;
+    public int $timeout = 30;
+
     public function __construct(
         public string $code,
         public int $codeExpiryMinutes,
     ) {
+        // Process on the 'mail' queue if available, otherwise default
+        $this->onQueue('mail');
     }
 
     /**
@@ -40,5 +52,13 @@ class VerifyEmailAuthenticationNotification extends Notification
                 'expiryMinutes' => $this->codeExpiryMinutes,
                 'userName' => $notifiable->name ?? 'there',
             ]);
+    }
+
+    /**
+     * Log when the notification fails permanently.
+     */
+    public function failed(\Throwable $e): void
+    {
+        Log::error('2FA email failed: ' . $e->getMessage());
     }
 }
