@@ -111,17 +111,10 @@
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
                                     <td align="left" valign="middle" style="width:180px;">
-                                        <!-- Logo as text (maximum email client compatibility) -->
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                                            <tr>
-                                                <td
-                                                    style="background: linear-gradient(135deg, #38bdf8, #4f46e5); border-radius:8px; padding:8px 14px;">
-                                                    <span
-                                                        style="font-family:'Inter',sans-serif; font-size:11px; font-weight:800; color:#ffffff; letter-spacing:0.5px;">🏗️
-                                                        INFRA<span style="color:#c7d2fe;">HUB</span></span>
-                                                </td>
-                                            </tr>
-                                        </table>
+                                        <span
+                                            style="font-family:'Inter',sans-serif; font-size:16px; font-weight:700; color:#1f2937; letter-spacing:-0.3px;">
+                                            {{ config('app.name', 'App') }}
+                                        </span>
                                     </td>
                                     <td align="right" valign="middle">
                                         @hasSection('header_action')
@@ -150,60 +143,13 @@
                         <td style="border-top: 1px solid #f0f0f5;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
-                                    <td class="email-footer-inner" align="center" style="padding: 32px 40px 28px;">
-                                        <!-- Footer Logo -->
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
-                                            <tr>
-                                                <td align="center" style="padding-bottom:16px;">
-                                                    <table role="presentation" cellspacing="0" cellpadding="0"
-                                                        border="0">
-                                                        <tr>
-                                                            <td
-                                                                style="background: linear-gradient(135deg, #38bdf8, #4f46e5); border-radius:6px; padding:6px 12px;">
-                                                                <span
-                                                                    style="font-family:'Inter',sans-serif; font-size:10px; font-weight:800; color:#ffffff; letter-spacing:0.5px;">🏗️
-                                                                    INFRA<span style="color:#c7d2fe;">HUB</span></span>
-                                                            </td>
-                                                        </tr>
-                                                    </table>
-                                                </td>
-                                            </tr>
-                                        </table>
-
+                                    <td class="email-footer-inner" align="center" style="padding: 28px 40px 24px;">
                                         <!-- Footer text -->
                                         <p
-                                            style="margin:0 0 16px; font-size:12px; color:#9ca3af; line-height:1.6; max-width:420px;">
-                                            You have received this email because you are registered at InfraHub. This is
-                                            an automated message from the Construction & Infrastructure Management
-                                            platform.
+                                            style="margin:0 0 14px; font-size:12px; color:#9ca3af; line-height:1.6; max-width:420px;">
+                                            You received this email because you have an account with
+                                            {{ config('app.name', 'us') }}. This is an automated message.
                                         </p>
-
-                                        <!-- Social icons row -->
-                                        <table role="presentation" cellspacing="0" cellpadding="0" border="0"
-                                            style="margin-bottom:16px;">
-                                            <tr>
-                                                <td style="padding:0 6px;">
-                                                    <a href="#"
-                                                        style="display:inline-block; width:32px; height:32px; border-radius:50%; background:#e5e7eb; text-align:center; line-height:32px; font-size:14px; text-decoration:none; color:#6b7280;"
-                                                        title="LinkedIn">in</a>
-                                                </td>
-                                                <td style="padding:0 6px;">
-                                                    <a href="#"
-                                                        style="display:inline-block; width:32px; height:32px; border-radius:50%; background:#e5e7eb; text-align:center; line-height:32px; font-size:14px; text-decoration:none; color:#6b7280;"
-                                                        title="Facebook">f</a>
-                                                </td>
-                                                <td style="padding:0 6px;">
-                                                    <a href="#"
-                                                        style="display:inline-block; width:32px; height:32px; border-radius:50%; background:#e5e7eb; text-align:center; line-height:32px; font-size:14px; text-decoration:none; color:#6b7280;"
-                                                        title="Twitter / X">𝕏</a>
-                                                </td>
-                                                <td style="padding:0 6px;">
-                                                    <a href="mailto:support@infrahub.co"
-                                                        style="display:inline-block; width:32px; height:32px; border-radius:50%; background:#e5e7eb; text-align:center; line-height:32px; font-size:14px; text-decoration:none; color:#6b7280;"
-                                                        title="Email">✉</a>
-                                                </td>
-                                            </tr>
-                                        </table>
 
                                         <!-- Links row -->
                                         <p style="margin:0 0 12px; font-size:12px;">
@@ -221,7 +167,7 @@
 
                                         <!-- Copyright -->
                                         <p style="margin:0; font-size:11px; color:#b0b8c9;">
-                                            © {{ date('Y') }} InfraHub · Construction & Infrastructure Management
+                                            &copy; {{ date('Y') }} {{ config('app.name', 'App') }}
                                         </p>
                                     </td>
                                 </tr>
