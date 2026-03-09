@@ -28,9 +28,12 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->passwordReset()
             ->profile()
             ->multiFactorAuthentication(
-                EmailAuthentication::make()->codeExpiryMinutes(10),
+                EmailAuthentication::make()
+                    ->codeExpiryMinutes(10)
+                    ->codeNotification(\App\Notifications\VerifyEmailAuthenticationNotification::class),
             )
             ->colors([
                 'primary' => Color::Indigo,

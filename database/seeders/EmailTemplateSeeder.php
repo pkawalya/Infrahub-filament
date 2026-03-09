@@ -163,6 +163,21 @@ class EmailTemplateSeeder extends Seeder
                     . '<p style="color:#9ca3af;font-size:12px;text-align:center;">If you did not expect this email, please contact your administrator.</p>',
                 'available_variables' => ['user_name', 'user_email', 'company_name', 'app_name', 'login_url', 'user_password', 'user_role', 'creator_name'],
             ],
+            [
+                'name' => 'Password Reset',
+                'slug' => 'password-reset',
+                'category' => 'authentication',
+                'subject' => 'Reset Your Password — {{app_name}}',
+                'body' => '<h2 style="color:#1f2937;margin:0 0 16px;">Password Reset Request 🔒</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">We received a request to reset the password for your <strong>{{app_name}}</strong> account associated with <strong>{{user_email}}</strong>.</p>'
+                    . '<p style="text-align:center;margin:28px 0;"><a href="{{reset_url}}" style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg,#3b82f6,#4f46e5);color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">Reset Password →</a></p>'
+                    . '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin:0 0 24px;">'
+                    . '<p style="color:#92400e;margin:0;font-size:13px;">⏰ This link will expire in <strong>{{expire_minutes}} minutes</strong>. If you didn\'t request a password reset, you can safely ignore this email — your password will remain unchanged.</p>'
+                    . '</div>'
+                    . '<p style="color:#9ca3af;font-size:12px;text-align:center;">For security, never share this link with anyone.</p>',
+                'available_variables' => ['user_name', 'user_email', 'company_name', 'app_name', 'reset_url', 'expire_minutes'],
+            ],
 
             // ─── Invoice Alerts ─────────────────────────────────
             [

@@ -134,4 +134,14 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
         'technician' => 'Technician',
         'client' => 'Client',
     ];
+
+    // ─── Password Reset ─────────────────────────────────────
+    /**
+     * Send a branded password reset notification using the
+     * EmailTemplate system instead of Laravel's default.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+        $this->notify(new \App\Notifications\ResetPasswordNotification($token));
+    }
 }

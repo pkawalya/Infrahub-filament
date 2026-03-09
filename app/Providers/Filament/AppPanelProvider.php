@@ -36,7 +36,9 @@ class AppPanelProvider extends PanelProvider
             ->emailVerification()
             ->profile()
             ->multiFactorAuthentication(
-                EmailAuthentication::make()->codeExpiryMinutes(10),
+                EmailAuthentication::make()
+                    ->codeExpiryMinutes(10)
+                    ->codeNotification(\App\Notifications\VerifyEmailAuthenticationNotification::class),
             )
             ->colors([
                 'primary' => Color::hex('#1d4ed8'),   // Professional Blue (Aconex style)
