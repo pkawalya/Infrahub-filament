@@ -5,8 +5,12 @@ namespace App\Http\Controllers\Api;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 
 class AuthController extends BaseApiController
@@ -23,42 +27,64 @@ class AuthController extends BaseApiController
             'device_name' => 'string|max:255',
         ]);
 
-        // Rate limiting: 5 attempts per minute per email
-        $rateLimitKey = 'api-login:' . strtolower($request->email);
-        if (RateLimiter::tooManyAttempts($rateLimitKey, 5)) {
-            $seconds = RateLimiter::availableIn($rateLimitKey);
+        $ip = $request->ip();
+        $email = strtolower($request->email);
+
+        // ── Dual rate limiting: per-email AND per-IP ────────
+        $emailKey = 'api-login:' . $email;
+        $ipKey = 'api-login-ip:' . $ip;
+        $maxAttempts = config('security.login.max_attempts', 5);
+
+        if (RateLimiter::tooManyAttempts($emailKey, $maxAttempts)) {
+            $this->logLoginActivity($email, null, $ip, $request->userAgent(), 'locked', 'rate_limited');
+            $seconds = RateLimiter::availableIn($emailKey);
             return $this->error("Too many login attempts. Try again in {$seconds} seconds.", 429);
         }
-        RateLimiter::hit($rateLimitKey, 60);
+        if (RateLimiter::tooManyAttempts($ipKey, $maxAttempts * 3)) {
+            $this->logLoginActivity($email, null, $ip, $request->userAgent(), 'blocked', 'ip_rate_limited');
+            return $this->error('Too many requests from this IP address.', 429);
+        }
 
-        $user = User::where('email', $request->email)->first();
+        RateLimiter::hit($emailKey, 60);
+        RateLimiter::hit($ipKey, 300);
+
+        $user = User::where('email', $email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
+            $this->logLoginActivity($email, $user?->id, $ip, $request->userAgent(), 'failed', 'wrong_password');
+            Log::channel('security')->warning('LOGIN_FAILED', ['email' => $email, 'ip' => $ip]);
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
         }
 
         if (!$user->is_active) {
+            $this->logLoginActivity($email, $user->id, $ip, $request->userAgent(), 'failed', 'disabled');
             return $this->error('Account is deactivated. Contact your administrator.', 403);
         }
 
         // SaaS: Verify the user's company is active
         if ($user->company && !$user->company->is_active) {
+            $this->logLoginActivity($email, $user->id, $ip, $request->userAgent(), 'failed', 'company_inactive');
             return $this->error('Your company account is inactive. Contact support.', 403);
         }
 
-        RateLimiter::clear($rateLimitKey);
+        // ── Success ─────────────────────────────────────────
+        RateLimiter::clear($emailKey);
+        $this->logLoginActivity($email, $user->id, $ip, $request->userAgent(), 'success');
 
         $deviceName = $request->device_name ?? ($request->userAgent() ?: 'api-token');
 
-        $token = $user->createToken($deviceName, ['*'])->plainTextToken;
+        // Token with configurable expiry (default: 30 days)
+        $expiryHours = config('security.api.token_expiry_hours', 720);
+        $token = $user->createToken($deviceName, ['*'], now()->addHours($expiryHours))->plainTextToken;
 
         $user->update(['last_login_at' => now()]);
 
         return $this->success([
             'token' => $token,
             'token_type' => 'Bearer',
+            'expires_in' => $expiryHours * 3600,
             'user' => [
                 'id' => $user->id,
                 'name' => $user->name,
@@ -66,6 +92,7 @@ class AuthController extends BaseApiController
                 'company_id' => $user->company_id,
                 'user_type' => $user->user_type,
                 'avatar' => $user->avatar,
+                'roles' => $user->getRoleNames(),
             ],
         ], 'Login successful');
     }
@@ -86,7 +113,7 @@ class AuthController extends BaseApiController
         $data = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8|confirmed',
+            'password' => ['required', 'string', 'confirmed', Password::min(10)->mixedCase()->numbers()->symbols()],
             'company_id' => 'required|exists:companies,id',
         ]);
 
@@ -168,6 +195,13 @@ class AuthController extends BaseApiController
             'abilities.*' => 'string',
         ]);
 
+        // Enforce max tokens per user
+        $maxTokens = config('security.api.max_tokens_per_user', 5);
+        $existingTokenCount = $request->user()->tokens()->count();
+        if ($existingTokenCount >= $maxTokens) {
+            return $this->error("Maximum of {$maxTokens} API tokens allowed. Revoke an existing token first.", 422);
+        }
+
         // Restrict abilities to safe operations (never allow wildcard from user input)
         $allowedAbilities = ['read', 'write', 'projects:read', 'projects:write', 'documents:read', 'documents:write', 'tasks:read', 'tasks:write'];
         $requestedAbilities = $request->abilities ?? ['read'];
@@ -176,15 +210,18 @@ class AuthController extends BaseApiController
             $safeAbilities = ['read'];
         }
 
+        $expiryHours = config('security.api.token_expiry_hours', 720);
         $token = $request->user()->createToken(
             $request->name,
             $safeAbilities,
+            now()->addHours($expiryHours),
         );
 
         return $this->success([
             'token' => $token->plainTextToken,
             'name' => $token->accessToken->name,
             'abilities' => $token->accessToken->abilities,
+            'expires_at' => $token->accessToken->expires_at?->toISOString(),
         ], 'Token created', 201);
     }
 
@@ -203,5 +240,34 @@ class AuthController extends BaseApiController
         }
 
         return $this->success(message: 'Token revoked');
+    }
+
+    /**
+     * Record login activity to database.
+     */
+    protected function logLoginActivity(
+        string $email,
+        ?int $userId,
+        ?string $ip,
+        ?string $userAgent,
+        string $status,
+        ?string $failureReason = null
+    ): void {
+        try {
+            if (Schema::hasTable('login_activities')) {
+                DB::table('login_activities')->insert([
+                    'user_id' => $userId,
+                    'email' => $email,
+                    'ip_address' => $ip ?? '0.0.0.0',
+                    'user_agent' => substr($userAgent ?? '', 0, 500),
+                    'status' => $status,
+                    'failure_reason' => $failureReason,
+                    'created_at' => now(),
+                ]);
+            }
+        } catch (\Throwable $e) {
+            // Don't break login flow for audit logging failures
+            Log::warning('Failed to log login activity: ' . $e->getMessage());
+        }
     }
 }

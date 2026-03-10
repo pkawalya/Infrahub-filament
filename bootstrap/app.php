@@ -13,10 +13,22 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
+
+        // ── Global Security ────────────────────────────────
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        $middleware->append(\App\Http\Middleware\AuditSensitiveActions::class);
+
+        // ── API-specific ───────────────────────────────────
+        $middleware->api(prepend: [
+            \App\Http\Middleware\EnforceTenantIsolation::class,
+        ]);
+
+        // ── Aliases ────────────────────────────────────────
         $middleware->alias([
             'module' => \App\Http\Middleware\CheckModulePermission::class,
         ]);
     })
+    ->withEvents(discover: [__DIR__ . '/../app/Listeners'])
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();

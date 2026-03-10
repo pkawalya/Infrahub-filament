@@ -1,0 +1,105 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | InfraHub Security Configuration
+    |--------------------------------------------------------------------------
+    | Centralized security settings for auth, API, sessions, passwords.
+    |
+    */
+
+    // ── Password Policy ────────────────────────────────────
+    'password' => [
+        'min_length' => 10,
+        'require_uppercase' => true,
+        'require_lowercase' => true,
+        'require_numbers' => true,
+        'require_symbols' => true,
+        'prevent_reuse' => 5,    // Remember last N passwords
+        'max_age_days' => 90,    // Force reset after N days (0 = disabled)
+    ],
+
+    // ── API Tokens ─────────────────────────────────────────
+    'api' => [
+        'token_expiry_hours' => 24 * 30, // 30 days (was: never)
+        'max_tokens_per_user' => 5,
+        'rate_limit_per_minute' => 60,
+        'rate_limit_auth' => 5,     // login/register per minute
+    ],
+
+    // ── Session Security ───────────────────────────────────
+    'session' => [
+        'lifetime_minutes' => 120,     // Auto logout after inactivity
+        'encrypt' => true,             // Encrypt session data
+        'same_site' => 'lax',          // Cookie SameSite policy
+    ],
+
+    // ── Login Protection ───────────────────────────────────
+    'login' => [
+        'max_attempts' => 5,            // Before lockout
+        'lockout_minutes' => 15,        // How long to lock out
+        'track_ip_changes' => true,     // Alert on new IP logins
+        'enforce_2fa' => true,          // Require email 2FA
+    ],
+
+    // ── File Upload Security ───────────────────────────────
+    'uploads' => [
+        'max_file_size_mb' => 50,       // Maximum upload size
+        'allowed_extensions' => [
+            'pdf',
+            'doc',
+            'docx',
+            'xls',
+            'xlsx',
+            'csv',
+            'png',
+            'jpg',
+            'jpeg',
+            'gif',
+            'webp',
+            'svg',
+            'dwg',
+            'dxf',
+            'dwf',       // CAD files
+            'ifc',
+            'rvt',              // BIM files
+            'zip',
+            'rar',
+            '7z',        // Archives
+        ],
+        'blocked_extensions' => [
+            'exe',
+            'bat',
+            'cmd',
+            'sh',
+            'php',
+            'phar',
+            'js',
+            'vbs',
+            'ps1',
+            'com',
+            'scr',
+        ],
+        'scan_for_malware' => false,    // Enable if ClamAV available
+    ],
+
+    // ── Audit Retention ────────────────────────────────────
+    'audit' => [
+        'log_retention_days' => 90,
+        'log_login_attempts' => true,
+        'log_api_requests' => true,
+        'log_data_exports' => true,
+        'log_admin_actions' => true,
+    ],
+
+    // ── Content Security ───────────────────────────────────
+    'headers' => [
+        'hsts_max_age' => 31536000,     // 1 year
+        'frame_options' => 'SAMEORIGIN',
+        'content_type_options' => 'nosniff',
+        'referrer_policy' => 'strict-origin-when-cross-origin',
+    ],
+
+];
