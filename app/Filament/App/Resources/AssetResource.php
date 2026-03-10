@@ -13,6 +13,7 @@ use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class AssetResource extends Resource
 {
@@ -20,6 +21,11 @@ class AssetResource extends Resource
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-server-stack';
     protected static string|\UnitEnum|null $navigationGroup = 'Company';
     protected static ?int $navigationSort = 2;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('company_id', auth()->user()?->company_id);
+    }
 
     public static function infolist(Schema $schema): Schema
     {

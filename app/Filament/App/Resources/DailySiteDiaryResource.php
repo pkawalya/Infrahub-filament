@@ -12,6 +12,7 @@ use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class DailySiteDiaryResource extends Resource
 {
@@ -22,6 +23,11 @@ class DailySiteDiaryResource extends Resource
     protected static ?string $navigationLabel = 'Daily Site Diary';
     protected static ?string $modelLabel = 'Site Diary';
     protected static ?int $navigationSort = 2;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('company_id', auth()->user()?->company_id);
+    }
 
     public static function getNavigationBadge(): ?string
     {

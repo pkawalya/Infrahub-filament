@@ -14,6 +14,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use Illuminate\Database\Eloquent\Builder;
 
 class SubcontractorResource extends Resource
 {
@@ -23,6 +24,11 @@ class SubcontractorResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Company';
     protected static ?string $navigationLabel = 'Subcontractors';
     protected static ?int $navigationSort = 5;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('company_id', auth()->user()?->company_id);
+    }
 
     public static function form(Schema $schema): Schema
     {

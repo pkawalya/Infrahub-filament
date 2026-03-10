@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use Illuminate\Database\Eloquent\Builder;
 
 class EquipmentAllocationResource extends Resource
 {
@@ -27,6 +28,11 @@ class EquipmentAllocationResource extends Resource
     protected static ?string $modelLabel = 'Allocation';
     protected static ?string $pluralModelLabel = 'Plant Allocations';
     protected static ?int $navigationSort = 3;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('company_id', auth()->user()?->company_id);
+    }
 
     public static function form(Schema $schema): Schema
     {

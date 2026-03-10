@@ -12,6 +12,7 @@ use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class CrewAttendanceResource extends Resource
 {
@@ -21,6 +22,11 @@ class CrewAttendanceResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Company';
     protected static ?string $navigationLabel = 'Crew Attendance';
     protected static ?int $navigationSort = 7;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('company_id', auth()->user()?->company_id);
+    }
 
     public static function form(Schema $schema): Schema
     {

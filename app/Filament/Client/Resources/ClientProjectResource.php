@@ -26,6 +26,16 @@ class ClientProjectResource extends Resource
         return false;
     }
 
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return false;
+    }
+
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->where('company_id', auth()->user()?->company_id);

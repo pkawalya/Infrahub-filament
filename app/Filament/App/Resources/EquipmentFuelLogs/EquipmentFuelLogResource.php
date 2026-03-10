@@ -16,6 +16,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class EquipmentFuelLogResource extends Resource
 {
@@ -27,6 +28,11 @@ class EquipmentFuelLogResource extends Resource
     protected static ?string $modelLabel = 'Fuel Log';
     protected static ?string $pluralModelLabel = 'Fuel Logs';
     protected static ?int $navigationSort = 4;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('company_id', auth()->user()?->company_id);
+    }
 
     public static function form(Schema $schema): Schema
     {

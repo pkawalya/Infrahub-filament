@@ -14,6 +14,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
+use Illuminate\Database\Eloquent\Builder;
 
 class TenderResource extends Resource
 {
@@ -23,6 +24,11 @@ class TenderResource extends Resource
     protected static string|\UnitEnum|null $navigationGroup = 'Company';
     protected static ?string $navigationLabel = 'Tenders & Bids';
     protected static ?int $navigationSort = 6;
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('company_id', auth()->user()?->company_id);
+    }
 
     public static function getNavigationBadge(): ?string
     {
