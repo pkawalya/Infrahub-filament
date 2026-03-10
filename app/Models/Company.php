@@ -50,12 +50,14 @@ class Company extends Model
         'suspended_at',
         'suspension_reason',
         'settings',
+        'configurable_options',
         'invoice_config',
         'notes',
     ];
 
     protected $casts = [
         'settings' => 'array',
+        'configurable_options' => 'array',
         'invoice_config' => 'array',
         'subscription_starts_at' => 'datetime',
         'subscription_expires_at' => 'datetime',
@@ -72,6 +74,105 @@ class Company extends Model
     {
         parent::boot();
         static::creating(fn($c) => $c->slug = $c->slug ?? Str::slug($c->name));
+    }
+
+    // ─── Configurable Options ────────────────────────────────────
+
+    /**
+     * System-wide defaults for configurable dropdowns.
+     * Companies can override any of these in their `configurable_options` JSON column.
+     */
+    public static array $defaultOptions = [
+        'weather_types' => [
+            'sunny' => '☀️ Sunny',
+            'cloudy' => '☁️ Cloudy',
+            'rainy' => '🌧️ Rainy',
+            'windy' => '💨 Windy',
+            'stormy' => '⛈️ Stormy',
+            'foggy' => '🌫️ Foggy',
+            'hot' => '🔥 Hot',
+            'cold' => '❄️ Cold',
+        ],
+        'subcontractor_specialties' => [
+            'electrical' => 'Electrical',
+            'plumbing' => 'Plumbing',
+            'hvac' => 'HVAC',
+            'steelwork' => 'Steelwork',
+            'concrete' => 'Concrete',
+            'roofing' => 'Roofing',
+            'painting' => 'Painting',
+            'landscaping' => 'Landscaping',
+            'demolition' => 'Demolition',
+            'earthworks' => 'Earthworks',
+            'piling' => 'Piling',
+            'waterproofing' => 'Waterproofing',
+            'tiling' => 'Tiling & Flooring',
+            'glazing' => 'Glazing',
+            'fire_protection' => 'Fire Protection',
+            'other' => 'Other',
+        ],
+        'tender_categories' => [
+            'construction' => 'Construction',
+            'renovation' => 'Renovation',
+            'maintenance' => 'Maintenance',
+            'supply' => 'Supply & Install',
+            'design_build' => 'Design & Build',
+            'civil' => 'Civil Works',
+            'infrastructure' => 'Infrastructure',
+            'other' => 'Other',
+        ],
+        'tender_sources' => [
+            'public' => 'Public Tender',
+            'private' => 'Private Invitation',
+            'referral' => 'Referral',
+            'portal' => 'Online Portal',
+            'newspaper' => 'Newspaper',
+            'other' => 'Other',
+        ],
+        'attendance_statuses' => [
+            'present' => 'Present',
+            'absent' => 'Absent',
+            'late' => 'Late',
+            'half_day' => 'Half Day',
+            'leave' => 'On Leave',
+        ],
+        'asset_categories' => [
+            'hvac' => 'HVAC',
+            'electrical' => 'Electrical',
+            'plumbing' => 'Plumbing',
+            'mechanical' => 'Mechanical',
+            'it_equipment' => 'IT Equipment',
+            'vehicle' => 'Vehicle',
+            'heavy_equipment' => 'Heavy Equipment',
+            'generator' => 'Generator',
+            'scaffolding' => 'Scaffolding',
+            'other' => 'Other',
+        ],
+    ];
+
+    /**
+     * Get configurable options for a given key, merging company overrides with defaults.
+     * Usage: $company->getOptions('weather_types')
+     */
+    public function getOptions(string $key): array
+    {
+        $companyOverrides = $this->configurable_options[$key] ?? null;
+        $defaults = static::$defaultOptions[$key] ?? [];
+
+        return $companyOverrides ?: $defaults;
+    }
+
+    /**
+     * Static helper to get options for the current authenticated user's company.
+     * Usage: Company::options('weather_types')
+     */
+    public static function options(string $key): array
+    {
+        $company = auth()->user()?->company;
+        if ($company) {
+            return $company->getOptions($key);
+        }
+        return static::$defaultOptions[$key] ?? [];
     }
 
     // ─── Relationships ───────────────────────────────────────────

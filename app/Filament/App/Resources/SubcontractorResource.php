@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\SubcontractorResource\Pages;
+use App\Models\Company;
 use App\Models\Subcontractor;
 use App\Support\CurrencyHelper;
 use Filament\Actions;
@@ -34,7 +35,7 @@ class SubcontractorResource extends Resource
                     Forms\Components\TextInput::make('email')->email()->maxLength(255),
                     Forms\Components\TextInput::make('phone')->maxLength(50),
                     Forms\Components\Select::make('specialty')
-                        ->options(Subcontractor::$specialties)
+                        ->options(fn() => Company::options('subcontractor_specialties'))
                         ->searchable(),
                     Forms\Components\Select::make('status')
                         ->options(Subcontractor::$statuses)
@@ -121,7 +122,7 @@ class SubcontractorResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(Subcontractor::$statuses),
                 Tables\Filters\SelectFilter::make('specialty')
-                    ->options(Subcontractor::$specialties),
+                    ->options(fn() => Company::options('subcontractor_specialties')),
             ])
             ->actions([
                 Actions\ViewAction::make(),

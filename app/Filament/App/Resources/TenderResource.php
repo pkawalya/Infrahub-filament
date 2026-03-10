@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\TenderResource\Pages;
+use App\Models\Company;
 use App\Models\Tender;
 use App\Support\CurrencyHelper;
 use Filament\Actions;
@@ -23,6 +24,19 @@ class TenderResource extends Resource
     protected static ?string $navigationLabel = 'Tenders & Bids';
     protected static ?int $navigationSort = 6;
 
+    public static function getNavigationBadge(): ?string
+    {
+        $count = static::getEloquentQuery()
+            ->whereIn('status', ['identified', 'preparing', 'submitted', 'shortlisted'])
+            ->count();
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): ?string
+    {
+        return 'info';
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([
@@ -39,10 +53,10 @@ class TenderResource extends Resource
                     Forms\Components\TextInput::make('client_name')
                         ->label('Client / Issuer'),
                     Forms\Components\Select::make('source')
-                        ->options(Tender::$sources)
+                        ->options(fn() => Company::options('tender_sources'))
                         ->searchable(),
                     Forms\Components\Select::make('category')
-                        ->options(Tender::$categories)
+                        ->options(fn() => Company::options('tender_categories'))
                         ->searchable(),
                     Forms\Components\TextInput::make('region')
                         ->placeholder('e.g. Kampala, East Region'),
@@ -192,7 +206,7 @@ class TenderResource extends Resource
                     ->options(Tender::$statuses)
                     ->multiple(),
                 Tables\Filters\SelectFilter::make('category')
-                    ->options(Tender::$categories),
+                    ->options(fn() => Company::options('tender_categories')),
                 Tables\Filters\Filter::make('overdue')
                     ->label('Overdue')
                     ->query(fn($q) => $q->whereNotIn('status', ['submitted', 'awarded', 'lost', 'withdrawn'])

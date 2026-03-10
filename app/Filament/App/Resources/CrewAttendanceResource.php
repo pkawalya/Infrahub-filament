@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\CrewAttendanceResource\Pages;
+use App\Models\Company;
 use App\Models\CrewAttendance;
 use Filament\Actions;
 use Filament\Forms;
@@ -43,7 +44,7 @@ class CrewAttendanceResource extends Resource
                         ->required()
                         ->default(now()),
                     Forms\Components\Select::make('status')
-                        ->options(CrewAttendance::$statuses)
+                        ->options(fn() => Company::options('attendance_statuses'))
                         ->default('present')
                         ->required(),
                 ])->columns(2),
@@ -126,7 +127,7 @@ class CrewAttendanceResource extends Resource
             ->defaultSort('attendance_date', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
-                    ->options(CrewAttendance::$statuses),
+                    ->options(fn() => Company::options('attendance_statuses')),
                 Tables\Filters\SelectFilter::make('user_id')
                     ->label('Worker')
                     ->relationship('worker', 'name'),
