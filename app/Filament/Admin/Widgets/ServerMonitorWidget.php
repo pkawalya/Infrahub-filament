@@ -12,12 +12,9 @@ class ServerMonitorWidget extends Widget
 
     protected static ?int $sort = 7;
 
-    // Poll every 5 seconds for live data
     protected static ?string $pollingInterval = '5s';
 
-    /**
-     * Get CPU usage percentage.
-     */
+    // ── CPU ──────────────────────────────────────────────────────
     public function getCpuUsage(): array
     {
         $cpuPercent = 0;
@@ -25,21 +22,18 @@ class ServerMonitorWidget extends Widget
         $loadAvg = [0, 0, 0];
 
         try {
-            // Get number of CPU cores
             if (is_readable('/proc/cpuinfo')) {
                 $cpuinfo = file_get_contents('/proc/cpuinfo');
                 $cpuCores = max(1, substr_count($cpuinfo, 'processor'));
             }
 
-            // Get load averages
             if (function_exists('sys_getloadavg')) {
                 $loadAvg = sys_getloadavg();
             }
 
-            // Get CPU usage from /proc/stat
             if (is_readable('/proc/stat')) {
                 $stat1 = file_get_contents('/proc/stat');
-                usleep(100000); // 100ms sample
+                usleep(100000);
                 $stat2 = file_get_contents('/proc/stat');
 
                 $info1 = $this->parseCpuStat($stat1);
@@ -52,11 +46,9 @@ class ServerMonitorWidget extends Widget
                     $cpuPercent = round((1 - $diff_idle / $diff_total) * 100, 1);
                 }
             } else {
-                // Fallback: estimate from load average
                 $cpuPercent = round(min(100, ($loadAvg[0] / $cpuCores) * 100), 1);
             }
         } catch (\Throwable $e) {
-            // Silently fail
         }
 
         return [
@@ -66,58 +58,37 @@ class ServerMonitorWidget extends Widget
         ];
     }
 
-    /**
-     * Get memory usage.
-     */
+    // ── Memory ──────────────────────────────────────────────────
     public function getMemoryUsage(): array
     {
-        $total = 0;
-        $used = 0;
-        $free = 0;
-        $cached = 0;
-        $buffers = 0;
-        $available = 0;
-        $swapTotal = 0;
-        $swapUsed = 0;
+        $total = $used = $free = $cached = $buffers = $available = 0;
+        $swapTotal = $swapUsed = 0;
 
         try {
             if (is_readable('/proc/meminfo')) {
                 $meminfo = file_get_contents('/proc/meminfo');
-                $lines = explode("\n", $meminfo);
-
-                foreach ($lines as $line) {
-                    if (preg_match('/^(\w+):\s+(\d+)/', $line, $matches)) {
-                        $key = $matches[1];
-                        $valueKb = (int) $matches[2];
-
-                        match ($key) {
-                            'MemTotal' => $total = $valueKb * 1024,
-                            'MemFree' => $free = $valueKb * 1024,
-                            'MemAvailable' => $available = $valueKb * 1024,
-                            'Buffers' => $buffers = $valueKb * 1024,
-                            'Cached' => $cached = $valueKb * 1024,
-                            'SwapTotal' => $swapTotal = $valueKb * 1024,
-                            'SwapFree' => $swapUsed = $swapTotal - ($valueKb * 1024),
+                foreach (explode("\n", $meminfo) as $line) {
+                    if (preg_match('/^(\w+):\s+(\d+)/', $line, $m)) {
+                        $kb = (int) $m[2];
+                        match ($m[1]) {
+                            'MemTotal' => $total = $kb * 1024,
+                            'MemFree' => $free = $kb * 1024,
+                            'MemAvailable' => $available = $kb * 1024,
+                            'Buffers' => $buffers = $kb * 1024,
+                            'Cached' => $cached = $kb * 1024,
+                            'SwapTotal' => $swapTotal = $kb * 1024,
+                            'SwapFree' => $swapUsed = $swapTotal - ($kb * 1024),
                             default => null,
                         };
                     }
                 }
-
-                // Actual used memory (excluding buffers/cache)
-                if ($available > 0) {
-                    $used = $total - $available;
-                } else {
-                    $used = $total - $free - $buffers - $cached;
-                }
+                $used = $available > 0 ? $total - $available : $total - $free - $buffers - $cached;
             }
         } catch (\Throwable $e) {
-            // Silently fail
         }
 
-        $percent = $total > 0 ? round(($used / $total) * 100, 1) : 0;
-
         return [
-            'percent' => $percent,
+            'percent' => $total > 0 ? round(($used / $total) * 100, 1) : 0,
             'total' => $total,
             'used' => $used,
             'free' => $total - $used,
@@ -133,215 +104,270 @@ class ServerMonitorWidget extends Widget
         ];
     }
 
-    /**
-     * Get disk usage for all mounted partitions.
-     */
+    // ── Disk ────────────────────────────────────────────────────
     public function getDiskUsage(): array
     {
         $disks = [];
-
         try {
-            // Get mounted filesystems
             $output = shell_exec("df -B1 --output=source,size,used,avail,pcent,target 2>/dev/null | tail -n +2");
-
             if ($output) {
-                $lines = array_filter(explode("\n", trim($output)));
-
-                foreach ($lines as $line) {
-                    $parts = preg_split('/\s+/', trim($line));
-
-                    if (count($parts) >= 6) {
-                        $source = $parts[0];
-                        $mount = end($parts);
-
-                        // Skip virtual and snap filesystems
-                        if (
-                            str_starts_with($source, '/dev/') &&
-                            !str_starts_with($mount, '/snap/') &&
-                            !str_starts_with($mount, '/boot/efi')
-                        ) {
-                            $total = (int) $parts[1];
-                            $used = (int) $parts[2];
-                            $available = (int) $parts[3];
-                            $percentStr = rtrim($parts[4], '%');
-
+                foreach (array_filter(explode("\n", trim($output))) as $line) {
+                    $p = preg_split('/\s+/', trim($line));
+                    if (count($p) >= 6) {
+                        $src = $p[0];
+                        $mnt = end($p);
+                        if (str_starts_with($src, '/dev/') && !str_starts_with($mnt, '/snap/') && !str_starts_with($mnt, '/boot/efi')) {
+                            $t = (int) $p[1];
+                            $u = (int) $p[2];
+                            $a = (int) $p[3];
+                            $pct = (float) rtrim($p[4], '%');
                             $disks[] = [
-                                'device' => $source,
-                                'mount' => $mount,
-                                'total' => $total,
-                                'used' => $used,
-                                'available' => $available,
-                                'percent' => (float) $percentStr,
-                                'total_formatted' => $this->formatBytes($total),
-                                'used_formatted' => $this->formatBytes($used),
-                                'available_formatted' => $this->formatBytes($available),
+                                'device' => $src,
+                                'mount' => $mnt,
+                                'total' => $t,
+                                'used' => $u,
+                                'available' => $a,
+                                'percent' => $pct,
+                                'total_formatted' => $this->formatBytes($t),
+                                'used_formatted' => $this->formatBytes($u),
+                                'available_formatted' => $this->formatBytes($a),
                             ];
                         }
                     }
                 }
             }
-
-            // Fallback if df didn't work
             if (empty($disks)) {
-                $total = disk_total_space('/');
-                $free = disk_free_space('/');
-                $used = $total - $free;
-
+                $t = disk_total_space('/');
+                $f = disk_free_space('/');
+                $u = $t - $f;
                 $disks[] = [
                     'device' => '/',
                     'mount' => '/',
-                    'total' => $total,
-                    'used' => $used,
-                    'available' => $free,
-                    'percent' => $total > 0 ? round(($used / $total) * 100, 1) : 0,
-                    'total_formatted' => $this->formatBytes($total),
-                    'used_formatted' => $this->formatBytes($used),
-                    'available_formatted' => $this->formatBytes($free),
+                    'total' => $t,
+                    'used' => $u,
+                    'available' => $f,
+                    'percent' => $t > 0 ? round(($u / $t) * 100, 1) : 0,
+                    'total_formatted' => $this->formatBytes($t),
+                    'used_formatted' => $this->formatBytes($u),
+                    'available_formatted' => $this->formatBytes($f)
                 ];
             }
         } catch (\Throwable $e) {
-            // Silently fail
         }
-
         return $disks;
     }
 
-    /**
-     * Get system uptime.
-     */
+    // ── Network I/O ─────────────────────────────────────────────
+    public function getNetworkStats(): array
+    {
+        $interfaces = [];
+        try {
+            if (is_readable('/proc/net/dev')) {
+                $lines = explode("\n", trim(file_get_contents('/proc/net/dev')));
+                foreach (array_slice($lines, 2) as $line) {
+                    if (preg_match('/^\s*(\w+):\s+(\d+)\s+(\d+)\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+\d+\s+(\d+)\s+(\d+)/', $line, $m)) {
+                        $iface = $m[1];
+                        if ($iface === 'lo')
+                            continue;
+                        $rxBytes = (int) $m[2];
+                        $txBytes = (int) $m[4];
+                        if ($rxBytes + $txBytes > 0) {
+                            $interfaces[] = [
+                                'name' => $iface,
+                                'rx' => $this->formatBytes($rxBytes),
+                                'tx' => $this->formatBytes($txBytes),
+                                'rx_raw' => $rxBytes,
+                                'tx_raw' => $txBytes,
+                            ];
+                        }
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+        return $interfaces;
+    }
+
+    // ── Service Status ──────────────────────────────────────────
+    public function getServiceStatus(): array
+    {
+        $services = [];
+
+        // MySQL
+        try {
+            \DB::connection()->getPdo();
+            $services[] = ['name' => 'MySQL', 'icon' => 'database', 'status' => 'running', 'detail' => config('database.default')];
+        } catch (\Throwable $e) {
+            $services[] = ['name' => 'MySQL', 'icon' => 'database', 'status' => 'down', 'detail' => 'Connection failed'];
+        }
+
+        // Redis
+        try {
+            $redis = \Illuminate\Support\Facades\Redis::connection();
+            $redis->ping();
+            $services[] = ['name' => 'Redis', 'icon' => 'bolt', 'status' => 'running', 'detail' => config('database.redis.default.host', '127.0.0.1')];
+        } catch (\Throwable $e) {
+            $services[] = ['name' => 'Redis', 'icon' => 'bolt', 'status' => 'down', 'detail' => 'Not available'];
+        }
+
+        // Queue (count pending jobs)
+        try {
+            $pending = \DB::table('jobs')->count();
+            $failed = \DB::table('failed_jobs')->count();
+            $services[] = [
+                'name' => 'Queue',
+                'icon' => 'queue',
+                'status' => $failed > 0 ? 'warning' : 'running',
+                'detail' => "{$pending} pending" . ($failed > 0 ? ", {$failed} failed" : '')
+            ];
+        } catch (\Throwable $e) {
+            $services[] = ['name' => 'Queue', 'icon' => 'queue', 'status' => 'unknown', 'detail' => 'N/A'];
+        }
+
+        // Nginx/Apache
+        $webserver = 'Unknown';
+        try {
+            $server = $_SERVER['SERVER_SOFTWARE'] ?? '';
+            if (stripos($server, 'nginx') !== false)
+                $webserver = 'Nginx';
+            elseif (stripos($server, 'apache') !== false)
+                $webserver = 'Apache';
+            $services[] = ['name' => 'Web Server', 'icon' => 'globe', 'status' => 'running', 'detail' => $webserver];
+        } catch (\Throwable $e) {
+            $services[] = ['name' => 'Web Server', 'icon' => 'globe', 'status' => 'unknown', 'detail' => 'N/A'];
+        }
+
+        return $services;
+    }
+
+    // ── Application Metrics ─────────────────────────────────────
+    public function getAppMetrics(): array
+    {
+        $metrics = [];
+
+        // PHP Memory usage
+        $phpMem = memory_get_usage(true);
+        $phpMemPeak = memory_get_peak_usage(true);
+        $metrics['php_memory'] = $this->formatBytes($phpMem);
+        $metrics['php_memory_peak'] = $this->formatBytes($phpMemPeak);
+
+        // Storage
+        try {
+            $storageFree = disk_free_space(storage_path());
+            $metrics['storage_free'] = $this->formatBytes($storageFree);
+        } catch (\Throwable $e) {
+            $metrics['storage_free'] = 'N/A';
+        }
+
+        // DB connection info
+        try {
+            $dbSize = \DB::selectOne("SELECT ROUND(SUM(data_length + index_length), 0) as size FROM information_schema.tables WHERE table_schema = ?", [config('database.connections.mysql.database')]);
+            $metrics['db_size'] = $this->formatBytes((int) ($dbSize->size ?? 0));
+        } catch (\Throwable $e) {
+            $metrics['db_size'] = 'N/A';
+        }
+
+        // Cache driver
+        $metrics['cache_driver'] = config('cache.default');
+        $metrics['session_driver'] = config('session.driver');
+        $metrics['queue_driver'] = config('queue.default');
+
+        // Laravel version
+        $metrics['laravel'] = app()->version();
+
+        return $metrics;
+    }
+
+    // ── System Info ─────────────────────────────────────────────
     public function getUptime(): string
     {
         try {
             if (is_readable('/proc/uptime')) {
-                $uptime = (float) explode(' ', file_get_contents('/proc/uptime'))[0];
-
-                $days = floor($uptime / 86400);
-                $hours = floor(($uptime % 86400) / 3600);
-                $minutes = floor(($uptime % 3600) / 60);
-
+                $up = (float) explode(' ', file_get_contents('/proc/uptime'))[0];
+                $d = floor($up / 86400);
+                $h = floor(($up % 86400) / 3600);
+                $m = floor(($up % 3600) / 60);
                 $parts = [];
-                if ($days > 0)
-                    $parts[] = $days . 'd';
-                if ($hours > 0)
-                    $parts[] = $hours . 'h';
-                $parts[] = $minutes . 'm';
-
+                if ($d > 0)
+                    $parts[] = $d . 'd';
+                if ($h > 0)
+                    $parts[] = $h . 'h';
+                $parts[] = $m . 'm';
                 return implode(' ', $parts);
             }
         } catch (\Throwable $e) {
-            // Silently fail
         }
-
         return 'N/A';
     }
 
-    /**
-     * Get system hostname.
-     */
     public function getHostname(): string
     {
         return gethostname() ?: 'Unknown';
     }
 
-    /**
-     * Get OS info.
-     */
     public function getOsInfo(): string
     {
         try {
             if (is_readable('/etc/os-release')) {
-                $content = file_get_contents('/etc/os-release');
-                if (preg_match('/PRETTY_NAME="(.+)"/', $content, $matches)) {
-                    return $matches[1];
-                }
+                $c = file_get_contents('/etc/os-release');
+                if (preg_match('/PRETTY_NAME="(.+)"/', $c, $m))
+                    return $m[1];
             }
         } catch (\Throwable $e) {
-            // Silently fail
         }
-
         return php_uname('s') . ' ' . php_uname('r');
     }
 
-    /**
-     * Get PHP version.
-     */
     public function getPhpVersion(): string
     {
         return PHP_VERSION;
     }
 
-    /**
-     * Get top processes by CPU.
-     */
+    public function getKernelVersion(): string
+    {
+        return php_uname('r');
+    }
+
+    public function getServerTime(): string
+    {
+        return now()->format('Y-m-d H:i:s T');
+    }
+
+    // ── Top Processes ───────────────────────────────────────────
     public function getTopProcesses(): array
     {
-        $processes = [];
-
+        $procs = [];
         try {
-            $output = shell_exec("ps aux --sort=-%cpu 2>/dev/null | head -n 8 | tail -n +2");
-
-            if ($output) {
-                $lines = array_filter(explode("\n", trim($output)));
-
-                foreach ($lines as $line) {
-                    $parts = preg_split('/\s+/', trim($line), 11);
-                    if (count($parts) >= 11) {
-                        $processes[] = [
-                            'user' => $parts[0],
-                            'pid' => $parts[1],
-                            'cpu' => (float) $parts[2],
-                            'mem' => (float) $parts[3],
-                            'command' => mb_substr($parts[10], 0, 60),
-                        ];
+            $out = shell_exec("ps aux --sort=-%cpu 2>/dev/null | head -n 8 | tail -n +2");
+            if ($out) {
+                foreach (array_filter(explode("\n", trim($out))) as $line) {
+                    $p = preg_split('/\s+/', trim($line), 11);
+                    if (count($p) >= 11) {
+                        $procs[] = ['user' => $p[0], 'pid' => $p[1], 'cpu' => (float) $p[2], 'mem' => (float) $p[3], 'command' => mb_substr($p[10], 0, 60)];
                     }
                 }
             }
         } catch (\Throwable $e) {
-            // Silently fail
         }
-
-        return $processes;
+        return $procs;
     }
 
-    /**
-     * Parse /proc/stat for CPU timing.
-     */
+    // ── Helpers ──────────────────────────────────────────────────
     private function parseCpuStat(string $content): array
     {
-        $line = strtok($content, "\n");
-        $parts = preg_split('/\s+/', trim($line));
-
-        // cpu user nice system idle iowait irq softirq steal
-        $user = (int) ($parts[1] ?? 0);
-        $nice = (int) ($parts[2] ?? 0);
-        $system = (int) ($parts[3] ?? 0);
-        $idle = (int) ($parts[4] ?? 0);
-        $iowait = (int) ($parts[5] ?? 0);
-        $irq = (int) ($parts[6] ?? 0);
-        $softirq = (int) ($parts[7] ?? 0);
-        $steal = (int) ($parts[8] ?? 0);
-
-        $total = $user + $nice + $system + $idle + $iowait + $irq + $softirq + $steal;
-
-        return [
-            'idle' => $idle + $iowait,
-            'total' => $total,
-        ];
+        $parts = preg_split('/\s+/', trim(strtok($content, "\n")));
+        $vals = array_map('intval', array_slice($parts, 1, 8));
+        $idle = ($vals[3] ?? 0) + ($vals[4] ?? 0);
+        return ['idle' => $idle, 'total' => array_sum($vals)];
     }
 
-    /**
-     * Format bytes into human-readable format.
-     */
     private function formatBytes(int|float $bytes, int $precision = 1): string
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-
         $bytes = max($bytes, 0);
         $pow = $bytes > 0 ? floor(log($bytes, 1024)) : 0;
         $pow = min($pow, count($units) - 1);
-
         $bytes /= (1 << (10 * $pow));
-
         return round($bytes, $precision) . ' ' . $units[$pow];
     }
 }
