@@ -51,6 +51,26 @@ class Module extends Model
             'description' => 'Bill of quantities, material usage, cost variance',
             'icon' => 'heroicon-o-calculator',
         ],
+        'equipment' => [
+            'name' => 'Plant & Equipment',
+            'description' => 'Machinery tracking, fuel logs, maintenance schedules, allocation',
+            'icon' => 'heroicon-o-truck',
+        ],
+        'hr_management' => [
+            'name' => 'Labor & HR',
+            'description' => 'Crew attendance, timesheets, payroll exports, skill tracking',
+            'icon' => 'heroicon-o-users',
+        ],
+        'subcontractors' => [
+            'name' => 'Subcontractor Management',
+            'description' => 'Vendor evaluations, specialized works, tier-2 compliance',
+            'icon' => 'heroicon-o-user-group',
+        ],
+        'bidding' => [
+            'name' => 'Tender & Bidding',
+            'description' => 'Bid tracking, estimating, document assembly, competitor analysis',
+            'icon' => 'heroicon-o-document-magnifying-glass',
+        ],
         'sheq' => [
             'name' => 'SHEQ Management',
             'description' => 'Safety incidents, inspections, permits, toolbox talks',
