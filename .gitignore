@@ -25,3 +25,6 @@ yarn-error.log
 **/caddy
 frankenphp
 frankenphp-worker.php
+
+# Google Cloud Storage key (NEVER commit this)
+storage/gcs-key.json
