@@ -211,6 +211,13 @@ class CdeProjectResource extends Resource
                     $makeItem('sheq', 'SHEQ', 'heroicon-o-shield-check', Modules\SheqPage::class),
                 ],
             ],
+            'Resources' => [
+                'icon' => 'heroicon-o-truck',
+                'items' => [
+                    $makeItem('equipment', 'Equipment', 'heroicon-o-truck', Modules\EquipmentPage::class),
+                    $makeItem('subcontractors', 'Subcontractors', 'heroicon-o-user-group', Modules\SubcontractorPage::class),
+                ],
+            ],
             'Commercial' => [
                 'icon' => 'heroicon-o-banknotes',
                 'items' => [
@@ -339,6 +346,8 @@ class CdeProjectResource extends Resource
             'module-boq-management' => Modules\BoqPage::route('/{record}/boq'),
             'module-sheq' => Modules\SheqPage::route('/{record}/sheq'),
             'module-reporting' => Modules\ReportingPage::route('/{record}/reports'),
+            'module-equipment' => Modules\EquipmentPage::route('/{record}/equipment'),
+            'module-subcontractors' => Modules\SubcontractorPage::route('/{record}/subcontractors'),
         ];
     }
 }
