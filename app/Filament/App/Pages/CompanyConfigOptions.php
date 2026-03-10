@@ -20,7 +20,7 @@ class CompanyConfigOptions extends Page implements HasForms
     protected static ?string $navigationLabel = 'Dropdown Options';
     protected static ?string $title = 'Configurable Options';
     protected static ?int $navigationSort = 4;
-    protected static string $view = 'filament.app.pages.company-config-options';
+    protected string $view = 'filament.app.pages.company-config-options';
 
     public ?array $data = [];
 
