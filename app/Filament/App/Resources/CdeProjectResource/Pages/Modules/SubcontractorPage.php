@@ -24,7 +24,7 @@ class SubcontractorPage extends BaseModulePage implements HasTable
     protected static ?string $title = 'Subcontractors';
     protected static string $view = 'filament.app.pages.modules.subcontractors';
     protected static ?string $navigationLabel = 'Subcontractors';
-    protected static ?string $navigationIcon = 'heroicon-o-user-group';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
 
     protected function pid(): int
     {

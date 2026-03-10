@@ -24,7 +24,7 @@ class EquipmentPage extends BaseModulePage implements HasTable
     protected static ?string $title = 'Plant & Equipment';
     protected static string $view = 'filament.app.pages.modules.equipment';
     protected static ?string $navigationLabel = 'Equipment';
-    protected static ?string $navigationIcon = 'heroicon-o-truck';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
 
     protected function pid(): int
     {

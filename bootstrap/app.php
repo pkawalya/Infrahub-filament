@@ -13,6 +13,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
+        $middleware->alias([
+            'module' => \App\Http\Middleware\CheckModulePermission::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

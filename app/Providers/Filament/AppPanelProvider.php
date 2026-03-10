@@ -103,6 +103,31 @@ class AppPanelProvider extends PanelProvider
                 \Filament\View\PanelsRenderHook::BODY_END,
                 fn() => view('components.fullscreen-toggle'),
             )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::HEAD_END,
+                fn() => new \Illuminate\Support\HtmlString('
+                    <link rel="manifest" href="/manifest.json">
+                    <meta name="theme-color" content="#6366f1">
+                    <meta name="apple-mobile-web-app-capable" content="yes">
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+                    <meta name="apple-mobile-web-app-title" content="InfraHub">
+                    <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
+                '),
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::BODY_END,
+                fn() => new \Illuminate\Support\HtmlString('
+                    <script>
+                        if ("serviceWorker" in navigator) {
+                            window.addEventListener("load", () => {
+                                navigator.serviceWorker.register("/sw.js")
+                                    .then(reg => console.log("SW registered:", reg.scope))
+                                    .catch(err => console.warn("SW registration failed:", err));
+                            });
+                        }
+                    </script>
+                '),
+            )
             ->viteTheme('resources/css/filament/app/theme.css');
     }
 }

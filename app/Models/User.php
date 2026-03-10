@@ -93,6 +93,32 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
         return $this->company->hasModule($code);
     }
 
+    /**
+     * Check if user has a specific module permission.
+     * Combines company-level module access with user-level granular permission.
+     * Super admins and company admins bypass permission checks.
+     *
+     * @param string $permission e.g. 'projects.view', 'financials.approve'
+     */
+    public function hasModulePermission(string $permission): bool
+    {
+        if ($this->isSuperAdmin() || $this->isCompanyAdmin()) {
+            return true;
+        }
+
+        // Check if permission exists and user has it via Spatie HasRoles
+        return $this->hasPermissionTo($permission);
+    }
+
+    /**
+     * Check if user can perform an action on a module.
+     * Syntactic sugar: canModule('projects', 'view') === hasModulePermission('projects.view')
+     */
+    public function canModule(string $module, string $action = 'view'): bool
+    {
+        return $this->hasModulePermission("{$module}.{$action}");
+    }
+
     // ─── Panel Access ────────────────────────────────────────
     public function canAccessPanel(Panel $panel): bool
     {

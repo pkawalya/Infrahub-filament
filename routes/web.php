@@ -10,6 +10,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::get('/offline', function () {
+    return response()->file(public_path('offline.html'));
+});
+
 // Company Onboarding
 Route::get('/get-started', [OnboardingController::class, 'show'])->name('onboarding');
 Route::post('/get-started', [OnboardingController::class, 'store'])->middleware('throttle:5,1')->name('onboarding.store');
