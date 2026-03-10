@@ -73,6 +73,16 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\MaterialIssuance::observe(\App\Observers\MaterialIssuanceObserver::class);
         \App\Models\MaterialRequisitionItem::observe(\App\Observers\MaterialRequisitionItemObserver::class);
 
+        // ── Module notification observers ──
+        \App\Models\User::observe(\App\Observers\UserObserver::class);
+        \App\Models\Task::observe(\App\Observers\TaskObserver::class);
+        \App\Models\ChangeOrder::observe(\App\Observers\ChangeOrderObserver::class);
+        \App\Models\PaymentCertificate::observe(\App\Observers\PaymentCertificateObserver::class);
+        \App\Models\Drawing::observe(\App\Observers\DrawingObserver::class);
+        \App\Models\SafetyIncident::observe(\App\Observers\SafetyIncidentObserver::class);
+        \App\Models\DailySiteDiary::observe(\App\Observers\DailySiteDiaryObserver::class);
+        \App\Models\Invoice::observe(\App\Observers\InvoiceObserver::class);
+
         // Livewire components
         if (class_exists(\App\Filament\Resources\TicketResource\Pages\EditCommentModal::class)) {
             Livewire::component('edit-comment-modal', \App\Filament\Resources\TicketResource\Pages\EditCommentModal::class);
