@@ -27,6 +27,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Storage;
 
 use App\Filament\App\Concerns\ExportsTableCsv;
+use App\Support\StoragePath;
 
 class CdePage extends BaseModulePage implements HasTable, HasForms
 {
@@ -85,7 +86,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 ->schema([
                     Forms\Components\FileUpload::make('file')
                         ->label('Select File')
-                        ->directory('cde-uploads/' . $this->record->id)
+                        ->directory(StoragePath::documents($this->record))
                         ->maxSize(51200) // 50MB
                         ->acceptedFileTypes([
                             'application/pdf',
@@ -356,7 +357,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 ->schema([
                     Forms\Components\FileUpload::make('file_path')
                         ->label('Upload Document')
-                        ->directory('submission-uploads/' . ($this->record->id ?? 0))
+                        ->directory(StoragePath::projectCategory($this->record, 'submissions'))
                         ->disk('public')
                         ->maxSize(51200) // 50MB
                         ->acceptedFileTypes([
@@ -985,7 +986,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                         ->schema([
                             Forms\Components\FileUpload::make('file')
                                 ->label('Updated File')
-                                ->directory('cde-uploads/' . $this->record->id)
+                                ->directory(StoragePath::documents($this->record))
                                 ->maxSize(51200)
                                 ->acceptedFileTypes([
                                     'application/pdf',

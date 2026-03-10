@@ -6,6 +6,7 @@ use App\Filament\App\Resources\CdeProjectResource\Pages;
 use App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 use App\Models\CdeProject;
 use App\Models\Module;
+use App\Support\StoragePath;
 use Filament\Actions;
 use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
@@ -81,7 +82,8 @@ class CdeProjectResource extends Resource
                             Forms\Components\TextInput::make('address'),
                             Forms\Components\TextInput::make('city'),
                             Forms\Components\TextInput::make('country'),
-                            Forms\Components\FileUpload::make('image')->image()->directory('projects/images'),
+                            Forms\Components\FileUpload::make('image')->image()
+                                ->directory(fn($record) => $record ? StoragePath::images($record) : 'projects/images'),
                         ])->columns(2),
 
                     Schemas\Components\Tabs\Tab::make('Description')

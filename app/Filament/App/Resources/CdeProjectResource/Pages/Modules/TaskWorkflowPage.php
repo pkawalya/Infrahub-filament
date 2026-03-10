@@ -25,6 +25,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
 use App\Filament\App\Concerns\ExportsTableCsv;
+use App\Support\StoragePath;
 
 class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 {
@@ -334,7 +335,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
             Section::make('Attachments')->schema([
                 Forms\Components\FileUpload::make('attachments')
                     ->label('Files')->multiple()->maxFiles(10)->maxSize(10240)
-                    ->directory('task-attachments')
+                    ->directory(StoragePath::projectCategory($this->record, 'tasks'))
                     ->acceptedFileTypes([
                         'application/pdf',
                         'image/*',

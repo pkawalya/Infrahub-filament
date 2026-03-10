@@ -23,6 +23,7 @@ use Filament\Tables\Contracts\HasTable;
 use Illuminate\Support\HtmlString;
 
 use App\Filament\App\Concerns\ExportsTableCsv;
+use App\Support\StoragePath;
 
 class CostContractsPage extends BaseModulePage implements HasTable, HasForms
 {
@@ -394,7 +395,7 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                             ->searchable()->nullable(),
                         Forms\Components\FileUpload::make('file_path')
                             ->label('Certificate File')
-                            ->directory('certificates')
+                            ->directory(StoragePath::projectCategory($this->record, 'certificates'))
                             ->acceptedFileTypes(['application/pdf', 'image/*'])
                             ->maxSize(5120),
                         Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),

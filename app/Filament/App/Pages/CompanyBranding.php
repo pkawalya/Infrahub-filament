@@ -12,6 +12,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
 use BackedEnum;
 use UnitEnum;
+use App\Support\StoragePath;
 
 class CompanyBranding extends Page implements HasForms
 {
@@ -59,7 +60,7 @@ class CompanyBranding extends Page implements HasForms
                             Forms\Components\FileUpload::make('logo')
                                 ->label('Company Logo')
                                 ->image()
-                                ->directory('companies/logos')
+                                ->directory(StoragePath::companyAssets() . '/logos')
                                 ->imageResizeMode('contain')
                                 ->imageCropAspectRatio('497:228')
                                 ->imageResizeTargetWidth('497')
@@ -71,7 +72,7 @@ class CompanyBranding extends Page implements HasForms
                             Forms\Components\FileUpload::make('favicon')
                                 ->label('Favicon')
                                 ->image()
-                                ->directory('companies/favicons')
+                                ->directory(StoragePath::companyAssets() . '/favicons')
                                 ->imageResizeTargetWidth('64')
                                 ->imageResizeTargetHeight('64')
                                 ->helperText('32×32 or 64×64px (PNG or ICO). Shown in the browser tab.')

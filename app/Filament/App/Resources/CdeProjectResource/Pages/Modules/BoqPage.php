@@ -22,6 +22,7 @@ use Filament\Tables\Contracts\HasTable;
 use Illuminate\Support\HtmlString;
 
 use App\Filament\App\Concerns\ExportsTableCsv;
+use App\Support\StoragePath;
 
 class BoqPage extends BaseModulePage implements HasTable, HasForms
 {
@@ -771,7 +772,7 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                             Forms\Components\FileUpload::make('boq_file')
                                 ->label('Select CSV File')
                                 ->acceptedFileTypes(['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel'])
-                                ->directory('boq-uploads/' . now()->format('Y-m'))
+                                ->directory(StoragePath::boq($this->record))
                                 ->maxSize(5120) // 5MB
                                 ->required()
                                 ->helperText('Max 5 MB. Supports .csv and .txt files with comma or tab-separated values.'),
