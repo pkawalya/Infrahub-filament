@@ -329,6 +329,84 @@ class Company extends Model
         return $q->where('is_active', true);
     }
 
+    // ─── Storage Usage ──────────────────────────────────────────
+
+    /**
+     * Calculate total storage usage (in bytes) from GCS for this company.
+     * Results are cached for 1 hour.
+     */
+    public function calculateStorageUsage(): int
+    {
+        return cache()->remember(
+            "company:{$this->id}:storage_bytes",
+            now()->addHour(),
+            function () {
+                try {
+                    $disk = \Illuminate\Support\Facades\Storage::disk('gcs');
+                    $prefix = \App\Support\StoragePath::company($this->id);
+                    $files = $disk->allFiles($prefix);
+
+                    $totalBytes = 0;
+                    foreach ($files as $file) {
+                        $totalBytes += $disk->size($file);
+                    }
+
+                    // Also update the stored value for quick access
+                    $this->updateQuietly(['current_storage_bytes' => $totalBytes]);
+
+                    return $totalBytes;
+                } catch (\Throwable $e) {
+                    report($e);
+                    return (int) ($this->current_storage_bytes ?? 0);
+                }
+            }
+        );
+    }
+
+    /**
+     * Get human-readable storage usage string, e.g. "12.5 MB / 5 GB".
+     */
+    public function getFormattedStorageUsage(): string
+    {
+        $bytes = $this->current_storage_bytes ?? 0;
+        $maxGb = $this->getEffectiveMaxStorageGb();
+
+        $used = $this->formatBytes($bytes);
+        $limit = $maxGb > 0 ? "{$maxGb} GB" : '∞';
+
+        return "{$used} / {$limit}";
+    }
+
+    /**
+     * Get storage usage as a percentage (0-100).
+     */
+    public function getStorageUsagePercent(): float
+    {
+        $maxGb = $this->getEffectiveMaxStorageGb();
+        if ($maxGb <= 0)
+            return 0;
+
+        $maxBytes = $maxGb * 1024 * 1024 * 1024;
+        $used = $this->current_storage_bytes ?? 0;
+
+        return min(100, round(($used / $maxBytes) * 100, 1));
+    }
+
+    /**
+     * Format bytes into human-readable string.
+     */
+    public static function formatBytes(int $bytes, int $precision = 1): string
+    {
+        if ($bytes <= 0)
+            return '0 B';
+
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        $pow = floor(log($bytes, 1024));
+        $pow = min($pow, count($units) - 1);
+
+        return round($bytes / (1024 ** $pow), $precision) . ' ' . $units[$pow];
+    }
+
     // ─── Currency Formatting ─────────────────────────────────────
     /**
      * Format an amount using the company's currency settings.

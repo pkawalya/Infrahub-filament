@@ -7,6 +7,7 @@ use App\Models\Company;
 use App\Models\Module;
 use App\Models\Subscription;
 use App\Support\Countries;
+use App\Support\StoragePath;
 use Filament\Actions;
 use Filament\Infolists;
 use Filament\Schemas;
@@ -100,7 +101,7 @@ class CompanyResource extends Resource
                     Schemas\Components\Section::make('Branding')->schema([
                         Forms\Components\FileUpload::make('logo')
                             ->image()
-                            ->directory('companies/logos')
+                            ->directory(fn($record) => $record ? StoragePath::companyAssets($record->id) . '/logos' : 'companies/logos')
                             ->imageResizeMode('contain')
                             ->imageCropAspectRatio('497:228')
                             ->imageResizeTargetWidth('497')
@@ -110,7 +111,7 @@ class CompanyResource extends Resource
                             ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp']),
                         Forms\Components\FileUpload::make('favicon')
                             ->image()
-                            ->directory('companies/favicons')
+                            ->directory(fn($record) => $record ? StoragePath::companyAssets($record->id) . '/favicons' : 'companies/favicons')
                             ->imageResizeTargetWidth('64')
                             ->imageResizeTargetHeight('64')
                             ->acceptedFileTypes(['image/png', 'image/x-icon', 'image/vnd.microsoft.icon']),
@@ -383,6 +384,35 @@ class CompanyResource extends Resource
                 Tables\Columns\TextColumn::make('email')->searchable(),
                 Tables\Columns\TextColumn::make('subscription.name')->label('Plan')->badge(),
                 Tables\Columns\TextColumn::make('users_count')->counts('users')->label('Users'),
+                Tables\Columns\TextColumn::make('storage_usage')
+                    ->label('Storage')
+                    ->html()
+                    ->state(function (Company $record): string {
+                        $bytes = $record->current_storage_bytes ?? 0;
+                        $maxGb = $record->getEffectiveMaxStorageGb();
+                        $used = Company::formatBytes($bytes);
+                        $limit = $maxGb > 0 ? "{$maxGb} GB" : '∞';
+                        $pct = $record->getStorageUsagePercent();
+
+                        // Color: green < 50%, amber 50-80%, red > 80%
+                        $barColor = $pct >= 80 ? '#ef4444' : ($pct >= 50 ? '#f59e0b' : '#22c55e');
+                        $bgColor = $pct >= 80 ? '#fef2f2' : ($pct >= 50 ? '#fffbeb' : '#f0fdf4');
+
+                        $bar = '';
+                        if ($maxGb > 0) {
+                            $bar = '<div style="height:6px;border-radius:3px;background:#e5e7eb;margin-bottom:2px;overflow:hidden;">'
+                                . '<div style="height:100%;width:' . min($pct, 100) . '%;background:' . $barColor . ';border-radius:3px;transition:width 0.3s;"></div>'
+                                . '</div>';
+                        }
+
+                        return '<div style="min-width:100px;">'
+                            . $bar
+                            . '<span style="font-size:11px;font-weight:600;color:#374151;">' . $used . '</span>'
+                            . '<span style="font-size:10px;color:#9ca3af;"> / ' . $limit . '</span>'
+                            . ($pct >= 80 ? '<span style="font-size:9px;color:#ef4444;font-weight:600;margin-left:4px;">⚠</span>' : '')
+                            . '</div>';
+                    })
+                    ->tooltip(fn(Company $record) => $record->getFormattedStorageUsage() . ' (' . $record->getStorageUsagePercent() . '%)'),
                 Tables\Columns\IconColumn::make('is_active')->boolean(),
                 Tables\Columns\IconColumn::make('is_trial')->boolean(),
                 Tables\Columns\TextColumn::make('subscription_expires_at')->dateTime()->label('Expires'),
@@ -397,6 +427,22 @@ class CompanyResource extends Resource
             ->actions([
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
+                Actions\Action::make('syncStorage')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('info')
+                    ->label('Sync Storage')
+                    ->tooltip('Recalculate storage usage from GCS')
+                    ->requiresConfirmation()
+                    ->modalDescription('This will scan all files in GCS for this company and update their storage usage. This may take a few seconds.')
+                    ->action(function (Company $record): void {
+                        cache()->forget("company:{$record->id}:storage_bytes");
+                        $bytes = $record->calculateStorageUsage();
+                        \Filament\Notifications\Notification::make()
+                            ->title('Storage synced')
+                            ->body(Company::formatBytes($bytes) . ' used by ' . $record->name)
+                            ->success()
+                            ->send();
+                    }),
                 Actions\Action::make('suspend')
                     ->icon('heroicon-o-no-symbol')
                     ->color('danger')
@@ -412,6 +458,22 @@ class CompanyResource extends Resource
             ])
             ->bulkActions([
                 Actions\DeleteBulkAction::make(),
+                Actions\BulkAction::make('syncAllStorage')
+                    ->label('Sync Storage Usage')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->deselectRecordsAfterCompletion()
+                    ->action(function (\Illuminate\Database\Eloquent\Collection $records): void {
+                        foreach ($records as $record) {
+                            cache()->forget("company:{$record->id}:storage_bytes");
+                            $record->calculateStorageUsage();
+                        }
+                        \Filament\Notifications\Notification::make()
+                            ->title('Storage synced for ' . $records->count() . ' companies')
+                            ->success()
+                            ->send();
+                    }),
             ]);
     }
 
