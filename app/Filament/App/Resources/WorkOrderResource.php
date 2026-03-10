@@ -144,6 +144,101 @@ class WorkOrderResource extends Resource
                 Forms\Components\RichEditor::make('description')->columnSpanFull(),
                 Forms\Components\Textarea::make('notes')->rows(3)->columnSpanFull(),
             ])->columns(2),
+
+            // ── Testing & Inspection Plan (TIP) ──
+            Schemas\Components\Section::make('🔍 Testing & Inspection')
+                ->icon('heroicon-o-clipboard-document-check')
+                ->description('For quality assurance inspection and testing work orders')
+                ->schema([
+                    Forms\Components\Toggle::make('is_inspection')
+                        ->label('This is a Testing & Inspection work order')
+                        ->reactive()
+                        ->columnSpanFull(),
+
+                    Schemas\Components\Fieldset::make('Inspection Details')
+                        ->schema([
+                            Forms\Components\Select::make('inspection_type')
+                                ->label('Inspection Type')
+                                ->options(WorkOrder::$inspectionTypes)
+                                ->searchable(),
+                            Forms\Components\Select::make('hold_point')
+                                ->label('Hold Point')
+                                ->options(WorkOrder::$holdPoints),
+                            Forms\Components\TextInput::make('equipment_tested')
+                                ->label('Equipment / Tag No.'),
+                            Forms\Components\TextInput::make('method_statement_ref')
+                                ->label('Method Statement Ref'),
+                            Forms\Components\Textarea::make('acceptance_criteria')
+                                ->label('Acceptance Criteria')
+                                ->rows(2)
+                                ->columnSpanFull(),
+                            Forms\Components\Select::make('test_result')
+                                ->label('Test Result')
+                                ->options(WorkOrder::$testResults),
+                        ])->columns(2)
+                        ->visible(fn($get) => $get('is_inspection')),
+                ])->collapsed(),
+
+            // ── Commissioning (Energy Projects) ──
+            Schemas\Components\Section::make('⚡ Commissioning')
+                ->icon('heroicon-o-bolt')
+                ->description('For commissioning phase work orders on energy projects')
+                ->schema([
+                    Forms\Components\Toggle::make('is_commissioning')
+                        ->label('This is a Commissioning work order')
+                        ->reactive()
+                        ->columnSpanFull(),
+
+                    Schemas\Components\Fieldset::make('Commissioning Details')
+                        ->schema([
+                            Forms\Components\Select::make('commissioning_phase')
+                                ->label('Commissioning Phase')
+                                ->options(WorkOrder::$commissioningPhases),
+                            Forms\Components\TextInput::make('system_tag')
+                                ->label('System / Subsystem Tag')
+                                ->placeholder('e.g. ELEC-MV-02, SOLAR-INV-01'),
+                        ])->columns(2)
+                        ->visible(fn($get) => $get('is_commissioning')),
+                ])->collapsed(),
+
+            // ── Road Material Testing ──
+            Schemas\Components\Section::make('🛣️ Road Material Testing')
+                ->icon('heroicon-o-beaker')
+                ->description('For CBR, compaction, asphalt core, and other road tests')
+                ->schema([
+                    Forms\Components\Toggle::make('is_road_test')
+                        ->label('This is a Road Material Test')
+                        ->reactive()
+                        ->columnSpanFull(),
+
+                    Schemas\Components\Fieldset::make('Test Details')
+                        ->schema([
+                            Forms\Components\Select::make('road_test_type')
+                                ->label('Test Type')
+                                ->options(WorkOrder::$roadTestTypes)
+                                ->searchable(),
+                            Forms\Components\TextInput::make('test_chainage')
+                                ->label('Chainage')
+                                ->placeholder('e.g. 15+200'),
+                            Forms\Components\Select::make('test_layer')
+                                ->label('Layer Tested')
+                                ->options(\App\Models\DailySiteDiary::$roadLayers),
+                            Forms\Components\TextInput::make('sample_reference')
+                                ->label('Sample Reference'),
+                            Forms\Components\TextInput::make('test_lab')
+                                ->label('Testing Laboratory'),
+                            Forms\Components\TextInput::make('test_value_achieved')
+                                ->label('Value Achieved')
+                                ->numeric(),
+                            Forms\Components\TextInput::make('test_value_required')
+                                ->label('Value Required (Spec)')
+                                ->numeric(),
+                            Forms\Components\TextInput::make('test_unit')
+                                ->label('Unit')
+                                ->placeholder('%, MPa, mm, kN'),
+                        ])->columns(2)
+                        ->visible(fn($get) => $get('is_road_test')),
+                ])->collapsed(),
         ]);
     }
 

@@ -109,6 +109,96 @@ class SafetyIncidentResource extends Resource
                 Forms\Components\RichEditor::make('root_cause')->label('Root Cause Analysis')->columnSpanFull(),
                 Forms\Components\RichEditor::make('corrective_action')->columnSpanFull(),
             ])->columns(2),
+
+            // ── Permit to Work (PTW) — toggle to show ──
+            Schemas\Components\Section::make('🔒 Permit to Work (PTW)')
+                ->icon('heroicon-o-shield-check')
+                ->description('Issue a safety permit for high-risk activities')
+                ->schema([
+                    Forms\Components\Toggle::make('is_ptw')
+                        ->label('This is a Permit to Work')
+                        ->reactive()
+                        ->columnSpanFull(),
+
+                    Schemas\Components\Fieldset::make('PTW Details')
+                        ->schema([
+                            Forms\Components\TextInput::make('ptw_number')
+                                ->label('PTW Number')
+                                ->placeholder('PTW-2026-001'),
+                            Forms\Components\Select::make('ptw_type')
+                                ->label('Permit Type')
+                                ->options(SafetyIncident::$ptwTypes)
+                                ->searchable(),
+                            Forms\Components\TextInput::make('isolation_method')
+                                ->label('Isolation Method')
+                                ->placeholder('e.g. LOTO, circuit breaker'),
+                            Forms\Components\Textarea::make('isolation_points')
+                                ->label('Isolation Points')
+                                ->rows(2)
+                                ->placeholder('List all isolation points'),
+                            Forms\Components\Select::make('ptw_issuer_id')
+                                ->label('Permit Issuer')
+                                ->relationship('ptwIssuer', 'name')
+                                ->searchable()
+                                ->preload(),
+                            Forms\Components\Select::make('ptw_receiver_id')
+                                ->label('Permit Receiver')
+                                ->relationship('ptwReceiver', 'name')
+                                ->searchable()
+                                ->preload(),
+                            Forms\Components\DateTimePicker::make('ptw_valid_from')
+                                ->label('Valid From'),
+                            Forms\Components\DateTimePicker::make('ptw_valid_until')
+                                ->label('Valid Until'),
+                            Forms\Components\Select::make('ptw_status')
+                                ->label('Permit Status')
+                                ->options(SafetyIncident::$ptwStatuses)
+                                ->default('active'),
+                            Forms\Components\Textarea::make('ptw_conditions')
+                                ->label('Special Conditions')
+                                ->rows(2)
+                                ->columnSpanFull(),
+                            Forms\Components\Textarea::make('ppe_requirements')
+                                ->label('PPE Requirements')
+                                ->rows(2)
+                                ->columnSpanFull()
+                                ->placeholder('Hard hat, safety goggles, arc flash suit, insulated gloves...'),
+                        ])->columns(2)
+                        ->visible(fn($get) => $get('is_ptw')),
+                ])->collapsed(),
+
+            // ── Traffic Management (Road Projects) — toggle to show ──
+            Schemas\Components\Section::make('🚧 Traffic / Road Work Zone')
+                ->icon('heroicon-o-exclamation-triangle')
+                ->description('For incidents involving traffic or road work zones')
+                ->schema([
+                    Forms\Components\Toggle::make('is_traffic_incident')
+                        ->label('This is a traffic / road work zone incident')
+                        ->reactive()
+                        ->columnSpanFull(),
+
+                    Schemas\Components\Fieldset::make('Traffic Details')
+                        ->schema([
+                            Forms\Components\Select::make('traffic_control_type')
+                                ->label('Traffic Control Type')
+                                ->options(SafetyIncident::$trafficControlTypes)
+                                ->searchable(),
+                            Forms\Components\TextInput::make('incident_chainage')
+                                ->label('Chainage')
+                                ->placeholder('e.g. 15+200'),
+                            Forms\Components\Toggle::make('third_party_involved')
+                                ->label('Third Party (Public) Involved'),
+                            Forms\Components\Toggle::make('road_closure_required')
+                                ->label('Road Closure Required')
+                                ->reactive(),
+                            Forms\Components\TextInput::make('closure_duration_hours')
+                                ->label('Closure Duration')
+                                ->numeric()
+                                ->suffix('hours')
+                                ->visible(fn($get) => $get('road_closure_required')),
+                        ])->columns(2)
+                        ->visible(fn($get) => $get('is_traffic_incident')),
+                ])->collapsed(),
         ]);
     }
 

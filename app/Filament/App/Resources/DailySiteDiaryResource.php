@@ -51,7 +51,8 @@ class DailySiteDiaryResource extends Resource
                         ->relationship('project', 'name')
                         ->searchable()
                         ->preload()
-                        ->required(),
+                        ->required()
+                        ->reactive(),
                     Forms\Components\DatePicker::make('diary_date')
                         ->label('Date')
                         ->required()
@@ -102,6 +103,92 @@ class DailySiteDiaryResource extends Resource
                         ->placeholder('Activities planned for the next working day...'),
                 ]),
 
+            // ── Environmental Monitoring (Energy Projects) ──
+            Section::make('🌡️ Environmental Monitoring')
+                ->icon('heroicon-o-beaker')
+                ->description('Environmental readings for energy/EIA compliance')
+                ->visible(fn($get) => static::projectTypeIs($get('cde_project_id'), 'energy'))
+                ->schema([
+                    Forms\Components\TextInput::make('humidity_percent')
+                        ->label('Humidity')
+                        ->numeric()
+                        ->suffix('%'),
+                    Forms\Components\TextInput::make('wind_speed_kmh')
+                        ->label('Wind Speed')
+                        ->numeric()
+                        ->suffix('km/h'),
+                    Forms\Components\Select::make('wind_direction')
+                        ->label('Wind Direction')
+                        ->options(['N' => 'N', 'NE' => 'NE', 'E' => 'E', 'SE' => 'SE', 'S' => 'S', 'SW' => 'SW', 'W' => 'W', 'NW' => 'NW']),
+                    Forms\Components\TextInput::make('noise_level_db')
+                        ->label('Noise Level')
+                        ->numeric()
+                        ->suffix('dB(A)'),
+                    Forms\Components\TextInput::make('dust_level_pm10')
+                        ->label('Dust (PM10)')
+                        ->numeric()
+                        ->suffix('µg/m³'),
+                    Forms\Components\TextInput::make('water_ph')
+                        ->label('Water pH')
+                        ->numeric(),
+                    Forms\Components\TextInput::make('solar_irradiance')
+                        ->label('Solar Irradiance')
+                        ->numeric()
+                        ->suffix('W/m²'),
+                    Forms\Components\Textarea::make('environmental_notes')
+                        ->label('Environmental Notes')
+                        ->rows(2)
+                        ->columnSpanFull(),
+                ])->columns(4)->collapsed(),
+
+            // ── Road Layer Works (Road Projects) ──
+            Section::make('🛣️ Road Layer Works')
+                ->icon('heroicon-o-map')
+                ->description('Chainage, layer placement & compaction tracking')
+                ->visible(fn($get) => static::projectTypeIs($get('cde_project_id'), 'road'))
+                ->schema([
+                    Forms\Components\TextInput::make('chainage_from')
+                        ->label('Chainage From')
+                        ->placeholder('e.g. 12+450'),
+                    Forms\Components\TextInput::make('chainage_to')
+                        ->label('Chainage To')
+                        ->placeholder('e.g. 12+850'),
+                    Forms\Components\Select::make('road_layer')
+                        ->label('Layer')
+                        ->options(\App\Models\DailySiteDiary::$roadLayers)
+                        ->searchable(),
+                    Forms\Components\TextInput::make('layer_thickness_mm')
+                        ->label('Layer Thickness')
+                        ->numeric()
+                        ->suffix('mm'),
+                    Forms\Components\TextInput::make('compaction_achieved')
+                        ->label('Compaction Achieved')
+                        ->numeric()
+                        ->suffix('% MDD'),
+                    Forms\Components\TextInput::make('compaction_required')
+                        ->label('Compaction Required')
+                        ->numeric()
+                        ->suffix('% MDD'),
+                    Forms\Components\TextInput::make('moisture_content')
+                        ->label('Moisture Content')
+                        ->numeric()
+                        ->suffix('%'),
+                    Forms\Components\TextInput::make('truck_loads')
+                        ->label('Truck Loads')
+                        ->numeric(),
+                    Forms\Components\TextInput::make('material_source')
+                        ->label('Material Source / Quarry')
+                        ->columnSpanFull(),
+                    Forms\Components\Textarea::make('survey_data')
+                        ->label('Survey Data / Levels')
+                        ->rows(2)
+                        ->placeholder('Level readings, alignment checks'),
+                    Forms\Components\Textarea::make('traffic_management_notes')
+                        ->label('Traffic Management')
+                        ->rows(2)
+                        ->placeholder('Diversions, flagmen, lane closures'),
+                ])->columns(4)->collapsed(),
+
             Section::make('Issues, Safety & Quality')
                 ->icon('heroicon-o-exclamation-triangle')
                 ->schema([
@@ -140,6 +227,16 @@ class DailySiteDiaryResource extends Resource
                         ->columnSpanFull(),
                 ])->collapsed(),
         ]);
+    }
+
+    /**
+     * Check if the selected project is of a specific type.
+     */
+    protected static function projectTypeIs(?int $projectId, string $type): bool
+    {
+        if (!$projectId)
+            return false;
+        return \App\Models\CdeProject::where('id', $projectId)->value('project_type') === $type;
     }
 
     public static function table(Table $table): Table

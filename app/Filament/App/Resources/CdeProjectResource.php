@@ -40,6 +40,12 @@ class CdeProjectResource extends Resource
                         ->schema([
                             Forms\Components\TextInput::make('name')->required(),
                             Forms\Components\TextInput::make('code')->label('Project Code'),
+                            Forms\Components\Select::make('project_type')
+                                ->label('Project Type')
+                                ->options(CdeProject::$projectTypes)
+                                ->searchable()
+                                ->reactive()
+                                ->placeholder('Select type...'),
                             Forms\Components\Select::make('client_id')
                                 ->relationship('client', 'name')->searchable()->preload(),
                             Forms\Components\Select::make('manager_id')
@@ -91,6 +97,79 @@ class CdeProjectResource extends Resource
                         ->schema([
                             Forms\Components\RichEditor::make('description')->columnSpanFull(),
                         ]),
+
+                    // ── Energy Project Tab (visible when type = energy) ──
+                    Schemas\Components\Tabs\Tab::make('⚡ Energy')
+                        ->icon('heroicon-o-bolt')
+                        ->visible(fn($get) => $get('project_type') === 'energy')
+                        ->schema([
+                            Forms\Components\Select::make('energy_sector')
+                                ->label('Energy Sector')
+                                ->options(CdeProject::$energySectors)
+                                ->searchable(),
+                            Forms\Components\TextInput::make('capacity_mw')
+                                ->label('Installed Capacity')
+                                ->numeric()
+                                ->suffix('MW'),
+                            Forms\Components\TextInput::make('voltage_level')
+                                ->label('Voltage Level')
+                                ->placeholder('e.g. 33kV, 132kV, 400kV'),
+                            Forms\Components\TextInput::make('grid_connection_point')
+                                ->label('Grid Connection Point'),
+                            Forms\Components\Select::make('commissioning_status')
+                                ->label('Commissioning Status')
+                                ->options(CdeProject::$commissioningStatuses),
+                            Forms\Components\DatePicker::make('commercial_operation_date')
+                                ->label('Commercial Operation Date (COD)'),
+                            Forms\Components\TextInput::make('regulatory_license')
+                                ->label('Regulatory License / ERA Permit'),
+                        ])->columns(2),
+
+                    // ── Road & Highway Tab (visible when type = road) ──
+                    Schemas\Components\Tabs\Tab::make('🛣️ Road & Highway')
+                        ->icon('heroicon-o-map')
+                        ->visible(fn($get) => $get('project_type') === 'road')
+                        ->schema([
+                            Forms\Components\Select::make('road_class')
+                                ->label('Road Classification')
+                                ->options(CdeProject::$roadClasses)
+                                ->searchable(),
+                            Forms\Components\TextInput::make('road_length_km')
+                                ->label('Total Road Length')
+                                ->numeric()
+                                ->suffix('km'),
+                            Forms\Components\TextInput::make('road_width_m')
+                                ->label('Carriageway Width')
+                                ->numeric()
+                                ->suffix('m'),
+                            Forms\Components\TextInput::make('number_of_lanes')
+                                ->label('Number of Lanes')
+                                ->numeric()
+                                ->minValue(1)
+                                ->maxValue(8),
+                            Forms\Components\Select::make('pavement_type')
+                                ->label('Pavement Type')
+                                ->options(CdeProject::$pavementTypes)
+                                ->searchable(),
+                            Forms\Components\TextInput::make('design_speed_kph')
+                                ->label('Design Speed')
+                                ->suffix('km/h'),
+                            Forms\Components\TextInput::make('chainage_start')
+                                ->label('Start Chainage')
+                                ->placeholder('e.g. 0+000'),
+                            Forms\Components\TextInput::make('chainage_end')
+                                ->label('End Chainage')
+                                ->placeholder('e.g. 45+350'),
+                            Forms\Components\Select::make('terrain')
+                                ->label('Terrain')
+                                ->options(CdeProject::$terrainTypes),
+                            Forms\Components\TextInput::make('funding_source')
+                                ->label('Funding Source')
+                                ->placeholder('e.g. World Bank, AfDB, GoU'),
+                            Forms\Components\TextInput::make('road_authority')
+                                ->label('Road Authority')
+                                ->placeholder('e.g. UNRA, KCCA'),
+                        ])->columns(2),
 
                     Schemas\Components\Tabs\Tab::make('Modules')
                         ->icon('heroicon-o-puzzle-piece')
