@@ -126,6 +126,10 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
             return $this->isSuperAdmin();
         }
 
+        if ($panel->getId() === 'client') {
+            return $this->is_active && $this->user_type === 'client';
+        }
+
         return $this->is_active;
     }
 
