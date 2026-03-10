@@ -32,6 +32,19 @@ class WorkOrder extends Model
         'completed_at',
         'notes',
         'created_by',
+        // Testing & Inspection
+        'is_inspection',
+        'inspection_type',
+        'hold_point',
+        'acceptance_criteria',
+        'test_result',
+        'test_readings',
+        'equipment_tested',
+        'method_statement_ref',
+        // Commissioning
+        'is_commissioning',
+        'commissioning_phase',
+        'system_tag',
     ];
 
     protected $casts = [
@@ -39,6 +52,9 @@ class WorkOrder extends Model
         'preferred_date' => 'date',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'is_inspection' => 'boolean',
+        'is_commissioning' => 'boolean',
+        'test_readings' => 'array',
     ];
 
     public static array $statuses = [
@@ -55,6 +71,39 @@ class WorkOrder extends Model
         'medium' => 'Medium',
         'high' => 'High',
         'urgent' => 'Urgent',
+    ];
+
+    public static array $inspectionTypes = [
+        'visual' => 'Visual Inspection',
+        'dimensional' => 'Dimensional Check',
+        'electrical' => 'Electrical Testing',
+        'pressure' => 'Pressure Test',
+        'functional' => 'Functional Test',
+        'load' => 'Load Test',
+        'insulation' => 'Insulation Resistance',
+        'continuity' => 'Continuity Test',
+        'relay' => 'Relay Protection Test',
+    ];
+
+    public static array $holdPoints = [
+        'hold' => 'Hold (must witness)',
+        'witness' => 'Witness (notified)',
+        'review' => 'Review (records only)',
+    ];
+
+    public static array $testResults = [
+        'pass' => 'Pass',
+        'fail' => 'Fail',
+        'conditional' => 'Conditional Pass',
+        'na' => 'Not Applicable',
+    ];
+
+    public static array $commissioningPhases = [
+        'pre_commissioning' => 'Pre-Commissioning',
+        'mechanical_completion' => 'Mechanical Completion',
+        'energization' => 'Energization',
+        'hot_commissioning' => 'Hot Commissioning',
+        'performance_test' => 'Performance Testing',
     ];
 
     public function cdeProject()

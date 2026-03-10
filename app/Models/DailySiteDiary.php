@@ -31,6 +31,15 @@ class DailySiteDiary extends Model
         'prepared_by',
         'approved_by',
         'approved_at',
+        // Environmental monitoring
+        'humidity_percent',
+        'wind_speed_kmh',
+        'wind_direction',
+        'noise_level_db',
+        'dust_level_pm10',
+        'water_ph',
+        'environmental_notes',
+        'solar_irradiance',
     ];
 
     protected $casts = [
@@ -43,6 +52,12 @@ class DailySiteDiary extends Model
         'equipment_list' => 'array',
         'photos' => 'array',
         'approved_at' => 'datetime',
+        'humidity_percent' => 'decimal:1',
+        'wind_speed_kmh' => 'decimal:1',
+        'noise_level_db' => 'decimal:1',
+        'dust_level_pm10' => 'decimal:2',
+        'water_ph' => 'decimal:2',
+        'solar_irradiance' => 'decimal:1',
     ];
 
     public static array $weatherOptions = [

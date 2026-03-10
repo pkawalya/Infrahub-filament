@@ -26,15 +26,51 @@ class SafetyIncident extends Model
         'preventive_action',
         'reported_by',
         'investigated_by',
+        // Permit to Work
+        'is_ptw',
+        'ptw_number',
+        'ptw_type',
+        'isolation_method',
+        'isolation_points',
+        'ptw_issuer_id',
+        'ptw_receiver_id',
+        'ptw_valid_from',
+        'ptw_valid_until',
+        'ptw_status',
+        'ptw_conditions',
+        'ppe_requirements',
     ];
 
-    protected $casts = ['incident_date' => 'datetime'];
+    protected $casts = [
+        'incident_date' => 'datetime',
+        'is_ptw' => 'boolean',
+        'ptw_valid_from' => 'datetime',
+        'ptw_valid_until' => 'datetime',
+    ];
 
     public static array $statuses = [
         'reported' => 'Reported',
         'investigating' => 'Investigating',
         'resolved' => 'Resolved',
         'closed' => 'Closed',
+    ];
+
+    public static array $ptwTypes = [
+        'hot_work' => 'Hot Work',
+        'electrical_isolation' => 'Electrical Isolation',
+        'confined_space' => 'Confined Space',
+        'height' => 'Working at Height',
+        'excavation' => 'Excavation',
+        'chemical' => 'Chemical Handling',
+        'radiation' => 'Radiation',
+        'general' => 'General',
+    ];
+
+    public static array $ptwStatuses = [
+        'active' => 'Active',
+        'extended' => 'Extended',
+        'closed' => 'Closed',
+        'cancelled' => 'Cancelled',
     ];
 
     public function project()
@@ -48,5 +84,13 @@ class SafetyIncident extends Model
     public function investigator()
     {
         return $this->belongsTo(User::class, 'investigated_by');
+    }
+    public function ptwIssuer()
+    {
+        return $this->belongsTo(User::class, 'ptw_issuer_id');
+    }
+    public function ptwReceiver()
+    {
+        return $this->belongsTo(User::class, 'ptw_receiver_id');
     }
 }

@@ -71,6 +71,9 @@ class Task extends Model
         'bcws',
         'bcwp',
         'acwp',
+        // Commissioning
+        'commissioning_phase',
+        'method_statement',
     ];
 
     protected $casts = [

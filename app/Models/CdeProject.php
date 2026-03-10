@@ -33,6 +33,15 @@ class CdeProject extends Model
         'city',
         'country',
         'image',
+        // Energy project fields
+        'project_type',
+        'energy_sector',
+        'capacity_mw',
+        'voltage_level',
+        'grid_connection_point',
+        'commissioning_status',
+        'commercial_operation_date',
+        'regulatory_license',
     ];
 
     protected $casts = [
@@ -42,6 +51,8 @@ class CdeProject extends Model
         'monthly_rate' => 'decimal:2',
         'billing_started_at' => 'datetime',
         'billing_paused_at' => 'datetime',
+        'capacity_mw' => 'decimal:2',
+        'commercial_operation_date' => 'date',
     ];
 
     // position: 'before' = $100, 'after' = 100 UGX
@@ -69,6 +80,42 @@ class CdeProject extends Model
         'on_hold' => 'On Hold',
         'completed' => 'Completed',
         'cancelled' => 'Cancelled',
+    ];
+
+    public static array $projectTypes = [
+        'building' => 'Building',
+        'road' => 'Road & Highway',
+        'energy' => 'Energy & Power',
+        'water' => 'Water & Sanitation',
+        'telecom' => 'Telecommunications',
+        'industrial' => 'Industrial',
+        'oil_gas' => 'Oil & Gas',
+        'mining' => 'Mining',
+        'other' => 'Other',
+    ];
+
+    public static array $energySectors = [
+        'solar' => 'Solar PV',
+        'wind' => 'Wind',
+        'hydro' => 'Hydroelectric',
+        'thermal' => 'Thermal / Gas',
+        'geothermal' => 'Geothermal',
+        'biomass' => 'Biomass',
+        'oil_gas' => 'Oil & Gas',
+        'transmission' => 'Transmission Lines',
+        'distribution' => 'Distribution Network',
+        'substation' => 'Substation',
+    ];
+
+    public static array $commissioningStatuses = [
+        'not_started' => 'Not Started',
+        'pre_commissioning' => 'Pre-Commissioning',
+        'mechanical_completion' => 'Mechanical Completion',
+        'energization' => 'Energization',
+        'hot_commissioning' => 'Hot Commissioning',
+        'performance_test' => 'Performance Testing',
+        'pac' => 'PAC (Provisional Acceptance)',
+        'fac' => 'FAC (Final Acceptance)',
     ];
 
     public static array $billingStatuses = [
