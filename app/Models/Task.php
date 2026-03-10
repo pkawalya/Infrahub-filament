@@ -74,6 +74,10 @@ class Task extends Model
         // Commissioning
         'commissioning_phase',
         'method_statement',
+        // Road chainage tracking
+        'chainage_from',
+        'chainage_to',
+        'road_layer',
     ];
 
     protected $casts = [

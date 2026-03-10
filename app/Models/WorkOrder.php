@@ -45,6 +45,16 @@ class WorkOrder extends Model
         'is_commissioning',
         'commissioning_phase',
         'system_tag',
+        // Road material testing
+        'is_road_test',
+        'road_test_type',
+        'test_chainage',
+        'test_layer',
+        'sample_reference',
+        'test_lab',
+        'test_value_achieved',
+        'test_value_required',
+        'test_unit',
     ];
 
     protected $casts = [
@@ -55,6 +65,9 @@ class WorkOrder extends Model
         'is_inspection' => 'boolean',
         'is_commissioning' => 'boolean',
         'test_readings' => 'array',
+        'is_road_test' => 'boolean',
+        'test_value_achieved' => 'decimal:2',
+        'test_value_required' => 'decimal:2',
     ];
 
     public static array $statuses = [
@@ -104,6 +117,21 @@ class WorkOrder extends Model
         'energization' => 'Energization',
         'hot_commissioning' => 'Hot Commissioning',
         'performance_test' => 'Performance Testing',
+    ];
+
+    public static array $roadTestTypes = [
+        'cbr' => 'CBR (California Bearing Ratio)',
+        'compaction' => 'Compaction (Proctor)',
+        'sieve_analysis' => 'Sieve / Grading Analysis',
+        'atterberg' => 'Atterberg Limits',
+        'asphalt_core' => 'Asphalt Core',
+        'marshall' => 'Marshall Stability',
+        'deflection' => 'Deflection (Benkelman Beam)',
+        'dcp' => 'DCP (Dynamic Cone Penetrometer)',
+        'sand_replacement' => 'Sand Replacement (FDD)',
+        'plate_bearing' => 'Plate Bearing Test',
+        'roughness' => 'Roughness (IRI)',
+        'permeability' => 'Permeability Test',
     ];
 
     public function cdeProject()

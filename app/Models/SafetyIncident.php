@@ -39,6 +39,13 @@ class SafetyIncident extends Model
         'ptw_status',
         'ptw_conditions',
         'ppe_requirements',
+        // Road / traffic management
+        'is_traffic_incident',
+        'traffic_control_type',
+        'incident_chainage',
+        'third_party_involved',
+        'road_closure_required',
+        'closure_duration_hours',
     ];
 
     protected $casts = [
@@ -46,6 +53,9 @@ class SafetyIncident extends Model
         'is_ptw' => 'boolean',
         'ptw_valid_from' => 'datetime',
         'ptw_valid_until' => 'datetime',
+        'is_traffic_incident' => 'boolean',
+        'third_party_involved' => 'boolean',
+        'road_closure_required' => 'boolean',
     ];
 
     public static array $statuses = [
@@ -71,6 +81,17 @@ class SafetyIncident extends Model
         'extended' => 'Extended',
         'closed' => 'Closed',
         'cancelled' => 'Cancelled',
+    ];
+
+    public static array $trafficControlTypes = [
+        'stop_go' => 'Stop/Go Control',
+        'flagmen' => 'Flagmen',
+        'traffic_lights' => 'Temporary Traffic Lights',
+        'full_closure' => 'Full Road Closure',
+        'lane_closure' => 'Lane Closure',
+        'diversion' => 'Diversion Route',
+        'speed_reduction' => 'Speed Reduction Zone',
+        'contraflow' => 'Contraflow',
     ];
 
     public function project()

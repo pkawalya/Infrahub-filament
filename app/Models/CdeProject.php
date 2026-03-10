@@ -42,6 +42,18 @@ class CdeProject extends Model
         'commissioning_status',
         'commercial_operation_date',
         'regulatory_license',
+        // Road project fields
+        'road_class',
+        'road_length_km',
+        'road_width_m',
+        'number_of_lanes',
+        'pavement_type',
+        'design_speed_kph',
+        'chainage_start',
+        'chainage_end',
+        'terrain',
+        'funding_source',
+        'road_authority',
     ];
 
     protected $casts = [
@@ -53,6 +65,8 @@ class CdeProject extends Model
         'billing_paused_at' => 'datetime',
         'capacity_mw' => 'decimal:2',
         'commercial_operation_date' => 'date',
+        'road_length_km' => 'decimal:3',
+        'road_width_m' => 'decimal:2',
     ];
 
     // position: 'before' = $100, 'after' = 100 UGX
@@ -105,6 +119,34 @@ class CdeProject extends Model
         'transmission' => 'Transmission Lines',
         'distribution' => 'Distribution Network',
         'substation' => 'Substation',
+    ];
+
+    public static array $roadClasses = [
+        'national_trunk' => 'National Trunk Road',
+        'district' => 'District Road',
+        'urban' => 'Urban Road',
+        'community' => 'Community Access Road',
+        'feeder' => 'Feeder Road',
+        'highway' => 'Highway / Expressway',
+        'collector' => 'Collector Road',
+    ];
+
+    public static array $pavementTypes = [
+        'flexible' => 'Flexible (Asphalt)',
+        'rigid' => 'Rigid (Concrete)',
+        'composite' => 'Composite',
+        'gravel' => 'Gravel / Murram',
+        'earth' => 'Earth / Unpaved',
+        'block' => 'Interlocking Block Paving',
+        'cobblestone' => 'Cobblestone',
+    ];
+
+    public static array $terrainTypes = [
+        'flat' => 'Flat',
+        'rolling' => 'Rolling',
+        'mountainous' => 'Mountainous',
+        'escarpment' => 'Escarpment',
+        'swampy' => 'Swampy / Wetland',
     ];
 
     public static array $commissioningStatuses = [

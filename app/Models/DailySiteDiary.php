@@ -40,6 +40,18 @@ class DailySiteDiary extends Model
         'water_ph',
         'environmental_notes',
         'solar_irradiance',
+        // Road construction
+        'chainage_from',
+        'chainage_to',
+        'road_layer',
+        'layer_thickness_mm',
+        'material_source',
+        'truck_loads',
+        'compaction_achieved',
+        'compaction_required',
+        'moisture_content',
+        'survey_data',
+        'traffic_management_notes',
     ];
 
     protected $casts = [
@@ -58,6 +70,24 @@ class DailySiteDiary extends Model
         'dust_level_pm10' => 'decimal:2',
         'water_ph' => 'decimal:2',
         'solar_irradiance' => 'decimal:1',
+        'layer_thickness_mm' => 'decimal:1',
+        'truck_loads' => 'integer',
+        'compaction_achieved' => 'decimal:1',
+        'compaction_required' => 'decimal:1',
+        'moisture_content' => 'decimal:1',
+    ];
+
+    public static array $roadLayers = [
+        'subgrade' => 'Subgrade',
+        'improved_subgrade' => 'Improved Subgrade',
+        'subbase' => 'Sub-base',
+        'base' => 'Base Course',
+        'primer' => 'Prime Coat',
+        'tack' => 'Tack Coat',
+        'binder' => 'Binder Course',
+        'wearing' => 'Wearing Course',
+        'shoulder' => 'Shoulder',
+        'drain' => 'Drainage Layer',
     ];
 
     public static array $weatherOptions = [
