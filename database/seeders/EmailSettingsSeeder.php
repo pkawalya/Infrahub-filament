@@ -11,12 +11,12 @@ class EmailSettingsSeeder extends Seeder
     {
         $settings = [
             'mail_mailer' => 'smtp',
-            'mail_host' => 'smtp.gmail.com',
-            'mail_port' => '587',
-            'mail_username' => 'appcellon@gmail.com',
-            'mail_password' => 'elch ocax mkfk jssf',
-            'mail_encryption' => 'auto',
-            'mail_from_address' => 'appcellon@gmail.com',
+            'mail_host' => 'mail.infrahub.click',
+            'mail_port' => '465',
+            'mail_username' => 'inotify@infrahub.click',
+            'mail_password' => 'Hub@256!!@@',
+            'mail_encryption' => 'smtps',
+            'mail_from_address' => 'inotify@infrahub.click',
             'mail_from_name' => 'InfraHub',
         ];
 
@@ -24,6 +24,6 @@ class EmailSettingsSeeder extends Seeder
             Setting::setValue($key, $value, 'email');
         }
 
-        $this->command->info('✅ Default email settings seeded (Gmail SMTP).');
+        $this->command->info('✅ Default email settings seeded (InfraHub SMTP).');
     }
 }

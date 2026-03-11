@@ -25,7 +25,7 @@ class VerifyEmailAuthenticationNotification extends Notification implements Shou
         public string $code,
         public int $codeExpiryMinutes,
     ) {
-        $this->onQueue('mail');
+        //
     }
 
     /**

@@ -39,7 +39,7 @@ return [
 
         'smtp' => [
             'transport' => 'smtp',
-            'scheme' => 'smtp',
+            'scheme' => env('MAIL_SCHEME'),
             'host' => env('MAIL_HOST', '127.0.0.1'),
             'port' => env('MAIL_PORT', 587),
             'username' => env('MAIL_USERNAME'),
