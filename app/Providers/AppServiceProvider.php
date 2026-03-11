@@ -82,6 +82,13 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\SafetyIncident::observe(\App\Observers\SafetyIncidentObserver::class);
         \App\Models\DailySiteDiary::observe(\App\Observers\DailySiteDiaryObserver::class);
         \App\Models\Invoice::observe(\App\Observers\InvoiceObserver::class);
+        \App\Models\WorkOrder::observe(\App\Observers\WorkOrderObserver::class);
+        \App\Models\Rfi::observe(\App\Observers\RfiObserver::class);
+        \App\Models\Submittal::observe(\App\Observers\SubmittalObserver::class);
+        \App\Models\PurchaseOrder::observe(\App\Observers\PurchaseOrderObserver::class);
+        \App\Models\MaterialRequisition::observe(\App\Observers\MaterialRequisitionObserver::class);
+        \App\Models\SnagItem::observe(\App\Observers\SnagItemObserver::class);
+        \App\Models\EquipmentAllocation::observe(\App\Observers\EquipmentAllocationObserver::class);
 
         // Livewire components
         if (class_exists(\App\Filament\Resources\TicketResource\Pages\EditCommentModal::class)) {

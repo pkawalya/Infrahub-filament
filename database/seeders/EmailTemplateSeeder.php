@@ -194,6 +194,269 @@ class EmailTemplateSeeder extends Seeder
                     . '<p style="text-align:center;margin:24px 0;"><a href="{{app_url}}/app" style="display:inline-block;padding:12px 32px;background:#dc2626;color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;">Review Invoices</a></p>',
                 'available_variables' => ['user_name', 'company_name', 'app_name', 'app_url', 'overdue_count', 'total_overdue_amount', 'invoice_numbers'],
             ],
+
+            // ─── Work Order Templates ──────────────────────────
+            [
+                'name' => 'Work Order Assigned',
+                'slug' => 'work-order-assigned',
+                'category' => 'project',
+                'subject' => 'Work Order {{wo_number}} assigned to you — {{project_name}}',
+                'body' => '<h2 style="color:#1f2937;margin:0 0 16px;">New Work Order Assigned 🔧</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;"><strong>{{assigned_by}}</strong> assigned you work order <strong>{{wo_number}}</strong> in <strong>{{project_name}}</strong>.</p>'
+                    . '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:20px;margin:20px 0;">'
+                    . '<p style="margin:0 0 8px;"><strong style="color:#1f2937;">{{wo_title}}</strong></p>'
+                    . '<table style="width:100%;"><tr>'
+                    . '<td><span style="background:#fef3c7;color:#92400e;padding:4px 12px;border-radius:12px;font-size:12px;font-weight:600;">⚡ {{priority}}</span></td>'
+                    . '<td style="color:#6b7280;font-size:13px;">📅 Due: {{due_date}}</td>'
+                    . '</tr></table></div>',
+                'available_variables' => ['user_name', 'company_name', 'wo_number', 'wo_title', 'priority', 'due_date', 'project_name', 'assigned_by'],
+            ],
+            [
+                'name' => 'Work Order Approved',
+                'slug' => 'work-order-approved',
+                'category' => 'project',
+                'subject' => 'Work Order {{wo_number}} approved — {{project_name}}',
+                'body' => '<h2 style="color:#059669;margin:0 0 16px;">Work Order Approved ✅</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Work order <strong>{{wo_number}} — {{wo_title}}</strong> has been approved by <strong>{{actioned_by}}</strong>.</p>',
+                'available_variables' => ['user_name', 'wo_number', 'wo_title', 'project_name', 'actioned_by'],
+            ],
+            [
+                'name' => 'Work Order Completed',
+                'slug' => 'work-order-completed',
+                'category' => 'project',
+                'subject' => 'Work Order {{wo_number}} completed — {{project_name}}',
+                'body' => '<h2 style="color:#059669;margin:0 0 16px;">Work Order Completed 🎉</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Work order <strong>{{wo_number}} — {{wo_title}}</strong> has been marked as completed by <strong>{{actioned_by}}</strong>.</p>',
+                'available_variables' => ['user_name', 'wo_number', 'wo_title', 'project_name', 'actioned_by'],
+            ],
+            [
+                'name' => 'Work Order Started',
+                'slug' => 'work-order-started',
+                'category' => 'project',
+                'subject' => 'Work Order {{wo_number}} started — {{project_name}}',
+                'body' => '<h2 style="color:#2563eb;margin:0 0 16px;">Work Order In Progress 🚧</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Work order <strong>{{wo_number}} — {{wo_title}}</strong> is now in progress.</p>',
+                'available_variables' => ['user_name', 'wo_number', 'wo_title', 'project_name', 'actioned_by'],
+            ],
+
+            // ─── RFI Templates ─────────────────────────────────
+            [
+                'name' => 'RFI Created',
+                'slug' => 'rfi-created',
+                'category' => 'project',
+                'subject' => 'RFI {{rfi_number}}: {{rfi_subject}} — {{project_name}}',
+                'body' => '<h2 style="color:#1f2937;margin:0 0 16px;">New RFI Requires Your Response 📝</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;"><strong>{{raised_by}}</strong> has raised an RFI that requires your response.</p>'
+                    . '<div style="background:#f0f9ff;border-left:4px solid #3b82f6;padding:16px;margin:20px 0;border-radius:0 8px 8px 0;">'
+                    . '<p style="margin:0 0 4px;"><strong>{{rfi_number}}</strong> — {{rfi_subject}}</p>'
+                    . '<p style="color:#6b7280;margin:0;font-size:13px;">Priority: {{priority}} · Due: {{due_date}}</p>'
+                    . '</div>',
+                'available_variables' => ['user_name', 'rfi_number', 'rfi_subject', 'priority', 'due_date', 'project_name', 'raised_by'],
+            ],
+            [
+                'name' => 'RFI Answered',
+                'slug' => 'rfi-answered',
+                'category' => 'project',
+                'subject' => 'RFI {{rfi_number}} answered — {{project_name}}',
+                'body' => '<h2 style="color:#059669;margin:0 0 16px;">Your RFI Has Been Answered ✅</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">RFI <strong>{{rfi_number}} — {{rfi_subject}}</strong> has been answered by <strong>{{actioned_by}}</strong>.</p>',
+                'available_variables' => ['user_name', 'rfi_number', 'rfi_subject', 'project_name', 'actioned_by'],
+            ],
+            [
+                'name' => 'RFI Closed',
+                'slug' => 'rfi-closed',
+                'category' => 'project',
+                'subject' => 'RFI {{rfi_number}} closed — {{project_name}}',
+                'body' => '<h2 style="color:#6b7280;margin:0 0 16px;">RFI Closed</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">RFI <strong>{{rfi_number}} — {{rfi_subject}}</strong> has been closed by <strong>{{actioned_by}}</strong>.</p>',
+                'available_variables' => ['user_name', 'rfi_number', 'rfi_subject', 'project_name', 'actioned_by'],
+            ],
+
+            // ─── Submittal Templates ───────────────────────────
+            [
+                'name' => 'Submittal Submitted for Review',
+                'slug' => 'submittal-submitted',
+                'category' => 'project',
+                'subject' => 'Submittal {{submittal_number}} for review — {{project_name}}',
+                'body' => '<h2 style="color:#1f2937;margin:0 0 16px;">New Submittal for Review 📋</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;"><strong>{{submitted_by}}</strong> submitted <strong>{{submittal_number}} — {{submittal_title}}</strong> ({{type}}) for your review.</p>',
+                'available_variables' => ['user_name', 'submittal_number', 'submittal_title', 'type', 'project_name', 'submitted_by'],
+            ],
+            [
+                'name' => 'Submittal Approved',
+                'slug' => 'submittal-approved',
+                'category' => 'project',
+                'subject' => 'Submittal {{submittal_number}} approved — {{project_name}}',
+                'body' => '<h2 style="color:#059669;margin:0 0 16px;">Submittal Approved ✅</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Submittal <strong>{{submittal_number}} — {{submittal_title}}</strong> has been <strong>{{status}}</strong> by <strong>{{actioned_by}}</strong>.</p>'
+                    . '<p style="color:#6b7280;">{{review_comments}}</p>',
+                'available_variables' => ['user_name', 'submittal_number', 'submittal_title', 'status', 'project_name', 'actioned_by', 'review_comments'],
+            ],
+            [
+                'name' => 'Submittal Rejected',
+                'slug' => 'submittal-rejected',
+                'category' => 'project',
+                'subject' => 'Submittal {{submittal_number}} needs revision — {{project_name}}',
+                'body' => '<h2 style="color:#dc2626;margin:0 0 16px;">Submittal Requires Revision ❌</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Submittal <strong>{{submittal_number}} — {{submittal_title}}</strong> has been <strong>{{status}}</strong> by <strong>{{actioned_by}}</strong>.</p>'
+                    . '<div style="background:#fef2f2;border-left:4px solid #dc2626;padding:16px;margin:20px 0;border-radius:0 8px 8px 0;">'
+                    . '<p style="color:#991b1b;margin:0;">{{review_comments}}</p>'
+                    . '</div>',
+                'available_variables' => ['user_name', 'submittal_number', 'submittal_title', 'status', 'project_name', 'actioned_by', 'review_comments'],
+            ],
+
+            // ─── Purchase Order Templates ──────────────────────
+            [
+                'name' => 'Purchase Order Submitted',
+                'slug' => 'po-submitted',
+                'category' => 'billing',
+                'subject' => 'PO {{po_number}} submitted for approval — {{supplier}}',
+                'body' => '<h2 style="color:#1f2937;margin:0 0 16px;">Purchase Order Awaiting Approval 📦</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">A purchase order has been submitted for your approval.</p>'
+                    . '<div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:20px;margin:20px 0;">'
+                    . '<table style="width:100%;"><tr>'
+                    . '<td><strong>PO #:</strong> {{po_number}}</td>'
+                    . '<td><strong>Supplier:</strong> {{supplier}}</td>'
+                    . '<td><strong>Amount:</strong> {{total_amount}}</td>'
+                    . '</tr></table></div>',
+                'available_variables' => ['user_name', 'po_number', 'total_amount', 'supplier', 'project_name', 'actioned_by'],
+            ],
+            [
+                'name' => 'Purchase Order Approved',
+                'slug' => 'po-approved',
+                'category' => 'billing',
+                'subject' => 'PO {{po_number}} approved ✅',
+                'body' => '<h2 style="color:#059669;margin:0 0 16px;">Purchase Order Approved ✅</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Your purchase order <strong>{{po_number}}</strong> for <strong>{{supplier}}</strong> ({{total_amount}}) has been approved by <strong>{{actioned_by}}</strong>.</p>',
+                'available_variables' => ['user_name', 'po_number', 'total_amount', 'supplier', 'project_name', 'actioned_by'],
+            ],
+            [
+                'name' => 'Purchase Order Rejected',
+                'slug' => 'po-rejected',
+                'category' => 'billing',
+                'subject' => 'PO {{po_number}} rejected ❌',
+                'body' => '<h2 style="color:#dc2626;margin:0 0 16px;">Purchase Order Rejected ❌</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Your purchase order <strong>{{po_number}}</strong> has been rejected by <strong>{{actioned_by}}</strong>.</p>'
+                    . '<div style="background:#fef2f2;border-left:4px solid #dc2626;padding:16px;margin:20px 0;">'
+                    . '<p style="color:#991b1b;margin:0;"><strong>Reason:</strong> {{rejection_reason}}</p></div>',
+                'available_variables' => ['user_name', 'po_number', 'total_amount', 'supplier', 'project_name', 'actioned_by', 'rejection_reason'],
+            ],
+            [
+                'name' => 'Purchase Order Received',
+                'slug' => 'po-received',
+                'category' => 'billing',
+                'subject' => 'PO {{po_number}} goods received — {{supplier}}',
+                'body' => '<h2 style="color:#059669;margin:0 0 16px;">Goods Received 📥</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Purchase order <strong>{{po_number}}</strong> from <strong>{{supplier}}</strong> has been received.</p>',
+                'available_variables' => ['user_name', 'po_number', 'total_amount', 'supplier', 'project_name'],
+            ],
+
+            // ─── Material Requisition Templates ────────────────
+            [
+                'name' => 'Material Requisition Submitted',
+                'slug' => 'requisition-submitted',
+                'category' => 'project',
+                'subject' => 'Material Requisition {{requisition_number}} awaiting approval',
+                'body' => '<h2 style="color:#1f2937;margin:0 0 16px;">Material Requisition Pending Approval 📋</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">A material requisition <strong>{{requisition_number}}</strong> ({{priority}}) has been submitted for approval.</p>'
+                    . '<p style="color:#6b7280;">Purpose: {{purpose}}</p>'
+                    . '<p style="color:#6b7280;">Required by: {{required_date}}</p>',
+                'available_variables' => ['user_name', 'requisition_number', 'purpose', 'priority', 'required_date', 'project_name'],
+            ],
+            [
+                'name' => 'Material Requisition Approved',
+                'slug' => 'requisition-approved',
+                'category' => 'project',
+                'subject' => 'Material Requisition {{requisition_number}} approved ✅',
+                'body' => '<h2 style="color:#059669;margin:0 0 16px;">Requisition Approved ✅</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Your material requisition <strong>{{requisition_number}}</strong> has been approved by <strong>{{actioned_by}}</strong>.</p>',
+                'available_variables' => ['user_name', 'requisition_number', 'purpose', 'project_name', 'actioned_by'],
+            ],
+            [
+                'name' => 'Material Requisition Rejected',
+                'slug' => 'requisition-rejected',
+                'category' => 'project',
+                'subject' => 'Material Requisition {{requisition_number}} rejected',
+                'body' => '<h2 style="color:#dc2626;margin:0 0 16px;">Requisition Rejected ❌</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Your material requisition <strong>{{requisition_number}}</strong> has been rejected by <strong>{{actioned_by}}</strong>.</p>',
+                'available_variables' => ['user_name', 'requisition_number', 'purpose', 'project_name', 'actioned_by'],
+            ],
+            [
+                'name' => 'Material Requisition Issued',
+                'slug' => 'requisition-issued',
+                'category' => 'project',
+                'subject' => 'Material Requisition {{requisition_number}} issued — materials ready',
+                'body' => '<h2 style="color:#059669;margin:0 0 16px;">Materials Issued 📦</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">The materials for requisition <strong>{{requisition_number}}</strong> have been issued and are ready for collection.</p>',
+                'available_variables' => ['user_name', 'requisition_number', 'purpose', 'project_name'],
+            ],
+
+            // ─── Snag / Punch List Templates ──────────────────
+            [
+                'name' => 'Snag Item Created',
+                'slug' => 'snag-created',
+                'category' => 'project',
+                'subject' => 'Snag {{snag_number}}: {{snag_title}} — {{project_name}}',
+                'body' => '<h2 style="color:#1f2937;margin:0 0 16px;">New Snag/Defect Assigned ⚠️</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">A snag has been reported and assigned to you by <strong>{{reported_by}}</strong>.</p>'
+                    . '<div style="background:#fef3c7;border-left:4px solid #f59e0b;padding:16px;margin:20px 0;border-radius:0 8px 8px 0;">'
+                    . '<p style="margin:0 0 4px;"><strong>{{snag_number}}</strong> — {{snag_title}}</p>'
+                    . '<p style="color:#6b7280;margin:0;font-size:13px;">Severity: {{severity}} · Location: {{location}} · Due: {{due_date}}</p>'
+                    . '</div>',
+                'available_variables' => ['user_name', 'snag_number', 'snag_title', 'severity', 'location', 'due_date', 'project_name', 'reported_by'],
+            ],
+            [
+                'name' => 'Snag Item Resolved',
+                'slug' => 'snag-resolved',
+                'category' => 'project',
+                'subject' => 'Snag {{snag_number}} resolved — {{project_name}}',
+                'body' => '<h2 style="color:#059669;margin:0 0 16px;">Snag Resolved ✅</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Snag <strong>{{snag_number}} — {{snag_title}}</strong> has been resolved by <strong>{{actioned_by}}</strong>.</p>',
+                'available_variables' => ['user_name', 'snag_number', 'snag_title', 'project_name', 'actioned_by'],
+            ],
+
+            // ─── Equipment Templates ──────────────────────────
+            [
+                'name' => 'Equipment Assigned',
+                'slug' => 'equipment-assigned',
+                'category' => 'project',
+                'subject' => 'Equipment assigned: {{asset_name}} — {{project_name}}',
+                'body' => '<h2 style="color:#1f2937;margin:0 0 16px;">Equipment Allocated to You 🚜</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;"><strong>{{assigned_by}}</strong> has assigned you equipment <strong>{{asset_name}}</strong> for project <strong>{{project_name}}</strong>.</p>'
+                    . '<p style="color:#6b7280;">Period: {{start_date}} — {{end_date}}</p>',
+                'available_variables' => ['user_name', 'asset_name', 'project_name', 'start_date', 'end_date', 'assigned_by'],
+            ],
+            [
+                'name' => 'Equipment Returned',
+                'slug' => 'equipment-returned',
+                'category' => 'project',
+                'subject' => 'Equipment returned: {{asset_name}} — {{project_name}}',
+                'body' => '<h2 style="color:#6b7280;margin:0 0 16px;">Equipment Returned 🔄</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Equipment <strong>{{asset_name}}</strong> has been returned from project <strong>{{project_name}}</strong> by <strong>{{returned_by}}</strong>.</p>',
+                'available_variables' => ['user_name', 'asset_name', 'project_name', 'returned_by'],
+            ],
         ];
 
         foreach ($templates as $templateData) {
