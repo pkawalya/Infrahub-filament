@@ -23,7 +23,7 @@ class ClientPanelProvider extends PanelProvider
         return $panel
             ->id('client')
             ->path('client')
-            ->login()
+            ->login(\App\Filament\Client\Pages\Auth\Login::class)
             ->passwordReset()
             ->colors([
                 'primary' => Color::Indigo,
