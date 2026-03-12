@@ -73,16 +73,13 @@ class DocumentController extends Controller
         }
 
         // Super admins can access all documents
-        if (method_exists($user, 'hasRole') && $user->hasRole('super_admin')) {
+        if ($user->isSuperAdmin()) {
             return;
         }
 
-        // Check if user is a member of the project
-        $isMember = $document->project->members()
-            ->where('user_id', $user->id)
-            ->exists();
-
-        if (!$isMember) {
+        // Verify user belongs to the same company as the project
+        $project = $document->project;
+        if (!$project || $project->company_id !== $user->company_id) {
             abort(403, 'You do not have access to this document.');
         }
     }
