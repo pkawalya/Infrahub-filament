@@ -31,7 +31,7 @@ class AppPanelProvider extends PanelProvider
             ->id('app')
             ->path('app')
             ->login()
-            ->registration()
+            // Registration disabled — users are created by company/super admins only
             ->passwordReset()
             ->emailVerification()
             ->profile()
