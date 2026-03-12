@@ -30,7 +30,7 @@ class AppPanelProvider extends PanelProvider
             ->default()
             ->id('app')
             ->path('app')
-            ->login()
+            ->login(\App\Filament\App\Pages\Auth\Login::class)
             // Registration disabled — users are created by company/super admins only
             ->passwordReset()
             ->emailVerification()
