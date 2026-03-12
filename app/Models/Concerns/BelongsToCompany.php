@@ -22,8 +22,23 @@ trait BelongsToCompany
 
         // Global scope: only show records for current company
         static::addGlobalScope('company', function (Builder $builder) {
-            if (auth()->check() && auth()->user()->company_id && !auth()->user()->isSuperAdmin()) {
-                $builder->where($builder->getModel()->getTable() . '.company_id', auth()->user()->company_id);
+            if (auth()->check()) {
+                $user = auth()->user();
+
+                // Super admins can see all records across companies
+                if ($user->isSuperAdmin()) {
+                    return;
+                }
+
+                // Users WITH a company see only their company's records
+                if ($user->company_id) {
+                    $builder->where($builder->getModel()->getTable() . '.company_id', $user->company_id);
+                    return;
+                }
+
+                // Users WITHOUT a company see NOTHING (return zero results)
+                // This prevents orphaned/self-registered users from accessing any data
+                $builder->whereRaw('1 = 0');
             }
         });
     }

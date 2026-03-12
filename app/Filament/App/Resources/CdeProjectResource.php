@@ -20,6 +20,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use App\Support\CurrencyHelper;
 
+use Illuminate\Database\Eloquent\Builder;
+
 class CdeProjectResource extends Resource
 {
     protected static ?string $model = CdeProject::class;
@@ -28,6 +30,22 @@ class CdeProjectResource extends Resource
     protected static ?string $label = 'Project';
     protected static ?int $navigationSort = 1;
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
+
+    /**
+     * Scope all project queries to the current user's company.
+     * Defense-in-depth alongside BelongsToCompany global scope.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user && !$user->isSuperAdmin()) {
+            $query->where('cde_projects.company_id', $user->company_id);
+        }
+
+        return $query;
+    }
 
     public static function form(Schema $schema): Schema
     {

@@ -130,7 +130,10 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
             return $this->is_active && $this->user_type === 'client';
         }
 
-        return $this->is_active;
+        // App panel: require active user + active company
+        return $this->is_active
+            && $this->company_id
+            && $this->company?->is_active;
     }
 
     // ─── Scopes ──────────────────────────────────────────────
