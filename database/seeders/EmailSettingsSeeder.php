@@ -10,14 +10,14 @@ class EmailSettingsSeeder extends Seeder
     public function run(): void
     {
         $settings = [
-            'mail_mailer' => 'smtp',
-            'mail_host' => 'mail.infrahub.click',
-            'mail_port' => '465',
-            'mail_username' => 'inotify@infrahub.click',
-            'mail_password' => 'Hub@256!!@@',
-            'mail_encryption' => 'smtps',
-            'mail_from_address' => 'inotify@infrahub.click',
-            'mail_from_name' => 'InfraHub',
+            'mail_mailer' => env('MAIL_MAILER', 'smtp'),
+            'mail_host' => env('MAIL_HOST', 'mail.infrahub.click'),
+            'mail_port' => env('MAIL_PORT', '465'),
+            'mail_username' => env('MAIL_USERNAME', 'inotify@infrahub.click'),
+            'mail_password' => env('MAIL_PASSWORD', ''),
+            'mail_encryption' => env('MAIL_SCHEME', 'smtps'),
+            'mail_from_address' => env('MAIL_FROM_ADDRESS', 'inotify@infrahub.click'),
+            'mail_from_name' => env('APP_NAME', 'InfraHub'),
         ];
 
         foreach ($settings as $key => $value) {
