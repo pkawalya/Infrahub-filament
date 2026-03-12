@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToCompany;
+use App\Models\Concerns\HasHashedRouteKey;
 use Illuminate\Database\Eloquent\Model;
 
 class DailySiteDiary extends Model
 {
-    use BelongsToCompany;
+    use BelongsToCompany, HasHashedRouteKey;
 
     protected $fillable = [
         'company_id',

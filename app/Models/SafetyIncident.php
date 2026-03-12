@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToCompany;
+use App\Models\Concerns\HasHashedRouteKey;
 use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class SafetyIncident extends Model
 {
-    use BelongsToCompany, LogsActivity;
+    use BelongsToCompany, HasHashedRouteKey, LogsActivity;
 
     protected $fillable = [
         'company_id',

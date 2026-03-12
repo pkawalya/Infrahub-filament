@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToCompany;
+use App\Models\Concerns\HasHashedRouteKey;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Subcontractor extends Model
 {
-    use SoftDeletes, BelongsToCompany;
+    use SoftDeletes, BelongsToCompany, HasHashedRouteKey;
 
     protected $fillable = [
         'company_id',

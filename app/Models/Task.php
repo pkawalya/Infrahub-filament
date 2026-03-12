@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToCompany;
+use App\Models\Concerns\HasHashedRouteKey;
 use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -25,7 +26,7 @@ use Illuminate\Support\Collection;
  */
 class Task extends Model
 {
-    use SoftDeletes, BelongsToCompany, LogsActivity;
+    use SoftDeletes, BelongsToCompany, HasHashedRouteKey, LogsActivity;
 
     protected $fillable = [
         'company_id',

@@ -16,12 +16,13 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
+use App\Models\Concerns\HasHashedRouteKey;
 
 #[ObservedBy(UserObserver::class)]
 class User extends Authenticatable implements FilamentUser, HasEmailAuthentication
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable, HasPanelShield, HasApiTokens;
+    use HasFactory, HasRoles, Notifiable, HasPanelShield, HasApiTokens, HasHashedRouteKey;
 
     /**
      * Temporarily holds the plain-text password so the Observer
