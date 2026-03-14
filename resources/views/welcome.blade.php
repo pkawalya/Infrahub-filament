@@ -993,6 +993,7 @@
 
             <div class="nav-links">
                 <a href="#modules" class="nav-link">Modules</a>
+                <a href="/docs" class="nav-link">Docs</a>
                 <a href="/schedule-call" class="nav-link">Schedule a Call</a>
                 <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode"
                     aria-label="Toggle theme">
