@@ -1,23 +1,30 @@
 /*
- * InfraHub Service Worker
- * Provides offline-first caching for the construction management PWA.
+ * InfraHub Service Worker v3 — Universal Offline
+ * Provides aggressive caching for ALL Filament pages + Background Sync.
  *
  * Strategies:
- * - App Shell (HTML, CSS, JS): Cache-first with network fallback
- * - API calls: Network-first with cache fallback
- * - Images: Cache-first, stale-while-revalidate
- * - Offline fallback page for navigation requests
+ * - App Shell (CSS, JS, icons): Cache-first
+ * - Filament pages: Network-first, cache fallback (stale but viewable)
+ * - API calls: Network-first, cache fallback
+ * - Static assets: Cache-first, stale-while-revalidate
+ * - Offline fallback page for uncached navigation requests
+ * - Background Sync for offline form submissions via IndexedDB
  */
 
-const CACHE_VERSION = 'infrahub-v1';
+const CACHE_VERSION = 'infrahub-v1.0.0';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
-const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
+const DYNAMIC_CACHE = `${CACHE_VERSION}-pages`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 
 // Core app shell - cached on install
 const APP_SHELL = [
     '/offline',
+    '/css/offline.css',
+    '/js/offline-db.js',
+    '/js/offline-ui.js',
     '/css/filament/filament/app.css',
+    '/images/icons/icon-192x192.png',
+    '/images/icons/icon-512x512.png',
 ];
 
 // ── Install ────────────────────────────────────────────────
@@ -34,7 +41,7 @@ self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then(keys =>
             Promise.all(
-                keys.filter(key => key !== STATIC_CACHE && key !== DYNAMIC_CACHE && key !== API_CACHE)
+                keys.filter(key => !key.startsWith(CACHE_VERSION))
                     .map(key => caches.delete(key))
             )
         ).then(() => self.clients.claim())
@@ -46,29 +53,25 @@ self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Skip non-GET requests
+    // Skip non-GET requests (POST/PUT/DELETE pass through to offline-ui.js interceptor)
     if (request.method !== 'GET') return;
 
-    // Skip Livewire/WebSocket requests
-    if (url.pathname.includes('/livewire/') || url.pathname.includes('/broadcasting/')) return;
+    // Skip Livewire, WebSocket, Vite HMR
+    if (url.pathname.includes('/livewire/') ||
+        url.pathname.includes('/broadcasting/') ||
+        url.pathname.includes('/__vite') ||
+        url.pathname.includes('/@vite')) return;
 
     // API calls: Network-first with cache fallback
     if (url.pathname.startsWith('/api/')) {
-        event.respondWith(networkFirst(request, API_CACHE));
+        event.respondWith(networkFirst(request, API_CACHE, 5000));
         return;
     }
 
-    // Navigation requests: Network-first, offline fallback
-    if (request.mode === 'navigate') {
+    // Navigation requests (HTML pages): Network-first with aggressive caching
+    if (request.mode === 'navigate' || request.headers.get('Accept')?.includes('text/html')) {
         event.respondWith(
-            fetch(request)
-                .then(response => {
-                    // Cache successful navigation responses
-                    const clone = response.clone();
-                    caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, clone));
-                    return response;
-                })
-                .catch(() => caches.match(request).then(cached => cached || caches.match('/offline')))
+            networkFirstWithTimeout(request, DYNAMIC_CACHE, 8000)
         );
         return;
     }
@@ -79,8 +82,8 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Everything else: Network-first
-    event.respondWith(networkFirst(request, DYNAMIC_CACHE));
+    // Everything else: Network-first with short timeout
+    event.respondWith(networkFirst(request, DYNAMIC_CACHE, 5000));
 });
 
 // ── Caching Strategies ─────────────────────────────────────
@@ -101,9 +104,14 @@ async function cacheFirst(request, cacheName) {
     }
 }
 
-async function networkFirst(request, cacheName) {
+async function networkFirst(request, cacheName, timeoutMs = 5000) {
     try {
-        const response = await fetch(request);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        const response = await fetch(request, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         if (response.ok) {
             const cache = await caches.open(cacheName);
             cache.put(request, response.clone());
@@ -118,8 +126,42 @@ async function networkFirst(request, cacheName) {
     }
 }
 
+/**
+ * Network-first with timeout + offline fallback page.
+ * If the network is too slow or down, serves the cached version.
+ * If no cache exists, serves the offline page.
+ */
+async function networkFirstWithTimeout(request, cacheName, timeoutMs) {
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+        const response = await fetch(request, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (response.ok) {
+            // Cache every successful page load
+            const cache = await caches.open(cacheName);
+            cache.put(request, response.clone());
+        }
+        return response;
+    } catch {
+        // Try cached version first
+        const cached = await caches.match(request);
+        if (cached) {
+            return cached; // Serve stale cached page
+        }
+        // No cached version — show offline page
+        const offlinePage = await caches.match('/offline');
+        return offlinePage || new Response('<h1>Offline</h1><p>No cached version available.</p>', {
+            status: 503,
+            headers: { 'Content-Type': 'text/html' }
+        });
+    }
+}
+
 function isStaticAsset(pathname) {
-    return /\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$/i.test(pathname);
+    return /\.(css|js|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|webp|avif)$/i.test(pathname);
 }
 
 // ── Push Notifications ─────────────────────────────────────
@@ -141,7 +183,6 @@ self.addEventListener('push', (event) => {
     );
 });
 
-// Handle notification click
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
     const url = event.notification.data?.url || '/app';
@@ -155,39 +196,144 @@ self.addEventListener('notificationclick', (event) => {
     );
 });
 
-// ── Background Sync (for offline form submissions) ─────────
+// ── Background Sync ────────────────────────────────────────
 self.addEventListener('sync', (event) => {
+    if (event.tag === 'infrahub-sync') {
+        event.waitUntil(syncAllOfflineData());
+    }
     if (event.tag === 'sync-attendance') {
-        event.waitUntil(syncOfflineData('attendance'));
+        event.waitUntil(syncStore('attendance', '/api/v1/offline-sync/attendance'));
     }
     if (event.tag === 'sync-diary') {
-        event.waitUntil(syncOfflineData('site-diaries'));
+        event.waitUntil(syncStore('site-diaries', '/api/v1/offline-sync/site-diaries'));
     }
     if (event.tag === 'sync-safety') {
-        event.waitUntil(syncOfflineData('safety-incidents'));
+        event.waitUntil(syncStore('safety-incidents', '/api/v1/offline-sync/safety-incidents'));
     }
 });
 
-async function syncOfflineData(endpoint) {
+// ── IndexedDB helpers (SW context) ─────────────────────────
+const SW_DB_NAME = 'infrahub-offline';
+const SW_DB_VERSION = 2;
+const SW_STORES = ['form-queue', 'site-diaries', 'attendance', 'safety-incidents'];
+
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(SW_DB_NAME, SW_DB_VERSION);
+        req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            SW_STORES.forEach(name => {
+                if (!db.objectStoreNames.contains(name)) {
+                    const store = db.createObjectStore(name, { keyPath: '_offlineId' });
+                    if (name === 'form-queue') {
+                        store.createIndex('resource', '_resource', { unique: false });
+                        store.createIndex('createdAt', '_createdAt', { unique: false });
+                    }
+                }
+            });
+        };
+        req.onsuccess = (e) => resolve(e.target.result);
+        req.onerror = (e) => reject(e.target.error);
+    });
+}
+
+function getAllFromStore(db, storeName) {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readonly');
+        const req = tx.objectStore(storeName).getAll();
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = (e) => reject(e.target.error);
+    });
+}
+
+function deleteFromStore(db, storeName, key) {
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(storeName, 'readwrite');
+        const req = tx.objectStore(storeName).delete(key);
+        req.onsuccess = () => resolve();
+        req.onerror = (e) => reject(e.target.error);
+    });
+}
+
+async function syncStore(storeName, endpoint) {
     try {
-        const cache = await caches.open('infrahub-offline-queue');
-        const requests = await cache.keys();
+        const db = await openDB();
+        const records = await getAllFromStore(db, storeName);
 
-        for (const request of requests) {
-            if (request.url.includes(endpoint)) {
-                const cachedResponse = await cache.match(request);
-                const body = await cachedResponse.json();
+        for (const record of records) {
+            const payload = { ...record };
+            delete payload._offlineId;
+            delete payload._createdAt;
+            delete payload._synced;
 
-                await fetch(`/api/v1/${endpoint}`, {
+            try {
+                const resp = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body),
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(payload),
                 });
-
-                await cache.delete(request);
-            }
+                if (resp.ok) {
+                    await deleteFromStore(db, storeName, record._offlineId);
+                }
+            } catch { /* retry next time */ }
         }
-    } catch (error) {
-        console.error('Background sync failed:', error);
+    } catch (e) {
+        console.error(`SW sync: failed for ${storeName}`, e);
     }
 }
+
+async function syncGenericQueue() {
+    try {
+        const db = await openDB();
+        const records = await getAllFromStore(db, 'form-queue');
+
+        for (const record of records) {
+            try {
+                const resp = await fetch('/api/v1/offline-sync/generic', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        resource: record._resource,
+                        action: record._action,
+                        record_id: record._recordId,
+                        data: record.data,
+                    }),
+                });
+                if (resp.ok) {
+                    await deleteFromStore(db, 'form-queue', record._offlineId);
+                }
+            } catch { /* retry next time */ }
+        }
+    } catch (e) {
+        console.error('SW sync: generic queue failed', e);
+    }
+}
+
+async function syncAllOfflineData() {
+    // Sync generic form queue first
+    await syncGenericQueue();
+
+    // Then legacy stores
+    const endpoints = {
+        'site-diaries': '/api/v1/offline-sync/site-diaries',
+        'attendance': '/api/v1/offline-sync/attendance',
+        'safety-incidents': '/api/v1/offline-sync/safety-incidents',
+    };
+    for (const [store, endpoint] of Object.entries(endpoints)) {
+        await syncStore(store, endpoint);
+    }
+
+    // Notify clients
+    const allClients = await self.clients.matchAll();
+    allClients.forEach(client => {
+        client.postMessage({ type: 'SYNC_COMPLETE' });
+    });
+}
+
+// ── Listen for messages from the main thread ───────────────
+self.addEventListener('message', (event) => {
+    if (event.data === 'SKIP_WAITING') self.skipWaiting();
+    if (event.data === 'TRIGGER_SYNC') syncAllOfflineData();
+});

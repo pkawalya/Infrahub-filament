@@ -13,7 +13,21 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'InfraHub'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | The current version of the application. Used in API responses,
+    | the service worker cache key, and the PWA manifest.
+    |
+    */
+
+    'version' => '1.0.0',
+
+    'api_version' => 'v1',
 
     /*
     |--------------------------------------------------------------------------

@@ -17,8 +17,9 @@ return [
         'require_lowercase' => true,
         'require_numbers' => true,
         'require_symbols' => true,
-        'prevent_reuse' => 5,    // Remember last N passwords
-        'max_age_days' => 90,    // Force reset after N days (0 = disabled)
+        'prevent_reuse' => 5,               // Remember last N passwords
+        'max_age_days' => 90,               // Force reset after N days (0 = disabled)
+        'warn_before_expiry_days' => 14,    // Show "expiring soon" warnings N days before
     ],
 
     // ── API Tokens ─────────────────────────────────────────

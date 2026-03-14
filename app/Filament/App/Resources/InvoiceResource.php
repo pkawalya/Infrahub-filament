@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\InvoiceResource\Pages;
+use App\Filament\Concerns\UIStandards;
 use App\Models\Invoice;
 use App\Support\CurrencyHelper;
 use Filament\Actions;
@@ -18,8 +19,9 @@ use Illuminate\Database\Eloquent\Builder;
 class InvoiceResource extends Resource
 {
     protected static ?string $model = Invoice::class;
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-currency-dollar';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-banknotes';
     protected static string|\UnitEnum|null $navigationGroup = 'Work Orders';
+    protected static ?string $navigationLabel = 'Invoices';
     protected static ?int $navigationSort = 3;
     protected static bool $shouldRegisterNavigation = false;
 
@@ -44,16 +46,13 @@ class InvoiceResource extends Resource
                     ->placeholder('—'),
                 Infolists\Components\TextEntry::make('status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'paid' => 'success', 'sent' => 'info', 'partially_paid' => 'warning',
-                        'overdue' => 'danger', 'cancelled' => 'gray', default => 'gray',
-                    }),
+                    ->color(fn(string $state): string => UIStandards::statusColor($state)),
                 Infolists\Components\TextEntry::make('issue_date')
-                    ->date()
+                    ->date(UIStandards::DATE_FORMAT)
                     ->icon('heroicon-o-calendar'),
                 Infolists\Components\TextEntry::make('due_date')
-                    ->date()
-                    ->placeholder('—'),
+                    ->date(UIStandards::DATE_FORMAT)
+                    ->placeholder(UIStandards::PLACEHOLDER_DATE),
             ])->columns(2),
 
             Schemas\Components\Section::make('Amounts')->schema([
@@ -82,7 +81,7 @@ class InvoiceResource extends Resource
                     ->placeholder('No notes.'),
                 Infolists\Components\TextEntry::make('created_at')
                     ->label('Created')
-                    ->dateTime(),
+                    ->dateTime(UIStandards::DATETIME_FORMAT),
             ])->collapsible(),
         ]);
     }
@@ -142,20 +141,17 @@ class InvoiceResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('invoice_number')->label('Invoice #')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('client.name')->searchable(),
+                Tables\Columns\TextColumn::make('invoice_number')->label('Invoice #')->searchable()->sortable()->weight('bold')->color('primary'),
+                Tables\Columns\TextColumn::make('client.name')->searchable()->limit(UIStandards::LIMIT_NAME),
                 Tables\Columns\TextColumn::make('workOrder.wo_number')->label('Work Order'),
                 Tables\Columns\TextColumn::make('items_count')->label('Items')->counts('items')->badge()->color('gray'),
-                Tables\Columns\TextColumn::make('total_amount')->formatStateUsing(CurrencyHelper::formatter())->sortable(),
+                Tables\Columns\TextColumn::make('total_amount')->formatStateUsing(CurrencyHelper::formatter())->sortable()->weight('bold'),
                 Tables\Columns\TextColumn::make('amount_paid')->formatStateUsing(CurrencyHelper::formatter()),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'paid' => 'success', 'sent' => 'info', 'partially_paid' => 'warning',
-                        'overdue' => 'danger', 'cancelled' => 'gray', default => 'gray',
-                    }),
-                Tables\Columns\TextColumn::make('issue_date')->date()->sortable(),
-                Tables\Columns\TextColumn::make('due_date')->date()->sortable(),
+                    ->color(fn(string $state) => UIStandards::statusColor($state)),
+                Tables\Columns\TextColumn::make('issue_date')->date(UIStandards::DATE_FORMAT)->sortable(),
+                Tables\Columns\TextColumn::make('due_date')->date(UIStandards::DATE_FORMAT)->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -176,6 +172,7 @@ class InvoiceResource extends Resource
         return [
             'index' => Pages\ListInvoices::route('/'),
             'create' => Pages\CreateInvoice::route('/create'),
+            'view' => Pages\ViewInvoice::route('/{record}'),
             'edit' => Pages\EditInvoice::route('/{record}/edit'),
         ];
     }

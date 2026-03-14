@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\DailySiteDiaryController;
 use App\Http\Controllers\Api\CrewAttendanceController;
 use App\Http\Controllers\Api\EquipmentController;
 use App\Http\Controllers\Api\SafetyController;
+use App\Http\Controllers\Api\OfflineSyncController;
+use App\Http\Controllers\Api\HealthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -27,6 +29,9 @@ use Illuminate\Support\Facades\Route;
 | - Super admins and company admins bypass all permission checks
 |
 */
+
+// ── Health Check (unauthenticated, for monitoring) ─────────
+Route::get('/health', HealthController::class)->middleware('throttle:30,1');
 
 // ── Public Auth Routes ─────────────────────────────────────
 Route::prefix('v1')->group(function () {
@@ -149,4 +154,13 @@ Route::prefix('v1')
         });
         Route::middleware('module:safety.create')->post('safety-incidents', [SafetyController::class, 'store']);
         Route::middleware('module:safety.update')->put('safety-incidents/{incident}', [SafetyController::class, 'update']);
+
+        // ─ Offline Sync (field workers) ───────────────────
+        Route::prefix('offline-sync')->group(function () {
+            Route::get('workers', [OfflineSyncController::class, 'workers']);
+            Route::post('generic', [OfflineSyncController::class, 'syncGeneric']);
+            Route::post('site-diaries', [OfflineSyncController::class, 'syncSiteDiary']);
+            Route::post('attendance', [OfflineSyncController::class, 'syncAttendance']);
+            Route::post('safety-incidents', [OfflineSyncController::class, 'syncSafetyIncident']);
+        });
     });

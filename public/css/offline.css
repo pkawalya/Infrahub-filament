@@ -1,0 +1,194 @@
+/* ── InfraHub Offline UI Styles ───────────────────────────── */
+
+/* Network Status Banner */
+#infrahub-offline-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 99999;
+    pointer-events: none;
+}
+
+.offline-bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 500;
+    animation: slideDown 0.3s ease-out;
+    pointer-events: auto;
+}
+
+.offline-bar-offline {
+    background: linear-gradient(135deg, #991b1b, #b91c1c);
+    color: #fecaca;
+    border-bottom: 1px solid rgba(254, 202, 202, 0.15);
+}
+
+.offline-bar-online {
+    background: linear-gradient(135deg, #065f46, #047857);
+    color: #a7f3d0;
+    border-bottom: 1px solid rgba(167, 243, 208, 0.15);
+}
+
+.offline-bar-text {
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.offline-bar-sub {
+    opacity: 0.8;
+    font-weight: 400;
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Sync Queue Badge */
+#infrahub-sync-badge {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 99998;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.sync-badge-inner {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1rem;
+    border-radius: 9999px;
+    background: rgba(30, 41, 59, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(99, 102, 241, 0.25);
+    color: #c7d2fe;
+    font-size: 0.78rem;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(99, 102, 241, 0.1);
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.sync-badge-inner:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(99, 102, 241, 0.3);
+}
+
+.sync-badge-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.4rem;
+    height: 1.4rem;
+    padding: 0 0.35rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 800;
+}
+
+.sync-badge-label {
+    opacity: 0.7;
+}
+
+.sync-icon {
+    opacity: 0.7;
+    transition: transform 0.3s;
+}
+
+.sync-icon.spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Toast Notifications (fallback when Filament not available) */
+.infrahub-toast {
+    position: fixed;
+    bottom: 5rem;
+    right: 1.5rem;
+    z-index: 99997;
+    max-width: 320px;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    backdrop-filter: blur(16px);
+    transform: translateX(120%);
+    transition: transform 0.3s ease-out;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.infrahub-toast.show {
+    transform: translateX(0);
+}
+
+.infrahub-toast-info {
+    background: rgba(30, 58, 138, 0.95);
+    color: #bfdbfe;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+.infrahub-toast-success {
+    background: rgba(6, 78, 59, 0.95);
+    color: #a7f3d0;
+    border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+.infrahub-toast-danger {
+    background: rgba(127, 29, 29, 0.95);
+    color: #fecaca;
+    border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+/* Offline banner overlays content naturally; no extra rules needed */
+
+/* Responsive */
+@media (max-width: 640px) {
+    .offline-bar-sub {
+        display: none;
+    }
+
+    #infrahub-sync-badge {
+        bottom: 1rem;
+        right: 1rem;
+    }
+}

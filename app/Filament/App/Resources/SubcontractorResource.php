@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\SubcontractorResource\Pages;
+use App\Filament\Concerns\UIStandards;
 use App\Models\Company;
 use App\Models\Subcontractor;
 use App\Support\CurrencyHelper;
@@ -20,7 +21,7 @@ class SubcontractorResource extends Resource
 {
     protected static ?string $model = Subcontractor::class;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-building-storefront';
     protected static string|\UnitEnum|null $navigationGroup = 'Company';
     protected static ?string $navigationLabel = 'Subcontractors';
     protected static ?int $navigationSort = 5;
@@ -108,12 +109,7 @@ class SubcontractorResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'active' => 'success',
-                        'suspended' => 'warning',
-                        'blacklisted' => 'danger',
-                        default => 'gray',
-                    }),
+                    ->color(fn(string $state) => UIStandards::statusColor($state)),
                 Tables\Columns\IconColumn::make('compliance')
                     ->label('Compliance')
                     ->state(fn(Subcontractor $r) => $r->isComplianceCurrent())
@@ -144,6 +140,7 @@ class SubcontractorResource extends Resource
         return [
             'index' => Pages\ListSubcontractors::route('/'),
             'create' => Pages\CreateSubcontractor::route('/create'),
+            'view' => Pages\ViewSubcontractor::route('/{record}'),
             'edit' => Pages\EditSubcontractor::route('/{record}/edit'),
         ];
     }

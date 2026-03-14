@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\TaskResource\Pages;
+use App\Filament\Concerns\UIStandards;
 use App\Models\Task;
 use Filament\Actions;
 use Filament\Infolists;
@@ -17,8 +18,9 @@ use Illuminate\Database\Eloquent\Builder;
 class TaskResource extends Resource
 {
     protected static ?string $model = Task::class;
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-check';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static string|\UnitEnum|null $navigationGroup = 'Task & Workflow';
+    protected static ?string $navigationLabel = 'Tasks';
     protected static ?int $navigationSort = 1;
     protected static bool $shouldRegisterNavigation = false;
 
@@ -45,16 +47,10 @@ class TaskResource extends Resource
                     ->placeholder('—'),
                 Infolists\Components\TextEntry::make('priority')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'urgent' => 'danger', 'high' => 'warning',
-                        'medium' => 'info', default => 'gray',
-                    }),
+                    ->color(fn(string $state): string => UIStandards::priorityColor($state)),
                 Infolists\Components\TextEntry::make('status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'done' => 'success', 'in_progress' => 'info',
-                        'review' => 'warning', 'blocked' => 'danger', default => 'gray',
-                    }),
+                    ->color(fn(string $state): string => UIStandards::statusColor($state)),
             ])->columns(2),
 
             Schemas\Components\Section::make('Assignment & Progress')->schema([
@@ -63,9 +59,9 @@ class TaskResource extends Resource
                     ->icon('heroicon-o-user')
                     ->placeholder('Unassigned'),
                 Infolists\Components\TextEntry::make('due_date')
-                    ->date()
+                    ->date(UIStandards::DATE_FORMAT)
                     ->icon('heroicon-o-calendar')
-                    ->placeholder('—'),
+                    ->placeholder(UIStandards::PLACEHOLDER_DATE),
                 Infolists\Components\TextEntry::make('estimated_hours')
                     ->suffix(' hrs')
                     ->placeholder('—'),
@@ -74,10 +70,10 @@ class TaskResource extends Resource
                     ->placeholder('0'),
                 Infolists\Components\TextEntry::make('created_at')
                     ->label('Created')
-                    ->dateTime(),
+                    ->dateTime(UIStandards::DATETIME_FORMAT),
                 Infolists\Components\TextEntry::make('updated_at')
                     ->label('Last Updated')
-                    ->dateTime(),
+                    ->dateTime(UIStandards::DATETIME_FORMAT),
             ])->columns(3),
 
             Schemas\Components\Section::make('Description')->schema([
@@ -119,21 +115,15 @@ class TaskResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('title')->searchable()->sortable()->limit(40),
-                Tables\Columns\TextColumn::make('project.name')->label('Project'),
-                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To'),
+                Tables\Columns\TextColumn::make('title')->searchable()->sortable()->weight('bold')->limit(UIStandards::LIMIT_TITLE),
+                Tables\Columns\TextColumn::make('project.name')->label('Project')->limit(UIStandards::LIMIT_PROJECT),
+                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->limit(UIStandards::LIMIT_NAME),
                 Tables\Columns\TextColumn::make('priority')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'urgent' => 'danger', 'high' => 'warning',
-                        'medium' => 'info', default => 'gray',
-                    }),
+                    ->color(fn(string $state) => UIStandards::priorityColor($state)),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'done' => 'success', 'in_progress' => 'info',
-                        'review' => 'warning', 'blocked' => 'danger', default => 'gray',
-                    }),
+                    ->color(fn(string $state) => UIStandards::statusColor($state)),
                 Tables\Columns\TextColumn::make('progress_percent')->suffix('%'),
-                Tables\Columns\TextColumn::make('due_date')->date(),
+                Tables\Columns\TextColumn::make('due_date')->date(UIStandards::DATE_FORMAT)->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -150,6 +140,7 @@ class TaskResource extends Resource
         return [
             'index' => Pages\ListTasks::route('/'),
             'create' => Pages\CreateTask::route('/create'),
+            'view' => Pages\ViewTask::route('/{record}'),
             'edit' => Pages\EditTask::route('/{record}/edit'),
         ];
     }

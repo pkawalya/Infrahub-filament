@@ -9,6 +9,9 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Auth\MultiFactor\Email\EmailAuthentication;
+use App\Http\Middleware\ForcePasswordChange;
+use App\Http\Middleware\SessionSecurity;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -25,6 +28,13 @@ class ClientPanelProvider extends PanelProvider
             ->path('client')
             ->login(\App\Filament\Client\Pages\Auth\Login::class)
             ->passwordReset()
+            ->emailVerification()
+            ->profile()
+            ->multiFactorAuthentication(
+                EmailAuthentication::make()
+                    ->codeExpiryMinutes(10)
+                    ->codeNotification(\App\Notifications\VerifyEmailAuthenticationNotification::class),
+            )
             ->colors([
                 'primary' => Color::Indigo,
                 'success' => Color::Emerald,
@@ -49,6 +59,8 @@ class ClientPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                SessionSecurity::class,
+                ForcePasswordChange::class,
             ])
             ->databaseNotifications()
             ->renderHook(

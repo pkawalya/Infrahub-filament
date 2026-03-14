@@ -59,3 +59,38 @@ Schedule::command('financial:process-alerts')
     ->withoutOverlapping()
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/financial-alerts.log'));
+
+// ── Security: purge expired API tokens (daily 4 AM) ──
+Schedule::command('sanctum:prune-expired')
+    ->dailyAt('04:00')
+    ->withoutOverlapping();
+
+// ── Security: clean old audit logs (weekly Sunday 4 AM) ──
+Schedule::command('security:audit --clean')
+    ->weeklyOn(0, '04:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/security-cleanup.log'));
+
+// ── Session: prune expired sessions (daily 5 AM) ──
+Schedule::command('session:prune')
+    ->dailyAt('05:00')
+    ->withoutOverlapping();
+
+// ── Backup: daily DB + uploads backup (3 AM) ──
+Schedule::command('backup:run')
+    ->dailyAt('03:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/backup.log'));
+
+// ── Backup: cleanup old backups (weekly Sunday 3:30 AM) ──
+Schedule::command('backup:clean')
+    ->weeklyOn(0, '03:30')
+    ->withoutOverlapping()
+    ->onOneServer();
+
+// ── Backup: monitor health (daily 6:30 AM) ──
+Schedule::command('backup:monitor')
+    ->dailyAt('06:30')
+    ->onOneServer();

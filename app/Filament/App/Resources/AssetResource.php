@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\AssetResource\Pages;
+use App\Filament\Concerns\UIStandards;
 use App\Models\Asset;
 use App\Support\CurrencyHelper;
 use Filament\Actions;
@@ -18,8 +19,9 @@ use Illuminate\Database\Eloquent\Builder;
 class AssetResource extends Resource
 {
     protected static ?string $model = Asset::class;
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-server-stack';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-truck';
     protected static string|\UnitEnum|null $navigationGroup = 'Company';
+    protected static ?string $navigationLabel = 'Assets';
     protected static ?int $navigationSort = 2;
 
     public static function getEloquentQuery(): Builder
@@ -41,10 +43,7 @@ class AssetResource extends Resource
                     ->badge(),
                 Infolists\Components\TextEntry::make('status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'active' => 'success', 'maintenance' => 'warning',
-                        'inactive' => 'gray', 'retired' => 'danger', default => 'gray',
-                    }),
+                    ->color(fn(string $state): string => UIStandards::statusColor($state)),
                 Infolists\Components\TextEntry::make('condition')
                     ->badge()
                     ->color(fn(?string $state): string => match ($state) {
@@ -74,15 +73,15 @@ class AssetResource extends Resource
 
             Schemas\Components\Section::make('Purchase & Warranty')->schema([
                 Infolists\Components\TextEntry::make('purchase_date')
-                    ->date()
-                    ->placeholder('—'),
+                    ->date(UIStandards::DATE_FORMAT)
+                    ->placeholder(UIStandards::PLACEHOLDER_DATE),
                 Infolists\Components\TextEntry::make('purchase_cost')
                     ->formatStateUsing(CurrencyHelper::formatter())
-                    ->placeholder('—'),
+                    ->placeholder(UIStandards::PLACEHOLDER_SHORT),
                 Infolists\Components\TextEntry::make('warranty_expires_at')
                     ->label('Warranty Expires')
-                    ->date()
-                    ->placeholder('—'),
+                    ->date(UIStandards::DATE_FORMAT)
+                    ->placeholder(UIStandards::PLACEHOLDER_DATE),
             ])->columns(3)->collapsible(),
 
             Schemas\Components\Section::make('Notes')->schema([
@@ -91,7 +90,7 @@ class AssetResource extends Resource
                     ->placeholder('No notes.'),
                 Infolists\Components\TextEntry::make('created_at')
                     ->label('Added')
-                    ->dateTime(),
+                    ->dateTime(UIStandards::DATETIME_FORMAT),
             ])->collapsible(),
         ]);
     }
@@ -126,18 +125,15 @@ class AssetResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('asset_id')->label('ID')->searchable(),
-                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('asset_id')->label('ID')->searchable()->weight('bold')->color('primary'),
+                Tables\Columns\TextColumn::make('name')->searchable()->sortable()->limit(UIStandards::LIMIT_TITLE),
                 Tables\Columns\TextColumn::make('category')->badge(),
-                Tables\Columns\TextColumn::make('client.name')->label('Client'),
+                Tables\Columns\TextColumn::make('client.name')->label('Client')->limit(UIStandards::LIMIT_NAME),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'active' => 'success', 'maintenance' => 'warning',
-                        'inactive' => 'gray', 'retired' => 'danger', default => 'gray',
-                    }),
-                Tables\Columns\TextColumn::make('location'),
-                Tables\Columns\TextColumn::make('warranty_expires_at')->date()->label('Warranty'),
+                    ->color(fn(string $state) => UIStandards::statusColor($state)),
+                Tables\Columns\TextColumn::make('location')->limit(UIStandards::LIMIT_NAME),
+                Tables\Columns\TextColumn::make('warranty_expires_at')->date(UIStandards::DATE_FORMAT)->label('Warranty'),
             ])
             ->defaultSort('name')
             ->filters([
@@ -153,6 +149,7 @@ class AssetResource extends Resource
         return [
             'index' => Pages\ListAssets::route('/'),
             'create' => Pages\CreateAsset::route('/create'),
+            'view' => Pages\ViewAsset::route('/{record}'),
             'edit' => Pages\EditAsset::route('/{record}/edit'),
         ];
     }

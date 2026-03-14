@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages;
 use App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
+use App\Filament\Concerns\UIStandards;
 use App\Models\CdeProject;
 use App\Models\Module;
 use App\Support\StoragePath;
@@ -230,16 +231,12 @@ class CdeProjectResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('code')->label('Code')->searchable(),
-                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('client.name')->label('Client'),
-                Tables\Columns\TextColumn::make('manager.name')->label('PM'),
+                Tables\Columns\TextColumn::make('code')->label('Code')->searchable()->weight('bold')->color('primary'),
+                Tables\Columns\TextColumn::make('name')->searchable()->sortable()->limit(UIStandards::LIMIT_TITLE),
+                Tables\Columns\TextColumn::make('client.name')->label('Client')->limit(UIStandards::LIMIT_NAME),
+                Tables\Columns\TextColumn::make('manager.name')->label('PM')->limit(UIStandards::LIMIT_NAME),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'active' => 'success', 'planning' => 'info',
-                        'on_hold' => 'warning', 'completed' => 'gray',
-                        'cancelled' => 'danger', default => 'gray',
-                    }),
+                    ->color(fn(string $state) => UIStandards::statusColor($state)),
                 Tables\Columns\TextColumn::make('module_access_count')
                     ->label('Modules')
                     ->counts('moduleAccess')
@@ -247,8 +244,8 @@ class CdeProjectResource extends Resource
                     ->color('primary')
                     ->suffix(' enabled'),
                 Tables\Columns\TextColumn::make('budget')->formatStateUsing(CurrencyHelper::formatter()),
-                Tables\Columns\TextColumn::make('start_date')->date(),
-                Tables\Columns\TextColumn::make('end_date')->date(),
+                Tables\Columns\TextColumn::make('start_date')->date(UIStandards::DATE_FORMAT),
+                Tables\Columns\TextColumn::make('end_date')->date(UIStandards::DATE_FORMAT),
             ])
             ->defaultSort('created_at', 'desc')
             ->recordUrl(fn(CdeProject $record) => static::getUrl('view', ['record' => $record]))

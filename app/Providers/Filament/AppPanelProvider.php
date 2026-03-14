@@ -6,6 +6,9 @@ use App\Filament\App\Pages\Dashboard;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use App\Http\Middleware\FilamentUserSettings;
 use App\Http\Middleware\ForcePasswordChange;
+use App\Http\Middleware\CheckSubscription;
+use App\Http\Middleware\ShareSaasLimits;
+use App\Http\Middleware\SessionSecurity;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -76,7 +79,10 @@ class AppPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                SessionSecurity::class,
                 FilamentUserSettings::class,
+                CheckSubscription::class,
+                ShareSaasLimits::class,
                 ForcePasswordChange::class,
             ])
             ->plugins([
@@ -112,16 +118,25 @@ class AppPanelProvider extends PanelProvider
                     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
                     <meta name="apple-mobile-web-app-title" content="InfraHub">
                     <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
+                    <link rel="stylesheet" href="/css/offline.css">
                 '),
             )
             ->renderHook(
                 \Filament\View\PanelsRenderHook::BODY_END,
                 fn() => new \Illuminate\Support\HtmlString('
+                    <script src="/js/offline-db.js"></script>
+                    <script src="/js/offline-ui.js"></script>
                     <script>
                         if ("serviceWorker" in navigator) {
                             window.addEventListener("load", () => {
                                 navigator.serviceWorker.register("/sw.js")
-                                    .then(reg => console.log("SW registered:", reg.scope))
+                                    .then(reg => {
+                                        console.log("SW registered:", reg.scope);
+                                        // Request background sync when SW is ready
+                                        if ("sync" in reg) {
+                                            reg.sync.register("infrahub-sync").catch(() => {});
+                                        }
+                                    })
                                     .catch(err => console.warn("SW registration failed:", err));
                             });
                         }

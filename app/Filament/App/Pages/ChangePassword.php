@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Pages;
 
+use App\Rules\StrongPassword;
 use Filament\Forms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -9,8 +10,8 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rules\Password;
 use BackedEnum;
 use UnitEnum;
 
@@ -29,6 +30,11 @@ class ChangePassword extends Page implements HasForms
 
     public ?array $data = [];
 
+    /**
+     * Determine why the user needs to change their password.
+     */
+    public string $reason = 'new_account';
+
     public function mount(): void
     {
         $user = auth()->user();
@@ -39,19 +45,42 @@ class ChangePassword extends Page implements HasForms
             return;
         }
 
+        // Determine reason for the forced change
+        $maxAgeDays = config('security.password.max_age_days', 90);
+        if ($maxAgeDays > 0 && $user->password_changed_at) {
+            $passwordAge = now()->diffInDays($user->password_changed_at);
+            if ($passwordAge >= $maxAgeDays) {
+                $this->reason = 'expired';
+            }
+        } elseif ($user->password_changed_at) {
+            // Has changed before but flagged — admin forced it
+            $this->reason = 'admin_forced';
+        }
+        // else: no password_changed_at = new account (default)
+
         $this->form->fill();
     }
 
     public function form(Schema $schema): Schema
     {
+        $config = config('security.password', []);
+        $minLength = $config['min_length'] ?? 10;
+        $preventReuse = $config['prevent_reuse'] ?? 5;
+
+        $description = match ($this->reason) {
+            'expired' => "Your password is older than " . config('security.password.max_age_days', 90) . " days. For security, please choose a new password.",
+            'admin_forced' => "Your administrator has required you to change your password before continuing.",
+            default => "Your account was recently created. For security, please set a new password before continuing.",
+        };
+
         return $schema
             ->components([
                 Section::make('Set Your New Password')
-                    ->description('Your account was recently created. For security, please set a new password before continuing.')
+                    ->description($description)
                     ->icon('heroicon-o-shield-check')
                     ->schema([
                         Forms\Components\TextInput::make('current_password')
-                            ->label('Current Password (from your welcome email)')
+                            ->label('Current Password')
                             ->password()
                             ->required()
                             ->revealable(),
@@ -61,9 +90,9 @@ class ChangePassword extends Page implements HasForms
                             ->password()
                             ->required()
                             ->revealable()
-                            ->rule(Password::min(8)->mixedCase()->numbers())
+                            ->rule(new StrongPassword())
                             ->different('current_password')
-                            ->helperText('At least 8 characters, with uppercase, lowercase, and a number.'),
+                            ->helperText("Min {$minLength} chars with uppercase, lowercase, number, and symbol. Cannot reuse your last {$preventReuse} passwords."),
 
                         Forms\Components\TextInput::make('new_password_confirmation')
                             ->label('Confirm New Password')
@@ -81,25 +110,42 @@ class ChangePassword extends Page implements HasForms
         $data = $this->form->getState();
         $user = auth()->user();
 
-        // Verify current password
+        // ── Verify current password ───────────────────────
         if (!Hash::check($data['current_password'], $user->password)) {
             Notification::make()
                 ->title('Current password is incorrect')
-                ->body('Please enter the password from your welcome email.')
+                ->body('Please enter your existing password.')
                 ->danger()
                 ->send();
             return;
         }
 
-        // Update password and clear the flag
+        // ── Check password reuse ──────────────────────────
+        if ($user->wasPasswordUsedBefore($data['new_password'])) {
+            $preventReuse = config('security.password.prevent_reuse', 5);
+            Notification::make()
+                ->title('Password already used')
+                ->body("For security, you cannot reuse any of your last {$preventReuse} passwords. Please choose a different one.")
+                ->danger()
+                ->send();
+            return;
+        }
+
+        // ── Update password ───────────────────────────────
+        // HasPasswordHistory trait will automatically:
+        //   - Record the old hash in password_history
+        //   - Set password_changed_at = now()
+        //   - Clear must_change_password = false
         $user->update([
             'password' => Hash::make($data['new_password']),
-            'must_change_password' => false,
         ]);
+
+        // Invalidate all other sessions for this user (security)
+        Auth::logoutOtherDevices($data['new_password']);
 
         Notification::make()
             ->title('Password changed successfully! 🎉')
-            ->body('Welcome to ' . config('app.name') . '. You can now use the platform.')
+            ->body('Your password has been updated. You can now use the platform securely.')
             ->success()
             ->send();
 

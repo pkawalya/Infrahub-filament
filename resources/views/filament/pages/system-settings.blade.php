@@ -214,6 +214,142 @@
             align-items: flex-start;
             gap: 0.35rem;
         }
+
+        /* Content width cards */
+        .width-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+        }
+
+        @media (min-width: 640px) {
+            .width-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        .width-card {
+            position: relative;
+            border-radius: 0.75rem;
+            border: 2px solid rgba(128, 128, 128, 0.15);
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .width-card:hover {
+            border-color: rgba(128, 128, 128, 0.3);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .width-card.active {
+            border-color: var(--c-primary, #3b82f6);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .dark .width-card {
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .dark .width-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .dark .width-card.active {
+            border-color: var(--c-primary, #3b82f6);
+            background: rgba(59, 130, 246, 0.04);
+        }
+
+        .width-card-preview {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .width-card-bar {
+            height: 100%;
+            border-radius: 0.375rem;
+            background: rgba(128, 128, 128, 0.1);
+            border: 1px solid rgba(128, 128, 128, 0.15);
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .dark .width-card-bar {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .width-card.active .width-card-bar {
+            border-color: var(--c-primary, #3b82f6);
+        }
+
+        .width-card-bar-inner {
+            position: absolute;
+            top: 4px;
+            bottom: 4px;
+            left: 4px;
+            right: 4px;
+            border-radius: 0.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            padding: 4px;
+        }
+
+        .width-card-bar-line {
+            height: 2px;
+            border-radius: 1px;
+            background: rgba(128, 128, 128, 0.2);
+        }
+
+        .dark .width-card-bar-line {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .width-card.active .width-card-bar-line {
+            background: var(--c-primary, #3b82f6);
+            opacity: 0.4;
+        }
+
+        .width-card-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: rgba(107, 114, 128, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .dark .width-card-label {
+            color: rgba(209, 213, 219, 1);
+        }
+
+        .width-card.active .width-card-label {
+            color: var(--c-primary, #3b82f6);
+        }
+
+        .width-card-desc {
+            font-size: 0.65rem;
+            color: rgba(156, 163, 175, 1);
+            margin-top: 0.15rem;
+            line-height: 1.3;
+        }
+
+        .dark .width-card-desc {
+            color: rgba(156, 163, 175, 0.8);
+        }
+
+        .width-card-check {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+        }
     </style>
 
     <form wire:submit.prevent="save">
@@ -226,6 +362,10 @@
             $labels = \App\Support\ColorPalette::options();
             $current = $this->data['panel_color'] ?? 'blue';
             $navStyle = $this->data['navigation_style'] ?? 'sidebar';
+            $contentWidth = $this->data['content_width'] ?? '7xl';
+            $widthOptions = \App\Support\ContentWidthOptions::options();
+            $widthDescriptions = \App\Support\ContentWidthOptions::descriptions();
+            $widthPreviews = \App\Support\ContentWidthOptions::previewPercentages();
         @endphp
 
         <div class="space-y-6">
@@ -334,6 +474,77 @@
                                 </div>
                             </div>
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            {{-- ===== Content Width Section ===== --}}
+            <div class="settings-section">
+                <div class="settings-section-header">
+                    <h3 class="text-base font-bold text-gray-800 dark:text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                        </svg>
+                        Content Width
+                    </h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Control how wide the main content area
+                        stretches on your screen</p>
+                </div>
+
+                <div class="settings-section-body">
+                    <div class="width-grid">
+                        @foreach($widthOptions as $widthKey => $widthLabel)
+                            <button type="button" wire:click="$set('data.content_width', '{{ $widthKey }}')"
+                                class="width-card {{ $contentWidth === $widthKey ? 'active' : '' }}"
+                                style="{{ $contentWidth === $widthKey ? '--c-primary: ' . ($hexColors[$current] ?? '#3b82f6') . ';' : '' }}">
+
+                                {{-- Active checkmark --}}
+                                @if($contentWidth === $widthKey)
+                                    <div class="width-card-check">
+                                        <div class="w-5 h-5 rounded-full flex items-center justify-center"
+                                            style="background-color: {{ $hexColors[$current] ?? '#3b82f6' }};">
+                                            <svg class="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24"
+                                                stroke="currentColor" stroke-width="3">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                @endif
+
+                                {{-- Visual width preview --}}
+                                <div class="width-card-preview">
+                                    <div class="width-card-bar" style="width: {{ $widthPreviews[$widthKey] ?? '50%' }};">
+                                        <div class="width-card-bar-inner">
+                                            <div class="width-card-bar-line" style="width: 70%;"></div>
+                                            <div class="width-card-bar-line" style="width: 100%;"></div>
+                                            <div class="width-card-bar-line" style="width: 85%;"></div>
+                                            <div class="width-card-bar-line" style="width: 55%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="width-card-label">{{ $widthKey }}</div>
+                                <div class="width-card-desc">{{ $widthDescriptions[$widthKey] ?? '' }}</div>
+                            </button>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Current width indicator --}}
+                <div class="preview-bar">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-5 rounded border flex items-center justify-center"
+                            style="border-color: {{ $hexColors[$current] ?? '#3b82f6' }}40;">
+                            <div class="rounded"
+                                style="width: {{ $widthPreviews[$contentWidth] ?? '90%' }}; height: 60%; background-color: {{ $hexColors[$current] ?? '#3b82f6' }}; opacity: 0.5;">
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">
+                            Current: <strong
+                                class="text-gray-700 dark:text-gray-200">{{ $widthOptions[$contentWidth] ?? $contentWidth }}</strong>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -450,6 +661,9 @@
                 setTimeout(() => window.location.reload(), 800);
             });
             Livewire.on('navigation-style-updated', () => {
+                setTimeout(() => window.location.reload(), 800);
+            });
+            Livewire.on('content-width-updated', () => {
                 setTimeout(() => window.location.reload(), 800);
             });
         });

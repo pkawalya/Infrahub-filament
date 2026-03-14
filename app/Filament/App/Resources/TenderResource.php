@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\TenderResource\Pages;
+use App\Filament\Concerns\UIStandards;
 use App\Models\Company;
 use App\Models\Tender;
 use App\Support\CurrencyHelper;
@@ -234,6 +235,7 @@ class TenderResource extends Resource
         return [
             'index' => Pages\ListTenders::route('/'),
             'create' => Pages\CreateTender::route('/create'),
+            'view' => Pages\ViewTender::route('/{record}'),
             'edit' => Pages\EditTender::route('/{record}/edit'),
         ];
     }

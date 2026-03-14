@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\WorkOrderResource\Pages;
+use App\Filament\Concerns\UIStandards;
 use App\Models\WorkOrder;
 use Filament\Actions;
 use Filament\Infolists;
@@ -19,6 +20,7 @@ class WorkOrderResource extends Resource
     protected static ?string $model = WorkOrder::class;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';
     protected static string|\UnitEnum|null $navigationGroup = 'Work Orders';
+    protected static ?string $navigationLabel = 'Work Orders';
     protected static ?int $navigationSort = 1;
     protected static bool $shouldRegisterNavigation = false;
 
@@ -42,17 +44,10 @@ class WorkOrderResource extends Resource
                     ->badge(),
                 Infolists\Components\TextEntry::make('priority')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'urgent' => 'danger', 'high' => 'warning',
-                        'medium' => 'info', 'low' => 'gray', default => 'gray',
-                    }),
+                    ->color(fn(string $state): string => UIStandards::priorityColor($state)),
                 Infolists\Components\TextEntry::make('status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'completed' => 'success', 'in_progress' => 'info',
-                        'on_hold' => 'warning', 'cancelled' => 'danger',
-                        default => 'gray',
-                    }),
+                    ->color(fn(string $state): string => UIStandards::statusColor($state)),
                 Infolists\Components\TextEntry::make('client.name')
                     ->label('Client')
                     ->icon('heroicon-o-user')
@@ -69,24 +64,24 @@ class WorkOrderResource extends Resource
 
             Schemas\Components\Section::make('Schedule')->schema([
                 Infolists\Components\TextEntry::make('due_date')
-                    ->date()
+                    ->date(UIStandards::DATE_FORMAT)
                     ->icon('heroicon-o-calendar')
-                    ->placeholder('—'),
+                    ->placeholder(UIStandards::PLACEHOLDER_DATE),
                 Infolists\Components\TextEntry::make('preferred_date')
-                    ->date()
-                    ->placeholder('—'),
+                    ->date(UIStandards::DATE_FORMAT)
+                    ->placeholder(UIStandards::PLACEHOLDER_DATE),
                 Infolists\Components\TextEntry::make('preferred_time')
                     ->time()
-                    ->placeholder('—'),
+                    ->placeholder(UIStandards::PLACEHOLDER_SHORT),
                 Infolists\Components\TextEntry::make('started_at')
-                    ->dateTime()
+                    ->dateTime(UIStandards::DATETIME_FORMAT)
                     ->placeholder('Not started'),
                 Infolists\Components\TextEntry::make('completed_at')
-                    ->dateTime()
+                    ->dateTime(UIStandards::DATETIME_FORMAT)
                     ->placeholder('Not completed'),
                 Infolists\Components\TextEntry::make('created_at')
                     ->label('Created')
-                    ->dateTime(),
+                    ->dateTime(UIStandards::DATETIME_FORMAT),
             ])->columns(3),
 
             Schemas\Components\Section::make('Description & Notes')->schema([
@@ -246,26 +241,19 @@ class WorkOrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('wo_number')->label('WO #')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('title')->searchable()->limit(40),
+                Tables\Columns\TextColumn::make('wo_number')->label('WO #')->searchable()->sortable()->weight('bold')->color('primary'),
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(UIStandards::LIMIT_TITLE),
                 Tables\Columns\TextColumn::make('type.name')->label('Type')->badge(),
-                Tables\Columns\TextColumn::make('client.name')->label('Client')->searchable(),
+                Tables\Columns\TextColumn::make('client.name')->label('Client')->searchable()->limit(UIStandards::LIMIT_NAME),
                 Tables\Columns\TextColumn::make('priority')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'urgent' => 'danger', 'high' => 'warning',
-                        'medium' => 'info', 'low' => 'gray', default => 'gray',
-                    }),
+                    ->color(fn(string $state): string => UIStandards::priorityColor($state)),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'completed' => 'success', 'in_progress' => 'info',
-                        'on_hold' => 'warning', 'cancelled' => 'danger',
-                        default => 'gray',
-                    }),
-                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To'),
-                Tables\Columns\TextColumn::make('due_date')->date()->sortable(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
+                    ->color(fn(string $state): string => UIStandards::statusColor($state)),
+                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->limit(UIStandards::LIMIT_NAME),
+                Tables\Columns\TextColumn::make('due_date')->date(UIStandards::DATE_FORMAT)->sortable(),
+                Tables\Columns\TextColumn::make('created_at')->dateTime(UIStandards::DATETIME_FORMAT)->sortable(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -295,6 +283,7 @@ class WorkOrderResource extends Resource
         return [
             'index' => Pages\ListWorkOrders::route('/'),
             'create' => Pages\CreateWorkOrder::route('/create'),
+            'view' => Pages\ViewWorkOrder::route('/{record}'),
             'edit' => Pages\EditWorkOrder::route('/{record}/edit'),
         ];
     }

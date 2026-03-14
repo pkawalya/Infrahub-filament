@@ -9,6 +9,7 @@ use Filament\Support\Facades\FilamentColor;
 use Filament\Support\Colors\Color;
 use Filament\Facades\Filament;
 use App\Support\ColorPalette;
+use App\Support\ContentWidthOptions;
 
 class FilamentUserSettings
 {
@@ -44,7 +45,10 @@ class FilamentUserSettings
             // ── 4. Navigation style ──────────────────────────────
             $this->setNavigationStyle($userId);
 
-            // ── 5. Share branding with views ─────────────────────
+            // ── 5. Content width ─────────────────────────────────
+            $this->setContentWidth($userId);
+
+            // ── 6. Share branding with views ─────────────────────
             view()->share('companyBranding', $company ? $company->getBranding() : []);
         }
 
@@ -109,5 +113,21 @@ class FilamentUserSettings
     private function getColorConstant(string $colorName)
     {
         return ColorPalette::constantFor($colorName);
+    }
+
+    private function setContentWidth($userId): void
+    {
+        try {
+            $savedWidth = Setting::getUserValue('filament_content_width', '7xl', $userId);
+
+            $panel = Filament::getCurrentPanel();
+
+            if ($panel) {
+                $widthEnum = ContentWidthOptions::widthEnum($savedWidth);
+                $panel->maxContentWidth($widthEnum);
+            }
+        } catch (\Exception $e) {
+            // default — Filament uses 7xl by default
+        }
     }
 }

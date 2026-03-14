@@ -132,7 +132,8 @@ class AuthController extends BaseApiController
             'is_active' => true,
         ]);
 
-        $token = $user->createToken('api-token')->plainTextToken;
+        $expiryHours = config('security.api.token_expiry_hours', 720);
+        $token = $user->createToken('api-token', ['*'], now()->addHours($expiryHours))->plainTextToken;
 
         return $this->success([
             'token' => $token,

@@ -7,9 +7,11 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::table('change_orders', function (Blueprint $table) {
-            $table->softDeletes();
-        });
+        if (!Schema::hasColumn('change_orders', 'deleted_at')) {
+            Schema::table('change_orders', function (Blueprint $table) {
+                $table->softDeletes();
+            });
+        }
     }
 
     public function down(): void

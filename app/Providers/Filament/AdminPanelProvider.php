@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Admin\Pages\Dashboard;
 use App\Http\Middleware\FilamentUserSettings;
+use App\Http\Middleware\SessionSecurity;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -71,6 +72,8 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+                SessionSecurity::class,
+                \App\Http\Middleware\ForcePasswordChange::class,
                 FilamentUserSettings::class,
             ])
             ->navigationGroups([

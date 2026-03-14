@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\CrewAttendanceResource\Pages;
+use App\Filament\Concerns\UIStandards;
 use App\Models\Company;
 use App\Models\CrewAttendance;
 use Filament\Actions;
@@ -121,14 +122,7 @@ class CrewAttendanceResource extends Resource
                     ->color('warning'),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'present' => 'success',
-                        'absent' => 'danger',
-                        'late' => 'warning',
-                        'half_day' => 'info',
-                        'leave' => 'gray',
-                        default => 'gray',
-                    }),
+                    ->color(fn(string $state) => UIStandards::statusColor($state)),
             ])
             ->defaultSort('attendance_date', 'desc')
             ->filters([

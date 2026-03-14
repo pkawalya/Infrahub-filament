@@ -23,10 +23,11 @@ class CreateCompanyUser extends CreateRecord
 
         // Enforce user limit
         if ($company && !$company->canAddUser()) {
+            $effectiveMax = $company->getEffectiveMaxUsers();
             Notification::make()
                 ->danger()
                 ->title('User limit reached')
-                ->body("Your plan allows a maximum of {$company->max_users} users. Please upgrade your subscription to add more.")
+                ->body("Your plan allows a maximum of {$effectiveMax} users (including addons). You currently have {$company->users()->count()}. Please upgrade your plan or add extra users.")
                 ->persistent()
                 ->send();
 

@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\ClientResource\Pages;
+use App\Filament\Concerns\UIStandards;
 use App\Models\Client;
 use Filament\Actions;
 use Filament\Infolists;
@@ -19,6 +20,7 @@ class ClientResource extends Resource
     protected static ?string $model = Client::class;
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
     protected static string|\UnitEnum|null $navigationGroup = 'Company';
+    protected static ?string $navigationLabel = 'Clients';
     protected static ?int $navigationSort = 1;
 
     public static function getEloquentQuery(): Builder
@@ -67,7 +69,7 @@ class ClientResource extends Resource
                     ->placeholder('No notes.'),
                 Infolists\Components\TextEntry::make('created_at')
                     ->label('Client Since')
-                    ->dateTime(),
+                    ->dateTime(UIStandards::DATETIME_FORMAT),
             ])->collapsible(),
         ]);
     }
@@ -102,13 +104,13 @@ class ClientResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('name')->searchable()->sortable(),
+                Tables\Columns\TextColumn::make('name')->searchable()->sortable()->weight('bold'),
                 Tables\Columns\TextColumn::make('email')->searchable(),
                 Tables\Columns\TextColumn::make('phone'),
-                Tables\Columns\TextColumn::make('company_name')->label('Company')->searchable(),
+                Tables\Columns\TextColumn::make('company_name')->label('Company')->searchable()->limit(UIStandards::LIMIT_NAME),
                 Tables\Columns\TextColumn::make('work_orders_count')->counts('workOrders')->label('Work Orders'),
                 Tables\Columns\IconColumn::make('is_active')->boolean(),
-                Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
+                Tables\Columns\TextColumn::make('created_at')->dateTime(UIStandards::DATETIME_FORMAT)->sortable(),
             ])
             ->defaultSort('name')
             ->filters([
@@ -128,6 +130,7 @@ class ClientResource extends Resource
         return [
             'index' => Pages\ListClients::route('/'),
             'create' => Pages\CreateClient::route('/create'),
+            'view' => Pages\ViewClient::route('/{record}'),
             'edit' => Pages\EditClient::route('/{record}/edit'),
         ];
     }

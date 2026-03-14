@@ -1,7 +1,8 @@
 {
     "name": "InfraHub",
     "short_name": "InfraHub",
-    "description": "Construction Management Platform — Projects, Documents, Tasks, Equipment, Safety",
+    "version": "1.0.0",
+    "description": "InfraHub v1.0 — Construction Management Platform — Projects, Documents, Tasks, Equipment, Safety",
     "start_url": "/app",
     "scope": "/",
     "display": "standalone",
@@ -92,6 +93,17 @@
             "name": "Site Diary",
             "short_name": "Diary",
             "url": "/app/daily-site-diaries",
+            "icons": [
+                {
+                    "src": "/images/icons/icon-96x96.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Offline Forms",
+            "short_name": "Offline",
+            "url": "/app/offline-forms",
             "icons": [
                 {
                     "src": "/images/icons/icon-96x96.png",

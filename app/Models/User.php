@@ -17,12 +17,13 @@ use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use BezhanSalleh\FilamentShield\Traits\HasPanelShield;
 use App\Models\Concerns\HasHashedRouteKey;
+use App\Models\Concerns\HasPasswordHistory;
 
 #[ObservedBy(UserObserver::class)]
 class User extends Authenticatable implements FilamentUser, HasEmailAuthentication
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable, HasPanelShield, HasApiTokens, HasHashedRouteKey;
+    use HasFactory, HasRoles, Notifiable, HasPanelShield, HasApiTokens, HasHashedRouteKey, HasPasswordHistory;
 
     /**
      * Temporarily holds the plain-text password so the Observer
@@ -47,6 +48,7 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
         'is_active',
         'has_email_authentication',
         'last_login_at',
+        'password_changed_at',
     ];
 
     protected $hidden = ['password', 'remember_token'];
@@ -60,6 +62,7 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
             'is_active' => 'boolean',
             'has_email_authentication' => 'boolean',
             'must_change_password' => 'boolean',
+            'password_changed_at' => 'datetime',
         ];
     }
 

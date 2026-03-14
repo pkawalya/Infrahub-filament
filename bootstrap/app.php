@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // ── Global Security ────────────────────────────────
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         $middleware->append(\App\Http\Middleware\AuditSensitiveActions::class);
+        $middleware->append(\App\Http\Middleware\ValidateFileUpload::class);
 
         // ── API-specific ───────────────────────────────────
         $middleware->api(prepend: [

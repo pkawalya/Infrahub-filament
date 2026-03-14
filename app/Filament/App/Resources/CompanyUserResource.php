@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\CompanyUserResource\Pages;
+use App\Filament\Concerns\UIStandards;
 use App\Models\User;
 use Filament\Actions;
 use Filament\Forms;
@@ -66,8 +67,9 @@ class CompanyUserResource extends Resource
                     ->dehydrateStateUsing(fn($state) => !empty($state) ? Hash::make($state) : null)
                     ->dehydrated(fn($state) => !empty($state))
                     ->required(fn(string $operation): bool => $operation === 'create')
+                    ->rule(new \App\Rules\StrongPassword())
                     ->maxLength(255)
-                    ->helperText(fn(string $operation) => $operation === 'edit' ? 'Leave blank to keep existing password' : ''),
+                    ->helperText(fn(string $operation) => $operation === 'edit' ? 'Leave blank to keep existing password' : 'Min 10 chars with uppercase, lowercase, number, and symbol'),
                 Forms\Components\Select::make('user_type')
                     ->options(function () use ($isCompanyAdmin) {
                         $types = User::$userTypes;
@@ -120,14 +122,7 @@ class CompanyUserResource extends Resource
                 Infolists\Components\TextEntry::make('user_type')
                     ->label('User Type')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'super_admin' => 'danger',
-                        'company_admin' => 'warning',
-                        'manager' => 'info',
-                        'member' => 'success',
-                        'technician' => 'primary',
-                        default => 'gray',
-                    }),
+                    ->color(fn(string $state): string => UIStandards::userTypeColor($state)),
                 Infolists\Components\IconEntry::make('is_active')
                     ->label('Active')
                     ->boolean(),
@@ -149,11 +144,11 @@ class CompanyUserResource extends Resource
                     ->placeholder('—'),
                 Infolists\Components\TextEntry::make('last_login_at')
                     ->label('Last Login')
-                    ->dateTime()
+                    ->dateTime(UIStandards::DATETIME_FORMAT)
                     ->placeholder('Never'),
                 Infolists\Components\TextEntry::make('created_at')
                     ->label('Joined')
-                    ->dateTime(),
+                    ->dateTime(UIStandards::DATETIME_FORMAT),
             ])->columns(2),
         ]);
     }
@@ -172,14 +167,7 @@ class CompanyUserResource extends Resource
                     ->copyable(),
                 Tables\Columns\TextColumn::make('user_type')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'super_admin' => 'danger',
-                        'company_admin' => 'warning',
-                        'manager' => 'info',
-                        'member' => 'success',
-                        'technician' => 'primary',
-                        default => 'gray',
-                    })
+                    ->color(fn(string $state): string => UIStandards::userTypeColor($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->label('Roles')
@@ -189,7 +177,7 @@ class CompanyUserResource extends Resource
                     ->boolean()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('last_login_at')
-                    ->dateTime()
+                    ->dateTime(UIStandards::DATETIME_FORMAT)
                     ->sortable()
                     ->placeholder('Never'),
             ])

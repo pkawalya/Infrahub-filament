@@ -64,6 +64,32 @@ trait SecureLogin
             // Success — clear rate limiters
             RateLimiter::clear($emailKey);
 
+            // ── Password Expiry Check ─────────────────────
+            // If password is older than max_age_days, force a change
+            $maxAgeDays = config('security.password.max_age_days', 90);
+            if ($maxAgeDays > 0 && $user) {
+                $passwordAge = $user->password_changed_at
+                    ? now()->diffInDays($user->password_changed_at)
+                    : ($user->created_at ? now()->diffInDays($user->created_at) : 999);
+
+                if ($passwordAge >= $maxAgeDays && !$user->must_change_password) {
+                    $user->updateQuietly(['must_change_password' => true]);
+                } else {
+                    // Warn if approaching expiry
+                    $warnDays = config('security.password.warn_before_expiry_days', 14);
+                    $daysRemaining = $maxAgeDays - $passwordAge;
+                    if ($daysRemaining > 0 && $daysRemaining <= $warnDays) {
+                        \Filament\Notifications\Notification::make()
+                            ->title('Password Expiring Soon')
+                            ->body("Your password will expire in {$daysRemaining} day(s). Please change it soon to avoid interruption.")
+                            ->warning()
+                            ->icon('heroicon-o-clock')
+                            ->persistent()
+                            ->send();
+                    }
+                }
+            }
+
             return $response;
         } catch (ValidationException $e) {
             // Failed authentication — rate limit stays incremented

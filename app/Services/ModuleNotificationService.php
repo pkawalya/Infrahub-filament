@@ -177,6 +177,15 @@ class ModuleNotificationService
             str_contains($slug, 'rfi') => 'heroicon-o-question-mark-circle',
             str_contains($slug, 'submittal') => 'heroicon-o-paper-airplane',
             str_contains($slug, 'overdue') || str_contains($slug, 'alert') => 'heroicon-o-exclamation-triangle',
+            // ── Inventory ──
+            str_contains($slug, 'purchase-order') || str_contains($slug, 'po-') => 'heroicon-o-shopping-cart',
+            str_contains($slug, 'grn') || str_contains($slug, 'goods-received') => 'heroicon-o-inbox-arrow-down',
+            str_contains($slug, 'requisition') => 'heroicon-o-clipboard-document-list',
+            str_contains($slug, 'issuance') || str_contains($slug, 'issued') => 'heroicon-o-clipboard-document-check',
+            str_contains($slug, 'transfer') || str_contains($slug, 'stock-transfer') => 'heroicon-o-arrows-right-left',
+            str_contains($slug, 'adjustment') || str_contains($slug, 'stock-adj') => 'heroicon-o-scale',
+            str_contains($slug, 'asset') => 'heroicon-o-tag',
+            str_contains($slug, 'low-stock') => 'heroicon-o-exclamation-triangle',
             default => 'heroicon-o-bell',
         };
     }
@@ -188,9 +197,9 @@ class ModuleNotificationService
     {
         return match (true) {
             str_contains($slug, 'approved') || str_contains($slug, 'completed') => 'success',
-            str_contains($slug, 'rejected') || str_contains($slug, 'overdue') || str_contains($slug, 'alert') => 'danger',
-            str_contains($slug, 'submitted') || str_contains($slug, 'review') => 'warning',
-            str_contains($slug, 'assigned') || str_contains($slug, 'created') => 'info',
+            str_contains($slug, 'rejected') || str_contains($slug, 'overdue') || str_contains($slug, 'alert') || str_contains($slug, 'low-stock') => 'danger',
+            str_contains($slug, 'submitted') || str_contains($slug, 'review') || str_contains($slug, 'pending') => 'warning',
+            str_contains($slug, 'assigned') || str_contains($slug, 'created') || str_contains($slug, 'issued') || str_contains($slug, 'received') => 'info',
             default => 'primary',
         };
     }

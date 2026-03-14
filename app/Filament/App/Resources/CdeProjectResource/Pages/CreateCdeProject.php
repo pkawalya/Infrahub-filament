@@ -16,10 +16,11 @@ class CreateCdeProject extends CreateRecord
 
         // Enforce project limit
         if ($company && !$company->canAddProject()) {
+            $effectiveMax = $company->getEffectiveMaxProjects();
             Notification::make()
                 ->danger()
                 ->title('Project limit reached')
-                ->body("Your plan allows a maximum of {$company->max_projects} projects. Please upgrade your subscription to add more.")
+                ->body("Your plan allows a maximum of {$effectiveMax} projects (including addons). You currently have {$company->projects()->count()}. Please upgrade your plan or add extra projects.")
                 ->persistent()
                 ->send();
 

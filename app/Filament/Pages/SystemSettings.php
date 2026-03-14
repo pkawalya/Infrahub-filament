@@ -16,6 +16,7 @@ use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
 use App\Models\Setting;
 use App\Support\ColorPalette;
+use App\Support\ContentWidthOptions;
 
 class SystemSettings extends Page implements HasForms
 {
@@ -35,6 +36,7 @@ class SystemSettings extends Page implements HasForms
         $this->form->fill([
             'navigation_style' => Setting::getUserValue('filament_navigation_style', 'sidebar', $userId),
             'panel_color' => Setting::getUserValue('filament_primary_color', 'blue', $userId),
+            'content_width' => Setting::getUserValue('filament_content_width', '7xl', $userId),
         ]);
     }
 
@@ -47,6 +49,8 @@ class SystemSettings extends Page implements HasForms
                     ->afterStateUpdated(fn($state) => $this->updateNavigationStyle($state)),
                 Hidden::make('panel_color')->live()
                     ->afterStateUpdated(fn($state) => $this->updateColorTheme($state)),
+                Hidden::make('content_width')->live()
+                    ->afterStateUpdated(fn($state) => $this->updateContentWidth($state)),
             ])
             ->statePath('data');
     }
@@ -83,6 +87,26 @@ class SystemSettings extends Page implements HasForms
             ->send();
     }
 
+    protected function updateContentWidth(string $width): void
+    {
+        $validWidths = array_keys(ContentWidthOptions::options());
+        if (!in_array($width, $validWidths)) {
+            $width = '7xl';
+        }
+
+        Setting::setUserValue('filament_content_width', $width, 'ui', auth()->id());
+
+        $this->dispatch('content-width-updated', width: $width);
+
+        $label = ContentWidthOptions::options()[$width] ?? $width;
+
+        Notification::make()
+            ->title('Content Width Updated')
+            ->body("Changed to {$label}. Reloading...")
+            ->success()
+            ->send();
+    }
+
     protected function applyColorChange(string $colorName): void
     {
         FilamentColor::register([
@@ -94,6 +118,7 @@ class SystemSettings extends Page implements HasForms
     {
         $this->updateNavigationStyle($this->data['navigation_style']);
         $this->updateColorTheme($this->data['panel_color']);
+        $this->updateContentWidth($this->data['content_width']);
 
         Notification::make()
             ->title('Settings Saved Successfully')

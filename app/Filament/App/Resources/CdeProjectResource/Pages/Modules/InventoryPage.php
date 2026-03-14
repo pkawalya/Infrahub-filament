@@ -39,6 +39,7 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
 use App\Filament\App\Concerns\ExportsTableCsv;
+use App\Services\InventoryNotificationService;
 use Livewire\Attributes\Url;
 
 class InventoryPage extends BaseModulePage implements HasTable, HasForms
@@ -366,6 +367,16 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         $this->showPOModal = false;
         $label = $this->editingPOId ? 'updated' : 'created';
         Notification::make()->title("PO {$this->poHeader['po_number']} {$label}")->success()->send();
+
+        // ── Stakeholder notifications ──────────────────────────────────────────
+        if (!$this->editingPOId) {
+            try {
+                $po->load(['supplier', 'creator']);
+                app(InventoryNotificationService::class)->poCreated($po, auth()->user());
+            } catch (\Throwable) {
+            }
+        }
+        // ──────────────────────────────────────────────────────────────────────
     }
 
     // ─── GRN Builder ─────────────────────────────────────────
@@ -494,6 +505,14 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         }
         $this->showGRNModal = false;
         Notification::make()->title("GRN {$grn->grn_number} created")->success()->send();
+
+        // ── Stakeholder notifications ──────────────────────────────────────────
+        try {
+            $grn->load(['warehouse', 'purchaseOrder.creator', 'items']);
+            app(InventoryNotificationService::class)->grnCreated($grn, auth()->user());
+        } catch (\Throwable) {
+        }
+        // ──────────────────────────────────────────────────────────────────────
     }
 
     // ─── Stock Transfer Builder ──────────────────────────────
@@ -579,6 +598,14 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         }
         $this->showTransferModal = false;
         Notification::make()->title("Transfer {$transfer->transfer_number} completed")->success()->send();
+
+        // ── Stakeholder notifications ──────────────────────────────────────────
+        try {
+            $transfer->load(['fromWarehouse', 'toWarehouse', 'items']);
+            app(InventoryNotificationService::class)->stockTransferred($transfer, auth()->user());
+        } catch (\Throwable) {
+        }
+        // ──────────────────────────────────────────────────────────────────────
     }
 
     // ─── Stock Adjustment ────────────────────────────────────
@@ -632,6 +659,17 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         $this->showAdjustmentModal = false;
         $dir = $change >= 0 ? '+' : '';
         Notification::make()->title("Stock adjusted ({$dir}{$change})")->success()->send();
+
+        // ── Stakeholder notification──────────────────────────────────────────
+        try {
+            $adj = StockAdjustment::where('company_id', $this->cid())->latest()->first();
+            if ($adj) {
+                $adj->load(['product', 'warehouse']);
+                app(InventoryNotificationService::class)->stockAdjusted($adj, auth()->user());
+            }
+        } catch (\Throwable) {
+        }
+        // ──────────────────────────────────────────────────────────────────────
     }
 
     // ─── Data Methods for New Tabs ───────────────────────────
@@ -1281,6 +1319,28 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             'condition_on_issue' => $data['condition'] ?? 'good',
         ]);
 
+        // ── Deduct from stock level ──────────────────────────────────────────
+        $stock = StockLevel::firstOrCreate(
+            ['product_id' => $data['product_id'], 'warehouse_id' => $data['warehouse_id']],
+            ['quantity_on_hand' => 0, 'quantity_reserved' => 0, 'quantity_available' => 0]
+        );
+
+        // Validate sufficient available stock before issuing
+        if ($stock->quantity_available < $data['quantity']) {
+            // Roll back issuance creation
+            $issuance->items()->delete();
+            $issuance->delete();
+            Notification::make()
+                ->title('Insufficient Stock')
+                ->body("Only {$stock->quantity_available} units available in this warehouse (requested: {$data['quantity']}).")
+                ->danger()->send();
+            return;
+        }
+
+        $stock->decrement('quantity_available', $data['quantity']);
+        $stock->increment('quantity_reserved', $data['quantity']);
+        // ────────────────────────────────────────────────────────────────────
+
         // Track product lifecycle
         ProductTracking::create([
             'company_id' => $this->cid(),
@@ -1310,6 +1370,33 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         $this->showIssuanceModal = false;
         $this->issuanceForm = ['issued_to' => '', 'issued_to_name' => '', 'purpose' => 'site_use', 'warehouse_id' => '', 'issue_date' => '', 'expected_return_date' => '', 'product_id' => '', 'quantity' => 1, 'condition' => 'good', 'notes' => '', 'requisition_id' => null];
         Notification::make()->title("Materials issued: {$number}")->body("Against requisition {$req->requisition_number}")->success()->send();
+
+        // ── Stakeholder notifications ──────────────────────────────────────────
+        try {
+            $issuance->load(['warehouse', 'issuedTo', 'requisition', 'items']);
+            app(InventoryNotificationService::class)->materialsIssued($issuance, auth()->user());
+        } catch (\Throwable) {
+        }
+
+        // ── Low-stock check after issuance ─────────────────────────────────────
+        try {
+            $stockFresh = $stock->fresh();
+            $productItem = Product::find($data['product_id']);
+            if (
+                $productItem && $productItem->reorder_level > 0
+                && $stockFresh->quantity_on_hand <= $productItem->reorder_level
+            ) {
+                app(InventoryNotificationService::class)->lowStockAlert(
+                    companyId: $this->cid(),
+                    projectId: $this->pid(),
+                    productName: $productItem->name,
+                    onHand: (float) $stockFresh->quantity_on_hand,
+                    reorderLevel: (float) $productItem->reorder_level,
+                );
+            }
+        } catch (\Throwable) {
+        }
+        // ──────────────────────────────────────────────────────────────────────
     }
 
     // ─── Asset CRUD ─────────────────────────────────────────
@@ -1380,6 +1467,16 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
 
         $this->showCheckoutModal = false;
         Notification::make()->title('Asset checked out')->success()->send();
+
+        // ── Stakeholder notification
+        try {
+            $asset->load(['product', 'currentHolder', 'warehouse']);
+            $holder = $data['assigned_to'] ? User::find($data['assigned_to']) : null;
+            if ($holder) {
+                app(InventoryNotificationService::class)->assetCheckedOut($asset, $holder, auth()->user());
+            }
+        } catch (\Throwable) {
+        }
     }
 
     public function checkinAsset(int $id): void
@@ -1400,6 +1497,13 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
 
         $asset->update(['status' => 'available', 'current_holder_id' => null]);
         Notification::make()->title('Asset checked in')->success()->send();
+
+        // ── Stakeholder notification
+        try {
+            $asset->load(['product', 'warehouse']);
+            app(InventoryNotificationService::class)->assetCheckedIn($asset, auth()->user());
+        } catch (\Throwable) {
+        }
     }
 
     public function openMaintenanceModal(int $id): void
@@ -1469,6 +1573,13 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
 
         $this->showMaintenanceModal = false;
         Notification::make()->title('Maintenance logged')->success()->send();
+
+        // ── Stakeholder notification
+        try {
+            $asset->load(['product', 'warehouse']);
+            app(InventoryNotificationService::class)->assetMaintenance($asset, auth()->user(), $f['type']);
+        } catch (\Throwable) {
+        }
     }
 
     // ── Asset Detail / Timeline ────────────────────────────
@@ -1630,6 +1741,13 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
         $this->showDisposeAssetModal = false;
         $labels = ['retire' => 'retired', 'dispose' => 'disposed', 'lost' => 'marked as lost'];
         Notification::make()->title('Asset ' . ($labels[$action] ?? 'updated'))->success()->send();
+
+        // ── Stakeholder notification
+        try {
+            $asset->load(['product', 'warehouse']);
+            app(InventoryNotificationService::class)->assetDisposed($asset, auth()->user(), $action);
+        } catch (\Throwable) {
+        }
     }
 
     // ── Update Condition ────────────────────────────────────
@@ -1890,6 +2008,13 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
 
         $this->showRequisitionModal = false;
         Notification::make()->title("Requisition {$req->requisition_number} submitted")->success()->send();
+
+        // ── Stakeholder notification
+        try {
+            $req->load(['requester', 'items', 'warehouse']);
+            app(InventoryNotificationService::class)->requisitionCreated($req, auth()->user());
+        } catch (\Throwable) {
+        }
     }
 
     public function approveRequisition(int $id): void
@@ -1905,6 +2030,13 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                 $item->update(['quantity_approved' => $item->quantity_requested]);
             }
             Notification::make()->title("Requisition {$req->requisition_number} approved.")->success()->send();
+
+            // ── Stakeholder notification
+            try {
+                $req->load(['requester', 'items']);
+                app(InventoryNotificationService::class)->requisitionApproved($req, auth()->user());
+            } catch (\Throwable) {
+            }
         }
     }
 
@@ -2037,6 +2169,12 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                         ->action(function (PurchaseOrder $record): void {
                             $record->update(['status' => 'submitted', 'submitted_at' => now(), 'rejection_reason' => null]);
                             Notification::make()->title("PO {$record->po_number} submitted for approval")->success()->send();
+                            // ── Stakeholder notification
+                            try {
+                                $record->load(['supplier', 'creator']);
+                                app(InventoryNotificationService::class)->poSubmitted($record, auth()->user());
+                            } catch (\Throwable) {
+                            }
                         }),
 
                     // ── Approve ──
@@ -2053,6 +2191,12 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                                 'approved_at' => now(),
                             ]);
                             Notification::make()->title("PO {$record->po_number} approved")->success()->send();
+                            // ── Stakeholder notification
+                            try {
+                                $record->load(['supplier', 'creator']);
+                                app(InventoryNotificationService::class)->poApproved($record, auth()->user());
+                            } catch (\Throwable) {
+                            }
                         }),
 
                     // ── Reject ──
@@ -2074,6 +2218,12 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                                 'approved_at' => null,
                             ]);
                             Notification::make()->title("PO {$record->po_number} rejected")->warning()->send();
+                            // ── Stakeholder notification
+                            try {
+                                $record->load(['supplier', 'creator']);
+                                app(InventoryNotificationService::class)->poRejected($record, auth()->user(), $data['rejection_reason']);
+                            } catch (\Throwable) {
+                            }
                         }),
 
                     // ── Receive GRN ──
@@ -2090,6 +2240,12 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
                         ->action(function (PurchaseOrder $record): void {
                             $record->update(['status' => 'ordered', 'order_date' => $record->order_date ?? now()]);
                             Notification::make()->title("PO {$record->po_number} marked as ordered")->success()->send();
+                            // ── Stakeholder notification
+                            try {
+                                $record->load(['supplier', 'creator']);
+                                app(InventoryNotificationService::class)->poOrdered($record);
+                            } catch (\Throwable) {
+                            }
                         }),
 
                     // ── Cancel ──

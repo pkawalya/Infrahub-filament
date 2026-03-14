@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources;
 
 use App\Filament\App\Resources\SafetyIncidentResource\Pages;
+use App\Filament\Concerns\UIStandards;
 use App\Models\SafetyIncident;
 use Filament\Actions;
 use Filament\Infolists;
@@ -17,8 +18,9 @@ use Illuminate\Database\Eloquent\Builder;
 class SafetyIncidentResource extends Resource
 {
     protected static ?string $model = SafetyIncident::class;
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-exclamation-triangle';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-exclamation';
     protected static string|\UnitEnum|null $navigationGroup = 'SHEQ';
+    protected static ?string $navigationLabel = 'Safety Incidents';
     protected static ?int $navigationSort = 1;
     protected static bool $shouldRegisterNavigation = false;
 
@@ -44,21 +46,15 @@ class SafetyIncidentResource extends Resource
                     ->badge(),
                 Infolists\Components\TextEntry::make('severity')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'critical' => 'danger', 'high' => 'warning',
-                        'medium' => 'info', default => 'gray',
-                    }),
+                    ->color(fn(string $state): string => UIStandards::priorityColor($state)),
                 Infolists\Components\TextEntry::make('status')
                     ->badge()
-                    ->color(fn(string $state): string => match ($state) {
-                        'closed' => 'success', 'resolved' => 'info',
-                        'investigating' => 'warning', default => 'gray',
-                    }),
+                    ->color(fn(string $state): string => UIStandards::statusColor($state)),
                 Infolists\Components\TextEntry::make('location')
                     ->icon('heroicon-o-map-pin')
-                    ->placeholder('—'),
+                    ->placeholder(UIStandards::PLACEHOLDER_SHORT),
                 Infolists\Components\TextEntry::make('incident_date')
-                    ->dateTime()
+                    ->dateTime(UIStandards::DATETIME_FORMAT)
                     ->icon('heroicon-o-calendar'),
             ])->columns(2),
 
@@ -206,21 +202,15 @@ class SafetyIncidentResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('incident_number')->label('#')->searchable(),
-                Tables\Columns\TextColumn::make('title')->searchable()->limit(35),
+                Tables\Columns\TextColumn::make('incident_number')->label('#')->searchable()->sortable()->weight('bold')->color('primary'),
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(UIStandards::LIMIT_TITLE),
                 Tables\Columns\TextColumn::make('type')->badge(),
                 Tables\Columns\TextColumn::make('severity')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'critical' => 'danger', 'high' => 'warning',
-                        'medium' => 'info', default => 'gray',
-                    }),
+                    ->color(fn(string $state) => UIStandards::priorityColor($state)),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $state) => match ($state) {
-                        'closed' => 'success', 'resolved' => 'info',
-                        'investigating' => 'warning', default => 'gray',
-                    }),
-                Tables\Columns\TextColumn::make('project.name')->label('Project'),
-                Tables\Columns\TextColumn::make('incident_date')->dateTime(),
+                    ->color(fn(string $state) => UIStandards::statusColor($state)),
+                Tables\Columns\TextColumn::make('project.name')->label('Project')->limit(UIStandards::LIMIT_PROJECT),
+                Tables\Columns\TextColumn::make('incident_date')->dateTime(UIStandards::DATETIME_FORMAT)->sortable(),
             ])
             ->defaultSort('incident_date', 'desc')
             ->filters([
@@ -237,6 +227,7 @@ class SafetyIncidentResource extends Resource
         return [
             'index' => Pages\ListSafetyIncidents::route('/'),
             'create' => Pages\CreateSafetyIncident::route('/create'),
+            'view' => Pages\ViewSafetyIncident::route('/{record}'),
             'edit' => Pages\EditSafetyIncident::route('/{record}/edit'),
         ];
     }

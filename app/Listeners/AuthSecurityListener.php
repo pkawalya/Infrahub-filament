@@ -6,8 +6,10 @@ use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Lockout;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 use App\Models\User;
 
 class AuthSecurityListener
@@ -20,17 +22,34 @@ class AuthSecurityListener
         /** @var User $user */
         $user = $event->user;
         $ip = request()->ip();
-        $agent = substr(request()->userAgent() ?? '', 0, 200);
+        $agent = substr(request()->userAgent() ?? '', 0, 500);
 
+        // ── Record to DB ──────────────────────────────────
+        $this->recordActivity([
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'ip_address' => $ip,
+            'user_agent' => $agent,
+            'status' => 'success',
+            'metadata' => json_encode([
+                'company_id' => $user->company_id,
+                'user_type' => $user->user_type,
+            ]),
+        ]);
+
+        // ── Record to log ─────────────────────────────────
         Log::channel('security')->info('LOGIN_SUCCESS', [
             'user_id' => $user->id,
             'email' => $user->email,
             'company_id' => $user->company_id,
             'ip' => $ip,
-            'user_agent' => $agent,
+            'user_agent' => substr($agent, 0, 200),
         ]);
 
-        // Detect new IP for this user
+        // ── Update last_login_at ──────────────────────────
+        $user->updateQuietly(['last_login_at' => now()]);
+
+        // ── Detect new IP for this user ───────────────────
         $knownIps = Cache::get("user_ips:{$user->id}", []);
         if (!in_array($ip, $knownIps)) {
             if (!empty($knownIps)) {
@@ -56,11 +75,38 @@ class AuthSecurityListener
     {
         $email = $event->credentials['email'] ?? 'unknown';
         $ip = request()->ip();
+        $agent = substr(request()->userAgent() ?? '', 0, 500);
 
+        // Determine the reason for failure
+        $reason = 'wrong_password';
+        $user = User::withoutGlobalScopes()->where('email', $email)->first();
+        if (!$user) {
+            $reason = 'user_not_found';
+        } elseif (!$user->is_active) {
+            $reason = 'user_disabled';
+        } elseif ($user->company_id && $user->company && !$user->company->is_active) {
+            $reason = 'company_suspended';
+        }
+
+        // ── Record to DB ──────────────────────────────────
+        $this->recordActivity([
+            'user_id' => $user?->id,
+            'email' => $email,
+            'ip_address' => $ip,
+            'user_agent' => $agent,
+            'status' => 'failed',
+            'failure_reason' => $reason,
+            'metadata' => json_encode([
+                'company_id' => $user?->company_id,
+            ]),
+        ]);
+
+        // ── Record to log ─────────────────────────────────
         Log::channel('security')->warning('LOGIN_FAILED', [
             'email' => $email,
             'ip' => $ip,
-            'user_agent' => substr(request()->userAgent() ?? '', 0, 200),
+            'reason' => $reason,
+            'user_agent' => substr($agent, 0, 200),
         ]);
 
         // Track consecutive failures
@@ -68,8 +114,8 @@ class AuthSecurityListener
         $fails = Cache::increment($key);
         Cache::put($key, $fails, now()->addHours(1));
 
-        // Alert on brute force attempts
-        if ($fails >= 5) {
+        $maxAttempts = config('security.login.max_attempts', 5);
+        if ($fails >= $maxAttempts) {
             Log::channel('security')->critical('BRUTE_FORCE_DETECTED', [
                 'email' => $email,
                 'ip' => $ip,
@@ -86,6 +132,15 @@ class AuthSecurityListener
         if ($event->user) {
             /** @var User $logoutUser */
             $logoutUser = $event->user;
+
+            $this->recordActivity([
+                'user_id' => $logoutUser->id,
+                'email' => $logoutUser->email,
+                'ip_address' => request()->ip(),
+                'user_agent' => substr(request()->userAgent() ?? '', 0, 500),
+                'status' => 'logout',
+            ]);
+
             Log::channel('security')->info('LOGOUT', [
                 'user_id' => $logoutUser->id,
                 'email' => $logoutUser->email,
@@ -99,11 +154,39 @@ class AuthSecurityListener
      */
     public function onLockout(Lockout $event): void
     {
+        $email = $event->request->input('email', 'unknown');
+        $ip = $event->request->ip();
+
+        $this->recordActivity([
+            'email' => $email,
+            'ip_address' => $ip,
+            'user_agent' => substr($event->request->userAgent() ?? '', 0, 500),
+            'status' => 'locked',
+            'failure_reason' => 'rate_limited',
+        ]);
+
         Log::channel('security')->critical('ACCOUNT_LOCKOUT', [
-            'email' => $event->request->input('email', 'unknown'),
-            'ip' => $event->request->ip(),
+            'email' => $email,
+            'ip' => $ip,
             'user_agent' => substr($event->request->userAgent() ?? '', 0, 200),
         ]);
+    }
+
+    /**
+     * Record an activity to the login_activities table.
+     */
+    protected function recordActivity(array $data): void
+    {
+        try {
+            if (Schema::hasTable('login_activities')) {
+                DB::table('login_activities')->insert(array_merge($data, [
+                    'created_at' => now(),
+                ]));
+            }
+        } catch (\Throwable $e) {
+            // Silently fail — never break login flow for audit logging
+            Log::error('Failed to record login activity: ' . $e->getMessage());
+        }
     }
 
     /**
