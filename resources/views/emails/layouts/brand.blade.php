@@ -33,28 +33,23 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #f4f6f9;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f1f5f9;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
 
         table {
             border-collapse: collapse;
-            mso-table-lspace: 0pt;
-            mso-table-rspace: 0pt;
         }
 
         img {
             border: 0;
             display: block;
             outline: none;
-            text-decoration: none;
-            -ms-interpolation-mode: bicubic;
         }
 
         a {
-            color: #4f46e5;
+            color: #e8a229;
             text-decoration: none;
         }
 
@@ -83,37 +78,50 @@
             .email-footer-inner {
                 padding: 24px 20px !important;
             }
-
-            .responsive-full {
-                width: 100% !important;
-                display: block !important;
-            }
         }
     </style>
 </head>
 
-<body style="margin:0; padding:0; background-color:#f4f6f9;">
+<body style="margin:0; padding:0; background-color:#f1f5f9;">
 
-    <!-- Full-width background wrapper -->
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
-        style="background-color:#f4f6f9;">
+        style="background-color:#f1f5f9;">
         <tr>
             <td align="center" style="padding: 40px 20px;" class="email-wrapper">
 
-                <!-- Card Container -->
-                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600"
-                    style="max-width:600px; width:100%; background-color:#ffffff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,0.06); overflow:hidden;"
+                <!-- Logo -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560"
+                    style="max-width:560px; width:100%;">
+                    <tr>
+                        <td align="center" style="padding-bottom:24px;">
+                            <img src="{{ config('app.url') }}/logo/infrahub-logo-new.png"
+                                alt="{{ config('app.name', 'InfraHub') }}" height="44"
+                                style="height:44px; border-radius:12px;">
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Card -->
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="560"
+                    style="max-width:560px; width:100%; background-color:#ffffff; border-radius:16px; box-shadow:0 2px 12px rgba(0,0,0,0.06); overflow:hidden;"
                     class="email-card">
 
-                    {{-- ═══════════════ HEADER ═══════════════ --}}
+                    {{-- Amber accent bar --}}
                     <tr>
-                        <td class="email-header" style="padding: 28px 40px; border-bottom: 1px solid #f0f0f5;">
+                        <td
+                            style="height:4px; background:linear-gradient(90deg, #e8a229, #f5c563, #e8a229); line-height:4px; font-size:0;">
+                            &nbsp;</td>
+                    </tr>
+
+                    {{-- Header --}}
+                    <tr>
+                        <td class="email-header" style="padding: 24px 40px 20px; border-bottom: 1px solid #f0f0f5;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
-                                    <td align="left" valign="middle" style="width:180px;">
+                                    <td align="left" valign="middle">
                                         <span
-                                            style="font-family:'Inter',sans-serif; font-size:16px; font-weight:700; color:#1f2937; letter-spacing:-0.3px;">
-                                            {{ config('app.name', 'App') }}
+                                            style="font-size:15px; font-weight:700; color:#0f172a; letter-spacing:-0.3px;">
+                                            {{ config('app.name', 'InfraHub') }}
                                         </span>
                                     </td>
                                     <td align="right" valign="middle">
@@ -121,7 +129,7 @@
                                             @yield('header_action')
                                         @else
                                             <a href="{{ config('app.url') }}/app"
-                                                style="display:inline-block; padding:8px 20px; font-size:13px; font-weight:600; color:#374151; border:1px solid #d1d5db; border-radius:8px; text-decoration:none; font-family:'Inter',sans-serif;">
+                                                style="display:inline-block; padding:8px 20px; font-size:13px; font-weight:600; color:#152d4a; background:linear-gradient(135deg, #e8a229, #d4911e); border-radius:8px; text-decoration:none;">
                                                 Log in
                                             </a>
                                         @endif
@@ -131,43 +139,36 @@
                         </td>
                     </tr>
 
-                    {{-- ═══════════════ BODY ═══════════════ --}}
+                    {{-- Body --}}
                     <tr>
-                        <td class="email-body" style="padding: 40px 40px 36px;">
+                        <td class="email-body" style="padding: 36px 40px 32px;">
                             @yield('content')
                         </td>
                     </tr>
 
-                    {{-- ═══════════════ FOOTER ═══════════════ --}}
+                    {{-- Footer --}}
                     <tr>
                         <td style="border-top: 1px solid #f0f0f5;">
                             <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
                                 <tr>
-                                    <td class="email-footer-inner" align="center" style="padding: 28px 40px 24px;">
-                                        <!-- Footer text -->
+                                    <td class="email-footer-inner" align="center" style="padding: 24px 40px 20px;">
                                         <p
-                                            style="margin:0 0 14px; font-size:12px; color:#9ca3af; line-height:1.6; max-width:420px;">
+                                            style="margin:0 0 12px; font-size:12px; color:#94a3b8; line-height:1.6; max-width:420px;">
                                             You received this email because you have an account with
-                                            {{ config('app.name', 'us') }}. This is an automated message.
+                                            {{ config('app.name', 'InfraHub') }}. This is an automated message.
                                         </p>
-
-                                        <!-- Links row -->
                                         <p style="margin:0 0 12px; font-size:12px;">
-                                            <a href="{{ config('app.url') }}"
-                                                style="color:#4f46e5; text-decoration:none; font-weight:500;">Dashboard</a>
+                                            <a href="{{ config('app.url') }}/app"
+                                                style="color:#e8a229; text-decoration:none; font-weight:500;">Dashboard</a>
                                             <span style="color:#d1d5db; padding:0 8px;">|</span>
-                                            <a href="{{ config('app.url') }}/privacy"
-                                                style="color:#4f46e5; text-decoration:none; font-weight:500;">Privacy
-                                                policy</a>
+                                            <a href="{{ config('app.url') }}/docs"
+                                                style="color:#e8a229; text-decoration:none; font-weight:500;">Documentation</a>
                                             <span style="color:#d1d5db; padding:0 8px;">|</span>
-                                            <a href="{{ config('app.url') }}/support"
-                                                style="color:#4f46e5; text-decoration:none; font-weight:500;">Help
-                                                center</a>
+                                            <a href="mailto:info@infrahub.click"
+                                                style="color:#e8a229; text-decoration:none; font-weight:500;">Support</a>
                                         </p>
-
-                                        <!-- Copyright -->
-                                        <p style="margin:0; font-size:11px; color:#b0b8c9;">
-                                            &copy; {{ date('Y') }} {{ config('app.name', 'App') }}
+                                        <p style="margin:0; font-size:11px; color:#cbd5e1;">
+                                            &copy; {{ date('Y') }} {{ config('app.name', 'InfraHub') }}
                                         </p>
                                     </td>
                                 </tr>
@@ -176,8 +177,6 @@
                     </tr>
 
                 </table>
-                <!-- /Card Container -->
-
             </td>
         </tr>
     </table>

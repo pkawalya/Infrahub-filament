@@ -2,16 +2,15 @@
 
 @section('title', $templateName ?? 'Notification')
 
-{{-- Override the header with company branding if available --}}
 @section('header_action')
     @if(!empty($companyWebsite))
         <a href="{{ $companyWebsite }}"
-            style="display:inline-block; padding:8px 20px; font-size:13px; font-weight:600; color:#374151; border:1px solid #d1d5db; border-radius:8px; text-decoration:none; font-family:'Inter',sans-serif;">
+            style="display:inline-block; padding:8px 20px; font-size:13px; font-weight:600; color:#152d4a; background:linear-gradient(135deg, #e8a229, #d4911e); border-radius:8px; text-decoration:none;">
             Visit Website
         </a>
     @else
         <a href="{{ config('app.url') }}/app"
-            style="display:inline-block; padding:8px 20px; font-size:13px; font-weight:600; color:#374151; border:1px solid #d1d5db; border-radius:8px; text-decoration:none; font-family:'Inter',sans-serif;">
+            style="display:inline-block; padding:8px 20px; font-size:13px; font-weight:600; color:#152d4a; background:linear-gradient(135deg, #e8a229, #d4911e); border-radius:8px; text-decoration:none;">
             Log in
         </a>
     @endif
