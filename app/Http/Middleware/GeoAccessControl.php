@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\BlockedIp;
+use App\Models\Setting;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -45,7 +46,10 @@ class GeoAccessControl
         // ── 2. Geo Restriction ─────────────────────────────────
         $geoConfig = config('security.geo_access');
 
-        if (!($geoConfig['enabled'] ?? false)) {
+        // Database settings override config/env
+        $geoEnabled = $this->getSettingValue('geo_restriction_enabled', $geoConfig['enabled'] ?? false);
+
+        if (!filter_var($geoEnabled, FILTER_VALIDATE_BOOLEAN)) {
             return $next($request);
         }
 
@@ -61,13 +65,21 @@ class GeoAccessControl
             return $next($request);
         }
 
-        $allowedCountries = $geoConfig['allowed_countries'] ?? [];
+        // Get allowed countries from DB first, then config
+        $dbCountries = $this->getSettingValue('geo_allowed_countries');
+        $allowedCountries = $dbCountries
+            ? array_filter(explode(',', $dbCountries))
+            : ($geoConfig['allowed_countries'] ?? []);
+
         if (empty($allowedCountries)) {
             return $next($request);  // No country restriction configured
         }
 
+        // Get cache duration from DB or config
+        $cacheMinutes = (int) $this->getSettingValue('geo_cache_minutes', $geoConfig['cache_minutes'] ?? 1440);
+
         // Look up the country for this IP (cached)
-        $country = $this->getCountryForIp($ip, $geoConfig['cache_minutes'] ?? 1440);
+        $country = $this->getCountryForIp($ip, $cacheMinutes);
 
         if ($country === null) {
             // If lookup failed, allow access (fail-open to avoid blocking legit users)
@@ -81,7 +93,9 @@ class GeoAccessControl
                 'path' => $request->path(),
             ]);
 
-            abort(403, $geoConfig['block_message'] ?? 'Access not available in your region.');
+            $blockMessage = $this->getSettingValue('geo_block_message', $geoConfig['block_message'] ?? 'Access not available in your region.');
+
+            abort(403, $blockMessage);
         }
 
         return $next($request);
@@ -144,6 +158,18 @@ class GeoAccessControl
             }
         } catch (\Throwable $e) {
             // Don't break the request if DB is down
+        }
+    }
+
+    /**
+     * Read a setting value from DB (via Setting model), with fallback.
+     */
+    protected function getSettingValue(string $key, mixed $default = null): mixed
+    {
+        try {
+            return Setting::getValue($key, $default);
+        } catch (\Throwable $e) {
+            return $default;
         }
     }
 }
