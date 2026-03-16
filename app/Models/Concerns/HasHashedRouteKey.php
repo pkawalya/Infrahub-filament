@@ -15,7 +15,8 @@ use Hashids\Hashids;
  * How it works with Filament / Laravel route model binding:
  *   - getRouteKeyName() returns 'id' (real column) so direct DB queries never break
  *   - getRouteKey() returns the hashed ID so generated URLs are obfuscated
- *   - resolveRouteBinding() decodes the hash back to the real ID for lookups
+ *   - resolveRouteBindingQuery() decodes hashes before querying
+ *   - resolveRouteBinding() decodes hashes back to integer PKs for record lookups
  */
 trait HasHashedRouteKey
 {
@@ -55,9 +56,8 @@ trait HasHashedRouteKey
     }
 
     /**
-     * Keep the route key name as the real DB column.
+     * Keep the route key name as the real DB column ('id').
      * This ensures that any code doing Model::where(getRouteKeyName(), ...) works.
-     * We do NOT return 'hashed_id' here because it's a virtual attribute.
      */
     public function getRouteKeyName(): string
     {
@@ -66,7 +66,7 @@ trait HasHashedRouteKey
 
     /**
      * Override getRouteKey to return the hashed ID for URL generation.
-     * This is what Laravel uses when building URLs (e.g. route('resource.show', $model)).
+     * Laravel/Filament uses this when generating URLs like route('resource.show', $model).
      */
     public function getRouteKey(): string
     {
@@ -74,29 +74,43 @@ trait HasHashedRouteKey
     }
 
     /**
-     * Resolve the model from its hashed route key.
-     * This is called by Laravel's route model binding AND Filament's record resolution.
+     * Override the query builder for route binding.
+     *
+     * This is the KEY method — both Laravel's `resolveRouteBinding()` and
+     * Filament's `resolveRecordRouteBinding()` flow through here.
+     * We intercept the hashed value, decode it to the real integer ID,
+     * and build a proper `WHERE id = <int>` query.
      */
-    public function resolveRouteBinding($value, $field = null): ?self
+    public function resolveRouteBindingQuery($query, $value, $field = null)
     {
-        // If a specific field is requested (and it's a real column), query directly
-        if ($field && $field !== 'id' && $field !== 'hashed_id') {
-            return static::where($field, $value)->first();
+        // If querying by a specific field that isn't 'id', pass through normally
+        if ($field && $field !== 'id' && $field !== $this->getKeyName()) {
+            return $query->where($field, $value);
         }
 
-        // Try to decode as a hashed ID first
+        // Try to decode as a hashed ID
         $id = static::decodeHashId((string) $value);
 
         if ($id !== null) {
-            return static::find($id);
+            return $query->where($this->getQualifiedKeyName(), $id);
         }
 
-        // Fallback: try as raw integer (backward compatibility / plain IDs)
+        // Fallback: try as raw numeric ID (backward compatibility)
         if (is_numeric($value)) {
-            return static::find((int) $value);
+            return $query->where($this->getQualifiedKeyName(), (int) $value);
         }
 
-        return null;
+        // Value is neither a valid hash nor numeric — return impossible condition
+        // so the query returns no results (instead of crashing)
+        return $query->where($this->getQualifiedKeyName(), 0)->whereRaw('0 = 1');
+    }
+
+    /**
+     * Resolve the model from its hashed route key.
+     */
+    public function resolveRouteBinding($value, $field = null): ?self
+    {
+        return $this->resolveRouteBindingQuery($this->newQuery(), $value, $field)->first();
     }
 
     /**
