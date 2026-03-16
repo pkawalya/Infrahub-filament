@@ -4,8 +4,10 @@ namespace App\Filament\Admin\Resources\CompanyResource\Pages;
 
 use App\Filament\Admin\Resources\CompanyResource;
 use App\Models\User;
+use App\Services\InvitationService;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class CreateCompany extends CreateRecord
 {
@@ -51,6 +53,30 @@ class CreateCompany extends CreateRecord
 
             // Assign panel_user role so they can access the App panel
             $user->assignRole('panel_user');
+
+            // Send the invitation email to the company admin
+            try {
+                $invitationService = app(InvitationService::class);
+                $invitationService->sendInvitation(
+                    $user,
+                    plainPassword: $adminPassword,
+                    invitedBy: auth()->id(),
+                );
+
+                \Filament\Notifications\Notification::make()
+                    ->success()
+                    ->title('Invitation sent')
+                    ->body("An invitation email has been sent to {$adminEmail}.")
+                    ->send();
+            } catch (\Throwable $e) {
+                Log::warning("Failed to send invitation to company admin {$adminEmail}: " . $e->getMessage());
+
+                \Filament\Notifications\Notification::make()
+                    ->warning()
+                    ->title('Invitation could not be sent')
+                    ->body("The user was created, but the invitation email failed: {$e->getMessage()}")
+                    ->send();
+            }
         }
     }
 }

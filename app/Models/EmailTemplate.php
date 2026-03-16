@@ -166,6 +166,12 @@ class EmailTemplate extends Model
                 'reset_link' => 'Password reset link',
                 'verification_link' => 'Email verification link',
                 'login_url' => 'Login page URL',
+                'invitation_url' => 'Invitation acceptance URL',
+                'inviter_name' => 'Name of person who sent the invitation',
+                'expiry_date' => 'Invitation expiry date',
+                'expiry_days' => 'Number of days until invitation expires',
+                'user_role' => 'User\'s assigned role',
+                'user_password' => 'User\'s initial password',
             ],
             'project' => [
                 'project_name' => 'Project name',

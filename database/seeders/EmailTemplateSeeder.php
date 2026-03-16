@@ -164,6 +164,29 @@ class EmailTemplateSeeder extends Seeder
                 'available_variables' => ['user_name', 'user_email', 'company_name', 'app_name', 'login_url', 'user_password', 'user_role', 'creator_name'],
             ],
             [
+                'name' => 'User Invitation',
+                'slug' => 'user-invitation',
+                'category' => 'authentication',
+                'subject' => 'You\'re invited to join {{company_name}} on {{app_name}} 🎉',
+                'body' => '<h2 style="color:#1f2937;margin:0 0 16px;">You\'re Invited! ✉️</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{user_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;"><strong>{{inviter_name}}</strong> has invited you to join <strong>{{company_name}}</strong> on {{app_name}}.</p>'
+                    . '<div style="background:linear-gradient(135deg,#f0f9ff,#eff6ff);border:1px solid #bfdbfe;border-radius:12px;padding:24px;margin:24px 0;">'
+                    . '<h3 style="color:#1e40af;margin:0 0 16px;font-size:16px;">Your Account Details</h3>'
+                    . '<table style="width:100%;border-collapse:collapse;">'
+                    . '<tr><td style="padding:8px 0;color:#6b7280;width:100px;">Email:</td><td style="padding:8px 0;color:#1f2937;font-weight:600;">{{user_email}}</td></tr>'
+                    . '<tr><td style="padding:8px 0;color:#6b7280;">Role:</td><td style="padding:8px 0;color:#1f2937;font-weight:600;">{{user_role}}</td></tr>'
+                    . '</table>'
+                    . '</div>'
+                    . '<p style="text-align:center;margin:28px 0;"><a href="{{invitation_url}}" style="display:inline-block;padding:16px 48px;background:linear-gradient(135deg,#3b82f6,#4f46e5);color:#ffffff;text-decoration:none;border-radius:10px;font-weight:700;font-size:16px;box-shadow:0 4px 15px rgba(79,70,229,0.3);">Accept Invitation →</a></p>'
+                    . '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin:0 0 20px;">'
+                    . '<p style="color:#92400e;margin:0;font-size:13px;">⏰ This invitation expires on <strong>{{expiry_date}}</strong>. Please accept it before then.</p>'
+                    . '</div>'
+                    . '<p style="color:#6b7280;font-size:13px;">After accepting, you can log in at: <a href="{{login_url}}" style="color:#4f46e5;">{{login_url}}</a></p>'
+                    . '<p style="color:#9ca3af;font-size:12px;text-align:center;margin-top:20px;">If you did not expect this invitation, you can safely ignore this email.</p>',
+                'available_variables' => ['user_name', 'user_email', 'company_name', 'app_name', 'invitation_url', 'login_url', 'user_role', 'inviter_name', 'expiry_date', 'expiry_days'],
+            ],
+            [
                 'name' => 'Password Reset',
                 'slug' => 'password-reset',
                 'category' => 'authentication',

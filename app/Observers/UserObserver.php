@@ -4,13 +4,14 @@ namespace App\Observers;
 
 use App\Models\User;
 use App\Services\EmailService;
+use App\Services\InvitationService;
 use Illuminate\Support\Facades\Log;
 
 class UserObserver
 {
     /**
      * When a new user is created, send them a welcome email
-     * with their login credentials and a link to the platform.
+     * with their login credentials and an invitation email.
      */
     public function created(User $user): void
     {
@@ -36,6 +37,7 @@ class UserObserver
         try {
             $emailService = app(EmailService::class);
 
+            // 1. Send the welcome email with credentials
             $emailService->send('welcome-new-user', $user, [
                 'login_url' => $loginUrl,
                 'user_password' => $plainPassword,
@@ -43,8 +45,16 @@ class UserObserver
                 'creator_name' => auth()->user()->name,
             ], $user->company_id);
 
+            // 2. Send the invitation email with accept link
+            $invitationService = app(InvitationService::class);
+            $invitationService->sendInvitation(
+                $user,
+                $plainPassword,
+                auth()->id()
+            );
+
         } catch (\Throwable $e) {
-            Log::warning('Failed to send welcome email to ' . $user->email . ': ' . $e->getMessage());
+            Log::warning('Failed to send welcome/invitation email to ' . $user->email . ': ' . $e->getMessage());
         }
     }
 }

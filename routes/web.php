@@ -5,10 +5,15 @@ use App\Livewire\ExternalLogin;
 use App\Livewire\ExternalDashboard;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Auth\GoogleController;
+use App\Http\Controllers\InvitationController;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// Email Invitation Acceptance
+Route::get('/invitation/accept/{token}', [InvitationController::class, 'accept'])->name('invitation.accept');
+Route::post('/invitation/accept/{token}', [InvitationController::class, 'confirm'])->name('invitation.confirm');
 
 Route::get('/offline', function () {
     return response()->file(public_path('offline.html'));

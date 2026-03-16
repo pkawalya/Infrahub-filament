@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources;
 use App\Filament\Admin\Resources\UserResource\Pages;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\InvitationService;
 use Filament\Actions;
 use Filament\Infolists;
 use Filament\Schemas;
@@ -238,6 +239,29 @@ class UserResource extends Resource
             ->actions([
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
+                Actions\Action::make('resendInvitation')
+                    ->icon('heroicon-o-envelope')
+                    ->color('info')
+                    ->label('Resend Invitation')
+                    ->requiresConfirmation()
+                    ->modalHeading('Resend Invitation Email')
+                    ->modalDescription(fn(User $record) => "Send a new invitation email to {$record->email}?")
+                    ->action(function (User $record): void {
+                        $invitation = app(InvitationService::class)->resendInvitation($record);
+                        if ($invitation) {
+                            \Filament\Notifications\Notification::make()
+                                ->success()
+                                ->title('Invitation sent')
+                                ->body("Invitation email sent to {$record->email}")
+                                ->send();
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->danger()
+                                ->title('Failed to send invitation')
+                                ->body('The invitation email could not be sent. Check the logs for details.')
+                                ->send();
+                        }
+                    }),
                 Actions\Action::make('toggleActive')
                     ->icon(fn(User $record) => $record->is_active ? 'heroicon-o-no-symbol' : 'heroicon-o-check-circle')
                     ->color(fn(User $record) => $record->is_active ? 'danger' : 'success')
