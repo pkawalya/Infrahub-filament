@@ -597,6 +597,7 @@
                     <a href="#modules" class="sidebar-link"><span class="icon">🧱</span> Modules</a>
                     <a href="#offline" class="sidebar-link"><span class="icon">☁️</span> Offline Mode</a>
                     <a href="#pwa" class="sidebar-link"><span class="icon">📱</span> PWA Install</a>
+                    <a href="#security" class="sidebar-link"><span class="icon">🛡️</span> Security & Access</a>
                 </div>
 
                 <div class="sidebar-group">
@@ -808,49 +809,86 @@
                         </div>
                     </div>
                 </div>
-            </section>
+    </div>
+    </section>
 
-            <!-- Offline -->
-            <section id="offline">
-                <h2>☁️ Offline Mode</h2>
-                <p>InfraHub works offline for field workers with poor connectivity. Every page you visit is cached.</p>
+    <!-- Security & Access Control -->
+    <section id="security">
+        <h2>🛡️ Security & Access Control</h2>
+        <p>InfraHub incorporates enterprise-grade security hardening natively, limiting exposure and validating inputs
+            effectively.</p>
 
-                <div class="info-box info-tip">
-                    <span class="icon">💡</span>
-                    <div>
-                        <strong>Keyboard shortcut:</strong> Press <code>Ctrl+Shift+S</code> on any Create or Edit form
-                        page to save the data offline. It will sync automatically when you reconnect.
-                    </div>
-                </div>
+        <h3>Geographic Access & IP Blocking</h3>
+        <p>The platform bounds access to safe operating regions:</p>
+        <ul>
+            <li><strong>Geo-Restriction:</strong> Allowed countries can be managed in the Admin panel. Requests from
+                restricted regions receive an HTTP 403 Forbidden. Caching optimizes lookup performance.</li>
+            <li><strong>IP Blocking:</strong> Specific threatening IPs or CIDR boundaries (e.g. <code>10.0.0.0/8</code>)
+                can be dynamically blocked with expiration controls.</li>
+            <li><strong>API Overrides:</strong> Select external APIs (e.g. Webhooks) safely bypass the geo-middleware
+                but remain strictly limited to whitelisted supplier IPs.</li>
+        </ul>
 
-                <h3>How It Works</h3>
-                <ul>
-                    <li><strong>Service Worker</strong> caches all visited pages (network-first with 8s timeout)</li>
-                    <li><strong>IndexedDB</strong> stores form submissions locally when offline</li>
-                    <li><strong>Background Sync API</strong> replays queued data when connectivity returns</li>
-                    <li><strong>Livewire Interceptor</strong> captures form data from any Filament page</li>
-                </ul>
+        <h3>User Session Hardening</h3>
+        <ul>
+            <li><strong>Enforced 2FA:</strong> Two-Factor Authentication (Email OTP) can be globally triggered for all
+                internal and client users, enforcing multi-factor checks on subsequent logins.</li>
+            <li><strong>Session Management:</strong> Active login sessions across all devices are trackable. Users can
+                invalidate dormant or suspicious concurrent instances remotely from their settings panel.</li>
+            <li><strong>Destructive Action Limits:</strong> Operations like Project termination require
+                re-authentication of the user's password prior to final deletion.</li>
+        </ul>
 
-                <h3>Supported Offline Operations</h3>
-                <ul>
-                    <li>✅ View any previously visited page</li>
-                    <li>✅ Create/edit records for all 15 resource types</li>
-                    <li>✅ Dedicated forms: Site Diary, Crew Attendance, Safety Incident</li>
-                    <li>✅ Auto-sync when back online</li>
-                    <li>✅ Manual sync via the Offline Forms page</li>
-                    <li>⚠️ File uploads require connectivity</li>
-                </ul>
+        <h3>Common Data Environment (CDE)</h3>
+        <ul>
+            <li><strong>Malware Scanning (ClamAV):</strong> When enabled, every uploaded BIM, CAD, or PDF file passes
+                through dynamic daemon scanning before persistence.</li>
+            <li><strong>Aggressive File Validation:</strong> Absolute blockage of executable vectors (<code>.exe</code>,
+                <code>.php</code>, <code>.bat</code>) and double extensions.</li>
+        </ul>
+    </section>
 
-                <h3>Offline Sync API</h3>
-                <div class="endpoint">
-                    <div class="endpoint-header">
-                        <span class="method method-post">POST</span>
-                        <span class="endpoint-path">/api/v1/offline-sync/generic</span>
-                        <span class="badge badge-auth">AUTH</span>
-                    </div>
-                    <div class="endpoint-desc">Sync any resource type from offline queue</div>
-                </div>
-                <pre><code><span class="code-label">Request</span>
+    <!-- Offline -->
+    <section id="offline">
+        <h2>☁️ Offline Mode</h2>
+        <p>InfraHub works offline for field workers with poor connectivity. Every page you visit is cached.</p>
+
+        <div class="info-box info-tip">
+            <span class="icon">💡</span>
+            <div>
+                <strong>Keyboard shortcut:</strong> Press <code>Ctrl+Shift+S</code> on any Create or Edit form
+                page to save the data offline. It will sync automatically when you reconnect.
+            </div>
+        </div>
+
+        <h3>How It Works</h3>
+        <ul>
+            <li><strong>Service Worker</strong> caches all visited pages (network-first with 8s timeout)</li>
+            <li><strong>IndexedDB</strong> stores form submissions locally when offline</li>
+            <li><strong>Background Sync API</strong> replays queued data when connectivity returns</li>
+            <li><strong>Livewire Interceptor</strong> captures form data from any Filament page</li>
+        </ul>
+
+        <h3>Supported Offline Operations</h3>
+        <ul>
+            <li>✅ View any previously visited page</li>
+            <li>✅ Create/edit records for all 15 resource types</li>
+            <li>✅ Dedicated forms: Site Diary, Crew Attendance, Safety Incident</li>
+            <li>✅ Auto-sync when back online</li>
+            <li>✅ Manual sync via the Offline Forms page</li>
+            <li>⚠️ File uploads require connectivity</li>
+        </ul>
+
+        <h3>Offline Sync API</h3>
+        <div class="endpoint">
+            <div class="endpoint-header">
+                <span class="method method-post">POST</span>
+                <span class="endpoint-path">/api/v1/offline-sync/generic</span>
+                <span class="badge badge-auth">AUTH</span>
+            </div>
+            <div class="endpoint-desc">Sync any resource type from offline queue</div>
+        </div>
+        <pre><code><span class="code-label">Request</span>
 {
     "resource": "tasks",
     "action": "create",
@@ -862,430 +900,430 @@
     }
 }</code></pre>
 
-                <h3>Supported Resource Types</h3>
-                <table class="docs-table">
-                    <thead>
-                        <tr>
-                            <th>Slug</th>
-                            <th>Model</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><code>tasks</code></td>
-                            <td>Task</td>
-                            <td>Project tasks</td>
-                        </tr>
-                        <tr>
-                            <td><code>work-orders</code></td>
-                            <td>WorkOrder</td>
-                            <td>Work instructions</td>
-                        </tr>
-                        <tr>
-                            <td><code>daily-site-diaries</code></td>
-                            <td>DailySiteDiary</td>
-                            <td>Daily site records</td>
-                        </tr>
-                        <tr>
-                            <td><code>crew-attendances</code></td>
-                            <td>CrewAttendance</td>
-                            <td>Worker attendance</td>
-                        </tr>
-                        <tr>
-                            <td><code>safety-incidents</code></td>
-                            <td>SafetyIncident</td>
-                            <td>Safety reports</td>
-                        </tr>
-                        <tr>
-                            <td><code>invoices</code></td>
-                            <td>Invoice</td>
-                            <td>Financial invoices</td>
-                        </tr>
-                        <tr>
-                            <td><code>assets</code></td>
-                            <td>Asset</td>
-                            <td>Company assets</td>
-                        </tr>
-                        <tr>
-                            <td><code>clients</code></td>
-                            <td>Client</td>
-                            <td>Client records</td>
-                        </tr>
-                        <tr>
-                            <td><code>subcontractors</code></td>
-                            <td>Subcontractor</td>
-                            <td>Subcontractor firms</td>
-                        </tr>
-                        <tr>
-                            <td><code>tenders</code></td>
-                            <td>Tender</td>
-                            <td>Bid/tender submissions</td>
-                        </tr>
-                        <tr>
-                            <td><code>drawings</code></td>
-                            <td>Drawing</td>
-                            <td>Engineering drawings</td>
-                        </tr>
-                        <tr>
-                            <td><code>payment-certificates</code></td>
-                            <td>PaymentCertificate</td>
-                            <td>Payment certs</td>
-                        </tr>
-                        <tr>
-                            <td><code>cde-projects</code></td>
-                            <td>CdeProject</td>
-                            <td>Projects</td>
-                        </tr>
-                        <tr>
-                            <td><code>change-orders</code></td>
-                            <td>ChangeOrder</td>
-                            <td>Contract variations</td>
-                        </tr>
-                        <tr>
-                            <td><code>snag-items</code></td>
-                            <td>SnagItem</td>
-                            <td>Defect/snag list</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
+        <h3>Supported Resource Types</h3>
+        <table class="docs-table">
+            <thead>
+                <tr>
+                    <th>Slug</th>
+                    <th>Model</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>tasks</code></td>
+                    <td>Task</td>
+                    <td>Project tasks</td>
+                </tr>
+                <tr>
+                    <td><code>work-orders</code></td>
+                    <td>WorkOrder</td>
+                    <td>Work instructions</td>
+                </tr>
+                <tr>
+                    <td><code>daily-site-diaries</code></td>
+                    <td>DailySiteDiary</td>
+                    <td>Daily site records</td>
+                </tr>
+                <tr>
+                    <td><code>crew-attendances</code></td>
+                    <td>CrewAttendance</td>
+                    <td>Worker attendance</td>
+                </tr>
+                <tr>
+                    <td><code>safety-incidents</code></td>
+                    <td>SafetyIncident</td>
+                    <td>Safety reports</td>
+                </tr>
+                <tr>
+                    <td><code>invoices</code></td>
+                    <td>Invoice</td>
+                    <td>Financial invoices</td>
+                </tr>
+                <tr>
+                    <td><code>assets</code></td>
+                    <td>Asset</td>
+                    <td>Company assets</td>
+                </tr>
+                <tr>
+                    <td><code>clients</code></td>
+                    <td>Client</td>
+                    <td>Client records</td>
+                </tr>
+                <tr>
+                    <td><code>subcontractors</code></td>
+                    <td>Subcontractor</td>
+                    <td>Subcontractor firms</td>
+                </tr>
+                <tr>
+                    <td><code>tenders</code></td>
+                    <td>Tender</td>
+                    <td>Bid/tender submissions</td>
+                </tr>
+                <tr>
+                    <td><code>drawings</code></td>
+                    <td>Drawing</td>
+                    <td>Engineering drawings</td>
+                </tr>
+                <tr>
+                    <td><code>payment-certificates</code></td>
+                    <td>PaymentCertificate</td>
+                    <td>Payment certs</td>
+                </tr>
+                <tr>
+                    <td><code>cde-projects</code></td>
+                    <td>CdeProject</td>
+                    <td>Projects</td>
+                </tr>
+                <tr>
+                    <td><code>change-orders</code></td>
+                    <td>ChangeOrder</td>
+                    <td>Contract variations</td>
+                </tr>
+                <tr>
+                    <td><code>snag-items</code></td>
+                    <td>SnagItem</td>
+                    <td>Defect/snag list</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
 
-            <!-- PWA -->
-            <section id="pwa">
-                <h2>📱 PWA Installation</h2>
-                <p>InfraHub is a Progressive Web App. Install it on your device for the best experience.</p>
-                <ol>
-                    <li>Open <code>{{ config('app.url') }}/app</code> in Chrome or Edge</li>
-                    <li>Click the <strong>Install</strong> icon in the address bar (or ⋮ → Install App)</li>
-                    <li>The app launches in its own window with offline support</li>
-                </ol>
-            </section>
+    <!-- PWA -->
+    <section id="pwa">
+        <h2>📱 PWA Installation</h2>
+        <p>InfraHub is a Progressive Web App. Install it on your device for the best experience.</p>
+        <ol>
+            <li>Open <code>{{ config('app.url') }}/app</code> in Chrome or Edge</li>
+            <li>Click the <strong>Install</strong> icon in the address bar (or ⋮ → Install App)</li>
+            <li>The app launches in its own window with offline support</li>
+        </ol>
+    </section>
 
-            <!-- API: Projects -->
-            <section id="api-projects">
-                <h2>📁 Projects API</h2>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/projects</span></div>
-                    <div class="endpoint-desc">List all projects for the authenticated company</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects</span></div>
-                    <div class="endpoint-desc">Create a new project</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/projects/{id}</span></div>
-                    <div class="endpoint-desc">Get project details with stats</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-put">PUT</span><span
-                            class="endpoint-path">/api/v1/projects/{id}</span></div>
-                    <div class="endpoint-desc">Update a project</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-delete">DELETE</span><span
-                            class="endpoint-path">/api/v1/projects/{id}</span></div>
-                    <div class="endpoint-desc">Delete a project</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/projects/{id}/stats</span></div>
-                    <div class="endpoint-desc">Get project statistics (tasks, documents, etc.)</div>
-                </div>
-            </section>
+    <!-- API: Projects -->
+    <section id="api-projects">
+        <h2>📁 Projects API</h2>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/projects</span></div>
+            <div class="endpoint-desc">List all projects for the authenticated company</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects</span></div>
+            <div class="endpoint-desc">Create a new project</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/projects/{id}</span></div>
+            <div class="endpoint-desc">Get project details with stats</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-put">PUT</span><span
+                    class="endpoint-path">/api/v1/projects/{id}</span></div>
+            <div class="endpoint-desc">Update a project</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-delete">DELETE</span><span
+                    class="endpoint-path">/api/v1/projects/{id}</span></div>
+            <div class="endpoint-desc">Delete a project</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/projects/{id}/stats</span></div>
+            <div class="endpoint-desc">Get project statistics (tasks, documents, etc.)</div>
+        </div>
+    </section>
 
-            <!-- API: Tasks -->
-            <section id="api-tasks">
-                <h2>✅ Tasks API</h2>
-                <p>Tasks are scoped under a project.</p>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/tasks</span></div>
-                    <div class="endpoint-desc">List all tasks for a project</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/tasks</span></div>
-                    <div class="endpoint-desc">Create a new task</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/tasks/{task}</span></div>
-                    <div class="endpoint-desc">Get task details</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-put">PUT</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/tasks/{task}</span></div>
-                    <div class="endpoint-desc">Update a task</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-patch">PATCH</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/tasks/{task}/progress</span></div>
-                    <div class="endpoint-desc">Update task progress percentage</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-delete">DELETE</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/tasks/{task}</span></div>
-                    <div class="endpoint-desc">Delete a task</div>
-                </div>
-            </section>
+    <!-- API: Tasks -->
+    <section id="api-tasks">
+        <h2>✅ Tasks API</h2>
+        <p>Tasks are scoped under a project.</p>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/tasks</span></div>
+            <div class="endpoint-desc">List all tasks for a project</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/tasks</span></div>
+            <div class="endpoint-desc">Create a new task</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/tasks/{task}</span></div>
+            <div class="endpoint-desc">Get task details</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-put">PUT</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/tasks/{task}</span></div>
+            <div class="endpoint-desc">Update a task</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-patch">PATCH</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/tasks/{task}/progress</span></div>
+            <div class="endpoint-desc">Update task progress percentage</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-delete">DELETE</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/tasks/{task}</span></div>
+            <div class="endpoint-desc">Delete a task</div>
+        </div>
+    </section>
 
-            <!-- API: Documents -->
-            <section id="api-documents">
-                <h2>📄 Documents API</h2>
-                <p>ISO 19650 compliant document management with versioning and approval workflows.</p>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/documents</span></div>
-                    <div class="endpoint-desc">List all documents in a project</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/documents</span></div>
-                    <div class="endpoint-desc">Upload a new document</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/documents/{doc}/submit-for-review</span>
-                    </div>
-                    <div class="endpoint-desc">Submit document for review</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/documents/{doc}/approve</span></div>
-                    <div class="endpoint-desc">Approve a document</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/documents/{doc}/reject</span></div>
-                    <div class="endpoint-desc">Reject a document</div>
-                </div>
-            </section>
+    <!-- API: Documents -->
+    <section id="api-documents">
+        <h2>📄 Documents API</h2>
+        <p>ISO 19650 compliant document management with versioning and approval workflows.</p>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/documents</span></div>
+            <div class="endpoint-desc">List all documents in a project</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/documents</span></div>
+            <div class="endpoint-desc">Upload a new document</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/documents/{doc}/submit-for-review</span>
+            </div>
+            <div class="endpoint-desc">Submit document for review</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/documents/{doc}/approve</span></div>
+            <div class="endpoint-desc">Approve a document</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/documents/{doc}/reject</span></div>
+            <div class="endpoint-desc">Reject a document</div>
+        </div>
+    </section>
 
-            <!-- API: Safety -->
-            <section id="api-safety">
-                <h2>⚠️ Safety Incidents API</h2>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/safety-incidents</span></div>
-                    <div class="endpoint-desc">List all safety incidents for the company</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/safety-incidents</span></div>
-                    <div class="endpoint-desc">Report a new safety incident</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/safety-incidents/{id}</span></div>
-                    <div class="endpoint-desc">Get incident details</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-put">PUT</span><span
-                            class="endpoint-path">/api/v1/safety-incidents/{id}</span></div>
-                    <div class="endpoint-desc">Update incident status / investigation</div>
-                </div>
-            </section>
+    <!-- API: Safety -->
+    <section id="api-safety">
+        <h2>⚠️ Safety Incidents API</h2>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/safety-incidents</span></div>
+            <div class="endpoint-desc">List all safety incidents for the company</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/safety-incidents</span></div>
+            <div class="endpoint-desc">Report a new safety incident</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/safety-incidents/{id}</span></div>
+            <div class="endpoint-desc">Get incident details</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-put">PUT</span><span
+                    class="endpoint-path">/api/v1/safety-incidents/{id}</span></div>
+            <div class="endpoint-desc">Update incident status / investigation</div>
+        </div>
+    </section>
 
-            <!-- API: Attendance -->
-            <section id="api-attendance">
-                <h2>👷 Crew Attendance API</h2>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/attendance</span></div>
-                    <div class="endpoint-desc">List attendance records</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/attendance</span></div>
-                    <div class="endpoint-desc">Record worker attendance</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/attendance/today</span></div>
-                    <div class="endpoint-desc">Get today's attendance summary</div>
-                </div>
-            </section>
+    <!-- API: Attendance -->
+    <section id="api-attendance">
+        <h2>👷 Crew Attendance API</h2>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/attendance</span></div>
+            <div class="endpoint-desc">List attendance records</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/attendance</span></div>
+            <div class="endpoint-desc">Record worker attendance</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/attendance/today</span></div>
+            <div class="endpoint-desc">Get today's attendance summary</div>
+        </div>
+    </section>
 
-            <!-- API: Work Orders -->
-            <section id="api-work-orders">
-                <h2>🔧 Work Orders API</h2>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/work-orders</span></div>
-                    <div class="endpoint-desc">List work orders for a project</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/work-orders</span></div>
-                    <div class="endpoint-desc">Create a work order</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-put">PUT</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/work-orders/{wo}</span></div>
-                    <div class="endpoint-desc">Update a work order</div>
-                </div>
-            </section>
+    <!-- API: Work Orders -->
+    <section id="api-work-orders">
+        <h2>🔧 Work Orders API</h2>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/work-orders</span></div>
+            <div class="endpoint-desc">List work orders for a project</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/work-orders</span></div>
+            <div class="endpoint-desc">Create a work order</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-put">PUT</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/work-orders/{wo}</span></div>
+            <div class="endpoint-desc">Update a work order</div>
+        </div>
+    </section>
 
-            <!-- API: RFIs -->
-            <section id="api-rfis">
-                <h2>❓ RFIs API</h2>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/rfis</span></div>
-                    <div class="endpoint-desc">List requests for information</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/rfis</span></div>
-                    <div class="endpoint-desc">Create an RFI</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/rfis/{rfi}/answer</span></div>
-                    <div class="endpoint-desc">Answer an RFI</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/rfis/{rfi}/close</span></div>
-                    <div class="endpoint-desc">Close an RFI</div>
-                </div>
-            </section>
+    <!-- API: RFIs -->
+    <section id="api-rfis">
+        <h2>❓ RFIs API</h2>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/rfis</span></div>
+            <div class="endpoint-desc">List requests for information</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/rfis</span></div>
+            <div class="endpoint-desc">Create an RFI</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/rfis/{rfi}/answer</span></div>
+            <div class="endpoint-desc">Answer an RFI</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/rfis/{rfi}/close</span></div>
+            <div class="endpoint-desc">Close an RFI</div>
+        </div>
+    </section>
 
-            <!-- API: Submittals -->
-            <section id="api-submittals">
-                <h2>📋 Submittals API</h2>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/submittals</span></div>
-                    <div class="endpoint-desc">List submittals</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/submittals</span></div>
-                    <div class="endpoint-desc">Create a submittal</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/projects/{project}/submittals/{sub}/review</span></div>
-                    <div class="endpoint-desc">Review a submittal (approve/reject)</div>
-                </div>
-            </section>
+    <!-- API: Submittals -->
+    <section id="api-submittals">
+        <h2>📋 Submittals API</h2>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/submittals</span></div>
+            <div class="endpoint-desc">List submittals</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/submittals</span></div>
+            <div class="endpoint-desc">Create a submittal</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/projects/{project}/submittals/{sub}/review</span></div>
+            <div class="endpoint-desc">Review a submittal (approve/reject)</div>
+        </div>
+    </section>
 
-            <!-- API: Equipment -->
-            <section id="api-equipment">
-                <h2>🚜 Equipment API</h2>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/equipment/allocations</span></div>
-                    <div class="endpoint-desc">List equipment allocations</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/equipment/allocations</span></div>
-                    <div class="endpoint-desc">Allocate equipment to a project</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/equipment/fuel-logs</span></div>
-                    <div class="endpoint-desc">List fuel consumption logs</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/equipment/fuel-logs</span></div>
-                    <div class="endpoint-desc">Record a fuel log entry</div>
-                </div>
-            </section>
+    <!-- API: Equipment -->
+    <section id="api-equipment">
+        <h2>🚜 Equipment API</h2>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/equipment/allocations</span></div>
+            <div class="endpoint-desc">List equipment allocations</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/equipment/allocations</span></div>
+            <div class="endpoint-desc">Allocate equipment to a project</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/equipment/fuel-logs</span></div>
+            <div class="endpoint-desc">List fuel consumption logs</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/equipment/fuel-logs</span></div>
+            <div class="endpoint-desc">Record a fuel log entry</div>
+        </div>
+    </section>
 
-            <!-- API: Offline Sync -->
-            <section id="api-offline-sync">
-                <h2>🔄 Offline Sync API</h2>
-                <p>Endpoints used by the offline queue engine. Typically called automatically by the Service Worker.</p>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/offline-sync/generic</span></div>
-                    <div class="endpoint-desc">Sync any whitelisted resource (see table above)</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/offline-sync/site-diaries</span></div>
-                    <div class="endpoint-desc">Sync a site diary (with deduplication)</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/offline-sync/attendance</span></div>
-                    <div class="endpoint-desc">Sync an attendance record (with deduplication)</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-post">POST</span><span
-                            class="endpoint-path">/api/v1/offline-sync/safety-incidents</span></div>
-                    <div class="endpoint-desc">Sync a safety incident report</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header"><span class="method method-get">GET</span><span
-                            class="endpoint-path">/api/v1/offline-sync/workers</span></div>
-                    <div class="endpoint-desc">Get worker list for offline dropdown caching</div>
-                </div>
-            </section>
+    <!-- API: Offline Sync -->
+    <section id="api-offline-sync">
+        <h2>🔄 Offline Sync API</h2>
+        <p>Endpoints used by the offline queue engine. Typically called automatically by the Service Worker.</p>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/offline-sync/generic</span></div>
+            <div class="endpoint-desc">Sync any whitelisted resource (see table above)</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/offline-sync/site-diaries</span></div>
+            <div class="endpoint-desc">Sync a site diary (with deduplication)</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/offline-sync/attendance</span></div>
+            <div class="endpoint-desc">Sync an attendance record (with deduplication)</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-post">POST</span><span
+                    class="endpoint-path">/api/v1/offline-sync/safety-incidents</span></div>
+            <div class="endpoint-desc">Sync a safety incident report</div>
+        </div>
+        <div class="endpoint">
+            <div class="endpoint-header"><span class="method method-get">GET</span><span
+                    class="endpoint-path">/api/v1/offline-sync/workers</span></div>
+            <div class="endpoint-desc">Get worker list for offline dropdown caching</div>
+        </div>
+    </section>
 
-            <!-- Errors -->
-            <section id="errors">
-                <h2>🚫 Error Codes</h2>
-                <table class="docs-table">
-                    <thead>
-                        <tr>
-                            <th>Code</th>
-                            <th>Meaning</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><code>200</code></td>
-                            <td>OK</td>
-                            <td>Request succeeded</td>
-                        </tr>
-                        <tr>
-                            <td><code>201</code></td>
-                            <td>Created</td>
-                            <td>Resource created successfully</td>
-                        </tr>
-                        <tr>
-                            <td><code>401</code></td>
-                            <td>Unauthenticated</td>
-                            <td>Missing or invalid token</td>
-                        </tr>
-                        <tr>
-                            <td><code>403</code></td>
-                            <td>Forbidden</td>
-                            <td>Insufficient permissions or module access</td>
-                        </tr>
-                        <tr>
-                            <td><code>404</code></td>
-                            <td>Not Found</td>
-                            <td>Resource does not exist or is not in your company</td>
-                        </tr>
-                        <tr>
-                            <td><code>422</code></td>
-                            <td>Validation Error</td>
-                            <td>Request body failed validation. Check <code>errors</code> field.</td>
-                        </tr>
-                        <tr>
-                            <td><code>429</code></td>
-                            <td>Rate Limited</td>
-                            <td>Too many requests. Wait and retry.</td>
-                        </tr>
-                        <tr>
-                            <td><code>500</code></td>
-                            <td>Server Error</td>
-                            <td>Unexpected error. Contact support.</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <pre><code><span class="code-label">Error Response</span>
+    <!-- Errors -->
+    <section id="errors">
+        <h2>🚫 Error Codes</h2>
+        <table class="docs-table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Meaning</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>200</code></td>
+                    <td>OK</td>
+                    <td>Request succeeded</td>
+                </tr>
+                <tr>
+                    <td><code>201</code></td>
+                    <td>Created</td>
+                    <td>Resource created successfully</td>
+                </tr>
+                <tr>
+                    <td><code>401</code></td>
+                    <td>Unauthenticated</td>
+                    <td>Missing or invalid token</td>
+                </tr>
+                <tr>
+                    <td><code>403</code></td>
+                    <td>Forbidden</td>
+                    <td>Insufficient permissions or module access</td>
+                </tr>
+                <tr>
+                    <td><code>404</code></td>
+                    <td>Not Found</td>
+                    <td>Resource does not exist or is not in your company</td>
+                </tr>
+                <tr>
+                    <td><code>422</code></td>
+                    <td>Validation Error</td>
+                    <td>Request body failed validation. Check <code>errors</code> field.</td>
+                </tr>
+                <tr>
+                    <td><code>429</code></td>
+                    <td>Rate Limited</td>
+                    <td>Too many requests. Wait and retry.</td>
+                </tr>
+                <tr>
+                    <td><code>500</code></td>
+                    <td>Server Error</td>
+                    <td>Unexpected error. Contact support.</td>
+                </tr>
+            </tbody>
+        </table>
+        <pre><code><span class="code-label">Error Response</span>
 {
     "success": false,
     "message": "Validation failed",
@@ -1294,61 +1332,61 @@
         "due_date": ["The due date must be a date after today."]
     }
 }</code></pre>
-            </section>
+    </section>
 
-            <!-- Rate Limits -->
-            <section id="rate-limits">
-                <h2>⏱️ Rate Limits</h2>
-                <table class="docs-table">
-                    <thead>
-                        <tr>
-                            <th>Endpoint Group</th>
-                            <th>Limit</th>
-                            <th>Window</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Login</td>
-                            <td>5 requests</td>
-                            <td>1 minute</td>
-                        </tr>
-                        <tr>
-                            <td>Registration</td>
-                            <td>3 requests</td>
-                            <td>1 minute</td>
-                        </tr>
-                        <tr>
-                            <td>Health Check</td>
-                            <td>30 requests</td>
-                            <td>1 minute</td>
-                        </tr>
-                        <tr>
-                            <td>All Authenticated APIs</td>
-                            <td>60 requests</td>
-                            <td>1 minute</td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="info-box info-warn">
-                    <span class="icon">⚡</span>
-                    <div>When rate limited, the API returns <code>429 Too Many Requests</code>. Include retry logic in
-                        your integration with exponential backoff.</div>
-                </div>
-            </section>
+    <!-- Rate Limits -->
+    <section id="rate-limits">
+        <h2>⏱️ Rate Limits</h2>
+        <table class="docs-table">
+            <thead>
+                <tr>
+                    <th>Endpoint Group</th>
+                    <th>Limit</th>
+                    <th>Window</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Login</td>
+                    <td>5 requests</td>
+                    <td>1 minute</td>
+                </tr>
+                <tr>
+                    <td>Registration</td>
+                    <td>3 requests</td>
+                    <td>1 minute</td>
+                </tr>
+                <tr>
+                    <td>Health Check</td>
+                    <td>30 requests</td>
+                    <td>1 minute</td>
+                </tr>
+                <tr>
+                    <td>All Authenticated APIs</td>
+                    <td>60 requests</td>
+                    <td>1 minute</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="info-box info-warn">
+            <span class="icon">⚡</span>
+            <div>When rate limited, the API returns <code>429 Too Many Requests</code>. Include retry logic in
+                your integration with exponential backoff.</div>
+        </div>
+    </section>
 
-            <!-- Health -->
-            <section id="health">
-                <h2>💚 Health Check</h2>
-                <div class="endpoint">
-                    <div class="endpoint-header">
-                        <span class="method method-get">GET</span>
-                        <span class="endpoint-path">/api/health</span>
-                        <span class="badge badge-public">PUBLIC</span>
-                    </div>
-                    <div class="endpoint-desc">Infrastructure health check — no authentication required</div>
-                </div>
-                <pre><code><span class="code-label">Response 200</span>
+    <!-- Health -->
+    <section id="health">
+        <h2>💚 Health Check</h2>
+        <div class="endpoint">
+            <div class="endpoint-header">
+                <span class="method method-get">GET</span>
+                <span class="endpoint-path">/api/health</span>
+                <span class="badge badge-public">PUBLIC</span>
+            </div>
+            <div class="endpoint-desc">Infrastructure health check — no authentication required</div>
+        </div>
+        <pre><code><span class="code-label">Response 200</span>
 {
     "status": "healthy",
     "version": "{{ config('app.version') }}",
@@ -1367,19 +1405,18 @@
         }
     }
 }</code></pre>
-            </section>
+    </section>
 
-            <!-- Footer -->
-            <div
-                style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-subtle); text-align: center;">
-                <p style="font-size: 0.78rem; color: var(--text-muted);">
-                    InfraHub v{{ config('app.version') }} · API {{ config('app.api_version') }} · Built with Laravel
-                    {{ app()->version() }} & Filament<br>
-                    <a href="/" style="color: var(--amber-400);">← Back to Home</a> · <a href="/app"
-                        style="color: var(--amber-400);">Open App →</a>
-                </p>
-            </div>
-        </main>
+    <!-- Footer -->
+    <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-subtle); text-align: center;">
+        <p style="font-size: 0.78rem; color: var(--text-muted);">
+            InfraHub v{{ config('app.version') }} · API {{ config('app.api_version') }} · Built with Laravel
+            {{ app()->version() }} & Filament<br>
+            <a href="/" style="color: var(--amber-400);">← Back to Home</a> · <a href="/app"
+                style="color: var(--amber-400);">Open App →</a>
+        </p>
+    </div>
+    </main>
     </div>
 
     <script>
