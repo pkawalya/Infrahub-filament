@@ -24,6 +24,8 @@
         $geoEnabled = \App\Models\Setting::getValue('geo_restriction_enabled', config('security.geo_access.enabled', false));
         $allowedCountries = \App\Models\Setting::getValue('geo_allowed_countries');
         $countryCount = $allowedCountries ? count(array_filter(explode(',', $allowedCountries))) : count(config('security.geo_access.allowed_countries', []));
+        $scanEnabled = \App\Models\Setting::getValue('scan_for_malware', config('security.uploads.scan_for_malware', false));
+        $enforce2fa = \App\Models\Setting::getValue('enforce_2fa', config('security.login.enforce_2fa', true));
     @endphp
 
     <div class="mt-8 rounded-xl border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-white/[0.02] p-5">
@@ -31,10 +33,11 @@
             <x-heroicon-o-shield-check class="w-4 h-4 text-emerald-500" />
             Current Status
         </h3>
-        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 text-xs text-gray-500 dark:text-gray-400">
+        <div class="grid grid-cols-1 sm:grid-cols-6 gap-4 text-xs text-gray-500 dark:text-gray-400">
             <div class="rounded-lg bg-white dark:bg-white/5 p-3 border border-gray-100 dark:border-white/5">
                 <div class="text-2xl font-bold {{ $activeBlocks > 0 ? 'text-rose-600' : 'text-gray-400' }}">
-                    {{ $activeBlocks }}</div>
+                    {{ $activeBlocks }}
+                </div>
                 <div class="mt-1 text-gray-500">Blocked IPs</div>
             </div>
             <div class="rounded-lg bg-white dark:bg-white/5 p-3 border border-gray-100 dark:border-white/5">
@@ -51,6 +54,20 @@
             <div class="rounded-lg bg-white dark:bg-white/5 p-3 border border-gray-100 dark:border-white/5">
                 <div class="text-2xl font-bold text-blue-600">{{ $countryCount }}</div>
                 <div class="mt-1 text-gray-500">Allowed Countries</div>
+            </div>
+            <div class="rounded-lg bg-white dark:bg-white/5 p-3 border border-gray-100 dark:border-white/5">
+                <div
+                    class="text-2xl font-bold {{ filter_var($scanEnabled, FILTER_VALIDATE_BOOLEAN) ? 'text-emerald-600' : 'text-gray-400' }}">
+                    {{ filter_var($scanEnabled, FILTER_VALIDATE_BOOLEAN) ? 'ON' : 'OFF' }}
+                </div>
+                <div class="mt-1 text-gray-500">Malware Scanner</div>
+            </div>
+            <div class="rounded-lg bg-white dark:bg-white/5 p-3 border border-gray-100 dark:border-white/5">
+                <div
+                    class="text-2xl font-bold {{ filter_var($enforce2fa, FILTER_VALIDATE_BOOLEAN) ? 'text-emerald-600' : 'text-gray-400' }}">
+                    {{ filter_var($enforce2fa, FILTER_VALIDATE_BOOLEAN) ? 'ON' : 'OFF' }}
+                </div>
+                <div class="mt-1 text-gray-500">2FA Enforced</div>
             </div>
         </div>
     </div>

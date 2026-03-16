@@ -154,8 +154,11 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
     // ─── Email 2FA (Filament Native) — MANDATORY ─────────────
     public function hasEmailAuthentication(): bool
     {
-        // Enforced for all users — every login requires an email OTP code.
-        return true;
+        // Check global setting first
+        $configEnabled = config('security.login.enforce_2fa', true);
+        $isEnforcedGlobally = filter_var(\App\Models\Setting::getValue('enforce_2fa', $configEnabled), FILTER_VALIDATE_BOOLEAN);
+
+        return $isEnforcedGlobally || $this->has_email_authentication;
     }
 
     public function toggleEmailAuthentication(bool $condition): void

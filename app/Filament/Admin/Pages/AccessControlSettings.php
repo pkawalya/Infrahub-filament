@@ -91,7 +91,12 @@ class AccessControlSettings extends Page implements HasForms
         $ipBlockingEnabled = Setting::getValue('ip_blocking_enabled', $ipConfig['enabled'] ?? true);
         $whitelistedIps = Setting::getValue('whitelisted_ips');
 
+        $scanEnabled = Setting::getValue('scan_for_malware', config('security.uploads.scan_for_malware', false));
+        $enforce2fa = Setting::getValue('enforce_2fa', config('security.login.enforce_2fa', true));
+
         $this->form->fill([
+            'enforce_2fa' => filter_var($enforce2fa, FILTER_VALIDATE_BOOLEAN),
+            'scan_for_malware' => filter_var($scanEnabled, FILTER_VALIDATE_BOOLEAN),
             'geo_enabled' => filter_var($geoEnabled, FILTER_VALIDATE_BOOLEAN),
             'allowed_countries' => $allowedCountries
                 ? (is_string($allowedCountries) ? explode(',', $allowedCountries) : $allowedCountries)
@@ -163,6 +168,28 @@ class AccessControlSettings extends Page implements HasForms
                     ->columns(1)
                     ->collapsible(),
 
+                // ── File Upload Security ──────────────────────────
+                Section::make('🛡️ File Uploads')
+                    ->description('Settings for securing file uploads across the system.')
+                    ->schema([
+                        Toggle::make('scan_for_malware')
+                            ->label('Enable Malware Scanning (ClamAV)')
+                            ->helperText('Requires ClamAV installed on the server. Scans all uploads for malware.'),
+                    ])
+                    ->columns(1)
+                    ->collapsible(),
+
+                // ── Login Security ──────────────────────────────
+                Section::make('🔐 Login Security')
+                    ->description('Settings for user authentication and login safety.')
+                    ->schema([
+                        Toggle::make('enforce_2fa')
+                            ->label('Enforce Two-Factor Authentication (2FA)')
+                            ->helperText('When enabled, ALL users will be immediately required to use Email 2FA to log in.'),
+                    ])
+                    ->columns(1)
+                    ->collapsible(),
+
                 // ── Quick Block ──────────────────────────────
                 Section::make('⚡ Quick Block an IP')
                     ->description('Block an IP directly from here without going to the Blocked IPs resource.')
@@ -208,6 +235,12 @@ class AccessControlSettings extends Page implements HasForms
         // Save IP settings
         Setting::setValue('ip_blocking_enabled', $data['ip_blocking_enabled'] ? '1' : '0', 'security');
         Setting::setValue('whitelisted_ips', implode(',', $data['whitelisted_ips'] ?? []), 'security');
+
+        // Save Upload settings
+        Setting::setValue('scan_for_malware', $data['scan_for_malware'] ? '1' : '0', 'security');
+
+        // Save Auth settings
+        Setting::setValue('enforce_2fa', $data['enforce_2fa'] ? '1' : '0', 'security');
 
         Notification::make()
             ->title('Access Control Settings Saved')

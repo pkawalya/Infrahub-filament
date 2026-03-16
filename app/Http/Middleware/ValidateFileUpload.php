@@ -78,9 +78,50 @@ class ValidateFileUpload
                         abort(422, "File '{$filename}' has a suspicious double extension.");
                     }
                 }
+
+                // ── Malware Scanning (ClamAV) ─────────────────
+                $scanEnabled = \App\Models\Setting::getValue('scan_for_malware', $config['scan_for_malware'] ?? false);
+
+                if (filter_var($scanEnabled, FILTER_VALIDATE_BOOLEAN)) {
+                    $this->scanForMalware($file, $filename, $request);
+                }
             }
         }
 
         return $next($request);
+    }
+
+    /**
+     * Run the uploaded file through ClamAV via CLI.
+     */
+    protected function scanForMalware($file, string $filename, Request $request): void
+    {
+        $path = $file->getRealPath();
+
+        // Execute clamdscan (fastest, uses daemon) or fallback to clamscan
+        $command = "clamdscan --no-summary " . escapeshellarg($path);
+
+        exec($command, $output, $returnCode);
+
+        // ClamAV exit codes: 0 = clean, 1 = virus found, 2 = error
+        if ($returnCode === 1) {
+            Log::channel('security')->alert('MALWARE_DETECTED', [
+                'user_id' => $request->user()?->id,
+                'filename' => $filename,
+                'clamav_output' => implode("\n", $output),
+                'ip' => $request->ip(),
+            ]);
+
+            abort(422, "Security Alert: The file '{$filename}' failed our malware scan and has been rejected.");
+        } elseif ($returnCode > 1) {
+            Log::error('ClamAV scan failed', [
+                'filename' => $filename,
+                'output' => implode("\n", $output),
+                'code' => $returnCode,
+            ]);
+            // If the scanner itself fails, we fail-open or fail-closed based on preference.
+            // In enterprise environments, returning a 500 error (fail-closed) is safer.
+            abort(500, "Unable to verify file security due to a scanning system error.");
+        }
     }
 }

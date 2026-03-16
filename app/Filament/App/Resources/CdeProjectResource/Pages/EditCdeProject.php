@@ -11,7 +11,18 @@ class EditCdeProject extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [Actions\DeleteAction::make()];
+        return [
+            Actions\DeleteAction::make()
+                ->requiresConfirmation()
+                ->modalDescription('Are you sure you want to delete this project? Data deletion cannot be undone.')
+                ->form([
+                    \Filament\Forms\Components\TextInput::make('password')
+                        ->password()
+                        ->required()
+                        ->currentPassword()
+                        ->label('Enter your password to confirm deletion'),
+                ]),
+        ];
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
