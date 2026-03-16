@@ -11,6 +11,11 @@ use Hashids\Hashids;
  * This prevents enumeration attacks while keeping integer PKs in the database.
  *
  * Usage: Add `use HasHashedRouteKey;` to any model.
+ *
+ * How it works with Filament / Laravel route model binding:
+ *   - getRouteKeyName() returns 'id' (real column) so direct DB queries never break
+ *   - getRouteKey() returns the hashed ID so generated URLs are obfuscated
+ *   - resolveRouteBinding() decodes the hash back to the real ID for lookups
  */
 trait HasHashedRouteKey
 {
@@ -50,34 +55,48 @@ trait HasHashedRouteKey
     }
 
     /**
-     * Tell Laravel to use 'hashed_id' as the route key.
+     * Keep the route key name as the real DB column.
+     * This ensures that any code doing Model::where(getRouteKeyName(), ...) works.
+     * We do NOT return 'hashed_id' here because it's a virtual attribute.
      */
     public function getRouteKeyName(): string
     {
-        return 'hashed_id';
+        return 'id';
+    }
+
+    /**
+     * Override getRouteKey to return the hashed ID for URL generation.
+     * This is what Laravel uses when building URLs (e.g. route('resource.show', $model)).
+     */
+    public function getRouteKey(): string
+    {
+        return $this->hashed_id;
     }
 
     /**
      * Resolve the model from its hashed route key.
+     * This is called by Laravel's route model binding AND Filament's record resolution.
      */
     public function resolveRouteBinding($value, $field = null): ?self
     {
-        if ($field && $field !== 'hashed_id') {
+        // If a specific field is requested (and it's a real column), query directly
+        if ($field && $field !== 'id' && $field !== 'hashed_id') {
             return static::where($field, $value)->first();
         }
 
-        // Try to decode the hash
-        $id = static::decodeHashId($value);
+        // Try to decode as a hashed ID first
+        $id = static::decodeHashId((string) $value);
 
-        if ($id === null) {
-            // Fallback: try as raw integer (for backward compatibility during transition)
-            if (is_numeric($value)) {
-                return static::find((int) $value);
-            }
-            return null;
+        if ($id !== null) {
+            return static::find($id);
         }
 
-        return static::find($id);
+        // Fallback: try as raw integer (backward compatibility / plain IDs)
+        if (is_numeric($value)) {
+            return static::find((int) $value);
+        }
+
+        return null;
     }
 
     /**
@@ -86,13 +105,5 @@ trait HasHashedRouteKey
     public function resolveChildRouteBinding($childType, $value, $field)
     {
         return $this->{$childType}()->where($field ?? 'id', $value)->first();
-    }
-
-    /**
-     * Override getRouteKey to return the hashed ID.
-     */
-    public function getRouteKey(): string
-    {
-        return $this->hashed_id;
     }
 }
