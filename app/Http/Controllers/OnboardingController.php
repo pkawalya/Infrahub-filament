@@ -109,6 +109,21 @@ class OnboardingController extends Controller
             Log::error('Failed to send onboarding notification: ' . $e->getMessage());
         }
 
+        // Send login details to the company admin
+        try {
+            Mail::send('emails.onboarding-welcome', [
+                'user' => $user,
+                'company' => $company,
+                'plan' => $plan,
+                'loginUrl' => config('app.url') . '/app/login',
+            ], function ($message) use ($user) {
+                $message->to($user->email, $user->name)
+                    ->subject('Welcome to InfraHub — Your Login Details');
+            });
+        } catch (\Throwable $e) {
+            Log::error('Failed to send welcome email to admin: ' . $e->getMessage());
+        }
+
         return redirect()->route('onboarding.success');
     }
 
