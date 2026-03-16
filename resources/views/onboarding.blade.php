@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Get Started — InfraHub</title>
     <meta name="description"
-        content="Create your InfraHub account. Choose a plan, set up your company, and start managing construction projects today.">
+        content="Create your InfraHub account. Simple per-project pricing. Start managing construction projects today.">
     <link rel="icon" type="image/svg+xml" href="{{ asset('logo/infrahub-icon.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,10 +24,10 @@
         :root {
             --navy-700: #152d4a;
             --navy-600: #1e3a5f;
-            --navy-500: #2a4d7a;
             --amber-300: #f5c563;
             --amber-400: #e8a229;
             --amber-500: #d4911e;
+            --emerald-500: #10b981;
         }
 
         [data-theme="dark"] {
@@ -50,6 +50,7 @@
             --glow-opacity: 0.12;
             --ghost-text: #94a3b8;
             --ghost-border: rgba(255, 255, 255, 0.1);
+            --pricing-highlight: rgba(232, 162, 41, 0.06);
         }
 
         [data-theme="light"] {
@@ -72,10 +73,11 @@
             --glow-opacity: 0.05;
             --ghost-text: #475569;
             --ghost-border: #cbd5e1;
+            --pricing-highlight: rgba(232, 162, 41, 0.04);
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             background: var(--bg-body);
             color: var(--text-primary);
             -webkit-font-smoothing: antialiased;
@@ -124,7 +126,7 @@
             z-index: 1;
         }
 
-        /* ─── Header ─── */
+        /* Header */
         .onboard-header {
             display: flex;
             justify-content: space-between;
@@ -151,7 +153,7 @@
             color: var(--text-primary);
         }
 
-        /* ─── Theme Toggle ─── */
+        /* Theme Toggle */
         .theme-toggle {
             width: 38px;
             height: 38px;
@@ -188,7 +190,7 @@
             display: none;
         }
 
-        /* ─── Stepper ─── */
+        /* Stepper */
         .steps {
             display: flex;
             justify-content: center;
@@ -244,7 +246,7 @@
             color: #fff;
         }
 
-        /* ─── Panels ─── */
+        /* Panels */
         .panel {
             display: none;
             animation: fadeIn 0.3s ease;
@@ -281,11 +283,59 @@
             font-size: 15px;
         }
 
-        /* ─── Plan Cards ─── */
+        /* Pricing Section */
+        .pricing-hero {
+            text-align: center;
+            max-width: 640px;
+            margin: 0 auto 40px;
+            padding: 32px;
+            background: var(--pricing-highlight);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+        }
+
+        .pricing-hero .price-tag {
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, var(--amber-300), var(--amber-400), var(--amber-500));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .pricing-hero .price-unit {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .pricing-hero .price-includes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .pricing-hero .price-tag-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 6px 14px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--emerald-500);
+        }
+
+        /* Plan Cards */
         .plans-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
             margin-bottom: 32px;
         }
 
@@ -309,8 +359,8 @@
             background: rgba(232, 162, 41, 0.05);
         }
 
-        .plan-card.popular::before {
-            content: 'POPULAR';
+        .plan-card.recommended::before {
+            content: 'RECOMMENDED';
             position: absolute;
             top: -1px;
             right: 20px;
@@ -329,22 +379,33 @@
             margin-bottom: 4px;
         }
 
+        .plan-price-row {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
         .plan-price {
             font-size: 32px;
             font-weight: 800;
             letter-spacing: -1px;
-            margin-bottom: 4px;
         }
 
-        .plan-price span {
-            font-size: 14px;
-            font-weight: 500;
+        .plan-price-note {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .plan-desc {
+            font-size: 13px;
             color: var(--text-secondary);
+            margin-bottom: 16px;
+            line-height: 1.5;
         }
 
         .plan-specs {
             list-style: none;
-            margin-top: 16px;
         }
 
         .plan-specs li {
@@ -362,7 +423,7 @@
             font-weight: 700;
         }
 
-        /* ─── Form ─── */
+        /* Form */
         .form-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -418,7 +479,7 @@
             margin-top: 4px;
         }
 
-        /* ─── Buttons ─── */
+        /* Buttons */
         .btn-row {
             display: flex;
             justify-content: space-between;
@@ -472,7 +533,7 @@
             color: var(--text-primary);
         }
 
-        /* ─── Alerts ─── */
+        /* Alerts */
         .alert-error {
             background: rgba(244, 63, 94, 0.08);
             border: 1px solid rgba(244, 63, 94, 0.25);
@@ -484,6 +545,24 @@
             max-width: 640px;
             margin-left: auto;
             margin-right: auto;
+        }
+
+        /* Footer */
+        .onboard-footer {
+            text-align: center;
+            padding: 40px 0 24px;
+            margin-top: 40px;
+            border-top: 1px solid var(--border-subtle);
+        }
+
+        .onboard-footer small {
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .onboard-footer a {
+            color: var(--amber-400);
+            text-decoration: none;
         }
 
         @media (max-width: 768px) {
@@ -503,6 +582,10 @@
                 font-size: 12px;
                 padding: 8px 14px;
             }
+
+            .pricing-hero .price-tag {
+                font-size: 36px;
+            }
         }
     </style>
 </head>
@@ -513,11 +596,10 @@
     <div class="bg-glow bg-glow-2"></div>
 
     <div class="container">
-        {{-- Header --}}
         <div class="onboard-header">
             <a href="/"><img src="{{ asset('logo/infrahub-logo-new.png') }}" alt="InfraHub"></a>
             <div style="display:flex;align-items:center;gap:12px;">
-                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode">
+                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
                     <span class="icon-moon">🌙</span>
                     <span class="icon-sun">☀️</span>
                 </button>
@@ -525,16 +607,12 @@
             </div>
         </div>
 
-        {{-- Steps --}}
         <div class="steps">
             <div class="step active" id="step-indicator-1" onclick="goToStep(1)">
                 <span class="step-number">1</span> Choose Plan
             </div>
             <div class="step" id="step-indicator-2" onclick="goToStep(2)">
-                <span class="step-number">2</span> Company Details
-            </div>
-            <div class="step" id="step-indicator-3" onclick="goToStep(3)">
-                <span class="step-number">3</span> Your Account
+                <span class="step-number">2</span> Company & Account
             </div>
         </div>
 
@@ -552,23 +630,49 @@
         <form method="POST" action="{{ route('onboarding.store') }}" id="onboardForm">
             @csrf
 
-            {{-- ═══ STEP 1 — Choose Plan ═══ --}}
+            {{-- ═══ STEP 1 — Pricing ═══ --}}
             <div class="panel active" id="panel-1">
-                <div class="panel-title">Choose Your Plan</div>
-                <p class="panel-desc">Start with a 14-day free trial. No credit card required. Upgrade anytime.</p>
+                <div class="panel-title">Simple, Per-Project Pricing</div>
+                <p class="panel-desc">No complex tiers. Pay only for the projects you manage. All features included.</p>
+
+                <!-- Pricing Hero -->
+                <div class="pricing-hero">
+                    <div class="price-tag">$50</div>
+                    <div class="price-unit">per active project / month</div>
+                    <div class="price-includes">
+                        <span class="price-tag-item">✓ Unlimited users</span>
+                        <span class="price-tag-item">✓ All modules</span>
+                        <span class="price-tag-item">✓ 14-day free trial</span>
+                        <span class="price-tag-item">✓ No credit card needed</span>
+                    </div>
+                </div>
 
                 <div class="plans-grid">
                     @foreach ($plans as $plan)
-                        <div class="plan-card {{ $plan->is_popular ? 'popular' : '' }} {{ old('subscription_id') == $plan->id ? 'selected' : '' }}"
+                        <div class="plan-card {{ $plan->is_popular ? 'recommended' : '' }} {{ old('subscription_id') == $plan->id ? 'selected' : '' }}"
                             onclick="selectPlan({{ $plan->id }}, this)">
                             <div class="plan-name">{{ $plan->name }}</div>
-                            <div class="plan-price">
-                                ${{ number_format($plan->monthly_price, 0) }}
-                                <span>/mo</span>
+                            <div class="plan-price-row">
+                                <div class="plan-price">
+                                    ${{ number_format($plan->per_project_price ?? $plan->monthly_price, 0) }}
+                                </div>
+                                <span class="plan-price-note">
+                                    @if($plan->per_project_price)
+                                        / project / mo
+                                    @else
+                                        / month flat
+                                    @endif
+                                </span>
                             </div>
+                            @if($plan->description)
+                                <div class="plan-desc">{{ $plan->description }}</div>
+                            @endif
                             <ul class="plan-specs">
-                                <li>{{ $plan->max_users }} users</li>
-                                <li>{{ $plan->max_projects }} projects</li>
+                                @if($plan->included_projects)
+                                    <li>{{ $plan->included_projects == -1 ? 'Unlimited' : $plan->included_projects }} projects
+                                        included</li>
+                                @endif
+                                <li>{{ $plan->max_users == -1 ? 'Unlimited' : $plan->max_users }} users</li>
                                 <li>{{ $plan->max_storage_gb }} GB storage</li>
                                 @if($plan->features)
                                     @foreach(array_slice($plan->features, 0, 3) as $feat)
@@ -590,12 +694,13 @@
                 </div>
             </div>
 
-            {{-- ═══ STEP 2 — Company ═══ --}}
+            {{-- ═══ STEP 2 — Company & Account ═══ --}}
             <div class="panel" id="panel-2">
-                <div class="panel-title">Company Details</div>
-                <p class="panel-desc">Tell us about your organization.</p>
+                <div class="panel-title">Company & Account</div>
+                <p class="panel-desc">Tell us about your organization and create your admin account.</p>
 
                 <div class="form-grid">
+                    <!-- Company Info -->
                     <div class="field full">
                         <label for="company_name">Company / Organization Name *</label>
                         <input type="text" name="company_name" id="company_name"
@@ -644,18 +749,6 @@
                     </div>
 
                     <div class="field">
-                        <label for="company_email">Company Email</label>
-                        <input type="email" name="company_email" id="company_email" placeholder="info@company.com"
-                            value="{{ old('company_email') }}">
-                    </div>
-
-                    <div class="field">
-                        <label for="company_phone">Company Phone</label>
-                        <input type="tel" name="company_phone" id="company_phone" placeholder="+256 700 000 000"
-                            value="{{ old('company_phone') }}">
-                    </div>
-
-                    <div class="field full">
                         <label for="company_country">Country *</label>
                         <select name="company_country" id="company_country" required>
                             <option value="">Select country…</option>
@@ -681,22 +774,19 @@
                         </select>
                         @error('company_country') <p class="error-msg">{{ $message }}</p> @enderror
                     </div>
-                </div>
 
-                <div class="btn-row">
-                    <button type="button" class="btn btn-ghost" onclick="prevStep()">← Back</button>
-                    <button type="button" class="btn btn-primary" onclick="nextStep()">Continue →</button>
-                </div>
-            </div>
+                    <div class="field">
+                        <label for="company_email">Company Email</label>
+                        <input type="email" name="company_email" id="company_email" placeholder="info@company.com"
+                            value="{{ old('company_email') }}">
+                    </div>
 
-            {{-- ═══ STEP 3 — Account ═══ --}}
-            <div class="panel" id="panel-3">
-                <div class="panel-title">Create Your Account</div>
-                <p class="panel-desc">This will be the admin account for your company.</p>
+                    <!-- Divider -->
+                    <div class="full" style="border-top:1px solid var(--border-subtle); margin:12px 0;"></div>
 
-                <div class="form-grid">
-                    <div class="field full">
-                        <label for="name">Full Name *</label>
+                    <!-- Account Info -->
+                    <div class="field">
+                        <label for="name">Your Full Name *</label>
                         <input type="text" name="name" id="name" placeholder="John Doe" value="{{ old('name') }}"
                             required>
                         @error('name') <p class="error-msg">{{ $message }}</p> @enderror
@@ -710,15 +800,15 @@
                     </div>
 
                     <div class="field">
-                        <label for="job_title">Job Title</label>
-                        <input type="text" name="job_title" id="job_title" placeholder="e.g. Project Manager"
-                            value="{{ old('job_title') }}">
-                    </div>
-
-                    <div class="field">
                         <label for="phone">Phone Number</label>
                         <input type="tel" name="phone" id="phone" placeholder="+256 700 000 000"
                             value="{{ old('phone') }}">
+                    </div>
+
+                    <div class="field">
+                        <label for="job_title">Job Title</label>
+                        <input type="text" name="job_title" id="job_title" placeholder="e.g. Project Manager"
+                            value="{{ old('job_title') }}">
                     </div>
 
                     <div class="field">
@@ -727,7 +817,7 @@
                         @error('password') <p class="error-msg">{{ $message }}</p> @enderror
                     </div>
 
-                    <div class="field full">
+                    <div class="field">
                         <label for="password_confirmation">Confirm Password *</label>
                         <input type="password" name="password_confirmation" id="password_confirmation"
                             placeholder="Repeat password" required>
@@ -737,16 +827,25 @@
                 <div class="btn-row">
                     <button type="button" class="btn btn-ghost" onclick="prevStep()">← Back</button>
                     <button type="submit" class="btn btn-primary" id="submitBtn">
-                        🚀 Submit Application
+                        🚀 Create Account
                     </button>
                 </div>
 
                 <p style="text-align:center; color: var(--text-muted); font-size: 13px; margin-top: 20px;">
-                    Your company will be reviewed and activated by our team.<br>
-                    You'll receive an email once approved.
+                    Your company will be reviewed and activated within 24 hours.<br>
+                    You'll receive a confirmation email once approved.
                 </p>
             </div>
         </form>
+
+        <div class="onboard-footer">
+            <small>
+                © {{ date('Y') }} InfraHub. All rights reserved. ·
+                <a href="/">Home</a> ·
+                <a href="/docs">Documentation</a> ·
+                <a href="/schedule-call">Talk to Sales</a>
+            </small>
+        </div>
     </div>
 
     <script>
@@ -759,12 +858,10 @@
         (function () {
             const saved = localStorage.getItem('infrahub-theme');
             if (saved) document.documentElement.setAttribute('data-theme', saved);
-            else if (window.matchMedia('(prefers-color-scheme: light)').matches)
-                document.documentElement.setAttribute('data-theme', 'light');
         })();
 
         let currentStep = 1;
-        const totalSteps = 3;
+        const totalSteps = 2;
 
         function selectPlan(id, el) {
             document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
