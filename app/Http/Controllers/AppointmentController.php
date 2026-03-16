@@ -30,6 +30,7 @@ class AppointmentController extends Controller
         try {
             Mail::raw($this->buildEmailBody($validated), function ($message) use ($validated) {
                 $message->to('info@infrahub.click')
+                    ->cc('appcellon@gmail.com')
                     ->replyTo($validated['email'], $validated['name'])
                     ->subject('📞 New Call Request from ' . $validated['name']);
             });
