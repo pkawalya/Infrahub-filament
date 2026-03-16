@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
 
         // ── Global Security ────────────────────────────────
+        $middleware->append(\App\Http\Middleware\GeoAccessControl::class);
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
         $middleware->append(\App\Http\Middleware\AuditSensitiveActions::class);
         $middleware->append(\App\Http\Middleware\ValidateFileUpload::class);

@@ -103,4 +103,48 @@ return [
         'referrer_policy' => 'strict-origin-when-cross-origin',
     ],
 
+    // ── Geo Access Control ────────────────────────────────
+    // Restrict access to specific countries (ISO 3166-1 alpha-2 codes).
+    // Uses ip-api.com free tier for lookups (45 req/min, no key needed).
+    // Set GEO_RESTRICTION_ENABLED=true in .env to activate.
+    'geo_access' => [
+        'enabled' => env('GEO_RESTRICTION_ENABLED', false),
+
+        // Allowed country codes (uppercase ISO 3166-1 alpha-2)
+        // Empty = allow all countries (no restriction)
+        'allowed_countries' => array_filter(explode(',', env(
+            'GEO_ALLOWED_COUNTRIES',
+            'UG,KE,TZ,RW,SS,NG,GH,ZA,GB,US,AE'
+        ))),
+
+        // Paths to EXCLUDE from geo checks (always accessible)
+        'excluded_paths' => [
+            'api/health',
+            'up',
+        ],
+
+        // Cache country lookups for N minutes (saves API calls)
+        'cache_minutes' => (int) env('GEO_CACHE_MINUTES', 1440), // 24 hours
+
+        // What to show blocked visitors
+        'block_message' => 'Access to this service is not available in your region.',
+    ],
+
+    // ── IP Blocking ───────────────────────────────────────
+    // Block specific IPs or CIDR ranges.
+    // Can be managed via config, .env, or admin panel (database).
+    'ip_blocking' => [
+        'enabled' => env('IP_BLOCKING_ENABLED', true),
+
+        // Static blocklist (from .env, comma-separated)
+        // Example: BLOCKED_IPS="1.2.3.4,10.0.0.0/8,192.168.1.100"
+        'blocked_ips' => array_filter(explode(',', env('BLOCKED_IPS', ''))),
+
+        // Also check database table 'blocked_ips' for dynamic blocks
+        'use_database' => true,
+
+        // Whitelisted IPs that can never be blocked
+        'whitelisted_ips' => array_filter(explode(',', env('WHITELISTED_IPS', '127.0.0.1'))),
+    ],
+
 ];
