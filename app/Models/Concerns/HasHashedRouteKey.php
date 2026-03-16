@@ -95,13 +95,8 @@ trait HasHashedRouteKey
             return $query->where($this->getQualifiedKeyName(), $id);
         }
 
-        // Fallback: try as raw numeric ID (backward compatibility)
-        if (is_numeric($value)) {
-            return $query->where($this->getQualifiedKeyName(), (int) $value);
-        }
-
-        // Value is neither a valid hash nor numeric — return impossible condition
-        // so the query returns no results (instead of crashing)
+        // Value is not a valid hash — return impossible condition
+        // so the query returns no results (prevents enumeration via raw IDs)
         return $query->where($this->getQualifiedKeyName(), 0)->whereRaw('0 = 1');
     }
 

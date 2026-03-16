@@ -13,7 +13,7 @@ Route::get('/', function () {
 
 // Email Invitation Acceptance
 Route::get('/invitation/accept/{token}', [InvitationController::class, 'accept'])->name('invitation.accept');
-Route::post('/invitation/accept/{token}', [InvitationController::class, 'confirm'])->name('invitation.confirm');
+Route::post('/invitation/accept/{token}', [InvitationController::class, 'confirm'])->middleware('throttle:5,1')->name('invitation.confirm');
 
 Route::get('/offline', function () {
     return response()->file(public_path('offline.html'));
@@ -30,14 +30,14 @@ Route::get('/get-started/success', [OnboardingController::class, 'success'])->na
 
 // Schedule a Call
 Route::get('/schedule-call', [\App\Http\Controllers\AppointmentController::class, 'create'])->name('schedule-call');
-Route::post('/schedule-call', [\App\Http\Controllers\AppointmentController::class, 'store'])->name('schedule-call.store');
+Route::post('/schedule-call', [\App\Http\Controllers\AppointmentController::class, 'store'])->middleware('throttle:5,1')->name('schedule-call.store');
 
 // Google Authentication Routes
 Route::get('auth/google', [GoogleController::class, 'redirectToGoogle'])->name('auth.google');
 Route::get('auth/google/callback', [GoogleController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 
 // External Dashboard Routes
-Route::prefix('external')->name('external.')->group(function () {
+Route::prefix('external')->name('external.')->middleware('throttle:10,1')->group(function () {
     Route::get('/{token}', ExternalLogin::class)->name('login');
     Route::get('/{token}/dashboard', ExternalDashboard::class)->name('dashboard');
 });

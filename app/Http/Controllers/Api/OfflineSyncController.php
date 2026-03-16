@@ -71,6 +71,13 @@ class OfflineSyncController extends Controller
             return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
         }
 
+        $request->validate([
+            'resource' => 'required|string|max:50',
+            'action' => 'required|string|in:create,update',
+            'record_id' => 'nullable|integer',
+            'data' => 'required|array',
+        ]);
+
         $resource = $request->input('resource');
         $action = $request->input('action', 'create');
         $recordId = $request->input('record_id');
@@ -80,8 +87,7 @@ class OfflineSyncController extends Controller
         if (!isset(self::RESOURCE_MAP[$resource])) {
             return response()->json([
                 'success' => false,
-                'message' => "Unknown resource type: {$resource}",
-                'allowed' => array_keys(self::RESOURCE_MAP),
+                'message' => 'Invalid resource type.',
             ], 422);
         }
 
@@ -172,7 +178,7 @@ class OfflineSyncController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Sync failed: ' . $e->getMessage(),
+                'message' => 'Sync failed. Please try again.',
             ], 500);
         }
     }
@@ -252,7 +258,7 @@ class OfflineSyncController extends Controller
             ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Sync failed: ' . $e->getMessage(),
+                'message' => 'Sync failed. Please try again.',
             ], 500);
         }
     }
@@ -327,7 +333,7 @@ class OfflineSyncController extends Controller
             ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Sync failed: ' . $e->getMessage(),
+                'message' => 'Sync failed. Please try again.',
             ], 500);
         }
     }
@@ -391,7 +397,7 @@ class OfflineSyncController extends Controller
             ]);
             return response()->json([
                 'success' => false,
-                'message' => 'Sync failed: ' . $e->getMessage(),
+                'message' => 'Sync failed. Please try again.',
             ], 500);
         }
     }
