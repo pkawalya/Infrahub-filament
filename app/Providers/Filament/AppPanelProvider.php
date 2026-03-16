@@ -16,6 +16,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Width;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -58,6 +59,7 @@ class AppPanelProvider extends PanelProvider
             ->darkModeBrandLogo(asset('logo/infrahub-logo-dark.png'))
             ->brandLogoHeight('2.5rem')
             ->spa()
+            ->maxContentWidth(Width::Full)
             ->topNavigation()
             ->discoverResources(in: app_path('Filament/App/Resources'), for: 'App\\Filament\\App\\Resources')
             ->discoverPages(in: app_path('Filament/App/Pages'), for: 'App\\Filament\\App\\Pages')

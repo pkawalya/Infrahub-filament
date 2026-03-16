@@ -9,6 +9,7 @@ use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
+use Filament\Support\Enums\Width;
 use Filament\Auth\MultiFactor\Email\EmailAuthentication;
 use App\Http\Middleware\ForcePasswordChange;
 use App\Http\Middleware\SessionSecurity;
@@ -40,6 +41,7 @@ class ClientPanelProvider extends PanelProvider
                 'success' => Color::Emerald,
             ])
             ->brandName('InfraHub — Client Portal')
+            ->maxContentWidth(Width::Full)
             ->discoverResources(in: app_path('Filament/Client/Resources'), for: 'App\\Filament\\Client\\Resources')
             ->discoverPages(in: app_path('Filament/Client/Pages'), for: 'App\\Filament\\Client\\Pages')
             ->discoverWidgets(in: app_path('Filament/Client/Widgets'), for: 'App\\Filament\\Client\\Widgets')
