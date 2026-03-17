@@ -1,23 +1,26 @@
 # InfraHub — Construction Project Management Platform
 
-> A comprehensive, multi-tenant construction project management platform built with **Laravel 12** and **Filament 4**.
+> A comprehensive, multi-tenant construction project management platform built with **Laravel 12** and **Filament 4**, featuring a **Client Portal**, **Mobile PWA**, and **REST API**.
 
 ---
 
 ## Overview
 
-InfraHub is an all-in-one project management solution designed for construction and infrastructure companies. It supports multi-company tenancy, modular project workflows, and role-based access control — all from a single unified interface.
+InfraHub is an all-in-one project management solution designed for construction and infrastructure companies. It supports multi-company tenancy, modular project workflows, role-based access control, and mobile field access — all from a single unified platform.
 
 ### Key Highlights
 
 - 🏗️ **Multi-project dashboard** with real-time stat cards and interactive project timeline
 - 🏢 **Multi-company tenancy** — each company manages its own users, roles, and projects
-- 📁 **10+ integrated modules** per project (Documents, Tasks, SHEQ, BOQ, Inventory, Contracts, and more)
-- 🔐 **Dual-panel architecture** — Admin panel for super admins, App panel for company teams
+- 📁 **15+ integrated modules** per project (Documents, Tasks, SHEQ, BOQ, Inventory, Contracts, Equipment, and more)
+- 🔐 **Three-panel architecture** — Admin panel, Company App panel, and Client Portal
+- 📱 **Mobile PWA** at `/mobile` — offline-first, bottom nav, works on 3G
+- 🌐 **REST API v1** — 60+ endpoints with Sanctum auth and module-based permissions
 - 🎨 **Customizable UI** — per-user navigation style and color theme settings
 - 📊 **Dashboard widgets** — stats overview, project Gantt timeline with milestones
 - ⚡ **Compact, data-dense UI** — optimized tables, sticky actions, narrow sidebars
-- 📦 **Background jobs** — BOQ variance sync, loan alerts, queue processing
+- 📦 **Background jobs** — BOQ variance sync, compliance alerts, queue processing
+- 🔒 **Security hardened** — 2FA, rate limiting, session management, security headers
 
 ---
 
@@ -29,6 +32,8 @@ InfraHub is an all-in-one project management solution designed for construction 
 |-------|-----|--------|---------|
 | **Admin** | `/admin` | Super Admins only | Platform management: companies, subscriptions, all users & roles |
 | **App** | `/app` | All active users | Day-to-day work: projects, modules, settings |
+| **Client** | `/client` | Client users | Client Portal: view projects, invoices, documents |
+| **Mobile** | `/mobile` | All users (API auth) | Mobile PWA: tasks, forms, offline field work |
 
 ### Navigation Structure (App Panel Sidebar)
 
@@ -60,9 +65,9 @@ When viewing a project record, a collapsible sidebar (`SubNavigationPosition::St
 | Group | Modules |
 |-------|---------|
 | **Operations** | Core FSM (Work Orders), Tasks & Workflow, Planning & Progress |
-| **Site** | Field Logs, Inventory, SHEQ |
-| **Commercial** | Financials, Contracts, BOQ |
-| **Information** | Documents (CDE), RFIs & Submittals, Reports |
+| **Site** | Field Logs, Inventory, SHEQ, Equipment |
+| **Commercial** | Financials, Contracts, BOQ, Subcontractors |
+| **Information** | Documents (CDE), RFIs & Submittals, Reports, Suggestion Box |
 
 ---
 
@@ -126,6 +131,67 @@ Each module page includes:
 - **Social records** — grievances, stakeholder engagement, labour welfare, CSR activities
 - **Bulk actions** — resolve, delete across multiple records
 
+### Client Portal
+
+- **Auto-provisioning** — toggle "Create Portal Account" when creating a client to auto-create a User with login credentials
+- **Grant access later** — "Grant Portal Access" action on any existing client
+- **Portal status** — icon column in clients table shows active/inactive portal access
+- **Client panel features** — Projects, Invoices, Documents, Change Password, Help & Docs
+- **Security** — 2FA via email, must_change_password on first login, rate-limited login
+
+### Mobile PWA (`/mobile`)
+
+- **Bottom tab navigation** — Home, Projects, Tasks, Forms, Profile
+- **Dashboard** — Stat cards, quick action grid, my tasks, recent projects
+- **Projects** — Searchable list with status filter pills, project detail with module shortcuts
+- **Tasks** — Aggregated from all projects, Open/Done/Overdue filters
+- **Offline Forms** — Site diary, attendance, safety incident — saves to IndexedDB when offline
+- **Dark theme** — Matches InfraHub brand (#020617 background, #6366f1 accent)
+- **API-first** — All data loaded via REST API with localStorage caching
+- **<50KB CSS** — No JS framework, vanilla JS with `fetch()`, fast on 3G
+- **Installable** — manifest.json configured, add to home screen
+
+### REST API v1
+
+| Endpoint Group | Routes | Auth |
+|---|---|---|
+| **Auth** | login, register, logout, me, tokens | Public / Sanctum |
+| **Projects** | CRUD + stats | `module:projects.*` |
+| **Documents** | CRUD + review workflow (project-scoped) | `module:documents.*` |
+| **Tasks** | CRUD + progress updates (project-scoped) | `module:tasks.*` |
+| **RFIs** | CRUD + answer/close (project-scoped) | `module:documents.*` |
+| **Submittals** | CRUD + review/resubmit (project-scoped) | `module:documents.*` |
+| **Work Orders** | CRUD (project-scoped) | `module:work_orders.*` |
+| **Site Diaries** | CRUD + approval | `module:field_logs.*` |
+| **Attendance** | CRUD + today view | `module:crew.*` |
+| **Equipment** | Allocations + fuel logs | `module:equipment.*` |
+| **Safety** | CRUD | `module:safety.*` |
+| **Offline Sync** | Generic queue + per-module sync | Sanctum |
+| **Health** | `GET /api/health` | Public |
+
+### Project Invitations
+
+- **Invite by email** — "Invite People" action on project view
+- **One email, multiple projects** — Same email can be invited to different projects
+- **Token-based acceptance** — Secure unique tokens with expiration
+- **Team management** — "Team" action shows members + pending invitations
+
+### Suggestion Box
+
+- **Priority levels** — Urgent, High, Normal, Low with emoji indicators
+- **Upvoting** — All users can upvote suggestions
+- **Engagement stats** — Total upvotes + in-progress count
+- **Priority filter** — Filter by priority level
+
+### Security & Hardening
+
+- **Two-Factor Authentication** — Email OTP (10-minute expiry) on all panels
+- **Rate limiting** — 5 attempts per email + 15 per IP per minute
+- **Password policy** — 90-day expiry with 14-day warning, forced change on first login
+- **Session security** — 30-minute timeout, concurrent session management
+- **Security headers** — X-Frame-Options, CSP, HSTS, X-Content-Type-Options
+- **IP blocking** — AdminPanelProvider-level blocked IP management
+
 ### UI Personalization
 
 - **Navigation layout** — sidebar or top navigation
@@ -158,14 +224,17 @@ The app uses a custom CSS theme (`resources/css/filament/app/theme.css`) with:
 |-------|-----------|
 | **Framework** | Laravel 12 |
 | **Admin UI** | Filament 4 |
-| **Auth & Permissions** | Spatie Permission + Filament Shield |
+| **Auth & Permissions** | Spatie Permission + Filament Shield + Sanctum |
 | **Database** | MySQL 8+ |
-| **Frontend** | Blade, Alpine.js, Livewire |
+| **Frontend** | Blade, Alpine.js, Livewire 3 |
+| **Mobile** | PWA (Vanilla JS, Service Worker, IndexedDB) |
+| **API** | REST API v1 with Sanctum token auth |
 | **Styling** | Filament Design System + Custom CSS |
 | **Build** | Vite |
 | **Fonts** | Inter (Google Fonts) |
 | **Queue** | Database driver (Redis-ready) |
 | **Cache/Session** | Database driver |
+| **Offline** | Service Worker v3 + IndexedDB + Background Sync |
 
 ---
 
@@ -292,7 +361,8 @@ php artisan schedule:work
 app/
 ├── Console/Commands/               # Artisan commands
 │   ├── SyncBoqVariance.php         # BOQ variance sync command
-│   └── ProcessLoanAlerts.php       # Loan alerts command
+│   ├── ProcessLoanAlerts.php       # Loan alerts command
+│   └── SendComplianceAlerts.php    # Compliance alert command
 ├── Filament/
 │   ├── Admin/                      # Admin panel (super admin)
 │   │   └── Resources/
@@ -302,68 +372,107 @@ app/
 │   │       ├── EmailTemplateResource
 │   │       └── SubscriptionResource
 │   ├── App/                        # App panel (all users)
-│   │   ├── Concerns/               # Shared traits (ExportsTableCsv, etc.)
+│   │   ├── Concerns/               # Shared traits (ExportsTableCsv, SecureLogin)
 │   │   ├── Pages/
-│   │   │   └── Dashboard.php       # Registers widgets (Stats + Timeline)
+│   │   │   ├── Dashboard.php       # Registers widgets (Stats + Timeline)
+│   │   │   └── OfflineForms.php    # Offline-capable field forms
 │   │   ├── Resources/
 │   │   │   ├── CdeProjectResource/
 │   │   │   │   └── Pages/
-│   │   │   │       ├── ViewCdeProject
-│   │   │   │       ├── BaseModulePage     # Abstract base for modules
-│   │   │   │       └── Modules/           # Project module pages
+│   │   │   │       ├── ViewCdeProject      # Overview + Invite/Team actions
+│   │   │   │       ├── BaseModulePage      # Abstract base for modules
+│   │   │   │       └── Modules/            # Project module pages
 │   │   │   │           ├── CoreFsmPage           # Work Orders (FSM)
 │   │   │   │           ├── TaskWorkflowPage      # Tasks & Gantt
 │   │   │   │           ├── PlanningProgressPage   # Milestones & EVM
 │   │   │   │           ├── FieldManagementPage    # Daily Logs
-│   │   │   │           ├── InventoryPage          # Stock, POs, GRN, Requisitions
-│   │   │   │           ├── SheqPage               # Safety, Inspections, Social
+│   │   │   │           ├── InventoryPage          # Stock, POs, GRN
+│   │   │   │           ├── SheqPage               # Safety, Inspections
 │   │   │   │           ├── FinancialsPage          # Cost tracking
 │   │   │   │           ├── CostContractsPage       # Contracts
 │   │   │   │           ├── BoqPage                 # Bill of Quantities
 │   │   │   │           ├── CdePage                 # Documents (ISO 19650)
+│   │   │   │           ├── EquipmentPage           # Plant & Equipment
+│   │   │   │           ├── SubcontractorPage       # Subcontractors
+│   │   │   │           ├── SuggestionBoxPage       # Suggestions + Upvotes
 │   │   │   │           └── ReportingPage           # Reports & Analytics
 │   │   │   └── ... (Asset, Client, Invoice, Task, WorkOrder resources)
 │   │   └── Widgets/                # Dashboard widgets
+│   ├── Client/                     # Client portal
+│   │   ├── Pages/
+│   │   │   ├── Dashboard.php
+│   │   │   ├── ChangePassword.php
+│   │   │   ├── ClientHelp.php      # Help & Documentation
+│   │   │   └── Auth/Login.php
+│   │   ├── Resources/
+│   │   │   ├── ClientProjectResource
+│   │   │   ├── ClientInvoiceResource
+│   │   │   └── ClientDocumentResource
+│   │   └── Widgets/ClientOverview.php
 │   └── Pages/
 │       └── SystemSettings          # Global UI settings
-├── Jobs/                           # Queue jobs
-│   ├── SyncBoqVarianceProjectJob   # Per-project variance sync
-│   └── SyncBoqVarianceByProductJob # Per-product variance sync
-├── Models/                         # 60+ Eloquent models
+├── Http/
+│   ├── Controllers/
+│   │   ├── Api/                    # REST API v1 controllers
+│   │   │   ├── AuthController.php
+│   │   │   ├── ProjectController.php
+│   │   │   ├── DocumentController.php
+│   │   │   ├── TaskController.php
+│   │   │   ├── RfiController.php
+│   │   │   ├── SafetyController.php
+│   │   │   ├── EquipmentController.php
+│   │   │   ├── OfflineSyncController.php
+│   │   │   └── HealthController.php
+│   │   ├── MobileController.php     # Mobile PWA views
+│   │   ├── ProjectInvitationController.php
+│   │   └── InvitationController.php
+│   └── Middleware/
+│       ├── SecurityHeaders.php
+│       ├── SessionSecurity.php
+│       └── ForcePasswordChange.php
+├── Models/                         # 70+ Eloquent models
 │   ├── User.php, Company.php, CdeProject.php
-│   ├── Boq.php, BoqItem.php, BoqRevision.php, BoqVarianceAlert.php
-│   ├── MaterialRequisition.php, MaterialIssuance.php
-│   ├── Product.php, Warehouse.php, Asset.php
+│   ├── ProjectInvitation.php, ProjectSuggestion.php
+│   ├── Boq.php, BoqItem.php, BoqRevision.php
 │   ├── Contract.php, Invoice.php, PurchaseOrder.php
-│   ├── SafetyIncident.php, SocialRecord.php
+│   ├── SafetyIncident.php, EquipmentAllocation.php
+│   ├── Tender.php, SubcontractorPackage.php
 │   └── ...
-├── Observers/                      # Model observers
-├── Policies/                       # Authorization policies (17+)
 ├── Services/                       # Business logic services
+│   ├── EmailService.php            # Templated email dispatch
 │   ├── BoqVarianceService.php
-│   └── LoanAlertService.php
-└── Support/
-    └── CurrencyHelper.php          # Currency formatting utility
+│   └── ModuleNotificationService.php
+└── Providers/Filament/
+    ├── AdminPanelProvider.php
+    ├── AppPanelProvider.php
+    └── ClientPanelProvider.php
 
-resources/
-├── css/filament/app/
-│   └── theme.css                   # Custom compact UI overrides
-├── views/filament/app/
-│   ├── widgets/                    # Dashboard widget views
-│   ├── pages/modules/              # Module Blade views
-│   │   ├── inventory.blade.php
-│   │   ├── sheq.blade.php
-│   │   ├── boq.blade.php
-│   │   └── ...
-│   └── components/                 # Reusable Blade components
+resources/views/
+├── filament/app/pages/modules/     # Module Blade views
+├── filament/client/pages/          # Client portal views
+├── mobile/                         # Mobile PWA views
+│   ├── layout.blade.php            # App shell + bottom nav
+│   ├── login.blade.php
+│   ├── home.blade.php              # Dashboard
+│   ├── projects/                   # List + detail
+│   ├── tasks.blade.php
+│   ├── forms.blade.php             # Offline field forms
+│   └── profile.blade.php
+└── invitations/                    # Invitation acceptance pages
+
+public/
+├── css/mobile.css                  # Mobile PWA styles
+├── sw.js                           # Service Worker v3
+├── manifest.json                   # PWA manifest
+└── js/offline-*.js                 # Offline capabilities
 
 routes/
-├── web.php                         # Web routes
-├── api.php                         # API routes
+├── web.php                         # Web + mobile routes
+├── api.php                         # REST API v1 (60+ endpoints)
 └── console.php                     # Scheduler & Artisan commands
 
 database/
-├── migrations/                     # Database migrations (100+)
+├── migrations/                     # Database migrations (120+)
 └── seeders/
     ├── DatabaseSeeder.php
     ├── SaasFoundationSeeder.php    # Full demo data
@@ -448,6 +557,9 @@ npm run dev                              # Terminal 3
 Access the application:
 - **App panel**: [http://localhost:8000/app](http://localhost:8000/app)
 - **Admin panel**: [http://localhost:8000/admin](http://localhost:8000/admin)
+- **Client portal**: [http://localhost:8000/client](http://localhost:8000/client)
+- **Mobile PWA**: [http://localhost:8000/mobile](http://localhost:8000/mobile)
+- **API docs**: `GET /api/health` for health check, all endpoints under `/api/v1/`
 
 ---
 
@@ -496,7 +608,7 @@ php artisan db:seed --class=SaasFoundationSeeder
 | **Manager** | Company-scoped | Project management, task oversight, reporting |
 | **Team Member** | Company-scoped | Day-to-day project work, task completion |
 | **Technician** | Company-scoped | Field service operations, work order execution |
-| **Client** | Limited | Client portal access, project viewing |
+| **Client** | Client Portal | View projects, invoices, and documents at `/client` |
 
 ### Company-Scoped Roles
 
@@ -957,6 +1069,10 @@ echo "0 4 * * * mysqldump -u infrahub -p'PASSWORD' infrahub_production | gzip > 
 | 502 Bad Gateway (Nginx) | Check `php8.3-fpm` is running: `sudo systemctl status php8.3-fpm` |
 | Upload fails (large files) | Increase `client_max_body_size` in Nginx and `upload_max_filesize` in PHP |
 | Scheduler not running | Verify cron entry: `crontab -l -u www-data` |
+| Client portal 404 | Ensure `ClientPanelProvider` is registered in `bootstrap/providers.php` |
+| Mobile PWA not loading | Check routes: `php artisan route:list --path=mobile` |
+| API returns 401 | Token expired or invalid — re-authenticate via `POST /api/v1/auth/login` |
+| Offline forms not syncing | Check Service Worker: `sw.js` must be served from root, ensure HTTPS in production |
 
 ---
 
