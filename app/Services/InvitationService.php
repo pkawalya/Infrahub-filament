@@ -58,12 +58,13 @@ class InvitationService
                 $variables['has_password'] = true;
             }
 
-            // Send the invitation email
+            // Send the invitation email synchronously (critical, don't queue)
             $this->emailService->send(
                 'user-invitation',
                 $user,
                 $variables,
-                $user->company_id
+                $user->company_id,
+                sync: true,
             );
 
             Log::info("InvitationService: Sent invitation to {$user->email}", [

@@ -35,7 +35,7 @@ class EmailService
      *
      * Auto-populates user_name, user_email, company_name from the user.
      */
-    public function send(string $slug, User $recipient, array $variables = [], ?int $companyId = null): bool
+    public function send(string $slug, User $recipient, array $variables = [], ?int $companyId = null, bool $sync = false): bool
     {
         $companyId = $companyId ?? $recipient->company_id;
 
@@ -54,7 +54,7 @@ class EmailService
             'company_id' => $companyId,
         ], $variables);
 
-        return $this->dispatch($recipient->email, $template, $variables);
+        return $this->dispatch($recipient->email, $template, $variables, $sync);
     }
 
     /**
@@ -144,13 +144,18 @@ class EmailService
     /**
      * Internal: dispatch the email.
      */
-    protected function dispatch(string $email, EmailTemplate $template, array $variables): bool
+    protected function dispatch(string $email, EmailTemplate $template, array $variables, bool $sync = false): bool
     {
         try {
             $mailable = new TemplatedMail($template, $variables);
-            Mail::to($email)->queue($mailable);
 
-            Log::info("EmailService: Queued '{$template->slug}' to {$email}");
+            if ($sync) {
+                Mail::to($email)->send($mailable);
+            } else {
+                Mail::to($email)->queue($mailable);
+            }
+
+            Log::info("EmailService: " . ($sync ? 'Sent' : 'Queued') . " '{$template->slug}' to {$email}");
             return true;
         } catch (\Exception $e) {
             Log::error("EmailService: Failed to send '{$template->slug}' to {$email}", [
