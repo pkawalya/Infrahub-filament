@@ -6,11 +6,13 @@ use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\ProjectSuggestion;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\Facades\DB;
 
 class SuggestionBoxPage extends BaseModulePage implements HasTable
 {
@@ -36,16 +38,28 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
     {
         $pid = $this->pid();
 
-        $total = ProjectSuggestion::where('cde_project_id', $pid)->count();
-        $new = ProjectSuggestion::where('cde_project_id', $pid)->where('status', 'new')->count();
-        $implemented = ProjectSuggestion::where('cde_project_id', $pid)->where('status', 'implemented')->count();
-        $anonymous = ProjectSuggestion::where('cde_project_id', $pid)->where('is_anonymous', true)->count();
+        $stats = DB::selectOne("
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) as new_count,
+                SUM(CASE WHEN status = 'implemented' THEN 1 ELSE 0 END) as implemented,
+                SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
+                SUM(CASE WHEN is_anonymous = 1 THEN 1 ELSE 0 END) as anonymous,
+                SUM(upvotes) as total_votes,
+                SUM(CASE WHEN priority = 'urgent' THEN 1 ELSE 0 END) as urgent_count,
+                SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as this_week
+            FROM project_suggestions WHERE cde_project_id = ?
+        ", [now()->startOfWeek(), $pid]);
+
+        $total = (int) $stats->total;
+        $new = (int) $stats->new_count;
+        $implemented = (int) $stats->implemented;
 
         return [
             [
                 'label' => 'Total Suggestions',
                 'value' => $total,
-                'sub' => $anonymous . ' anonymous',
+                'sub' => (int) $stats->anonymous . ' anonymous · ' . (int) $stats->this_week . ' this week',
                 'sub_type' => 'neutral',
                 'icon_svg' => Blade::render('<x-heroicon-o-light-bulb class="w-5 h-5 text-amber-600 dark:text-amber-400" />'),
                 'icon_bg' => '#fef3c7',
@@ -54,7 +68,7 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
             [
                 'label' => 'Awaiting Review',
                 'value' => $new,
-                'sub' => $new > 0 ? 'Needs attention' : 'All caught up!',
+                'sub' => ((int) $stats->urgent_count > 0 ? (int) $stats->urgent_count . ' urgent · ' : '') . ($new > 0 ? 'Needs attention' : 'All caught up!'),
                 'sub_type' => $new > 0 ? 'negative' : 'positive',
                 'icon_svg' => Blade::render('<x-heroicon-o-inbox-stack class="w-5 h-5 text-blue-600 dark:text-blue-400" />'),
                 'icon_bg' => '#dbeafe',
@@ -67,6 +81,15 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
                 'sub_type' => 'positive',
                 'icon_svg' => Blade::render('<x-heroicon-o-check-badge class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />'),
                 'icon_bg' => '#d1fae5',
+                'primary' => false,
+            ],
+            [
+                'label' => 'Team Engagement',
+                'value' => (int) $stats->total_votes,
+                'sub' => 'Total upvotes · ' . (int) $stats->in_progress . ' in progress',
+                'sub_type' => 'neutral',
+                'icon_svg' => Blade::render('<x-heroicon-o-hand-thumb-up class="w-5 h-5 text-violet-600 dark:text-violet-400" />'),
+                'icon_bg' => '#ede9fe',
                 'primary' => false,
             ],
         ];
@@ -90,7 +113,16 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
                         ->label('Category')
                         ->options(ProjectSuggestion::$categories)
                         ->default('general')
-                        ->required(),
+                        ->required()
+                        ->native(false),
+
+                    Forms\Components\Select::make('priority')
+                        ->label('Priority')
+                        ->options(ProjectSuggestion::$priorities)
+                        ->default('normal')
+                        ->required()
+                        ->native(false)
+                        ->helperText('Mark as urgent only if it affects safety or immediate operations.'),
 
                     Forms\Components\Textarea::make('content')
                         ->label('Your Suggestion')
@@ -112,11 +144,12 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
                         'author_id' => auth()->id(),
                         'is_anonymous' => $data['is_anonymous'],
                         'category' => $data['category'],
+                        'priority' => $data['priority'],
                         'content' => $data['content'],
                         'status' => 'new',
                     ]);
 
-                    \Filament\Notifications\Notification::make()
+                    Notification::make()
                         ->success()
                         ->title('Suggestion submitted!')
                         ->body($data['is_anonymous'] ? 'Your anonymous suggestion has been recorded.' : 'Your suggestion has been submitted.')
@@ -141,6 +174,19 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
                     ->with(['author', 'responder'])
             )
             ->columns([
+                Tables\Columns\TextColumn::make('priority')
+                    ->label('')
+                    ->formatStateUsing(fn($state) => match ($state) {
+                        'urgent' => '🔴',
+                        'high' => '🟠',
+                        'normal' => '🟢',
+                        'low' => '⚪',
+                        default => '🟢',
+                    })
+                    ->tooltip(fn($record) => ucfirst($record->priority ?? 'normal') . ' priority')
+                    ->alignCenter()
+                    ->grow(false),
+
                 Tables\Columns\TextColumn::make('author_display')
                     ->label('From')
                     ->getStateUsing(fn($record) => $record->author_display)
@@ -166,6 +212,13 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
                     ->tooltip(fn($record) => $record->content)
                     ->wrap(),
 
+                Tables\Columns\TextColumn::make('upvotes')
+                    ->label('👍')
+                    ->badge()
+                    ->color(fn(int $state) => $state > 5 ? 'success' : ($state > 0 ? 'primary' : 'gray'))
+                    ->sortable()
+                    ->alignCenter(),
+
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state) => match ($state) {
@@ -180,7 +233,7 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
 
                 Tables\Columns\TextColumn::make('admin_response')
                     ->label('Response')
-                    ->limit(60)
+                    ->limit(50)
                     ->placeholder('—')
                     ->tooltip(fn($record) => $record->admin_response),
 
@@ -195,41 +248,65 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
                     ->options(ProjectSuggestion::$statuses),
                 Tables\Filters\SelectFilter::make('category')
                     ->options(ProjectSuggestion::$categories),
+                Tables\Filters\SelectFilter::make('priority')
+                    ->options(ProjectSuggestion::$priorities),
             ])
             ->recordActions(
-                $isManagerOrAdmin ? [
-                    Actions\Action::make('respond')
-                        ->label('Respond')
-                        ->icon('heroicon-o-chat-bubble-left-right')
-                        ->color('primary')
-                        ->form([
-                            Forms\Components\Select::make('status')
-                                ->label('Update Status')
-                                ->options(ProjectSuggestion::$statuses)
-                                ->required()
-                                ->default(fn($record) => $record->status),
-                            Forms\Components\Textarea::make('admin_response')
-                                ->label('Your Response')
-                                ->placeholder('Share your response to this suggestion...')
-                                ->rows(3)
-                                ->default(fn($record) => $record->admin_response),
-                        ])
-                        ->action(function ($record, array $data) {
-                            $record->update([
-                                'status' => $data['status'],
-                                'admin_response' => $data['admin_response'],
-                                'responded_by' => auth()->id(),
-                                'responded_at' => now(),
-                            ]);
+                array_merge(
+                    // Everyone can upvote
+                    [
+                        Actions\Action::make('upvote')
+                            ->label(fn($record) => '👍 ' . $record->upvotes)
+                            ->color('gray')
+                            ->size('sm')
+                            ->action(function ($record) {
+                                $record->increment('upvotes');
 
-                            \Filament\Notifications\Notification::make()
-                                ->success()
-                                ->title('Response saved')
-                                ->send();
-                        }),
-                    Actions\DeleteAction::make()
-                        ->label('Remove'),
-                ] : []
+                                Notification::make()
+                                    ->success()
+                                    ->title('Upvoted!')
+                                    ->body('Thanks for your feedback.')
+                                    ->duration(2000)
+                                    ->send();
+                            }),
+                    ],
+                    // Manager/Admin actions
+                    $isManagerOrAdmin ? [
+                        Actions\Action::make('respond')
+                            ->label('Respond')
+                            ->icon('heroicon-o-chat-bubble-left-right')
+                            ->color('primary')
+                            ->form([
+                                Forms\Components\Select::make('status')
+                                    ->label('Update Status')
+                                    ->options(ProjectSuggestion::$statuses)
+                                    ->required()
+                                    ->default(fn($record) => $record->status)
+                                    ->native(false),
+                                Forms\Components\Textarea::make('admin_response')
+                                    ->label('Your Response')
+                                    ->placeholder('Share your response to this suggestion...')
+                                    ->rows(3)
+                                    ->required()
+                                    ->default(fn($record) => $record->admin_response),
+                            ])
+                            ->action(function ($record, array $data) {
+                                $record->update([
+                                    'status' => $data['status'],
+                                    'admin_response' => $data['admin_response'],
+                                    'responded_by' => auth()->id(),
+                                    'responded_at' => now(),
+                                ]);
+
+                                Notification::make()
+                                    ->success()
+                                    ->title('Response saved')
+                                    ->send();
+                            }),
+                        Actions\DeleteAction::make()
+                            ->label('Remove'),
+                    ] : []
+                )
             )
             ->emptyStateHeading('No suggestions yet')
             ->emptyStateDescription('Be the first to share a suggestion! Click "Submit Suggestion" above to get started.')

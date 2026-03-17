@@ -5,7 +5,12 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages;
 use App\Filament\App\Resources\CdeProjectResource;
 use App\Models\CdeProject;
 use App\Models\Module;
+use App\Models\ProjectInvitation;
+use App\Models\User;
+use App\Services\EmailService;
 use Filament\Actions;
+use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewCdeProject extends ViewRecord
@@ -18,6 +23,136 @@ class ViewCdeProject extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('invitePeople')
+                ->label('Invite People')
+                ->icon('heroicon-o-user-plus')
+                ->color('primary')
+                ->modalHeading('Invite People to ' . $this->record->name)
+                ->modalDescription('Invite team members by email. One person can be invited to multiple projects.')
+                ->modalIcon('heroicon-o-user-plus')
+                ->form([
+                    Forms\Components\Repeater::make('invites')
+                        ->label('People to Invite')
+                        ->schema([
+                            Forms\Components\TextInput::make('email')
+                                ->email()
+                                ->required()
+                                ->placeholder('name@company.com'),
+                            Forms\Components\TextInput::make('name')
+                                ->placeholder('Full name (optional)'),
+                            Forms\Components\Select::make('role')
+                                ->options(ProjectInvitation::$roles)
+                                ->default('member')
+                                ->required(),
+                        ])
+                        ->columns(3)
+                        ->defaultItems(1)
+                        ->addActionLabel('+ Add another person')
+                        ->minItems(1)
+                        ->maxItems(10),
+                ])
+                ->action(function (array $data) {
+                    $project = $this->record;
+                    $sent = 0;
+                    $skipped = 0;
+
+                    foreach ($data['invites'] as $invite) {
+                        $email = strtolower(trim($invite['email']));
+
+                        // Skip if user is already a project member
+                        $existingUser = User::where('email', $email)
+                            ->where('company_id', $project->company_id)
+                            ->first();
+
+                        if ($existingUser && $project->members()->where('user_id', $existingUser->id)->exists()) {
+                            $skipped++;
+                            continue;
+                        }
+
+                        // If user already exists in the company, add them directly
+                        if ($existingUser) {
+                            $project->members()->syncWithoutDetaching([
+                                $existingUser->id => [
+                                    'role' => $invite['role'],
+                                    'invited_by' => auth()->id(),
+                                ],
+                            ]);
+                            $sent++;
+                            continue;
+                        }
+
+                        // Create invitation for external/new user
+                        $invitation = ProjectInvitation::createInvitation(
+                            companyId: $project->company_id,
+                            projectId: $project->id,
+                            email: $email,
+                            role: $invite['role'],
+                            name: $invite['name'] ?? null,
+                            invitedBy: auth()->id(),
+                        );
+
+                        // Try sending the invitation email
+                        try {
+                            $emailService = app(EmailService::class);
+                            $emailService->sendTo(
+                                $email,
+                                'project-invitation',
+                                [
+                                    'recipient_name' => $invite['name'] ?? $email,
+                                    'project_name' => $project->name,
+                                    'inviter_name' => auth()->user()->name,
+                                    'company_name' => $project->company->name ?? 'InfraHub',
+                                    'role' => ProjectInvitation::$roles[$invite['role']] ?? $invite['role'],
+                                    'accept_url' => $invitation->getAcceptUrl(),
+                                    'expires_at' => $invitation->expires_at->format('M d, Y'),
+                                ],
+                                $project->company_id,
+                            );
+                        } catch (\Throwable $e) {
+                            \Illuminate\Support\Facades\Log::warning("ProjectInvitation email failed for {$email}: {$e->getMessage()}");
+                        }
+
+                        $sent++;
+                    }
+
+                    if ($sent > 0) {
+                        Notification::make()
+                            ->success()
+                            ->title("{$sent} invitation(s) sent!")
+                            ->body($skipped > 0 ? "{$skipped} skipped (already members)" : null)
+                            ->send();
+                    } else {
+                        Notification::make()
+                            ->warning()
+                            ->title('No new invitations')
+                            ->body('All emails are already project members.')
+                            ->send();
+                    }
+                })
+                ->modalSubmitActionLabel('Send Invitations'),
+
+            Actions\Action::make('viewTeam')
+                ->label('Team')
+                ->icon('heroicon-o-users')
+                ->color('gray')
+                ->modalHeading('Project Team — ' . $this->record->name)
+                ->modalContent(function () {
+                    $project = $this->record;
+                    $members = $project->members()->with('company')->get();
+                    $pendingInvites = $project->invitations()
+                        ->where('status', 'pending')
+                        ->where(fn($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                        ->get();
+
+                    return view('filament.app.pages.partials.project-team', [
+                        'members' => $members,
+                        'pendingInvites' => $pendingInvites,
+                        'manager' => $project->manager,
+                    ]);
+                })
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel('Close'),
+
             Actions\EditAction::make(),
         ];
     }

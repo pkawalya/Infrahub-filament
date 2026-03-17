@@ -13,6 +13,7 @@ class ProjectSuggestion extends Model
         'author_id',
         'is_anonymous',
         'category',
+        'priority',
         'content',
         'status',
         'admin_response',
@@ -44,6 +45,14 @@ class ProjectSuggestion extends Model
         'in_progress' => 'In Progress',
         'implemented' => 'Implemented',
         'dismissed' => 'Dismissed',
+    ];
+
+    // ── Priorities ──────────────────────────────────────────
+    public static array $priorities = [
+        'low' => 'Low',
+        'normal' => 'Normal',
+        'high' => 'High',
+        'urgent' => 'Urgent',
     ];
 
     // ── Relationships ───────────────────────────────────────

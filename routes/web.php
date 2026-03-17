@@ -6,6 +6,7 @@ use App\Livewire\ExternalDashboard;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\ProjectInvitationController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -14,6 +15,10 @@ Route::get('/', function () {
 // Email Invitation Acceptance
 Route::get('/invitation/accept/{token}', [InvitationController::class, 'accept'])->name('invitation.accept');
 Route::post('/invitation/accept/{token}', [InvitationController::class, 'confirm'])->middleware('throttle:5,1')->name('invitation.confirm');
+
+// Project Invitation Acceptance
+Route::get('/project-invite/{token}', [ProjectInvitationController::class, 'accept'])->name('project-invitation.accept');
+Route::post('/project-invite/{token}', [ProjectInvitationController::class, 'confirm'])->middleware('throttle:5,1')->name('project-invitation.confirm');
 
 Route::get('/offline', function () {
     return response()->file(public_path('offline.html'));

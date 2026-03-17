@@ -321,6 +321,18 @@ class CdeProject extends Model
         return $this->hasMany(InvoicePayment::class, 'cde_project_id');
     }
 
+    public function members()
+    {
+        return $this->belongsToMany(User::class, 'cde_project_members')
+            ->withPivot('role', 'invited_by')
+            ->withTimestamps();
+    }
+
+    public function invitations()
+    {
+        return $this->hasMany(ProjectInvitation::class);
+    }
+
     // ─── Module Access ───────────────────────────────────────────
 
 
