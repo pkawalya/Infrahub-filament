@@ -79,12 +79,40 @@ class ClientResource extends Resource
         return $schema->schema([
             Schemas\Components\Section::make('Client Information')->schema([
                 Forms\Components\TextInput::make('name')->required()->maxLength(255),
-                Forms\Components\TextInput::make('email')->email()->maxLength(255),
+                Forms\Components\TextInput::make('email')
+                    ->email()
+                    ->maxLength(255)
+                    ->required(fn(string $operation, $get) => $operation === 'create' && $get('create_portal_account'))
+                    ->unique(table: 'users', column: 'email', ignoreRecord: true, modifyRuleUsing: fn($rule, $get) => $get('create_portal_account') ? $rule : $rule->ignore(0))
+                    ->helperText(fn($get) => $get('create_portal_account') ? 'This email will be used for portal login.' : null),
                 Forms\Components\TextInput::make('phone')->maxLength(50),
                 Forms\Components\TextInput::make('company_name')->label('Company'),
                 Forms\Components\TextInput::make('tax_id')->label('Tax ID'),
                 Forms\Components\Toggle::make('is_active')->default(true),
             ])->columns(2),
+
+            Schemas\Components\Section::make('Portal Access')
+                ->description('Give this client access to the Client Portal where they can view their projects, invoices, and documents.')
+                ->schema([
+                    Forms\Components\Toggle::make('create_portal_account')
+                        ->label('Create Portal Account')
+                        ->helperText('A user account will be created and login credentials sent to the client\'s email.')
+                        ->default(false)
+                        ->live()
+                        ->dehydrated(false),
+
+                    Forms\Components\TextInput::make('portal_password')
+                        ->label('Temporary Password')
+                        ->password()
+                        ->revealable()
+                        ->default(fn() => \Illuminate\Support\Str::random(10))
+                        ->helperText('The client will be asked to change this on first login.')
+                        ->visible(fn($get) => $get('create_portal_account'))
+                        ->required(fn($get) => $get('create_portal_account'))
+                        ->dehydrated(false),
+                ])
+                ->collapsible()
+                ->visible(fn(string $operation) => $operation === 'create'),
 
             Schemas\Components\Section::make('Address')->schema([
                 Forms\Components\Textarea::make('address')->rows(2)->columnSpanFull(),
@@ -110,6 +138,14 @@ class ClientResource extends Resource
                 Tables\Columns\TextColumn::make('company_name')->label('Company')->searchable()->limit(UIStandards::LIMIT_NAME),
                 Tables\Columns\TextColumn::make('work_orders_count')->counts('workOrders')->label('Work Orders'),
                 Tables\Columns\IconColumn::make('is_active')->boolean(),
+                Tables\Columns\IconColumn::make('user_id')
+                    ->label('Portal')
+                    ->boolean()
+                    ->getStateUsing(fn($record) => !empty($record->user_id))
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('gray'),
                 Tables\Columns\TextColumn::make('created_at')->dateTime(UIStandards::DATETIME_FORMAT)->sortable(),
             ])
             ->defaultSort('name')
