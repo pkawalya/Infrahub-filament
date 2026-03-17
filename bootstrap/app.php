@@ -53,7 +53,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     $message = "A required field is missing: {$field}. Please check the form and try again.";
                 }
 
-                if ($request->expectsJson() || $request->isLivewireRequest()) {
+                if ($request->expectsJson() || $request->hasHeader('X-Livewire')) {
                     // For Livewire/AJAX requests, flash a notification
                     \Filament\Notifications\Notification::make()
                         ->danger()
