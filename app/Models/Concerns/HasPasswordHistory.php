@@ -33,15 +33,16 @@ trait HasPasswordHistory
 
                     // Prune history beyond the configured limit
                     $keepCount = config('security.password.prevent_reuse', 5);
-                    $oldIds = DB::table('password_history')
+                    $keepIds = DB::table('password_history')
                         ->where('user_id', $user->id)
                         ->orderByDesc('created_at')
-                        ->skip($keepCount)
+                        ->limit($keepCount)
                         ->pluck('id');
 
-                    if ($oldIds->isNotEmpty()) {
+                    if ($keepIds->isNotEmpty()) {
                         DB::table('password_history')
-                            ->whereIn('id', $oldIds)
+                            ->where('user_id', $user->id)
+                            ->whereNotIn('id', $keepIds)
                             ->delete();
                     }
                 }
