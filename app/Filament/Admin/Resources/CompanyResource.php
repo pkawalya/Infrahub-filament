@@ -88,11 +88,22 @@ class CompanyResource extends Resource
                         Forms\Components\Select::make('billing_cycle')
                             ->options(['monthly' => 'Monthly', 'yearly' => 'Yearly', 'unlimited' => 'Unlimited'])
                             ->required()
-                            ->default('monthly'),
+                            ->default('monthly')
+                            ->live()
+                            ->afterStateUpdated(function (\Filament\Schemas\Components\Utilities\Set $set, ?string $state) {
+                                $set('subscription_starts_at', now()->toDateTimeString());
+                                $set('subscription_expires_at', match ($state) {
+                                    'monthly' => now()->addMonth()->toDateTimeString(),
+                                    'yearly' => now()->addYear()->toDateTimeString(),
+                                    'unlimited' => null,
+                                    default => now()->addMonth()->toDateTimeString(),
+                                });
+                            }),
                         Forms\Components\DateTimePicker::make('subscription_starts_at')
                             ->default(now()),
                         Forms\Components\DateTimePicker::make('subscription_expires_at')
-                            ->default(now()->addMonth()),
+                            ->default(now()->addMonth())
+                            ->hidden(fn(\Filament\Schemas\Components\Utilities\Get $get): bool => $get('billing_cycle') === 'unlimited'),
                     ])->columns(2),
 
                     Schemas\Components\Section::make('Limits')->schema([
