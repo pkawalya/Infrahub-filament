@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Models\BlockedIp;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -109,7 +110,7 @@ class BlockedIpResource extends Resource
                     ->placeholder('All'),
             ])
             ->actions([
-                Tables\Actions\Action::make('toggle')
+                Actions\Action::make('toggle')
                     ->label(fn($record) => $record->is_active ? 'Deactivate' : 'Activate')
                     ->icon(fn($record) => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
                     ->color(fn($record) => $record->is_active ? 'danger' : 'success')
@@ -118,12 +119,12 @@ class BlockedIpResource extends Resource
                         $record->update(['is_active' => !$record->is_active]);
                         BlockedIp::clearCache($record->ip_address);
                     }),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make()
                     ->after(fn($record) => BlockedIp::clearCache($record->ip_address)),
             ])
             ->bulkActions([
-                Tables\Actions\DeleteBulkAction::make(),
+                Actions\DeleteBulkAction::make(),
             ])
             ->defaultSort('created_at', 'desc');
     }
