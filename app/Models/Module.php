@@ -81,6 +81,11 @@ class Module extends Model
             'description' => 'Custom reports and analytics dashboards',
             'icon' => 'heroicon-o-chart-bar',
         ],
+        'suggestion_box' => [
+            'name' => 'Suggestion Box',
+            'description' => 'Anonymous feedback & improvement suggestions from team members',
+            'icon' => 'heroicon-o-light-bulb',
+        ],
         'financials' => [
             'name' => 'Financials',
             'description' => 'Track invoices, receipts, and project related revenue and expense',

@@ -331,6 +331,7 @@ class CdeProjectResource extends Resource
                         ->url(static::getUrl('module-rfi-submittals', ['record' => $record]))
                     : null,
                     $makeItem('reporting', 'Reports', 'heroicon-o-chart-bar', Modules\ReportingPage::class),
+                    $makeItem('suggestion_box', 'Suggestions', 'heroicon-o-light-bulb', Modules\SuggestionBoxPage::class),
                 ],
             ],
         ];
@@ -442,6 +443,7 @@ class CdeProjectResource extends Resource
             'module-reporting' => Modules\ReportingPage::route('/{record}/reports'),
             'module-equipment' => Modules\EquipmentPage::route('/{record}/equipment'),
             'module-subcontractors' => Modules\SubcontractorPage::route('/{record}/subcontractors'),
+            'module-suggestion-box' => Modules\SuggestionBoxPage::route('/{record}/suggestions'),
         ];
     }
 }
