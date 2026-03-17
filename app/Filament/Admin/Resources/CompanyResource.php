@@ -32,7 +32,7 @@ class CompanyResource extends Resource
                     Schemas\Components\Section::make('Company Information')->schema([
                         Forms\Components\TextInput::make('name')->required()->maxLength(255),
                         Forms\Components\TextInput::make('slug')->maxLength(255)->unique(ignoreRecord: true),
-                        Forms\Components\TextInput::make('email')->email()->maxLength(255),
+                        Forms\Components\TextInput::make('email')->email()->required()->maxLength(255),
                         Forms\Components\TextInput::make('phone')->maxLength(50),
                         Forms\Components\TextInput::make('website')->url()->maxLength(255),
                         Forms\Components\Textarea::make('address')->rows(2),
@@ -83,17 +83,22 @@ class CompanyResource extends Resource
                     Schemas\Components\Section::make('Plan & Billing')->schema([
                         Forms\Components\Select::make('subscription_id')
                             ->relationship('subscription', 'name')
+                            ->required()
                             ->preload(),
                         Forms\Components\Select::make('billing_cycle')
-                            ->options(['monthly' => 'Monthly', 'yearly' => 'Yearly', 'unlimited' => 'Unlimited']),
-                        Forms\Components\DateTimePicker::make('subscription_starts_at'),
-                        Forms\Components\DateTimePicker::make('subscription_expires_at'),
+                            ->options(['monthly' => 'Monthly', 'yearly' => 'Yearly', 'unlimited' => 'Unlimited'])
+                            ->required()
+                            ->default('monthly'),
+                        Forms\Components\DateTimePicker::make('subscription_starts_at')
+                            ->default(now()),
+                        Forms\Components\DateTimePicker::make('subscription_expires_at')
+                            ->default(now()->addMonth()),
                     ])->columns(2),
 
                     Schemas\Components\Section::make('Limits')->schema([
-                        Forms\Components\TextInput::make('max_users')->numeric()->default(5),
-                        Forms\Components\TextInput::make('max_projects')->numeric()->default(10),
-                        Forms\Components\TextInput::make('max_storage_gb')->numeric()->default(5),
+                        Forms\Components\TextInput::make('max_users')->numeric()->required()->default(5),
+                        Forms\Components\TextInput::make('max_projects')->numeric()->required()->default(10),
+                        Forms\Components\TextInput::make('max_storage_gb')->numeric()->required()->default(5),
                     ])->columns(3),
                 ]),
 

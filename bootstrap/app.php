@@ -42,5 +42,30 @@ return Application::configure(basePath: dirname(__DIR__))
                 abort(403, 'You are not authorized to access this resource.');
             }
         });
+
+        // Convert raw SQL constraint violations into user-friendly messages
+        $exceptions->renderable(function (\Illuminate\Database\QueryException $e, $request) {
+            if ($e->getCode() === '23000') {
+                // Extract column name from "Column 'xyz' cannot be null" or similar
+                $message = 'A required field is missing. Please check the form and try again.';
+                if (preg_match("/Column '(\w+)' cannot be null/", $e->getMessage(), $m)) {
+                    $field = str_replace('_', ' ', $m[1]);
+                    $message = "A required field is missing: {$field}. Please check the form and try again.";
+                }
+
+                if ($request->expectsJson() || $request->isLivewireRequest()) {
+                    // For Livewire/AJAX requests, flash a notification
+                    \Filament\Notifications\Notification::make()
+                        ->danger()
+                        ->title('Validation Error')
+                        ->body($message)
+                        ->send();
+
+                    return back();
+                }
+
+                abort(422, $message);
+            }
+        });
     })->create();
 
