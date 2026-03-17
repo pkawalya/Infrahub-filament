@@ -7,6 +7,7 @@ use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\ProjectInvitationController;
+use App\Http\Controllers\MobileController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -61,4 +62,16 @@ Route::middleware(['auth'])->group(function () {
         ->name('print.receipt');
     Route::get('/print/quotation/{quotation}', [\App\Http\Controllers\FinancialPrintController::class, 'printQuotation'])
         ->name('print.quotation');
+});
+
+// ── Mobile PWA ─────────────────────────────────────────────
+Route::prefix('mobile')->group(function () {
+    Route::get('/login', [MobileController::class, 'login'])->name('mobile.login');
+    Route::get('/', [MobileController::class, 'home'])->name('mobile.home');
+    Route::get('/projects', [MobileController::class, 'projects'])->name('mobile.projects');
+    Route::get('/projects/{id}', [MobileController::class, 'projectShow'])->name('mobile.projects.show');
+    Route::get('/tasks', [MobileController::class, 'tasks'])->name('mobile.tasks');
+    Route::get('/forms', [MobileController::class, 'forms'])->name('mobile.forms');
+    Route::get('/profile', [MobileController::class, 'profile'])->name('mobile.profile');
+    Route::get('/notifications', [MobileController::class, 'notifications'])->name('mobile.notifications');
 });

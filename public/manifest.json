@@ -3,7 +3,7 @@
     "short_name": "InfraHub",
     "version": "1.0.0",
     "description": "InfraHub v1.0 — Construction Management Platform — Projects, Documents, Tasks, Equipment, Safety",
-    "start_url": "/app",
+    "start_url": "/mobile",
     "scope": "/",
     "display": "standalone",
     "orientation": "portrait-primary",
