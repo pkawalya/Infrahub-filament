@@ -30,7 +30,16 @@ class GeoAccessControl
         $ip = $request->ip();
 
         // ── 1. IP Blocking (fast, check first) ─────────────────
-        if (BlockedIp::isBlocked($ip)) {
+        try {
+            $isBlocked = BlockedIp::isBlocked($ip);
+        } catch (\Throwable $e) {
+            // If the blocked_ips table doesn't exist or DB is unreachable,
+            // fail-open to avoid breaking all traffic
+            Log::warning('IP blocking check failed: ' . $e->getMessage());
+            $isBlocked = false;
+        }
+
+        if ($isBlocked) {
             Log::channel('security')->warning('BLOCKED_IP_ACCESS', [
                 'ip' => $ip,
                 'path' => $request->path(),

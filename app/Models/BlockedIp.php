@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Schema;
 
 class BlockedIp extends Model
 {
@@ -68,6 +69,14 @@ class BlockedIp extends Model
      */
     protected static function isBlockedInDb(string $ip): bool
     {
+        try {
+            if (!Schema::hasTable((new static())->getTable())) {
+                return false;
+            }
+        } catch (\Throwable $e) {
+            return false;
+        }
+
         $cacheKey = 'blocked_ip:' . md5($ip);
 
         return Cache::remember($cacheKey, 300, function () use ($ip) {
