@@ -4,14 +4,13 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>InfraHub v{{ config('app.version') }} — Documentation</title>
+    <title>InfraHub — Help Center</title>
     <meta name="description"
-        content="InfraHub API & Platform documentation. REST API reference, module guides, offline capabilities, and integration help.">
+        content="InfraHub Help Center. Learn how to manage construction projects, track tasks, handle documents, and collaborate with your team.">
     <link rel="icon" type="image/svg+xml" href="{{ asset('logo/infrahub-icon.svg') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
     <style>
@@ -42,13 +41,11 @@
             --bg-card: rgba(15, 23, 42, 0.7);
             --bg-elevated: #0f172a;
             --bg-glass: rgba(15, 23, 42, 0.6);
-            --bg-code: #0c1222;
             --border-subtle: #1e293b;
             --border-hover: #334155;
             --text-primary: #f1f5f9;
             --text-secondary: #94a3b8;
             --text-muted: #64748b;
-            --text-code: #e2e8f0;
         }
 
         html {
@@ -63,7 +60,7 @@
             line-height: 1.7;
         }
 
-        /* ── Grid Background ── */
+        /* ── Background Effects ── */
         .bg-grid {
             position: fixed;
             inset: 0;
@@ -162,16 +159,6 @@
             letter-spacing: -0.5px;
         }
 
-        .sidebar-header .version {
-            font-size: 0.65rem;
-            font-weight: 600;
-            padding: 0.15rem 0.5rem;
-            border-radius: 6px;
-            background: rgba(99, 102, 241, 0.15);
-            color: #818cf8;
-            margin-left: 0.25rem;
-        }
-
         .sidebar-nav {
             padding: 0 0.75rem;
         }
@@ -222,6 +209,29 @@
             flex-shrink: 0;
         }
 
+        /* ── Mobile Menu Toggle ── */
+        .mobile-menu-btn {
+            display: none;
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 100;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--amber-400), var(--amber-500));
+            color: var(--navy-700);
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(232, 162, 41, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .mobile-menu-btn:active {
+            transform: scale(0.95);
+        }
+
         /* ── Main Content ── */
         .docs-main {
             padding: 2.5rem 3rem;
@@ -241,7 +251,7 @@
         }
 
         .docs-main .subtitle {
-            font-size: 1rem;
+            font-size: 1.05rem;
             color: var(--text-secondary);
             margin-bottom: 2.5rem;
             max-width: 640px;
@@ -278,7 +288,7 @@
         }
 
         .docs-main li {
-            margin-bottom: 0.35rem;
+            margin-bottom: 0.5rem;
         }
 
         .docs-main strong {
@@ -296,129 +306,18 @@
             text-decoration: underline;
         }
 
-        /* ── Code Blocks ── */
-        code {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.82rem;
-            background: rgba(99, 102, 241, 0.1);
-            color: #c7d2fe;
-            padding: 0.15rem 0.4rem;
-            border-radius: 5px;
-        }
-
-        pre {
-            background: var(--bg-code);
-            border: 1px solid var(--border-subtle);
-            border-radius: 12px;
-            padding: 1.25rem;
-            overflow-x: auto;
-            margin-bottom: 1.5rem;
-            position: relative;
-        }
-
-        pre code {
-            background: none;
-            padding: 0;
-            color: var(--text-code);
-            font-size: 0.8rem;
-            line-height: 1.7;
-        }
-
-        .code-label {
-            position: absolute;
-            top: 0;
-            right: 0;
-            font-size: 0.65rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            padding: 0.3rem 0.75rem;
-            border-radius: 0 12px 0 8px;
-            background: rgba(99, 102, 241, 0.12);
-            color: #818cf8;
-        }
-
-        /* ── Endpoint Cards ── */
-        .endpoint {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            border-radius: 12px;
-            padding: 1rem 1.25rem;
-            margin-bottom: 0.75rem;
-            transition: border-color 0.2s;
-        }
-
-        .endpoint:hover {
-            border-color: var(--border-hover);
-        }
-
-        .endpoint-header {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            margin-bottom: 0.35rem;
-        }
-
-        .method {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.7rem;
-            font-weight: 700;
-            padding: 0.2rem 0.5rem;
-            border-radius: 6px;
-            letter-spacing: 0.05em;
-            flex-shrink: 0;
-        }
-
-        .method-get {
-            background: rgba(34, 197, 94, 0.12);
-            color: #4ade80;
-        }
-
-        .method-post {
-            background: rgba(59, 130, 246, 0.12);
-            color: #60a5fa;
-        }
-
-        .method-put {
-            background: rgba(232, 162, 41, 0.12);
-            color: var(--amber-400);
-        }
-
-        .method-patch {
-            background: rgba(168, 85, 247, 0.12);
-            color: #c084fc;
-        }
-
-        .method-delete {
-            background: rgba(239, 68, 68, 0.12);
-            color: #f87171;
-        }
-
-        .endpoint-path {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.82rem;
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        .endpoint-desc {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            margin-left: 3.5rem;
-        }
-
         /* ── Info Boxes ── */
         .info-box {
             border-radius: 12px;
             padding: 1rem 1.25rem;
             margin-bottom: 1.5rem;
-            font-size: 0.85rem;
+            font-size: 0.88rem;
             display: flex;
             align-items: flex-start;
             gap: 0.75rem;
         }
 
-        .info-box .icon {
+        .info-box .box-icon {
             font-size: 1.1rem;
             flex-shrink: 0;
             margin-top: 0.1rem;
@@ -442,97 +341,217 @@
             color: #93c5fd;
         }
 
-        /* ── Module Grid ── */
-        .module-grid {
+        /* ── Feature Cards ── */
+        .feature-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 0.75rem;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1rem;
             margin-bottom: 1.5rem;
         }
 
-        .module-item {
+        .feature-card {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
-            border-radius: 10px;
-            padding: 0.85rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            transition: all 0.2s;
-            font-size: 0.85rem;
+            border-radius: 14px;
+            padding: 1.25rem;
+            transition: all 0.25s;
         }
 
-        .module-item:hover {
+        .feature-card:hover {
             border-color: var(--border-hover);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
         }
 
-        .module-item .m-icon {
-            font-size: 1.1rem;
+        .feature-card .fc-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.6rem;
         }
 
-        .module-item .m-name {
-            font-weight: 600;
+        .feature-card .fc-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            margin-bottom: 0.35rem;
             color: var(--text-primary);
         }
 
-        .module-item .m-desc {
-            font-size: 0.72rem;
+        .feature-card .fc-desc {
+            font-size: 0.82rem;
             color: var(--text-muted);
+            line-height: 1.5;
         }
 
-        /* ── Table ── */
-        .docs-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 1.5rem;
+        /* ── Steps ── */
+        .step-list {
+            list-style: none;
+            padding-left: 0;
+            counter-reset: steps;
+        }
+
+        .step-list li {
+            counter-increment: steps;
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            align-items: flex-start;
+        }
+
+        .step-list li::before {
+            content: counter(steps);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--amber-400), var(--amber-500));
+            color: var(--navy-700);
+            font-weight: 800;
+            font-size: 0.82rem;
+        }
+
+        .step-content {
+            padding-top: 0.25rem;
+        }
+
+        .step-content strong {
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        .step-content span {
             font-size: 0.85rem;
-        }
-
-        .docs-table th {
-            text-align: left;
-            padding: 0.6rem 0.75rem;
-            font-weight: 700;
-            font-size: 0.72rem;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
             color: var(--text-muted);
-            border-bottom: 2px solid var(--border-subtle);
         }
 
-        .docs-table td {
-            padding: 0.6rem 0.75rem;
-            border-bottom: 1px solid var(--border-subtle);
+        /* ── FAQ ── */
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            overflow: hidden;
+            transition: border-color 0.2s;
+        }
+
+        .faq-item:hover {
+            border-color: var(--border-hover);
+        }
+
+        .faq-q {
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            user-select: none;
+        }
+
+        .faq-q .arrow {
+            transition: transform 0.2s;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .faq-item.open .faq-q .arrow {
+            transform: rotate(180deg);
+        }
+
+        .faq-a {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .faq-item.open .faq-a {
+            max-height: 500px;
+        }
+
+        .faq-a-inner {
+            padding: 0 1.25rem 1rem;
+            font-size: 0.85rem;
             color: var(--text-secondary);
+            border-top: 1px solid var(--border-subtle);
+            padding-top: 1rem;
         }
 
-        .docs-table tr:hover td {
-            background: rgba(255, 255, 255, 0.02);
+        /* ── Search ── */
+        .search-box {
+            position: relative;
+            margin-bottom: 2rem;
         }
 
-        .docs-table code {
-            font-size: 0.78rem;
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
         }
 
-        /* ── Badges ── */
-        .badge {
+        .search-box input:focus {
+            border-color: var(--amber-400);
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-box .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+
+        /* ── Contact Card ── */
+        .contact-card {
+            background: linear-gradient(135deg, rgba(232, 162, 41, 0.08), rgba(30, 58, 95, 0.15));
+            border: 1px solid rgba(232, 162, 41, 0.2);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            margin: 2rem 0;
+        }
+
+        .contact-card h3 {
+            margin-bottom: 0.5rem !important;
+            margin-top: 0 !important;
+        }
+
+        .contact-card p {
+            margin-bottom: 1.5rem;
+        }
+
+        .contact-card .btn {
             display: inline-flex;
             align-items: center;
-            padding: 0.15rem 0.5rem;
-            border-radius: 6px;
-            font-size: 0.7rem;
+            gap: 0.5rem;
+            padding: 0.75rem 2rem;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--amber-400), var(--amber-500));
+            color: var(--navy-700);
             font-weight: 700;
-            letter-spacing: 0.03em;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
-        .badge-auth {
-            background: rgba(239, 68, 68, 0.12);
-            color: #f87171;
-        }
-
-        .badge-public {
-            background: rgba(34, 197, 94, 0.12);
-            color: #4ade80;
+        .contact-card .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(232, 162, 41, 0.25);
+            text-decoration: none;
         }
 
         /* ── Mobile ── */
@@ -543,10 +562,26 @@
 
             .sidebar {
                 display: none;
+                position: fixed;
+                inset: 0;
+                z-index: 50;
+                width: 100%;
+                height: 100vh;
+                background: var(--bg-elevated);
+            }
+
+            .sidebar.open {
+                display: block;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
 
             .docs-main {
-                padding: 1.5rem 1rem;
+                padding: 1.5rem 1.25rem;
             }
 
             .docs-main h1 {
@@ -557,13 +592,8 @@
                 font-size: 1.2rem;
             }
 
-            .module-grid {
+            .feature-grid {
                 grid-template-columns: 1fr;
-            }
-
-            .endpoint-desc {
-                margin-left: 0;
-                margin-top: 0.25rem;
             }
         }
     </style>
@@ -574,849 +604,655 @@
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
 
+    <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('open')"
+        aria-label="Toggle menu">☰</button>
+
     <div class="docs-layout">
         <!-- ── Sidebar ── -->
         <aside class="sidebar">
             <div class="sidebar-header">
                 <a href="/">
                     <div class="logo-icon">IH</div>
-                    <h1>InfraHub <span class="version">v{{ config('app.version') }}</span></h1>
+                    <h1>Help Center</h1>
                 </a>
             </div>
 
             <nav class="sidebar-nav">
                 <div class="sidebar-group">
                     <div class="sidebar-group-label">Getting Started</div>
-                    <a href="#overview" class="sidebar-link active"><span class="icon">📖</span> Overview</a>
-                    <a href="#authentication" class="sidebar-link"><span class="icon">🔑</span> Authentication</a>
-                    <a href="#quick-start" class="sidebar-link"><span class="icon">⚡</span> Quick Start</a>
+                    <a href="#welcome" class="sidebar-link active"><span class="icon">👋</span> Welcome</a>
+                    <a href="#first-steps" class="sidebar-link"><span class="icon">🚀</span> First Steps</a>
+                    <a href="#navigation" class="sidebar-link"><span class="icon">🧭</span> Navigating the App</a>
                 </div>
 
                 <div class="sidebar-group">
-                    <div class="sidebar-group-label">Platform</div>
-                    <a href="#modules" class="sidebar-link"><span class="icon">🧱</span> Modules</a>
-                    <a href="#offline" class="sidebar-link"><span class="icon">☁️</span> Offline Mode</a>
-                    <a href="#pwa" class="sidebar-link"><span class="icon">📱</span> PWA Install</a>
-                    <a href="#security" class="sidebar-link"><span class="icon">🛡️</span> Security & Access</a>
+                    <div class="sidebar-group-label">Features</div>
+                    <a href="#projects" class="sidebar-link"><span class="icon">📁</span> Projects</a>
+                    <a href="#documents" class="sidebar-link"><span class="icon">📄</span> Documents</a>
+                    <a href="#tasks" class="sidebar-link"><span class="icon">✅</span> Tasks</a>
+                    <a href="#safety" class="sidebar-link"><span class="icon">⚠️</span> Safety & SHEQ</a>
+                    <a href="#field" class="sidebar-link"><span class="icon">👷</span> Field Management</a>
+                    <a href="#equipment" class="sidebar-link"><span class="icon">🚜</span> Equipment</a>
+                    <a href="#financials" class="sidebar-link"><span class="icon">💰</span> Financials</a>
+                    <a href="#inventory" class="sidebar-link"><span class="icon">📦</span> Inventory</a>
+                    <a href="#contracts" class="sidebar-link"><span class="icon">🏗️</span> Contracts</a>
                 </div>
 
                 <div class="sidebar-group">
-                    <div class="sidebar-group-label">API Reference</div>
-                    <a href="#api-projects" class="sidebar-link"><span class="icon">📁</span> Projects</a>
-                    <a href="#api-tasks" class="sidebar-link"><span class="icon">✅</span> Tasks</a>
-                    <a href="#api-documents" class="sidebar-link"><span class="icon">📄</span> Documents</a>
-                    <a href="#api-safety" class="sidebar-link"><span class="icon">⚠️</span> Safety</a>
-                    <a href="#api-attendance" class="sidebar-link"><span class="icon">👷</span> Attendance</a>
-                    <a href="#api-work-orders" class="sidebar-link"><span class="icon">🔧</span> Work Orders</a>
-                    <a href="#api-rfis" class="sidebar-link"><span class="icon">❓</span> RFIs</a>
-                    <a href="#api-submittals" class="sidebar-link"><span class="icon">📋</span> Submittals</a>
-                    <a href="#api-equipment" class="sidebar-link"><span class="icon">🚜</span> Equipment</a>
-                    <a href="#api-offline-sync" class="sidebar-link"><span class="icon">🔄</span> Offline Sync</a>
+                    <div class="sidebar-group-label">Using the App</div>
+                    <a href="#offline" class="sidebar-link"><span class="icon">☁️</span> Working Offline</a>
+                    <a href="#pwa" class="sidebar-link"><span class="icon">📱</span> Install on Phone</a>
+                    <a href="#security" class="sidebar-link"><span class="icon">🔒</span> Account & Security</a>
                 </div>
 
                 <div class="sidebar-group">
-                    <div class="sidebar-group-label">Reference</div>
-                    <a href="#errors" class="sidebar-link"><span class="icon">🚫</span> Error Codes</a>
-                    <a href="#rate-limits" class="sidebar-link"><span class="icon">⏱️</span> Rate Limits</a>
-                    <a href="#health" class="sidebar-link"><span class="icon">💚</span> Health Check</a>
+                    <div class="sidebar-group-label">Help</div>
+                    <a href="#faq" class="sidebar-link"><span class="icon">❓</span> FAQ</a>
+                    <a href="#contact" class="sidebar-link"><span class="icon">💬</span> Contact Support</a>
                 </div>
             </nav>
         </aside>
 
         <!-- ── Main Content ── -->
         <main class="docs-main">
-            <!-- Overview -->
-            <section id="overview">
-                <h1>InfraHub Documentation</h1>
+            <!-- Welcome -->
+            <section id="welcome">
+                <h1>Welcome to InfraHub</h1>
                 <p class="subtitle">
-                    Complete reference for the InfraHub construction management platform.
-                    REST API v{{ config('app.api_version') }} · App v{{ config('app.version') }} · Laravel
-                    {{ app()->version() }}
+                    Everything you need to know to manage your construction projects, teams, and documents — all in one
+                    place.
                 </p>
 
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="helpSearch" placeholder="Search help topics..." autocomplete="off">
+                </div>
+
                 <div class="info-box info-note">
-                    <span class="icon">ℹ️</span>
+                    <span class="box-icon">💡</span>
                     <div>
-                        <strong>Base URL:</strong> <code>{{ config('app.url') }}/api/v1</code><br>
-                        All API endpoints require authentication via <strong>Bearer token</strong> (Laravel Sanctum)
-                        unless marked as public.
+                        <strong>New here?</strong> We recommend starting with <a href="#first-steps">First Steps</a> to
+                        set up your account and create your first project.
                     </div>
                 </div>
             </section>
 
-            <!-- Authentication -->
-            <section id="authentication">
-                <h2>🔑 Authentication</h2>
-                <p>InfraHub uses <strong>Laravel Sanctum</strong> for API authentication. Obtain a token via the login
-                    endpoint, then include it in subsequent requests.</p>
+            <!-- First Steps -->
+            <section id="first-steps">
+                <h2>🚀 First Steps</h2>
+                <p>Get up and running in just a few minutes. Here's what you need to do after your account is created:
+                </p>
 
-                <h3>Login</h3>
-                <div class="endpoint">
-                    <div class="endpoint-header">
-                        <span class="method method-post">POST</span>
-                        <span class="endpoint-path">/api/v1/auth/login</span>
-                        <span class="badge badge-public">PUBLIC</span>
+                <ol class="step-list">
+                    <li>
+                        <div class="step-content">
+                            <strong>Log in to your account</strong>
+                            <span>Open the link from your invitation email and sign in with the credentials provided.
+                                You'll be asked to change your password on first login.</span>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="step-content">
+                            <strong>Set up your company profile</strong>
+                            <span>Add your company logo, address, and currency preferences from <strong>Settings →
+                                    Company</strong>. This information appears on invoices and reports.</span>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="step-content">
+                            <strong>Create your first project</strong>
+                            <span>Click <strong>Projects → New Project</strong>. Give it a name, code, and assign team
+                                members. Each project becomes a workspace for tasks, documents, and reports.</span>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="step-content">
+                            <strong>Invite your team</strong>
+                            <span>Go to <strong>Settings → Users</strong> and invite team members by email. They'll
+                                receive a link to join your company and access assigned projects.</span>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="step-content">
+                            <strong>Enable modules for your project</strong>
+                            <span>Open your project and click <strong>Modules</strong>. Turn on the features your team
+                                needs — Tasks, Documents, Safety, Field Management, and more.</span>
+                        </div>
+                    </li>
+                </ol>
+            </section>
+
+            <!-- Navigation -->
+            <section id="navigation">
+                <h2>🧭 Navigating the App</h2>
+                <p>InfraHub is organized around <strong>projects</strong>. Here's how to find your way around:</p>
+
+                <ul>
+                    <li><strong>Dashboard</strong> — Your home screen showing active projects, recent tasks, and key
+                        metrics at a glance.</li>
+                    <li><strong>Left Sidebar</strong> — Access your projects, clients, company settings, and reports
+                        from the navigation menu.</li>
+                    <li><strong>Project View</strong> — Click any project to enter its workspace. Use the module tabs
+                        (Tasks, Documents, Safety, etc.) to switch between features.</li>
+                    <li><strong>Quick Actions</strong> — The <strong>+ New</strong> buttons throughout the app let you
+                        quickly create tasks, upload documents, or log incidents.</li>
+                    <li><strong>Search</strong> — Use the search bar at the top to find projects, tasks, documents, or
+                        team members by name.</li>
+                </ul>
+
+                <div class="info-box info-tip">
+                    <span class="box-icon">⌨️</span>
+                    <div>
+                        <strong>Keyboard shortcut:</strong> Press <strong>Ctrl + K</strong> (or <strong>Cmd + K</strong>
+                        on Mac) to open the quick search from any page.
                     </div>
-                    <div class="endpoint-desc">Authenticate and receive a Bearer token</div>
-                </div>
-
-                <pre><code><span class="code-label">Request</span>
-{
-    "email": "user@company.com",
-    "password": "your-password"
-}</code></pre>
-
-                <pre><code><span class="code-label">Response 200</span>
-{
-    "token": "1|abc123def456...",
-    "user": {
-        "id": 1,
-        "name": "John Doe",
-        "email": "user@company.com",
-        "company_id": 1
-    }
-}</code></pre>
-
-                <h3>Using the Token</h3>
-                <p>Include the token in the <code>Authorization</code> header of all subsequent requests:</p>
-                <pre><code>Authorization: Bearer 1|abc123def456...</code></pre>
-
-                <h3>Other Auth Endpoints</h3>
-                <div class="endpoint">
-                    <div class="endpoint-header">
-                        <span class="method method-post">POST</span>
-                        <span class="endpoint-path">/api/v1/auth/register</span>
-                        <span class="badge badge-public">PUBLIC</span>
-                    </div>
-                    <div class="endpoint-desc">Register a new user account</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header">
-                        <span class="method method-post">POST</span>
-                        <span class="endpoint-path">/api/v1/auth/logout</span>
-                        <span class="badge badge-auth">AUTH</span>
-                    </div>
-                    <div class="endpoint-desc">Revoke the current token</div>
-                </div>
-                <div class="endpoint">
-                    <div class="endpoint-header">
-                        <span class="method method-get">GET</span>
-                        <span class="endpoint-path">/api/v1/auth/me</span>
-                        <span class="badge badge-auth">AUTH</span>
-                    </div>
-                    <div class="endpoint-desc">Get authenticated user profile</div>
                 </div>
             </section>
 
-            <!-- Quick Start -->
-            <section id="quick-start">
-                <h2>⚡ Quick Start</h2>
-                <p>Get started in 3 steps:</p>
+            <!-- Projects -->
+            <section id="projects">
+                <h2>📁 Projects</h2>
+                <p>Projects are the heart of InfraHub. Every task, document, and report belongs to a project.</p>
 
-                <h3>1. Get a Token</h3>
-                <pre><code>curl -X POST {{ config('app.url') }}/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"you@company.com","password":"secret"}'</code></pre>
+                <h3>Creating a Project</h3>
+                <ol>
+                    <li>Click <strong>Projects</strong> in the sidebar, then click <strong>New Project</strong>.</li>
+                    <li>Fill in the project name, code (e.g., PROJ-001), client, and location.</li>
+                    <li>Set the start and end dates, budget, and project type.</li>
+                    <li>Assign team members and set their roles (Project Manager, Engineer, Site Supervisor, etc.).</li>
+                    <li>Click <strong>Create</strong> — your project workspace is ready!</li>
+                </ol>
 
-                <h3>2. List Your Projects</h3>
-                <pre><code>curl {{ config('app.url') }}/api/v1/projects \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Accept: application/json"</code></pre>
+                <h3>Managing Team Access</h3>
+                <p>Each project has its own team. To add or remove members:</p>
+                <ul>
+                    <li>Open the project and go to the <strong>Team</strong> tab.</li>
+                    <li>Click <strong>Add Member</strong> and select users from your company.</li>
+                    <li>Assign roles to control what each person can view and edit.</li>
+                </ul>
 
-                <h3>3. Create a Task</h3>
-                <pre><code>curl -X POST {{ config('app.url') }}/api/v1/projects/1/tasks \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Pour foundation","priority":"high","due_date":"2026-04-01"}'</code></pre>
+                <div class="info-box info-warn">
+                    <span class="box-icon">⚠️</span>
+                    <div>
+                        <strong>Important:</strong> Only company admins and project managers can add or remove team
+                        members.
+                    </div>
+                </div>
             </section>
 
-            <!-- Modules -->
-            <section id="modules">
-                <h2>🧱 Platform Modules</h2>
-                <p>InfraHub is a modular platform. Each company subscribes to the modules they need.</p>
+            <!-- Documents -->
+            <section id="documents">
+                <h2>📄 Documents & Drawings</h2>
+                <p>InfraHub follows <strong>ISO 19650</strong> standards for document management. Upload, review,
+                    approve, and version-control all your project files.</p>
 
-                <div class="module-grid">
-                    <div class="module-item"><span class="m-icon">📁</span>
-                        <div>
-                            <div class="m-name">CDE (ISO 19650)</div>
-                            <div class="m-desc">Document management & version control</div>
+                <h3>Uploading Documents</h3>
+                <ol>
+                    <li>Open your project and click the <strong>Documents</strong> tab.</li>
+                    <li>Click <strong>Upload Document</strong> and select your files (PDF, DWG, BIM, images, etc.).</li>
+                    <li>Add a title, description, discipline (e.g., Structural, Electrical), and revision number.</li>
+                    <li>Click <strong>Upload</strong> — your document is saved with full version history.</li>
+                </ol>
+
+                <h3>Review & Approval Workflow</h3>
+                <p>Documents go through a structured review process:</p>
+                <ul>
+                    <li><strong>Work in Progress</strong> — The document is being prepared.</li>
+                    <li><strong>Under Review</strong> — Submitted for team review. Reviewers can comment and approve or
+                        reject.</li>
+                    <li><strong>Approved</strong> — The document is finalized and ready for use.</li>
+                    <li><strong>Superseded</strong> — A newer revision has replaced this version.</li>
+                </ul>
+
+                <div class="info-box info-tip">
+                    <span class="box-icon">💡</span>
+                    <div>
+                        <strong>Tip:</strong> All uploaded files are automatically scanned for viruses and validated to
+                        block unsafe file types.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tasks -->
+            <section id="tasks">
+                <h2>✅ Tasks & Workflow</h2>
+                <p>Assign work, track progress, and keep your team on schedule with Tasks.</p>
+
+                <h3>Creating a Task</h3>
+                <ol>
+                    <li>Open your project and go to the <strong>Tasks</strong> tab.</li>
+                    <li>Click <strong>New Task</strong>.</li>
+                    <li>Enter the task title, description, priority (Low / Medium / High / Critical), and due date.</li>
+                    <li>Assign it to a team member.</li>
+                    <li>Click <strong>Create</strong>.</li>
+                </ol>
+
+                <h3>Tracking Progress</h3>
+                <ul>
+                    <li>Tasks move through stages: <strong>To Do → In Progress → Under Review → Completed</strong>.</li>
+                    <li>Update the progress percentage to show how much work is done.</li>
+                    <li>Add comments to discuss work or share updates with your team.</li>
+                    <li>Attach files, drawings, or photos directly to the task.</li>
+                </ul>
+            </section>
+
+            <!-- Safety -->
+            <section id="safety">
+                <h2>⚠️ Safety & SHEQ</h2>
+                <p>Track safety incidents, conduct inspections, and run toolbox talks to keep your sites safe.</p>
+
+                <h3>Reporting an Incident</h3>
+                <ol>
+                    <li>Go to the project's <strong>Safety</strong> tab and click <strong>Report Incident</strong>.</li>
+                    <li>Describe what happened, the severity (Near Miss / Minor / Major / Critical), and the location.
+                    </li>
+                    <li>Upload photos of the scene.</li>
+                    <li>Submit the report — the safety officer and project manager are notified immediately.</li>
+                </ol>
+
+                <h3>Inspections & Toolbox Talks</h3>
+                <ul>
+                    <li><strong>Inspections</strong> — Schedule and record site safety inspections with checklists.</li>
+                    <li><strong>Toolbox Talks</strong> — Log safety briefings with attendance records and topics
+                        covered.</li>
+                </ul>
+            </section>
+
+            <!-- Field Management -->
+            <section id="field">
+                <h2>👷 Field Management</h2>
+                <p>Record what happens on site every day — weather conditions, work activities, crew attendance, and
+                    more.</p>
+
+                <h3>Daily Site Diaries</h3>
+                <p>Create a diary entry for each day on site:</p>
+                <ul>
+                    <li>Record the <strong>weather conditions</strong> and how they affected work.</li>
+                    <li>Log <strong>activities completed</strong> and materials used.</li>
+                    <li>Note any <strong>delays, visitors, or issues</strong> encountered.</li>
+                    <li>Add photos to document site conditions.</li>
+                </ul>
+
+                <h3>Crew Attendance</h3>
+                <p>Track who's on site each day:</p>
+                <ul>
+                    <li>Mark workers as <strong>Present, Absent, Late,</strong> or <strong>On Leave</strong>.</li>
+                    <li>Record overtime hours.</li>
+                    <li>View attendance summaries by week or month.</li>
+                </ul>
+
+                <div class="info-box info-tip">
+                    <span class="box-icon">📱</span>
+                    <div>
+                        <strong>Works offline!</strong> Site diary entries and attendance records can be filled in
+                        without internet. They'll sync automatically when you're back online.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Equipment -->
+            <section id="equipment">
+                <h2>🚜 Equipment & Assets</h2>
+                <p>Track all your plant, machinery, and tools — where they are, who's using them, and their condition.
+                </p>
+
+                <h3>What You Can Do</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="fc-icon">📋</div>
+                        <div class="fc-title">Allocate to Projects</div>
+                        <div class="fc-desc">Assign equipment to projects with start and end dates. Know exactly where
+                            each asset is.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="fc-icon">⛽</div>
+                        <div class="fc-title">Fuel Logs</div>
+                        <div class="fc-desc">Record fuel consumption for each piece of equipment. Track costs per
+                            project.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="fc-icon">🔧</div>
+                        <div class="fc-title">Maintenance</div>
+                        <div class="fc-desc">Schedule servicing, log repairs, and get alerts when maintenance is due.
                         </div>
                     </div>
-                    <div class="module-item"><span class="m-icon">📊</span>
-                        <div>
-                            <div class="m-name">BOQ & Cost</div>
-                            <div class="m-desc">Bills of quantities, cost tracking</div>
-                        </div>
+                    <div class="feature-card">
+                        <div class="fc-icon">📊</div>
+                        <div class="fc-title">Utilization Reports</div>
+                        <div class="fc-desc">See which equipment is idle, overworked, or due for return from site.</div>
                     </div>
-                    <div class="module-item"><span class="m-icon">✅</span>
-                        <div>
-                            <div class="m-name">Tasks & Workflow</div>
-                            <div class="m-desc">Task assignment, dependencies, Kanban</div>
+                </div>
+            </section>
+
+            <!-- Financials -->
+            <section id="financials">
+                <h2>💰 Financials</h2>
+                <p>Manage your Bills of Quantities, invoices, payment certificates, and cost tracking all in one place.
+                </p>
+
+                <ul>
+                    <li><strong>BOQ (Bills of Quantities)</strong> — Define line items with rates and quantities. Track
+                        actual vs budgeted costs.</li>
+                    <li><strong>Invoices</strong> — Generate professional invoices with your company branding and send
+                        them to clients.</li>
+                    <li><strong>Payment Certificates</strong> — Create interim and final payment certificates based on
+                        work completed.</li>
+                    <li><strong>Change Orders</strong> — Document scope changes with cost and time implications. Track
+                        approvals.</li>
+                    <li><strong>Expense Tracking</strong> — Log project expenses and categorize them for clear financial
+                        reporting.</li>
+                </ul>
+            </section>
+
+            <!-- Inventory -->
+            <section id="inventory">
+                <h2>📦 Inventory & Procurement</h2>
+                <p>Control your materials from request to delivery.</p>
+
+                <h3>The Procurement Workflow</h3>
+                <ol class="step-list">
+                    <li>
+                        <div class="step-content">
+                            <strong>Material Requisition</strong>
+                            <span>A site engineer requests materials by filling out a requisition form with quantities
+                                and required-by dates.</span>
                         </div>
-                    </div>
-                    <div class="module-item"><span class="m-icon">📐</span>
-                        <div>
-                            <div class="m-name">Planning & Progress</div>
-                            <div class="m-desc">Gantt charts, EVM, milestones</div>
+                    </li>
+                    <li>
+                        <div class="step-content">
+                            <strong>Manager Approval</strong>
+                            <span>The project manager reviews and approves (or rejects) the requisition.</span>
                         </div>
-                    </div>
-                    <div class="module-item"><span class="m-icon">⚠️</span>
-                        <div>
-                            <div class="m-name">SHEQ</div>
-                            <div class="m-desc">Safety incidents, inspections, toolbox talks</div>
+                    </li>
+                    <li>
+                        <div class="step-content">
+                            <strong>Purchase Order</strong>
+                            <span>An approved requisition becomes a Purchase Order sent to the supplier.</span>
                         </div>
-                    </div>
-                    <div class="module-item"><span class="m-icon">👷</span>
-                        <div>
-                            <div class="m-name">Field Management</div>
-                            <div class="m-desc">Site diaries, attendance, daily logs</div>
+                    </li>
+                    <li>
+                        <div class="step-content">
+                            <strong>Goods Received</strong>
+                            <span>When materials arrive, record a Goods Received Note (GRN) to update stock
+                                levels.</span>
                         </div>
-                    </div>
-                    <div class="module-item"><span class="m-icon">🚜</span>
-                        <div>
-                            <div class="m-name">Equipment</div>
-                            <div class="m-desc">Allocations, fuel logs, maintenance</div>
+                    </li>
+                    <li>
+                        <div class="step-content">
+                            <strong>Issue to Site</strong>
+                            <span>Materials are issued from the store to the construction site, tracked by
+                                project.</span>
                         </div>
+                    </li>
+                </ol>
+            </section>
+
+            <!-- Contracts -->
+            <section id="contracts">
+                <h2>🏗️ Contracts & Subcontractors</h2>
+                <p>Manage your subcontractor relationships, scope of work, and contract variations.</p>
+
+                <ul>
+                    <li><strong>Subcontractor Profiles</strong> — Store contact details, specialties, insurance, and
+                        performance ratings.</li>
+                    <li><strong>Work Packages</strong> — Define scope, pricing, and schedule for each subcontracted
+                        package.</li>
+                    <li><strong>Change Orders</strong> — Track contract variations with justifications and approval
+                        workflows.</li>
+                    <li><strong>RFIs</strong> — Send Requests for Information to resolve design or construction
+                        questions.</li>
+                    <li><strong>Submittals</strong> — Submit shop drawings, samples, and technical documents for review.
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Offline -->
+            <section id="offline">
+                <h2>☁️ Working Offline</h2>
+                <p>Construction sites often have poor internet. InfraHub is designed to work <strong>without a
+                        connection</strong> so your field team is never blocked.</p>
+
+                <h3>How It Works</h3>
+                <ul>
+                    <li><strong>Every page you visit is saved</strong> — You can browse previously viewed pages even
+                        without internet.</li>
+                    <li><strong>Fill in forms offline</strong> — Create site diaries, record attendance, and report
+                        incidents without a connection.</li>
+                    <li><strong>Automatic sync</strong> — When internet returns, your data uploads automatically in the
+                        background.</li>
+                    <li><strong>No data loss</strong> — Everything is stored safely on your device until it syncs.</li>
+                </ul>
+
+                <div class="info-box info-note">
+                    <span class="box-icon">💡</span>
+                    <div>
+                        <strong>Offline shortcut:</strong> Press <strong>Ctrl + Shift + S</strong> on any form page to
+                        save your current work offline.
                     </div>
-                    <div class="module-item"><span class="m-icon">💰</span>
-                        <div>
-                            <div class="m-name">Financials</div>
-                            <div class="m-desc">Invoices, payment certificates, expenses</div>
-                        </div>
+                </div>
+
+                <h3>What Works Offline</h3>
+                <ul>
+                    <li>✅ Viewing any previously visited page</li>
+                    <li>✅ Creating and editing tasks, work orders, and daily diaries</li>
+                    <li>✅ Recording crew attendance</li>
+                    <li>✅ Reporting safety incidents</li>
+                    <li>✅ All form submissions (auto-synced when online)</li>
+                    <li>📎 File uploads require internet (they'll queue and upload when connected)</li>
+                </ul>
+            </section>
+
+            <!-- PWA -->
+            <section id="pwa">
+                <h2>📱 Install InfraHub on Your Phone</h2>
+                <p>InfraHub works like a native app on your phone, tablet, or desktop — no app store needed.</p>
+
+                <h3>On Android / Chrome</h3>
+                <ol>
+                    <li>Open <strong>{{ config('app.url') }}/app</strong> in Chrome.</li>
+                    <li>Tap the <strong>"Install"</strong> banner at the bottom — or tap the <strong>⋮ menu → Install
+                            App</strong>.</li>
+                    <li>InfraHub appears on your home screen with its own icon, just like a regular app.</li>
+                </ol>
+
+                <h3>On iPhone / iPad</h3>
+                <ol>
+                    <li>Open <strong>{{ config('app.url') }}/app</strong> in Safari.</li>
+                    <li>Tap the <strong>Share button</strong> (square with arrow).</li>
+                    <li>Scroll down and tap <strong>"Add to Home Screen"</strong>.</li>
+                    <li>Tap <strong>Add</strong> — the app icon appears on your home screen.</li>
+                </ol>
+
+                <h3>On Desktop (Windows / Mac)</h3>
+                <ol>
+                    <li>Open <strong>{{ config('app.url') }}/app</strong> in Chrome or Edge.</li>
+                    <li>Click the <strong>install icon</strong> in the address bar (or <strong>⋮ → Install
+                            InfraHub</strong>).</li>
+                    <li>The app opens in its own window with offline support.</li>
+                </ol>
+            </section>
+
+            <!-- Account & Security -->
+            <section id="security">
+                <h2>🔒 Account & Security</h2>
+                <p>InfraHub takes the security of your data seriously. Here's how your account is protected:</p>
+
+                <h3>Your Account</h3>
+                <ul>
+                    <li><strong>Change your password</strong> — Go to <strong>Settings → Profile</strong> and click
+                        <strong>Change Password</strong>. Old passwords cannot be reused.</li>
+                    <li><strong>Two-Factor Authentication (2FA)</strong> — When enabled, you'll receive a one-time code
+                        by email each time you log in. This adds an extra layer of security.</li>
+                    <li><strong>Active Sessions</strong> — View all devices where you're logged in. You can log out of
+                        any session remotely from <strong>Settings → Sessions</strong>.</li>
+                </ul>
+
+                <h3>Data Protection</h3>
+                <ul>
+                    <li>All data is encrypted in transit (HTTPS) and at rest.</li>
+                    <li>Your company's data is completely isolated from other companies.</li>
+                    <li>File uploads are scanned for viruses before being stored.</li>
+                    <li>Dangerous file types (executables, scripts) are automatically blocked.</li>
+                    <li>Login attempts are rate-limited to prevent brute-force attacks.</li>
+                </ul>
+
+                <div class="info-box info-warn">
+                    <span class="box-icon">🔐</span>
+                    <div>
+                        <strong>Security tip:</strong> Never share your login credentials. If you suspect unauthorized
+                        access, change your password immediately and contact your company admin.
                     </div>
-                    <div class="module-item"><span class="m-icon">📦</span>
-                        <div>
-                            <div class="m-name">Inventory</div>
-                            <div class="m-desc">Stock, requisitions, POs, GRNs</div>
-                        </div>
+                </div>
+            </section>
+
+            <!-- FAQ -->
+            <section id="faq">
+                <h2>❓ Frequently Asked Questions</h2>
+
+                <div class="faq-item" data-search="password reset forgot login">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        I forgot my password. How do I reset it?
+                        <span class="arrow">▼</span>
                     </div>
-                    <div class="module-item"><span class="m-icon">🏗️</span>
-                        <div>
-                            <div class="m-name">Contracts</div>
-                            <div class="m-desc">Subcontractors, change orders, claims</div>
-                        </div>
-                    </div>
-                    <div class="module-item"><span class="m-icon">❓</span>
-                        <div>
-                            <div class="m-name">RFIs & Submittals</div>
-                            <div class="m-desc">Requests for information, shop drawings</div>
-                        </div>
-                    </div>
-                    <div class="module-item"><span class="m-icon">📈</span>
-                        <div>
-                            <div class="m-name">Reporting</div>
-                            <div class="m-desc">Dashboards, analytics, exports</div>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            On the login page, click <strong>"Forgot Password"</strong>. Enter your email address and
+                            you'll receive a link to create a new password. The link expires in 60 minutes.
                         </div>
                     </div>
                 </div>
-    </div>
-    </section>
 
-    <!-- Security & Access Control -->
-    <section id="security">
-        <h2>🛡️ Security & Access Control</h2>
-        <p>InfraHub incorporates enterprise-grade security hardening natively, limiting exposure and validating inputs
-            effectively.</p>
+                <div class="faq-item" data-search="add team member invite user">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        How do I add a new team member?
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            Go to <strong>Settings → Users → Add User</strong>. Enter their name and email address.
+                            They'll receive an invitation email with login instructions. After they accept, you can
+                            assign them to projects.
+                        </div>
+                    </div>
+                </div>
 
-        <h3>Geographic Access & IP Blocking</h3>
-        <p>The platform bounds access to safe operating regions:</p>
-        <ul>
-            <li><strong>Geo-Restriction:</strong> Allowed countries can be managed in the Admin panel. Requests from
-                restricted regions receive an HTTP 403 Forbidden. Caching optimizes lookup performance.</li>
-            <li><strong>IP Blocking:</strong> Specific threatening IPs or CIDR boundaries (e.g. <code>10.0.0.0/8</code>)
-                can be dynamically blocked with expiration controls.</li>
-            <li><strong>API Overrides:</strong> Select external APIs (e.g. Webhooks) safely bypass the geo-middleware
-                but remain strictly limited to whitelisted supplier IPs.</li>
-        </ul>
+                <div class="faq-item" data-search="offline data sync internet connection">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        What happens to my data if I lose internet on site?
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            Your data is safe! InfraHub stores all your work locally on your device. When internet
+                            returns, everything syncs automatically. You'll see a notification confirming the sync. You
+                            can also check pending uploads at <strong>Settings → Offline Forms</strong>.
+                        </div>
+                    </div>
+                </div>
 
-        <h3>User Session Hardening</h3>
-        <ul>
-            <li><strong>Enforced 2FA:</strong> Two-Factor Authentication (Email OTP) can be globally triggered for all
-                internal and client users, enforcing multi-factor checks on subsequent logins.</li>
-            <li><strong>Session Management:</strong> Active login sessions across all devices are trackable. Users can
-                invalidate dormant or suspicious concurrent instances remotely from their settings panel.</li>
-            <li><strong>Destructive Action Limits:</strong> Operations like Project termination require
-                re-authentication of the user's password prior to final deletion.</li>
-        </ul>
+                <div class="faq-item" data-search="modules enable disable features">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        How do I enable additional modules for my project?
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            Open your project, go to the <strong>Modules</strong> tab, and toggle on the modules you
+                            need (e.g., Tasks, Safety, Inventory). Note: Your company subscription determines which
+                            modules are available. Contact your admin if you need access to additional modules.
+                        </div>
+                    </div>
+                </div>
 
-        <h3>Common Data Environment (CDE)</h3>
-        <ul>
-            <li><strong>Malware Scanning (ClamAV):</strong> When enabled, every uploaded BIM, CAD, or PDF file passes
-                through dynamic daemon scanning before persistence.</li>
-            <li><strong>Aggressive File Validation:</strong> Absolute blockage of executable vectors (<code>.exe</code>,
-                <code>.php</code>, <code>.bat</code>) and double extensions.</li>
-        </ul>
-    </section>
+                <div class="faq-item" data-search="upload file document size limit format">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        What file types and sizes can I upload?
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            You can upload PDFs, images (JPG, PNG, WebP), CAD files (DWG, DXF), BIM models (IFC, RVT),
+                            spreadsheets, and documents. The maximum file size depends on your company plan (typically
+                            50MB–200MB per file). Executable files (.exe, .bat, .php) are blocked for security.
+                        </div>
+                    </div>
+                </div>
 
-    <!-- Offline -->
-    <section id="offline">
-        <h2>☁️ Offline Mode</h2>
-        <p>InfraHub works offline for field workers with poor connectivity. Every page you visit is cached.</p>
+                <div class="faq-item" data-search="mobile app phone tablet download">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        Is there a mobile app I can download?
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            InfraHub is a Progressive Web App (PWA) — it works like a native app without needing to
+                            download from an app store. See the <a href="#pwa">Install on Phone</a> section for
+                            step-by-step instructions for Android, iPhone, and desktop.
+                        </div>
+                    </div>
+                </div>
 
-        <div class="info-box info-tip">
-            <span class="icon">💡</span>
-            <div>
-                <strong>Keyboard shortcut:</strong> Press <code>Ctrl+Shift+S</code> on any Create or Edit form
-                page to save the data offline. It will sync automatically when you reconnect.
+                <div class="faq-item" data-search="export report download data csv pdf">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        Can I export my data?
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            Yes! Most tables have an <strong>Export</strong> button that lets you download data as CSV
+                            or Excel. Reports can be exported as PDF. Your company admin can also request a full data
+                            export from Settings.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="faq-item" data-search="client portal external access">
+                    <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">
+                        Can my clients access InfraHub?
+                        <span class="arrow">▼</span>
+                    </div>
+                    <div class="faq-a">
+                        <div class="faq-a-inner">
+                            Yes! InfraHub has a dedicated <strong>Client Portal</strong> where your clients can view
+                            project progress, documents shared with them, invoices, and quotations. They get their own
+                            login at <strong>{{ config('app.url') }}/client</strong>.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contact -->
+            <section id="contact">
+                <h2>💬 Contact Support</h2>
+                <p>Can't find what you're looking for? Our team is here to help.</p>
+
+                <div class="contact-card">
+                    <h3>Need Help?</h3>
+                    <p>Our support team is available Monday through Friday, 8:00 AM — 6:00 PM (EAT).</p>
+                    <a href="mailto:support@infrahub.click" class="btn">
+                        ✉️ Email Support
+                    </a>
+                </div>
+
+                <div class="info-box info-tip">
+                    <span class="box-icon">💡</span>
+                    <div>
+                        <strong>Before contacting support:</strong> Include your company name, the page where the issue
+                        occurred, and a screenshot if possible. This helps us resolve your issue faster.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <div
+                style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-subtle); text-align: center;">
+                <p style="font-size: 0.78rem; color: var(--text-muted);">
+                    InfraHub v{{ config('app.version') }} · © {{ date('Y') }} All rights reserved.<br>
+                    <a href="/" style="color: var(--amber-400);">← Back to Home</a> ·
+                    <a href="/app" style="color: var(--amber-400);">Open App →</a>
+                </p>
             </div>
-        </div>
-
-        <h3>How It Works</h3>
-        <ul>
-            <li><strong>Service Worker</strong> caches all visited pages (network-first with 8s timeout)</li>
-            <li><strong>IndexedDB</strong> stores form submissions locally when offline</li>
-            <li><strong>Background Sync API</strong> replays queued data when connectivity returns</li>
-            <li><strong>Livewire Interceptor</strong> captures form data from any Filament page</li>
-        </ul>
-
-        <h3>Supported Offline Operations</h3>
-        <ul>
-            <li>✅ View any previously visited page</li>
-            <li>✅ Create/edit records for all 15 resource types</li>
-            <li>✅ Dedicated forms: Site Diary, Crew Attendance, Safety Incident</li>
-            <li>✅ Auto-sync when back online</li>
-            <li>✅ Manual sync via the Offline Forms page</li>
-            <li>⚠️ File uploads require connectivity</li>
-        </ul>
-
-        <h3>Offline Sync API</h3>
-        <div class="endpoint">
-            <div class="endpoint-header">
-                <span class="method method-post">POST</span>
-                <span class="endpoint-path">/api/v1/offline-sync/generic</span>
-                <span class="badge badge-auth">AUTH</span>
-            </div>
-            <div class="endpoint-desc">Sync any resource type from offline queue</div>
-        </div>
-        <pre><code><span class="code-label">Request</span>
-{
-    "resource": "tasks",
-    "action": "create",
-    "record_id": null,
-    "data": {
-        "title": "Pour foundation Level 3",
-        "priority": "high",
-        "cde_project_id": 25
-    }
-}</code></pre>
-
-        <h3>Supported Resource Types</h3>
-        <table class="docs-table">
-            <thead>
-                <tr>
-                    <th>Slug</th>
-                    <th>Model</th>
-                    <th>Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><code>tasks</code></td>
-                    <td>Task</td>
-                    <td>Project tasks</td>
-                </tr>
-                <tr>
-                    <td><code>work-orders</code></td>
-                    <td>WorkOrder</td>
-                    <td>Work instructions</td>
-                </tr>
-                <tr>
-                    <td><code>daily-site-diaries</code></td>
-                    <td>DailySiteDiary</td>
-                    <td>Daily site records</td>
-                </tr>
-                <tr>
-                    <td><code>crew-attendances</code></td>
-                    <td>CrewAttendance</td>
-                    <td>Worker attendance</td>
-                </tr>
-                <tr>
-                    <td><code>safety-incidents</code></td>
-                    <td>SafetyIncident</td>
-                    <td>Safety reports</td>
-                </tr>
-                <tr>
-                    <td><code>invoices</code></td>
-                    <td>Invoice</td>
-                    <td>Financial invoices</td>
-                </tr>
-                <tr>
-                    <td><code>assets</code></td>
-                    <td>Asset</td>
-                    <td>Company assets</td>
-                </tr>
-                <tr>
-                    <td><code>clients</code></td>
-                    <td>Client</td>
-                    <td>Client records</td>
-                </tr>
-                <tr>
-                    <td><code>subcontractors</code></td>
-                    <td>Subcontractor</td>
-                    <td>Subcontractor firms</td>
-                </tr>
-                <tr>
-                    <td><code>tenders</code></td>
-                    <td>Tender</td>
-                    <td>Bid/tender submissions</td>
-                </tr>
-                <tr>
-                    <td><code>drawings</code></td>
-                    <td>Drawing</td>
-                    <td>Engineering drawings</td>
-                </tr>
-                <tr>
-                    <td><code>payment-certificates</code></td>
-                    <td>PaymentCertificate</td>
-                    <td>Payment certs</td>
-                </tr>
-                <tr>
-                    <td><code>cde-projects</code></td>
-                    <td>CdeProject</td>
-                    <td>Projects</td>
-                </tr>
-                <tr>
-                    <td><code>change-orders</code></td>
-                    <td>ChangeOrder</td>
-                    <td>Contract variations</td>
-                </tr>
-                <tr>
-                    <td><code>snag-items</code></td>
-                    <td>SnagItem</td>
-                    <td>Defect/snag list</td>
-                </tr>
-            </tbody>
-        </table>
-    </section>
-
-    <!-- PWA -->
-    <section id="pwa">
-        <h2>📱 PWA Installation</h2>
-        <p>InfraHub is a Progressive Web App. Install it on your device for the best experience.</p>
-        <ol>
-            <li>Open <code>{{ config('app.url') }}/app</code> in Chrome or Edge</li>
-            <li>Click the <strong>Install</strong> icon in the address bar (or ⋮ → Install App)</li>
-            <li>The app launches in its own window with offline support</li>
-        </ol>
-    </section>
-
-    <!-- API: Projects -->
-    <section id="api-projects">
-        <h2>📁 Projects API</h2>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/projects</span></div>
-            <div class="endpoint-desc">List all projects for the authenticated company</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects</span></div>
-            <div class="endpoint-desc">Create a new project</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/projects/{id}</span></div>
-            <div class="endpoint-desc">Get project details with stats</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-put">PUT</span><span
-                    class="endpoint-path">/api/v1/projects/{id}</span></div>
-            <div class="endpoint-desc">Update a project</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-delete">DELETE</span><span
-                    class="endpoint-path">/api/v1/projects/{id}</span></div>
-            <div class="endpoint-desc">Delete a project</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/projects/{id}/stats</span></div>
-            <div class="endpoint-desc">Get project statistics (tasks, documents, etc.)</div>
-        </div>
-    </section>
-
-    <!-- API: Tasks -->
-    <section id="api-tasks">
-        <h2>✅ Tasks API</h2>
-        <p>Tasks are scoped under a project.</p>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/tasks</span></div>
-            <div class="endpoint-desc">List all tasks for a project</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/tasks</span></div>
-            <div class="endpoint-desc">Create a new task</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/tasks/{task}</span></div>
-            <div class="endpoint-desc">Get task details</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-put">PUT</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/tasks/{task}</span></div>
-            <div class="endpoint-desc">Update a task</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-patch">PATCH</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/tasks/{task}/progress</span></div>
-            <div class="endpoint-desc">Update task progress percentage</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-delete">DELETE</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/tasks/{task}</span></div>
-            <div class="endpoint-desc">Delete a task</div>
-        </div>
-    </section>
-
-    <!-- API: Documents -->
-    <section id="api-documents">
-        <h2>📄 Documents API</h2>
-        <p>ISO 19650 compliant document management with versioning and approval workflows.</p>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/documents</span></div>
-            <div class="endpoint-desc">List all documents in a project</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/documents</span></div>
-            <div class="endpoint-desc">Upload a new document</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/documents/{doc}/submit-for-review</span>
-            </div>
-            <div class="endpoint-desc">Submit document for review</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/documents/{doc}/approve</span></div>
-            <div class="endpoint-desc">Approve a document</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/documents/{doc}/reject</span></div>
-            <div class="endpoint-desc">Reject a document</div>
-        </div>
-    </section>
-
-    <!-- API: Safety -->
-    <section id="api-safety">
-        <h2>⚠️ Safety Incidents API</h2>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/safety-incidents</span></div>
-            <div class="endpoint-desc">List all safety incidents for the company</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/safety-incidents</span></div>
-            <div class="endpoint-desc">Report a new safety incident</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/safety-incidents/{id}</span></div>
-            <div class="endpoint-desc">Get incident details</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-put">PUT</span><span
-                    class="endpoint-path">/api/v1/safety-incidents/{id}</span></div>
-            <div class="endpoint-desc">Update incident status / investigation</div>
-        </div>
-    </section>
-
-    <!-- API: Attendance -->
-    <section id="api-attendance">
-        <h2>👷 Crew Attendance API</h2>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/attendance</span></div>
-            <div class="endpoint-desc">List attendance records</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/attendance</span></div>
-            <div class="endpoint-desc">Record worker attendance</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/attendance/today</span></div>
-            <div class="endpoint-desc">Get today's attendance summary</div>
-        </div>
-    </section>
-
-    <!-- API: Work Orders -->
-    <section id="api-work-orders">
-        <h2>🔧 Work Orders API</h2>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/work-orders</span></div>
-            <div class="endpoint-desc">List work orders for a project</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/work-orders</span></div>
-            <div class="endpoint-desc">Create a work order</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-put">PUT</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/work-orders/{wo}</span></div>
-            <div class="endpoint-desc">Update a work order</div>
-        </div>
-    </section>
-
-    <!-- API: RFIs -->
-    <section id="api-rfis">
-        <h2>❓ RFIs API</h2>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/rfis</span></div>
-            <div class="endpoint-desc">List requests for information</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/rfis</span></div>
-            <div class="endpoint-desc">Create an RFI</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/rfis/{rfi}/answer</span></div>
-            <div class="endpoint-desc">Answer an RFI</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/rfis/{rfi}/close</span></div>
-            <div class="endpoint-desc">Close an RFI</div>
-        </div>
-    </section>
-
-    <!-- API: Submittals -->
-    <section id="api-submittals">
-        <h2>📋 Submittals API</h2>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/submittals</span></div>
-            <div class="endpoint-desc">List submittals</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/submittals</span></div>
-            <div class="endpoint-desc">Create a submittal</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/projects/{project}/submittals/{sub}/review</span></div>
-            <div class="endpoint-desc">Review a submittal (approve/reject)</div>
-        </div>
-    </section>
-
-    <!-- API: Equipment -->
-    <section id="api-equipment">
-        <h2>🚜 Equipment API</h2>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/equipment/allocations</span></div>
-            <div class="endpoint-desc">List equipment allocations</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/equipment/allocations</span></div>
-            <div class="endpoint-desc">Allocate equipment to a project</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/equipment/fuel-logs</span></div>
-            <div class="endpoint-desc">List fuel consumption logs</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/equipment/fuel-logs</span></div>
-            <div class="endpoint-desc">Record a fuel log entry</div>
-        </div>
-    </section>
-
-    <!-- API: Offline Sync -->
-    <section id="api-offline-sync">
-        <h2>🔄 Offline Sync API</h2>
-        <p>Endpoints used by the offline queue engine. Typically called automatically by the Service Worker.</p>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/offline-sync/generic</span></div>
-            <div class="endpoint-desc">Sync any whitelisted resource (see table above)</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/offline-sync/site-diaries</span></div>
-            <div class="endpoint-desc">Sync a site diary (with deduplication)</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/offline-sync/attendance</span></div>
-            <div class="endpoint-desc">Sync an attendance record (with deduplication)</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-post">POST</span><span
-                    class="endpoint-path">/api/v1/offline-sync/safety-incidents</span></div>
-            <div class="endpoint-desc">Sync a safety incident report</div>
-        </div>
-        <div class="endpoint">
-            <div class="endpoint-header"><span class="method method-get">GET</span><span
-                    class="endpoint-path">/api/v1/offline-sync/workers</span></div>
-            <div class="endpoint-desc">Get worker list for offline dropdown caching</div>
-        </div>
-    </section>
-
-    <!-- Errors -->
-    <section id="errors">
-        <h2>🚫 Error Codes</h2>
-        <table class="docs-table">
-            <thead>
-                <tr>
-                    <th>Code</th>
-                    <th>Meaning</th>
-                    <th>Description</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><code>200</code></td>
-                    <td>OK</td>
-                    <td>Request succeeded</td>
-                </tr>
-                <tr>
-                    <td><code>201</code></td>
-                    <td>Created</td>
-                    <td>Resource created successfully</td>
-                </tr>
-                <tr>
-                    <td><code>401</code></td>
-                    <td>Unauthenticated</td>
-                    <td>Missing or invalid token</td>
-                </tr>
-                <tr>
-                    <td><code>403</code></td>
-                    <td>Forbidden</td>
-                    <td>Insufficient permissions or module access</td>
-                </tr>
-                <tr>
-                    <td><code>404</code></td>
-                    <td>Not Found</td>
-                    <td>Resource does not exist or is not in your company</td>
-                </tr>
-                <tr>
-                    <td><code>422</code></td>
-                    <td>Validation Error</td>
-                    <td>Request body failed validation. Check <code>errors</code> field.</td>
-                </tr>
-                <tr>
-                    <td><code>429</code></td>
-                    <td>Rate Limited</td>
-                    <td>Too many requests. Wait and retry.</td>
-                </tr>
-                <tr>
-                    <td><code>500</code></td>
-                    <td>Server Error</td>
-                    <td>Unexpected error. Contact support.</td>
-                </tr>
-            </tbody>
-        </table>
-        <pre><code><span class="code-label">Error Response</span>
-{
-    "success": false,
-    "message": "Validation failed",
-    "errors": {
-        "title": ["The title field is required."],
-        "due_date": ["The due date must be a date after today."]
-    }
-}</code></pre>
-    </section>
-
-    <!-- Rate Limits -->
-    <section id="rate-limits">
-        <h2>⏱️ Rate Limits</h2>
-        <table class="docs-table">
-            <thead>
-                <tr>
-                    <th>Endpoint Group</th>
-                    <th>Limit</th>
-                    <th>Window</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>Login</td>
-                    <td>5 requests</td>
-                    <td>1 minute</td>
-                </tr>
-                <tr>
-                    <td>Registration</td>
-                    <td>3 requests</td>
-                    <td>1 minute</td>
-                </tr>
-                <tr>
-                    <td>Health Check</td>
-                    <td>30 requests</td>
-                    <td>1 minute</td>
-                </tr>
-                <tr>
-                    <td>All Authenticated APIs</td>
-                    <td>60 requests</td>
-                    <td>1 minute</td>
-                </tr>
-            </tbody>
-        </table>
-        <div class="info-box info-warn">
-            <span class="icon">⚡</span>
-            <div>When rate limited, the API returns <code>429 Too Many Requests</code>. Include retry logic in
-                your integration with exponential backoff.</div>
-        </div>
-    </section>
-
-    <!-- Health -->
-    <section id="health">
-        <h2>💚 Health Check</h2>
-        <div class="endpoint">
-            <div class="endpoint-header">
-                <span class="method method-get">GET</span>
-                <span class="endpoint-path">/api/health</span>
-                <span class="badge badge-public">PUBLIC</span>
-            </div>
-            <div class="endpoint-desc">Infrastructure health check — no authentication required</div>
-        </div>
-        <pre><code><span class="code-label">Response 200</span>
-{
-    "status": "healthy",
-    "version": "{{ config('app.version') }}",
-    "api_version": "{{ config('app.api_version') }}",
-    "timestamp": "2026-03-14T10:30:00.000000Z",
-    "checks": {
-        "database": { "status": "ok", "response_ms": 1.2 },
-        "cache": { "status": "ok", "driver": "redis" },
-        "queue": { "status": "ok", "pending_jobs": 0, "failed_jobs": 0 },
-        "storage": { "status": "ok" },
-        "system": {
-            "php": "8.4.x",
-            "laravel": "12.x",
-            "app_version": "{{ config('app.version') }}",
-            "api_version": "{{ config('app.api_version') }}"
-        }
-    }
-}</code></pre>
-    </section>
-
-    <!-- Footer -->
-    <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-subtle); text-align: center;">
-        <p style="font-size: 0.78rem; color: var(--text-muted);">
-            InfraHub v{{ config('app.version') }} · API {{ config('app.api_version') }} · Built with Laravel
-            {{ app()->version() }} & Filament<br>
-            <a href="/" style="color: var(--amber-400);">← Back to Home</a> · <a href="/app"
-                style="color: var(--amber-400);">Open App →</a>
-        </p>
-    </div>
-    </main>
+        </main>
     </div>
 
     <script>
@@ -1435,6 +1271,40 @@
         }, { rootMargin: '-20% 0px -75% 0px' });
 
         sections.forEach(section => observer.observe(section));
+
+        // Search functionality
+        const searchInput = document.getElementById('helpSearch');
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase().trim();
+            const allSections = document.querySelectorAll('section[id]');
+
+            if (!query) {
+                allSections.forEach(s => s.style.display = '');
+                document.querySelectorAll('.faq-item').forEach(f => f.style.display = '');
+                return;
+            }
+
+            allSections.forEach(section => {
+                const text = section.textContent.toLowerCase();
+                section.style.display = text.includes(query) ? '' : 'none';
+            });
+
+            // Also search FAQ data-search attributes
+            document.querySelectorAll('.faq-item').forEach(faq => {
+                const searchData = (faq.dataset.search || '') + ' ' + faq.textContent.toLowerCase();
+                if (searchData.includes(query)) {
+                    faq.style.display = '';
+                    faq.classList.add('open');
+                }
+            });
+        });
+
+        // Close mobile sidebar when clicking a link
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', () => {
+                document.querySelector('.sidebar').classList.remove('open');
+            });
+        });
     </script>
 </body>
 
