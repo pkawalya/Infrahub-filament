@@ -72,9 +72,10 @@ class CreateClient extends CreateRecord
             $loginUrl = config('app.url') . '/client/login';
 
             try {
-                app(EmailService::class)->sendTo(
-                    $client->email,
+                // Send welcome email synchronously (contains credentials — critical)
+                app(EmailService::class)->send(
                     'client-welcome',
+                    $user,
                     [
                         'client_name' => $client->name,
                         'company_name' => $companyName,
@@ -83,7 +84,15 @@ class CreateClient extends CreateRecord
                         'login_url' => $loginUrl,
                         'user_name' => $client->name,
                     ],
-                    $client->company_id
+                    $client->company_id,
+                    sync: true,
+                );
+
+                // Also send invitation email with accept link
+                app(\App\Services\InvitationService::class)->sendInvitation(
+                    $user,
+                    plainPassword: $password,
+                    invitedBy: auth()->id(),
                 );
 
                 Notification::make()

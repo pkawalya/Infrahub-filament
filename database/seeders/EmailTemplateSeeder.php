@@ -480,6 +480,30 @@ class EmailTemplateSeeder extends Seeder
                     . '<p style="color:#4b5563;line-height:1.7;">Equipment <strong>{{asset_name}}</strong> has been returned from project <strong>{{project_name}}</strong> by <strong>{{returned_by}}</strong>.</p>',
                 'available_variables' => ['user_name', 'asset_name', 'project_name', 'returned_by'],
             ],
+
+            // ─── Client Portal Templates ────────────────────────
+            [
+                'name' => 'Client Portal Welcome',
+                'slug' => 'client-welcome',
+                'category' => 'authentication',
+                'subject' => 'Welcome to {{company_name}} Client Portal — {{app_name}}',
+                'body' => '<h2 style="color:#1f2937;margin:0 0 16px;">Welcome to Your Client Portal! 🎉</h2>'
+                    . '<p style="color:#4b5563;line-height:1.7;">Hi <strong>{{client_name}}</strong>,</p>'
+                    . '<p style="color:#4b5563;line-height:1.7;"><strong>{{company_name}}</strong> has created a client portal account for you on {{app_name}}. You can now view your projects, invoices, and documents online.</p>'
+                    . '<div style="background:linear-gradient(135deg,#f0f9ff,#eff6ff);border:1px solid #bfdbfe;border-radius:12px;padding:24px;margin:24px 0;">'
+                    . '<h3 style="color:#1e40af;margin:0 0 16px;font-size:16px;">Your Login Credentials</h3>'
+                    . '<table style="width:100%;border-collapse:collapse;">'
+                    . '<tr><td style="padding:8px 0;color:#6b7280;width:100px;">Email:</td><td style="padding:8px 0;color:#1f2937;font-weight:600;">{{email}}</td></tr>'
+                    . '<tr><td style="padding:8px 0;color:#6b7280;">Password:</td><td style="padding:8px 0;color:#1f2937;font-weight:600;font-family:monospace;letter-spacing:1px;">{{password}}</td></tr>'
+                    . '</table>'
+                    . '</div>'
+                    . '<div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin:0 0 24px;">'
+                    . '<p style="color:#92400e;margin:0;font-size:13px;">⚠️ <strong>Important:</strong> You will be asked to change your password when you first log in. Please keep these credentials safe until then.</p>'
+                    . '</div>'
+                    . '<p style="text-align:center;margin:24px 0;"><a href="{{login_url}}" style="display:inline-block;padding:14px 40px;background:linear-gradient(135deg,#3b82f6,#4f46e5);color:#ffffff;text-decoration:none;border-radius:8px;font-weight:600;font-size:16px;">Access Client Portal →</a></p>'
+                    . '<p style="color:#9ca3af;font-size:12px;text-align:center;">If you did not expect this email, please contact your project manager.</p>',
+                'available_variables' => ['client_name', 'user_name', 'email', 'password', 'company_name', 'app_name', 'login_url'],
+            ],
         ];
 
         foreach ($templates as $templateData) {

@@ -187,6 +187,48 @@ class CompanyRegistration extends BaseRegister
             $user->assignRole($role);
         }
 
+        // Send welcome email to the new company admin
+        try {
+            $emailService = app(\App\Services\EmailService::class);
+            $emailService->send('welcome', $user, [
+                'login_url' => url('/app/login'),
+            ], $company->id, sync: true);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to send registration welcome email: ' . $e->getMessage());
+        }
+
+        // Notify the InfraHub team about the new signup
+        try {
+            \Illuminate\Support\Facades\Mail::raw(
+                implode("\n", [
+                    '🏗️ NEW COMPANY SIGNUP (Self-Registration)',
+                    str_repeat('─', 40),
+                    '',
+                    'Company: ' . $data['company_name'],
+                    'Industry: ' . $data['industry'],
+                    'Team Size: ' . ($data['team_size'] ?? 'N/A'),
+                    'Country: ' . $data['company_country'],
+                    '',
+                    'Admin: ' . $data['name'],
+                    'Email: ' . $data['email'],
+                    'Phone: ' . ($data['phone'] ?? 'N/A'),
+                    'Title: ' . ($data['job_title'] ?? 'N/A'),
+                    '',
+                    str_repeat('─', 40),
+                    'Trial started: 14 days',
+                    config('app.url') . '/admin/companies',
+                ]),
+                function ($message) use ($data) {
+                    $message->to('info@infrahub.click')
+                        ->cc('appcellon@gmail.com')
+                        ->replyTo($data['email'], $data['name'])
+                        ->subject('🏗️ New Company Signup — ' . $data['company_name']);
+                }
+            );
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Failed to send signup notification: ' . $e->getMessage());
+        }
+
         auth()->login($user);
 
         session()->regenerate();

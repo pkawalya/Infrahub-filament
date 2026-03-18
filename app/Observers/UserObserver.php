@@ -32,7 +32,11 @@ class UserObserver
         // Mark user to change password on first login
         $user->updateQuietly(['must_change_password' => true]);
 
-        $loginUrl = url('/app/login');
+        $loginUrl = match ($user->user_type) {
+            'super_admin' => url('/admin/login'),
+            'client' => url('/client/login'),
+            default => url('/app/login'),
+        };
 
         try {
             $emailService = app(EmailService::class);

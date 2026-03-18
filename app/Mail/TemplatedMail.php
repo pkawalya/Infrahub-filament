@@ -4,7 +4,6 @@ namespace App\Mail;
 
 use App\Models\EmailTemplate;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -19,7 +18,7 @@ use Illuminate\Queue\SerializesModels;
  *       'project_name' => $project->name,
  *   ]));
  */
-class TemplatedMail extends Mailable implements ShouldQueue
+class TemplatedMail extends Mailable
 {
     use Queueable, SerializesModels;
 

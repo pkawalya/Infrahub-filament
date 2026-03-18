@@ -70,9 +70,10 @@ class ViewClient extends ViewRecord
                     $loginUrl = config('app.url') . '/client/login';
 
                     try {
-                        app(EmailService::class)->sendTo(
-                            $client->email,
+                        // Send welcome email synchronously (contains credentials)
+                        app(EmailService::class)->send(
                             'client-welcome',
+                            $user,
                             [
                                 'client_name' => $client->name,
                                 'company_name' => auth()->user()->company?->name ?? config('app.name'),
@@ -81,7 +82,15 @@ class ViewClient extends ViewRecord
                                 'login_url' => $loginUrl,
                                 'user_name' => $client->name,
                             ],
-                            $client->company_id
+                            $client->company_id,
+                            sync: true,
+                        );
+
+                        // Also send invitation email with accept link
+                        app(\App\Services\InvitationService::class)->sendInvitation(
+                            $user,
+                            plainPassword: $data['password'],
+                            invitedBy: auth()->id(),
                         );
 
                         Notification::make()
