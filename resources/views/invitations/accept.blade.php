@@ -100,6 +100,69 @@
             border-bottom: none;
         }
 
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            color: #1f2937;
+        }
+
+        .form-group input:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .form-group .helper-text {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        .error-text {
+            font-size: 13px;
+            color: #dc2626;
+            margin-top: 4px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .section-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
         .btn-accept {
             display: block;
             width: 100%;
@@ -114,6 +177,7 @@
             text-align: center;
             text-decoration: none;
             transition: all 0.2s ease;
+            font-family: inherit;
         }
 
         .btn-accept:hover {
@@ -151,8 +215,16 @@
             <p class="welcome-text">
                 Hello <strong>{{ $user->name }}</strong>,<br><br>
                 You've been invited to join <strong>{{ $company?->name ?? config('app.name') }}</strong>.
-                Click the button below to accept your invitation and get started.
+                Set your password below to activate your account.
             </p>
+
+            @if($errors->any())
+                <div class="alert alert-error">
+                    @foreach($errors->all() as $error)
+                        <p>{{ $error }}</p>
+                    @endforeach
+                </div>
+            @endif
 
             <div class="info-box">
                 <div class="info-row">
@@ -186,8 +258,27 @@
 
             <form method="POST" action="{{ url('/invitation/accept/' . $invitation->token) }}">
                 @csrf
+
+                <p class="section-label">🔐 Set Your Password</p>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Choose a strong password"
+                        required>
+                    <p class="helper-text">Min 8 characters, with uppercase, lowercase, and a number.</p>
+                    @error('password')
+                        <p class="error-text">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div class="form-group">
+                    <label for="password_confirmation">Confirm Password</label>
+                    <input type="password" id="password_confirmation" name="password_confirmation"
+                        placeholder="Re-enter your password" required>
+                </div>
+
                 <button type="submit" class="btn-accept">
-                    ✅ Accept Invitation & Continue
+                    ✅ Set Password & Activate Account
                 </button>
             </form>
         </div>

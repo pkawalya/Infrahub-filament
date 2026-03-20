@@ -19,6 +19,17 @@ class ClientInvoiceResource extends Resource
     protected static ?string $modelLabel = 'Invoice';
     protected static ?int $navigationSort = 3;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        $settings = auth()->user()?->company?->settings['client_portal'] ?? [];
+        return $settings['show_invoices'] ?? true;
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::shouldRegisterNavigation();
+    }
+
     public static function canCreate(): bool
     {
         return false;
@@ -34,8 +45,19 @@ class ClientInvoiceResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        $user = auth()->user();
+
         return parent::getEloquentQuery()
-            ->where('company_id', auth()->user()?->company_id)
+            ->where(function (Builder $query) use ($user) {
+                // Invoices from projects where user is the assigned client
+                $query->whereHas('cdeProject', function (Builder $q) use ($user) {
+                    $q->whereHas('client', fn(Builder $c) => $c->where('user_id', $user?->id));
+                })
+                    // OR invoices from projects where user is an invited member
+                    ->orWhereHas('cdeProject', function (Builder $q) use ($user) {
+                    $q->whereHas('members', fn(Builder $m) => $m->where('users.id', $user?->id));
+                });
+            })
             ->whereIn('status', ['sent', 'partially_paid', 'paid', 'overdue']);
     }
 
@@ -44,7 +66,7 @@ class ClientInvoiceResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('invoice_number')->searchable()->weight('bold')->color('primary'),
-                Tables\Columns\TextColumn::make('project.name')->label('Project')->limit(20),
+                Tables\Columns\TextColumn::make('cdeProject.name')->label('Project')->limit(20),
                 Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $s) => match ($s) {
                     'sent' => 'info', 'partially_paid' => 'warning', 'paid' => 'success', 'overdue' => 'danger', default => 'gray'
                 }),

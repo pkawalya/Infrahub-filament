@@ -18,6 +18,17 @@ class ClientDocumentResource extends Resource
     protected static ?string $modelLabel = 'Document';
     protected static ?int $navigationSort = 2;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        $settings = auth()->user()?->company?->settings['client_portal'] ?? [];
+        return $settings['show_documents'] ?? true;
+    }
+
+    public static function canAccess(): bool
+    {
+        return static::shouldRegisterNavigation();
+    }
+
     public static function canCreate(): bool
     {
         return false;
@@ -33,9 +44,18 @@ class ClientDocumentResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        $user = auth()->user();
+        $settings = $user?->company?->settings['client_portal'] ?? [];
+        $allowedStatuses = $settings['allowed_document_statuses'] ?? ['approved'];
+
         return parent::getEloquentQuery()
-            ->whereHas('project', fn($q) => $q->where('company_id', auth()->user()?->company_id))
-            ->where('status', 'approved');
+            ->whereHas('project', function (Builder $q) use ($user) {
+                $q->where(function (Builder $sub) use ($user) {
+                    $sub->whereHas('client', fn(Builder $c) => $c->where('user_id', $user?->id))
+                        ->orWhereHas('members', fn(Builder $m) => $m->where('users.id', $user?->id));
+                });
+            })
+            ->whereIn('status', $allowedStatuses);
     }
 
     public static function table(Table $table): Table

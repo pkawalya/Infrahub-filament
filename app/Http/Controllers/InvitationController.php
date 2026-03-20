@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\UserInvitation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
 
 class InvitationController extends Controller
 {
@@ -26,19 +28,31 @@ class InvitationController extends Controller
     }
 
     /**
-     * Process the invitation acceptance.
+     * Process the invitation acceptance — user sets their own password.
      */
     public function confirm(Request $request, string $token)
     {
         $invitation = UserInvitation::findByToken($token);
 
         if (!$invitation) {
-            return redirect()->route('login')
+            return redirect('/app/login')
                 ->with('error', 'This invitation link is invalid or has expired.');
         }
 
-        // Accept the invitation
+        // Validate the password
+        $request->validate([
+            'password' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+        ]);
+
+        // Accept the invitation (marks email as verified)
         $invitation->accept();
+
+        // Set the user's password and clear must_change_password
+        $invitation->user->update([
+            'password' => Hash::make($request->password),
+            'must_change_password' => false,
+            'password_changed_at' => now(),
+        ]);
 
         // Determine where to redirect based on user type
         $loginUrl = match ($invitation->user->user_type) {
@@ -48,6 +62,6 @@ class InvitationController extends Controller
         };
 
         return redirect($loginUrl)
-            ->with('status', 'Your invitation has been accepted! Please log in with your credentials.');
+            ->with('status', 'Your password has been set! Please log in to get started.');
     }
 }

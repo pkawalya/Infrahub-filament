@@ -20,6 +20,7 @@ Route::post('/invitation/accept/{token}', [InvitationController::class, 'confirm
 // Project Invitation Acceptance
 Route::get('/project-invite/{token}', [ProjectInvitationController::class, 'accept'])->name('project-invitation.accept');
 Route::post('/project-invite/{token}', [ProjectInvitationController::class, 'confirm'])->middleware('throttle:5,1')->name('project-invitation.confirm');
+Route::post('/project-invite/{token}/register', [ProjectInvitationController::class, 'register'])->middleware('throttle:5,1')->name('project-invitation.register');
 
 Route::get('/offline', function () {
     return response()->file(public_path('offline.html'));

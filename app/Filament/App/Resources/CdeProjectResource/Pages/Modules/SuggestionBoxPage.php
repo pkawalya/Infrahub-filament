@@ -132,17 +132,13 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
                         ->maxLength(2000)
                         ->helperText('Be specific about what you\'d like to see changed and why.'),
 
-                    Forms\Components\Toggle::make('is_anonymous')
-                        ->label('Submit anonymously')
-                        ->helperText('When enabled, your name will not be shown to anyone — including project managers.')
-                        ->default(true),
                 ])
                 ->action(function (array $data) use ($pid, $cid) {
                     ProjectSuggestion::create([
                         'company_id' => $cid,
                         'cde_project_id' => $pid,
-                        'author_id' => auth()->id(),
-                        'is_anonymous' => $data['is_anonymous'],
+                        'author_id' => null,  // Always anonymous
+                        'is_anonymous' => true,
                         'category' => $data['category'],
                         'priority' => $data['priority'],
                         'content' => $data['content'],
@@ -152,7 +148,7 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
                     Notification::make()
                         ->success()
                         ->title('Suggestion submitted!')
-                        ->body($data['is_anonymous'] ? 'Your anonymous suggestion has been recorded.' : 'Your suggestion has been submitted.')
+                        ->body('Your anonymous suggestion has been recorded. Your identity is never stored.')
                         ->send();
                 })
                 ->modalSubmitActionLabel('Submit Suggestion'),

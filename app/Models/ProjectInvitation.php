@@ -31,6 +31,7 @@ class ProjectInvitation extends Model
         'engineer' => 'Engineer',
         'supervisor' => 'Site Supervisor',
         'viewer' => 'Viewer (Read Only)',
+        'client' => 'Client (Project Visibility)',
     ];
 
     public static array $statuses = [

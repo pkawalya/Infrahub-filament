@@ -145,6 +145,10 @@ class AppPanelProvider extends PanelProvider
                     </script>
                 '),
             )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::BODY_END,
+                fn() => \Illuminate\Support\Facades\Blade::render('@livewire(\'floating-suggestion-box\')'),
+            )
             ->viteTheme('resources/css/filament/app/theme.css');
     }
 }

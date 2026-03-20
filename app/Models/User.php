@@ -10,6 +10,7 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -70,6 +71,17 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    /**
+     * All CDE projects this user is a member of (across any company).
+     * Enables: $user->cdeProjects, eager-loading, and cross-company project queries.
+     */
+    public function cdeProjects(): BelongsToMany
+    {
+        return $this->belongsToMany(CdeProject::class, 'cde_project_members')
+            ->withPivot('role', 'invited_by')
+            ->withTimestamps();
     }
 
     // ─── User Type Checks ────────────────────────────────────
