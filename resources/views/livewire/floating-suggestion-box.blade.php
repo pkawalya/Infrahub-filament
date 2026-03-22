@@ -2,8 +2,8 @@
     class="floating-suggestion-box">
 
     {{-- Floating Trigger Button --}}
-    <button wire:click="toggle" class="suggestion-fab" :class="{ 'pulse-ring': animatePulse }"
-        title="Anonymous Suggestion Box" aria-label="Open suggestion box">
+    <button wire:click="toggle" class="suggestion-fab {{ $isOpen ? 'is-open' : 'is-closed' }}"
+        :class="{ 'pulse-ring': animatePulse }" title="Anonymous Suggestion Box" aria-label="Open suggestion box">
         <div class="fab-content">
             @if(!$isOpen)
                 <svg xmlns="http://www.w3.org/2000/svg" class="fab-icon" viewBox="0 0 24 24" fill="none"
@@ -20,7 +20,6 @@
                     <line x1="18" y1="6" x2="6" y2="18" />
                     <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
-                <span class="fab-text">Close</span>
             @endif
         </div>
     </button>
@@ -151,8 +150,6 @@
         /* ── FAB Button ─────────────────────────────────── */
         .suggestion-fab {
             height: 56px;
-            padding: 0 20px;
-            border-radius: 28px;
             background: linear-gradient(135deg, #f59e0b, #d97706);
             border: none;
             cursor: pointer;
@@ -163,6 +160,17 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             color: #fff;
+        }
+
+        .suggestion-fab.is-closed {
+            padding: 0 20px;
+            border-radius: 28px;
+        }
+
+        .suggestion-fab.is-open {
+            width: 56px;
+            padding: 0;
+            border-radius: 50%;
         }
 
         .suggestion-fab:hover {
