@@ -120,7 +120,8 @@
 
                         {{-- Submit --}}
                         <button type="submit" class="btn-submit" wire:loading.attr="disabled" wire:target="submit">
-                            <span wire:loading.remove wire:target="submit">
+                            <span wire:loading.remove wire:target="submit"
+                                style="display: flex; align-items: center; gap: 8px; justify-content: center;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
                                     stroke="currentColor" stroke-width="2">
                                     <line x1="22" y1="2" x2="11" y2="13" />
@@ -128,7 +129,8 @@
                                 </svg>
                                 Send Anonymously
                             </span>
-                            <span wire:loading wire:target="submit">
+                            <span wire:loading wire:target="submit"
+                                style="display: flex; align-items: center; justify-content: center;">
                                 Sending...
                             </span>
                         </button>
