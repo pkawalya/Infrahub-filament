@@ -98,11 +98,11 @@ class EquipmentPage extends BaseModulePage implements HasTable
                 ->form([
                     Forms\Components\Select::make('asset_id')
                         ->label('Equipment')
-                        ->relationship('asset', 'name', fn($q) => $q->where('company_id', $cid))
+                        ->options(fn() => \App\Models\Asset::where('company_id', $cid)->pluck('name', 'id'))
                         ->searchable()->preload()->required(),
                     Forms\Components\Select::make('operator_id')
                         ->label('Operator')
-                        ->relationship('operator', 'name', fn($q) => $q->where('company_id', $cid))
+                        ->options(fn() => \App\Models\User::where('company_id', $cid)->pluck('name', 'id'))
                         ->searchable()->preload(),
                     Forms\Components\DatePicker::make('start_date')->default(now())->required(),
                     Forms\Components\DatePicker::make('end_date'),
@@ -126,7 +126,7 @@ class EquipmentPage extends BaseModulePage implements HasTable
                 ->form([
                     Forms\Components\Select::make('asset_id')
                         ->label('Equipment')
-                        ->relationship('asset', 'name', fn($q) => $q->where('company_id', $cid))
+                        ->options(fn() => \App\Models\Asset::where('company_id', $cid)->pluck('name', 'id'))
                         ->searchable()->preload()->required(),
                     Forms\Components\DatePicker::make('log_date')->default(now())->required(),
                     Forms\Components\TextInput::make('liters')->numeric()->suffix('L')->required(),
