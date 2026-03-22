@@ -4,22 +4,25 @@
     {{-- Floating Trigger Button --}}
     <button wire:click="toggle" class="suggestion-fab" :class="{ 'pulse-ring': animatePulse }"
         title="Anonymous Suggestion Box" aria-label="Open suggestion box">
-        <template x-if="!@js($isOpen)">
-            <svg xmlns="http://www.w3.org/2000/svg" class="fab-icon" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path
-                    d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
-                <line x1="9" y1="21" x2="15" y2="21" />
-                <line x1="10" y1="17" x2="14" y2="17" />
-            </svg>
-        </template>
-        <template x-if="@js($isOpen)">
-            <svg xmlns="http://www.w3.org/2000/svg" class="fab-icon" viewBox="0 0 24 24" fill="none"
-                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-        </template>
+        <div class="fab-content">
+            @if(!$isOpen)
+                <svg xmlns="http://www.w3.org/2000/svg" class="fab-icon" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path
+                        d="M12 2a7 7 0 0 1 7 7c0 2.38-1.19 4.47-3 5.74V17a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-2.26C6.19 13.47 5 11.38 5 9a7 7 0 0 1 7-7z" />
+                    <line x1="9" y1="21" x2="15" y2="21" />
+                    <line x1="10" y1="17" x2="14" y2="17" />
+                </svg>
+                <span class="fab-text">Suggestion Box</span>
+            @else
+                <svg xmlns="http://www.w3.org/2000/svg" class="fab-icon" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+                <span class="fab-text">Close</span>
+            @endif
+        </div>
     </button>
 
     {{-- Chat Panel --}}
@@ -140,16 +143,16 @@
         .floating-suggestion-box {
             position: fixed;
             bottom: 24px;
-            right: 24px;
+            left: 24px;
             z-index: 9999;
             font-family: 'Inter', system-ui, sans-serif;
         }
 
         /* ── FAB Button ─────────────────────────────────── */
         .suggestion-fab {
-            width: 56px;
             height: 56px;
-            border-radius: 50%;
+            padding: 0 20px;
+            border-radius: 28px;
             background: linear-gradient(135deg, #f59e0b, #d97706);
             border: none;
             cursor: pointer;
@@ -172,15 +175,27 @@
         }
 
         .fab-icon {
-            width: 26px;
-            height: 26px;
+            width: 24px;
+            height: 24px;
+        }
+
+        .fab-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fab-text {
+            font-size: 15px;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         .suggestion-fab.pulse-ring::after {
             content: '';
             position: absolute;
             inset: -4px;
-            border-radius: 50%;
+            border-radius: 32px;
             border: 2px solid rgba(245, 158, 11, 0.6);
             animation: pulse-ring 2s ease-out infinite;
         }
@@ -201,7 +216,7 @@
         .suggestion-panel {
             position: absolute;
             bottom: 72px;
-            right: 0;
+            left: 0;
             width: 380px;
             max-height: 560px;
             background: #ffffff;
@@ -484,13 +499,13 @@
         @media (max-width: 480px) {
             .suggestion-panel {
                 width: calc(100vw - 32px);
-                right: -8px;
+                left: -8px;
                 max-height: 80vh;
             }
 
             .floating-suggestion-box {
                 bottom: 16px;
-                right: 16px;
+                left: 16px;
             }
         }
     </style>
