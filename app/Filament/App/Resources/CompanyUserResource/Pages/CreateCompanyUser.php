@@ -41,7 +41,7 @@ class CreateCompanyUser extends CreateRecord
         }
 
         // Capture the plain password before hashing
-        $this->capturedPassword = $data['password'] ?? null;
+        $this->capturedPassword = $this->data['password'] ?? null;
 
         // Force password change on first login
         $data['must_change_password'] = true;

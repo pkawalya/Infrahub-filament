@@ -15,7 +15,7 @@ class CreateUser extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         // Capture plain password before hashing
-        $this->capturedPassword = $data['password'] ?? null;
+        $this->capturedPassword = $this->data['password'] ?? null;
 
         // Force password change on first login
         $data['must_change_password'] = true;
