@@ -39,10 +39,13 @@ class CompanyRoleResource extends Resource
         $query = parent::getEloquentQuery();
 
         if ($user && $user->isCompanyAdmin() && !$user->isSuperAdmin()) {
-            // Company admins see: their company's roles + global roles (for reference)
+            // Company admins see: their company's roles + global roles (except super_admin)
             $query->where(function ($q) use ($user) {
                 $q->where('company_id', $user->company_id)
-                    ->orWhereNull('company_id');
+                    ->orWhere(function ($q2) {
+                        $q2->whereNull('company_id')
+                            ->whereNotIn('name', ['super_admin']);
+                    });
             });
         }
 

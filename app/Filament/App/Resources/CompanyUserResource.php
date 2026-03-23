@@ -89,8 +89,13 @@ class CompanyUserResource extends Resource
                     ->relationship('roles', 'name', function (Builder $query) {
                         $user = auth()->user();
                         if ($user && $user->isCompanyAdmin() && !$user->isSuperAdmin()) {
-                            $query->where('company_id', $user->company_id)
-                                ->orWhereNull('company_id');
+                            $query->where(function ($q) use ($user) {
+                                $q->where('company_id', $user->company_id)
+                                    ->orWhere(function ($q2) {
+                                        $q2->whereNull('company_id')
+                                            ->whereNotIn('name', ['super_admin']);
+                                    });
+                            });
                         }
                     })
                     ->multiple()
