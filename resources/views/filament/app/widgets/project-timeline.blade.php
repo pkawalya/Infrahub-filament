@@ -43,7 +43,7 @@
                     <p>No projects with scheduled dates yet.</p>
                 </div>
             @else
-                <div class="timeline-container overflow-x-auto relative isolate">
+                <div class="timeline-container relative" style="overflow-x: auto; overflow-y: visible;">
                     @php
                         $monthCount = count($months);
                         $minTotalWidth = max(700, $monthCount * 40);
@@ -62,8 +62,7 @@
                     </div>
 
                     {{-- Timeline Body --}}
-                    <div class="relative"
-                        style="min-width: {{ $minTotalWidth }}px; min-height: {{ count($projects) * 72 + 20 }}px;">
+                    <div class="relative" style="overflow: visible; min-width: {{ $minTotalWidth }}px; min-height: {{ count($projects) * 72 + 20 }}px;">
 
                         {{-- Grid lines --}}
                         <div class="absolute inset-0 flex pointer-events-none">
@@ -181,9 +180,9 @@
                                         $mTotal = count($project['milestones']);
                                         $mDone = collect($project['milestones'])->where('status', 'completed')->count();
                                     @endphp
-                                    <div class="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50 pointer-events-none">
+                                    <div class="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 w-64 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[9999] pointer-events-none">
                                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-3 text-left">
-                                            <div class="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-gray-800 border-l border-t border-gray-200 dark:border-gray-700 rotate-45"></div>
+                                            <div class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-gray-800 border-r border-b border-gray-200 dark:border-gray-700 rotate-45"></div>
                                             <div class="text-sm font-bold text-gray-900 dark:text-white mb-2">{{ $project['name'] }}</div>
                                             <div class="space-y-1.5 text-[11px]">
                                                 <div class="flex justify-between"><span class="text-gray-500">Status</span><span class="font-semibold" style="color: {{ $theme['badge_text'] }};">{{ $project['statusLabel'] }}</span></div>
