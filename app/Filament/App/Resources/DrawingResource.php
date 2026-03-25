@@ -28,14 +28,13 @@ class DrawingResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        $cid = auth()->user()?->company_id;
         return $schema->schema([
             Section::make('Drawing Information')->schema([
                 Forms\Components\TextInput::make('drawing_number')->required()->maxLength(50)
-                    ->unique(ignoreRecord: true, modifyRuleUsing: fn($rule) => $rule->where('company_id', $cid)),
+                    ->unique(ignoreRecord: true, modifyRuleUsing: fn($rule) => $rule->where('company_id', auth()->user()?->company_id)),
                 Forms\Components\TextInput::make('title')->required()->maxLength(255)->columnSpan(2),
                 Forms\Components\Select::make('cde_project_id')->label('Project')
-                    ->relationship('project', 'name', fn($q) => $q->where('company_id', $cid))
+                    ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload()->required(),
                 Forms\Components\Select::make('discipline')->options(Drawing::$disciplines)->default('architectural')->required(),
                 Forms\Components\Select::make('drawing_type')->options(Drawing::$drawingTypes)->default('plan')->required(),
@@ -60,13 +59,13 @@ class DrawingResource extends Resource
 
             Section::make('Responsibility')->schema([
                 Forms\Components\Select::make('drawn_by')->label('Drawn By')
-                    ->relationship('drawnByUser', 'name', fn($q) => $q->where('company_id', $cid))->searchable()->preload(),
+                    ->relationship('drawnByUser', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))->searchable()->preload(),
                 Forms\Components\DatePicker::make('drawn_date'),
                 Forms\Components\Select::make('checked_by')->label('Checked By')
-                    ->relationship('checkedByUser', 'name', fn($q) => $q->where('company_id', $cid))->searchable()->preload(),
+                    ->relationship('checkedByUser', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))->searchable()->preload(),
                 Forms\Components\DatePicker::make('checked_date'),
                 Forms\Components\Select::make('approved_by')->label('Approved By')
-                    ->relationship('approvedByUser', 'name', fn($q) => $q->where('company_id', $cid))->searchable()->preload(),
+                    ->relationship('approvedByUser', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))->searchable()->preload(),
                 Forms\Components\DatePicker::make('approved_date'),
             ])->columns(3)->collapsed(),
 
@@ -76,7 +75,7 @@ class DrawingResource extends Resource
                 Forms\Components\Textarea::make('description')->rows(3),
             ])->collapsed(),
 
-            Forms\Components\Hidden::make('company_id')->default(fn() => $cid),
+            Forms\Components\Hidden::make('company_id')->default(fn() => auth()->user()?->company_id),
         ]);
     }
 

@@ -30,21 +30,20 @@ class PaymentCertificateResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        $cid = auth()->user()?->company_id;
         $cf = fn() => CurrencyHelper::prefix();
         $cs = fn() => CurrencyHelper::suffix();
 
         return $schema->schema([
             Section::make('Certificate Details')->schema([
                 Forms\Components\TextInput::make('certificate_number')->required()->unique(ignoreRecord: true)
-                    ->default(fn() => 'IPC-' . str_pad(PaymentCertificate::where('company_id', $cid)->count() + 1, 3, '0', STR_PAD_LEFT)),
+                    ->default(fn() => 'IPC-' . str_pad(PaymentCertificate::where('company_id', auth()->user()?->company_id)->count() + 1, 3, '0', STR_PAD_LEFT)),
                 Forms\Components\Select::make('type')->options(PaymentCertificate::$types)->default('interim')->required(),
                 Forms\Components\Select::make('status')->options(PaymentCertificate::$statuses)->default('draft')->required(),
                 Forms\Components\Select::make('cde_project_id')->label('Project')
-                    ->relationship('project', 'name', fn($q) => $q->where('company_id', $cid))
+                    ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload()->required(),
                 Forms\Components\Select::make('contract_id')->label('Contract')
-                    ->relationship('contract', 'title', fn($q) => $q->where('company_id', $cid))
+                    ->relationship('contract', 'title', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload(),
                 Forms\Components\DatePicker::make('period_from')->required(),
                 Forms\Components\DatePicker::make('period_to')->required(),
@@ -84,19 +83,19 @@ class PaymentCertificateResource extends Resource
 
             Section::make('Workflow & Approvals')->schema([
                 Forms\Components\Select::make('prepared_by')
-                    ->relationship('preparedByUser', 'name', fn($q) => $q->where('company_id', $cid))->searchable()->preload()
+                    ->relationship('preparedByUser', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))->searchable()->preload()
                     ->default(fn() => auth()->id()),
                 Forms\Components\Select::make('checked_by')
-                    ->relationship('checkedByUser', 'name', fn($q) => $q->where('company_id', $cid))->searchable()->preload(),
+                    ->relationship('checkedByUser', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))->searchable()->preload(),
                 Forms\Components\Select::make('certified_by')
-                    ->relationship('certifiedByUser', 'name', fn($q) => $q->where('company_id', $cid))->searchable()->preload(),
+                    ->relationship('certifiedByUser', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))->searchable()->preload(),
                 Forms\Components\DatePicker::make('submitted_date'),
                 Forms\Components\DatePicker::make('certified_date'),
                 Forms\Components\DatePicker::make('paid_date'),
                 Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
             ])->columns(3)->collapsed(),
 
-            Forms\Components\Hidden::make('company_id')->default(fn() => $cid),
+            Forms\Components\Hidden::make('company_id')->default(fn() => auth()->user()?->company_id),
         ]);
     }
 
