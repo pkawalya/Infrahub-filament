@@ -31,18 +31,20 @@ class ChangeOrderResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        $cid = auth()->user()?->company_id;
         return $schema->schema([
             Section::make('Change Order Details')->schema([
                 Forms\Components\TextInput::make('reference')
                     ->required()->maxLength(50)->unique(ignoreRecord: true)
-                    ->default(fn() => 'CO-' . str_pad(ChangeOrder::where('company_id', $cid)->count() + 1, 3, '0', STR_PAD_LEFT)),
+                    ->default(fn() => 'CO-' . str_pad(
+                        ChangeOrder::where('company_id', auth()->user()?->company_id)->count() + 1,
+                        3, '0', STR_PAD_LEFT
+                    )),
                 Forms\Components\TextInput::make('title')->required()->maxLength(255)->columnSpan(2),
                 Forms\Components\Select::make('cde_project_id')->label('Project')
-                    ->relationship('project', 'name', fn($q) => $q->where('company_id', $cid))
+                    ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload()->required(),
                 Forms\Components\Select::make('contract_id')->label('Contract')
-                    ->relationship('contract', 'title', fn($q) => $q->where('company_id', $cid))
+                    ->relationship('contract', 'title', fn($q) => $q->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload(),
                 Forms\Components\Select::make('type')->options(ChangeOrder::$types)->default('addition')->required(),
                 Forms\Components\Select::make('priority')->options(ChangeOrder::$priorities)->default('medium')->required(),
@@ -76,9 +78,15 @@ class ChangeOrderResource extends Resource
                 Forms\Components\DatePicker::make('submitted_date'),
                 Forms\Components\DatePicker::make('approved_date'),
                 Forms\Components\DatePicker::make('implementation_date'),
-                Forms\Components\Select::make('submitted_by')->relationship('submitter', 'name', fn($q) => $q->where('company_id', $cid))->searchable()->preload(),
-                Forms\Components\Select::make('reviewed_by')->relationship('reviewer', 'name', fn($q) => $q->where('company_id', $cid))->searchable()->preload(),
-                Forms\Components\Select::make('approved_by')->relationship('approver', 'name', fn($q) => $q->where('company_id', $cid))->searchable()->preload(),
+                Forms\Components\Select::make('submitted_by')
+                    ->relationship('submitter', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->searchable()->preload(),
+                Forms\Components\Select::make('reviewed_by')
+                    ->relationship('reviewer', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->searchable()->preload(),
+                Forms\Components\Select::make('approved_by')
+                    ->relationship('approver', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->searchable()->preload(),
                 Forms\Components\Textarea::make('approval_notes')->rows(2)->columnSpanFull(),
             ])->columns(3)->collapsed(),
 
