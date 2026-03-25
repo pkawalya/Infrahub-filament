@@ -56,7 +56,7 @@ class ForcePasswordChange
             session([$sessionKey => true]);
         }
 
-        return redirect()->to("/{$panel}/change-password");
+        return redirect()->away(url("/{$panel}/change-password"));
     }
 
     /**

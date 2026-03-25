@@ -34,6 +34,14 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
         return $this->record->company_id;
     }
 
+    protected function isManagerOrAdmin(): bool
+    {
+        $user = auth()->user();
+        return $user?->isSuperAdmin()
+            || $this->record->manager_id === $user?->id
+            || $user?->user_type === 'company_admin';
+    }
+
     public function getStats(): array
     {
         $pid = $this->pid();
@@ -158,10 +166,16 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
     public function table(Table $table): Table
     {
         $pid = $this->pid();
-        $user = auth()->user();
-        $isManagerOrAdmin = $user?->isSuperAdmin()
-            || $this->record->manager_id === $user?->id
-            || $user?->user_type === 'company_admin';
+        $isManagerOrAdmin = $this->isManagerOrAdmin();
+
+        // Only admins and project managers can see the submissions table
+        if (!$isManagerOrAdmin) {
+            return $table
+                ->query(ProjectSuggestion::query()->whereRaw('0=1'))
+                ->columns([])
+                ->emptyStateHeading('Table not available')
+                ->emptyStateDescription('Only project managers and administrators can view submitted suggestions.');
+        }
 
         return $table
             ->query(
