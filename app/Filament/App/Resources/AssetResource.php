@@ -51,9 +51,7 @@ class AssetResource extends Resource
                         'fair' => 'warning', 'poor' => 'danger', default => 'gray',
                     })
                     ->placeholder('—'),
-                Infolists\Components\TextEntry::make('client.name')
-                    ->label('Client')
-                    ->placeholder('—'),
+
                 Infolists\Components\TextEntry::make('location')
                     ->icon('heroicon-o-map-pin')
                     ->placeholder('—'),
@@ -108,7 +106,7 @@ class AssetResource extends Resource
                 Forms\Components\TextInput::make('model_number'),
                 Forms\Components\TextInput::make('serial_number'),
                 Forms\Components\TextInput::make('location'),
-                Forms\Components\Select::make('client_id')->relationship('client', 'name')->searchable()->preload(),
+
                 Forms\Components\Select::make('status')->options(Asset::$statuses)->default('active'),
                 Forms\Components\Select::make('condition')
                     ->options(['excellent' => 'Excellent', 'good' => 'Good', 'fair' => 'Fair', 'poor' => 'Poor']),
@@ -128,7 +126,7 @@ class AssetResource extends Resource
                 Tables\Columns\TextColumn::make('asset_id')->label('ID')->searchable()->weight('bold')->color('primary'),
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable()->limit(UIStandards::LIMIT_TITLE),
                 Tables\Columns\TextColumn::make('category')->badge(),
-                Tables\Columns\TextColumn::make('client.name')->label('Client')->limit(UIStandards::LIMIT_NAME),
+
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state) => UIStandards::statusColor($state)),
@@ -138,7 +136,7 @@ class AssetResource extends Resource
             ->defaultSort('name')
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(Asset::$statuses),
-                Tables\Filters\SelectFilter::make('client_id')->relationship('client', 'name')->label('Client'),
+
             ])
             ->actions([Actions\ViewAction::make(), Actions\EditAction::make()])
             ->bulkActions([Actions\DeleteBulkAction::make()]);
