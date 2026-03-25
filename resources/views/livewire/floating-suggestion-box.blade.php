@@ -72,7 +72,7 @@
                         Your identity is never recorded
                     </div>
 
-                    <form wire:submit="submit" class="suggestion-form">
+                    <form wire:submit.prevent="submit" class="suggestion-form">
                         {{-- Category & Priority --}}
                         <div class="form-row">
                             <div class="form-field">

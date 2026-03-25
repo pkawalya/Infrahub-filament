@@ -13,6 +13,7 @@ class OfflineForms extends Page
     protected static ?int $navigationSort = 99;
     protected static ?string $title = 'Offline Data Collection';
     protected static ?string $slug = 'offline-forms';
+    protected static bool $navigationHidden = true;
 
     public function getSubheading(): ?string
     {
