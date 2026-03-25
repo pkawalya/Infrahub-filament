@@ -41,12 +41,10 @@ class ChangeOrderResource extends Resource
                     )),
                 Forms\Components\TextInput::make('title')->required()->maxLength(255)->columnSpan(2),
                 Forms\Components\Select::make('cde_project_id')->label('Project')
-                    ->relationship('project', 'name')
-                    ->modifyQueryUsing(fn($q) => $q?->where('company_id', auth()->user()?->company_id))
+                    ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload()->required(),
                 Forms\Components\Select::make('contract_id')->label('Contract')
-                    ->relationship('contract', 'title')
-                    ->modifyQueryUsing(fn($q) => $q?->where('company_id', auth()->user()?->company_id))
+                    ->relationship('contract', 'title', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload(),
                 Forms\Components\Select::make('type')->options(ChangeOrder::$types)->default('addition')->required(),
                 Forms\Components\Select::make('priority')->options(ChangeOrder::$priorities)->default('medium')->required(),
@@ -81,16 +79,13 @@ class ChangeOrderResource extends Resource
                 Forms\Components\DatePicker::make('approved_date'),
                 Forms\Components\DatePicker::make('implementation_date'),
                 Forms\Components\Select::make('submitted_by')
-                    ->relationship('submitter', 'name')
-                    ->modifyQueryUsing(fn($q) => $q?->where('company_id', auth()->user()?->company_id))
+                    ->relationship('submitter', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload(),
                 Forms\Components\Select::make('reviewed_by')
-                    ->relationship('reviewer', 'name')
-                    ->modifyQueryUsing(fn($q) => $q?->where('company_id', auth()->user()?->company_id))
+                    ->relationship('reviewer', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload(),
                 Forms\Components\Select::make('approved_by')
-                    ->relationship('approver', 'name')
-                    ->modifyQueryUsing(fn($q) => $q?->where('company_id', auth()->user()?->company_id))
+                    ->relationship('approver', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload(),
                 Forms\Components\Textarea::make('approval_notes')->rows(2)->columnSpanFull(),
             ])->columns(3)->collapsed(),
