@@ -1,4 +1,4 @@
-<div x-data="{ animatePulse: true }" x-init="setTimeout(() => animatePulse = false, 5000)"
+<div x-data="{ animatePulse: true, minimized: false }" x-init="setTimeout(() => animatePulse = false, 5000)"
     class="floating-suggestion-box">
 
     {{-- Floating Trigger Button --}}
@@ -31,25 +31,37 @@
             x-transition:leave-start="panel-leave-start" x-transition:leave-end="panel-leave-end">
 
             {{-- Header --}}
-            <div class="suggestion-panel-header">
+            <div class="suggestion-panel-header" @click.self="minimized = !minimized" style="cursor: pointer;" :title="minimized ? 'Click to expand' : ''">
                 <div class="header-left">
                     <div class="header-icon">💡</div>
                     <div>
                         <h3 class="header-title">Suggestion Box</h3>
-                        <p class="header-sub">100% Anonymous • Your identity is never stored</p>
+                        <p class="header-sub" x-show="!minimized">100% Anonymous • Your identity is never stored</p>
+                        <p class="header-sub" x-show="minimized" style="opacity:0.7;">Click to expand</p>
                     </div>
                 </div>
-                <button wire:click="close" class="header-close" aria-label="Close">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                </button>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    {{-- Minimize / Restore --}}
+                    <button @click.stop="minimized = !minimized" class="header-close" :aria-label="minimized ? 'Restore' : 'Minimize'" :title="minimized ? 'Restore' : 'Minimize'">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                            :style="minimized ? 'transform:rotate(180deg);transition:transform 0.25s;' : 'transform:rotate(0deg);transition:transform 0.25s;'">
+                            <polyline points="18 15 12 9 6 15" />
+                        </svg>
+                    </button>
+                    {{-- Close --}}
+                    <button wire:click="close" @click.stop class="header-close" aria-label="Close">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                    </button>
+                </div>
             </div>
 
             {{-- Body --}}
-            <div class="suggestion-panel-body">
+            <div class="suggestion-panel-body" x-show="!minimized" x-transition:enter="body-fade-enter" x-transition:enter-start="body-fade-start" x-transition:enter-end="body-fade-end" x-transition:leave="body-fade-enter" x-transition:leave-start="body-fade-end" x-transition:leave-end="body-fade-start">
                 @if($submitted)
                     {{-- Success State --}}
                     <div class="success-state">
@@ -227,15 +239,22 @@
             background: #ffffff;
             border-radius: 16px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
-            overflow: hidden;
             display: flex;
             flex-direction: column;
+            transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
         }
 
         .dark .suggestion-panel {
             background: #1e293b;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
         }
+
+        /* Body collapse transitions */
+        .body-fade-enter { transition: opacity 0.2s ease, transform 0.2s ease; }
+        .body-fade-start { opacity: 0; transform: translateY(-6px); }
+        .body-fade-end   { opacity: 1; transform: translateY(0); }
+
 
         .panel-enter {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
