@@ -11,10 +11,13 @@
  * - Background Sync for offline form submissions via IndexedDB
  */
 
-const CACHE_VERSION = 'infrahub-v1.0.0';
-const STATIC_CACHE = `${CACHE_VERSION}-static`;
+// CACHE_VERSION is injected at deploy-time or falls back to a timestamp.
+// To manually bust the cache, update this value or re-deploy.
+// Production: replace this with a CI/CD step that injects the git SHA or app version.
+const CACHE_VERSION = self.__BUILD_VERSION__ || 'infrahub-v1.0.0-' + Math.floor(Date.now() / (1000 * 60 * 60 * 24));
+const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-pages`;
-const API_CACHE = `${CACHE_VERSION}-api`;
+const API_CACHE     = `${CACHE_VERSION}-api`;
 
 // Core app shell - cached on install
 const APP_SHELL = [

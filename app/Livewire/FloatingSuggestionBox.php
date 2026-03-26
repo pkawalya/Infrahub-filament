@@ -28,8 +28,18 @@ class FloatingSuggestionBox extends Component
 
     public function submit(): void
     {
+        // Guard: user must be logged in
+        if (!auth()->check()) {
+            \Filament\Notifications\Notification::make()
+                ->danger()
+                ->title('Please log in first')
+                ->body('You must be logged in to submit a suggestion.')
+                ->send();
+            return;
+        }
+
         $this->validate([
-            'content' => ['required', 'string', 'min:10', 'max:2000'],
+            'content'  => ['required', 'string', 'min:10', 'max:2000'],
             'category' => ['required', 'in:' . implode(',', array_keys(ProjectSuggestion::$categories))],
             'priority' => ['required', 'in:' . implode(',', array_keys(ProjectSuggestion::$priorities))],
         ]);

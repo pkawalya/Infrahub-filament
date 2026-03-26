@@ -30,10 +30,13 @@ class ForcePasswordChange
             $panel = 'client';
         }
 
-        // Allow access to the change-password page itself, logout, and Livewire
+        // Allow access to the change-password page itself, logout, Livewire, and auth flows
         $allowedPaths = [
             "{$panel}/change-password",
             "{$panel}/logout",
+            "{$panel}/password-reset",       // Forgot password flow
+            "{$panel}/email-verification",   // Email verification
+            "auth/password-reset",           // Generic reset
             'livewire',
             'filament',  // Filament assets
         ];

@@ -291,6 +291,19 @@ class InventoryNotificationService
         );
     }
 
+    /** Over-stock alert when stock exceeds the max order level */
+    public function overStockAlert(int $companyId, int $projectId, string $productName, float $onHand, float $maxLevel): void
+    {
+        $this->sendToAdmins(
+            companyId: $companyId,
+            title: "↑ Over-Stock Alert: {$productName}",
+            body: "Stock for {$productName} is at {$onHand} units, exceeding the max level of {$maxLevel}. Consider re-distributing or halting orders.",
+            icon: 'heroicon-o-arrow-up-circle',
+            color: 'warning',
+            url: $this->projectUrl($projectId, 'stock_monitor'),
+        );
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // ASSET EVENTS
     // ─────────────────────────────────────────────────────────────────────────

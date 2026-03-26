@@ -13,6 +13,8 @@ class Product extends Model
     protected $fillable = [
         'company_id',
         'product_category_id',
+        'supplier_id',
+        'lead_time_days',
         'name',
         'brand',
         'model_number',
@@ -26,6 +28,9 @@ class Product extends Model
         'selling_price',
         'reorder_level',
         'reorder_quantity',
+        'max_order_level',
+        'expiry_tracking_enabled',
+        'expiry_date',
         'image',
         'is_active',
         'track_inventory',
@@ -36,10 +41,12 @@ class Product extends Model
     ];
 
     protected $casts = [
-        'cost_price' => 'decimal:2',
-        'selling_price' => 'decimal:2',
-        'is_active' => 'boolean',
-        'track_inventory' => 'boolean',
+        'cost_price'              => 'decimal:2',
+        'selling_price'           => 'decimal:2',
+        'is_active'               => 'boolean',
+        'track_inventory'         => 'boolean',
+        'expiry_tracking_enabled' => 'boolean',
+        'expiry_date'             => 'date',
     ];
 
     public static array $conditions = [
@@ -73,6 +80,11 @@ class Product extends Model
         return $this->belongsTo(ProductCategory::class, 'product_category_id');
     }
 
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
     public function stockLevels()
     {
         return $this->hasMany(StockLevel::class);
@@ -95,7 +107,41 @@ class Product extends Model
 
     public function getTotalStockAttribute(): int
     {
-        return $this->stockLevels()->sum('quantity_on_hand');
+        return (int) $this->stockLevels()->sum('quantity_on_hand');
+    }
+
+    public function getTotalStockValueAttribute(): float
+    {
+        return (float) $this->stockLevels->reduce(
+            fn($carry, $sl) => $carry + ($sl->quantity_on_hand * (float) $this->cost_price),
+            0.0
+        );
+    }
+
+    public function isLowStock(): bool
+    {
+        return $this->reorder_level > 0 && $this->total_stock <= $this->reorder_level;
+    }
+
+    public function isOverStock(): bool
+    {
+        return $this->max_order_level > 0 && $this->total_stock > $this->max_order_level;
+    }
+
+    public function isExpiringSoon(int $days = 30): bool
+    {
+        if (!$this->expiry_tracking_enabled || !$this->expiry_date) {
+            return false;
+        }
+        return \Carbon\Carbon::parse($this->expiry_date)->lte(now()->addDays($days));
+    }
+
+    public function isExpired(): bool
+    {
+        if (!$this->expiry_tracking_enabled || !$this->expiry_date) {
+            return false;
+        }
+        return \Carbon\Carbon::parse($this->expiry_date)->isPast();
     }
 
     /**

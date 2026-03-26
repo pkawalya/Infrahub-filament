@@ -190,7 +190,7 @@
 
     <div class="inv-tab-bar"
         style="display:flex; gap:4px; border-bottom:2px solid #e5e7eb; margin-bottom:16px; flex-wrap:wrap;">
-        @foreach(['products' => $iCube . ' Products', 'assets' => $iTag . ' Assets', 'stores' => $iStore . ' Stores', 'requisitions' => '📋 Requisitions', 'purchase_orders' => $iCart . ' Purchase Orders', 'grn' => $iInbox . ' GRN', 'issuances' => $iClipboard . ' Issuances', 'delivery_notes' => $iTruck . ' Delivery Notes', 'transfers' => $iArrows . ' Transfers', 'adjustments' => $iScale . ' Adjustments', 'stock_monitor' => $iSignal . ' Stock Monitor', 'tracking' => $iRoute . ' Tracking'] as $tab => $label)
+        @foreach(['products' => $iCube . ' Products', 'assets' => $iTag . ' Assets', 'stores' => $iStore . ' Stores', 'requisitions' => '📋 Requisitions', 'purchase_orders' => $iCart . ' Purchase Orders', 'grn' => $iInbox . ' GRN', 'issuances' => $iClipboard . ' Issuances', 'delivery_notes' => $iTruck . ' Delivery Notes', 'transfers' => $iArrows . ' Transfers', 'adjustments' => $iScale . ' Adjustments', 'stock_monitor' => $iSignal . ' Stock Monitor', 'tracking' => $iRoute . ' Tracking', 'inv_reports' => '📊 Inv. Reports', 'audit_trail' => '🔒 Audit Trail'] as $tab => $label)
             <button wire:click="$set('activeInventoryTab', '{{ $tab }}')"
                 class="inv-tab {{ $activeInventoryTab === $tab ? 'inv-tab-active' : '' }}"
                 style="padding:10px 20px; font-size:13px; font-weight:600; border:none; cursor:pointer; transition:all .2s; border-radius:8px 8px 0 0;
@@ -3412,6 +3412,342 @@
                         </div>
                     @endif
                 @endif
+            </div>
+        </div>
+    @endif
+
+    {{-- ═══════════════ INVENTORY REPORTS TAB ═══════════════ --}}
+    @if($activeInventoryTab === 'inv_reports')
+        @php
+            $invReport  = $this->getStockValuationReport();
+            $slowReport = $this->getSlowMovingReport(90);
+            $expiryRep  = $this->getExpiryReport();
+            $procReport = $this->getProcurementReport();
+        @endphp
+
+        {{-- Header --}}
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+            <div>
+                <h2 style="font-size:20px;font-weight:800;margin:0;color:#1f2937;">📊 Inventory Intelligence Reports</h2>
+                <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">URA-compliant stock valuation, expiry tracking &amp; procurement analysis</p>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <a wire:click="exportReport('stock_valuation')" style="padding:8px 14px;font-size:12px;font-weight:600;border-radius:8px;border:1px solid #4f46e5;background:white;color:#4f46e5;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+                    {!! $ico('M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12M12 16.5V3', 14) !!} Stock Value CSV
+                </a>
+                <a wire:click="exportReport('slow_moving')" style="padding:8px 14px;font-size:12px;font-weight:600;border-radius:8px;border:1px solid #d97706;background:white;color:#d97706;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+                    {!! $ico('M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12M12 16.5V3', 14) !!} Slow-Moving CSV
+                </a>
+                <a wire:click="exportReport('expiry')" style="padding:8px 14px;font-size:12px;font-weight:600;border-radius:8px;border:1px solid #dc2626;background:white;color:#dc2626;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+                    {!! $ico('M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12M12 16.5V3', 14) !!} Expiry CSV
+                </a>
+                <a wire:click="exportReport('procurement')" style="padding:8px 14px;font-size:12px;font-weight:600;border-radius:8px;border:1px solid #059669;background:white;color:#059669;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;">
+                    {!! $ico('M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12M12 16.5V3', 14) !!} Procurement CSV
+                </a>
+            </div>
+        </div>
+
+        {{-- ── Stock Valuation Summary Cards ── --}}
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px;">
+            @php
+                $valCards = [
+                    ['label' => 'Total Inventory Value', 'value' => 'UGX ' . number_format($invReport['summary']['total_value'], 0), 'color' => '#4f46e5', 'bg' => '#eef2ff', 'icon' => 'M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ['label' => 'Products Tracked', 'value' => number_format($invReport['summary']['total_products']), 'color' => '#059669', 'bg' => '#f0fdf4', 'icon' => 'M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9'],
+                    ['label' => 'Below Minimum Level', 'value' => number_format($invReport['summary']['low_stock']), 'color' => '#dc2626', 'bg' => '#fef2f2', 'icon' => 'M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z'],
+                    ['label' => 'Slow-Moving Items', 'value' => number_format($slowReport['slow_moving_count']), 'color' => '#d97706', 'bg' => '#fffbeb', 'icon' => 'M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z'],
+                    ['label' => 'Expiry Alerts', 'value' => number_format($expiryRep['summary']['expired_count'] + $expiryRep['summary']['expiring_soon_count']), 'color' => '#be185d', 'bg' => '#fdf2f8', 'icon' => 'M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5'],
+                    ['label' => 'POs This Period', 'value' => number_format($procReport['po_summary']['total_pos']), 'color' => '#2563eb', 'bg' => '#eff6ff', 'icon' => 'M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z'],
+                ];
+            @endphp
+            @foreach($valCards as $vc)
+                <div style="background:{{ $vc['bg'] }};border:1px solid transparent;border-radius:12px;padding:14px;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                        <div style="width:34px;height:34px;border-radius:8px;background:{{ $vc['color'] }};display:flex;align-items:center;justify-content:center;">
+                            {!! $ico($vc['icon'], 18) !!}
+                        </div>
+                        <span style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;">{{ $vc['label'] }}</span>
+                    </div>
+                    <div style="font-size:22px;font-weight:800;color:{{ $vc['color'] }};">{{ $vc['value'] }}</div>
+                </div>
+            @endforeach
+        </div>
+
+        {{-- ── Section 1: Stock Valuation Table ── --}}
+        <div class="inv-card" style="background:white;border-radius:12px;border:1px solid #e5e7eb;margin-bottom:20px;overflow:hidden;">
+            <div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                <div style="font-size:15px;font-weight:700;">📦 Stock Valuation by Product</div>
+                <div style="font-size:12px;color:#6b7280;">Total: <strong style="color:#4f46e5;">UGX {{ number_format($invReport['summary']['total_value'], 0) }}</strong></div>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="inv-table" style="width:100%;border-collapse:collapse;font-size:13px;">
+                    <thead>
+                        <tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb;">
+                            <th style="padding:10px 14px;text-align:left;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;">Product</th>
+                            <th style="padding:10px 14px;text-align:left;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;">Category</th>
+                            <th style="padding:10px 14px;text-align:right;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;">Unit Cost</th>
+                            <th style="padding:10px 14px;text-align:right;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;">Qty On Hand</th>
+                            <th style="padding:10px 14px;text-align:right;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;">Total Value</th>
+                            <th style="padding:10px 14px;text-align:center;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;">Min/Max</th>
+                            <th style="padding:10px 14px;text-align:center;font-weight:700;color:#6b7280;font-size:11px;text-transform:uppercase;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($invReport['by_product'] as $item)
+                            <tr style="border-bottom:1px solid #f3f4f6;" onmouseenter="this.style.background='#f9fafb'" onmouseleave="this.style.background=''">
+                                <td style="padding:10px 14px;">
+                                    <div style="font-weight:600;">{{ $item['product_name'] }}</div>
+                                    <div style="font-size:11px;color:#9ca3af;">SKU: {{ $item['sku'] }} · {{ $item['unit'] }}</div>
+                                </td>
+                                <td style="padding:10px 14px;font-size:12px;color:#6b7280;">{{ $item['category'] }}</td>
+                                <td style="padding:10px 14px;text-align:right;font-family:monospace;">UGX {{ number_format($item['unit_cost'], 0) }}</td>
+                                <td style="padding:10px 14px;text-align:right;font-weight:700;">{{ number_format($item['total_units'], 0) }}</td>
+                                <td style="padding:10px 14px;text-align:right;font-weight:700;font-family:monospace;color:#4f46e5;">UGX {{ number_format($item['total_value'], 0) }}</td>
+                                <td style="padding:10px 14px;text-align:center;font-size:12px;">
+                                    <span style="color:#059669;">{{ $item['reorder_level'] }}</span> /
+                                    @if($item['max_level'] > 0)
+                                        <span style="color:#2563eb;">{{ $item['max_level'] }}</span>
+                                    @else
+                                        <span style="color:#d1d5db;">∞</span>
+                                    @endif
+                                </td>
+                                <td style="padding:10px 14px;text-align:center;">
+                                    @if($item['is_low'])
+                                        <span style="padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;">⚠ LOW</span>
+                                    @elseif($item['is_over'])
+                                        <span style="padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;background:#dbeafe;color:#2563eb;">↑ OVER</span>
+                                    @else
+                                        <span style="padding:3px 10px;border-radius:99px;font-size:10px;font-weight:700;background:#dcfce7;color:#16a34a;">✓ OK</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @empty
+                            <tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af;">No products with stock levels found.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- ── Section 2: Slow-Moving Items + Expiry Side by Side ── --}}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+
+            {{-- Slow-Moving --}}
+            <div class="inv-card" style="background:white;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
+                <div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="font-size:14px;font-weight:700;">🕐 Slow-Moving Items <span style="font-size:11px;font-weight:500;color:#9ca3af;">(90+ days no movement)</span></div>
+                    <span style="padding:3px 10px;border-radius:99px;font-size:11px;font-weight:700;background:#fef3c7;color:#d97706;">{{ $slowReport['slow_moving_count'] }} items</span>
+                </div>
+                <div style="padding:4px 0;max-height:280px;overflow-y:auto;">
+                    @forelse($slowReport['items'] as $slow)
+                        <div style="padding:10px 14px;border-bottom:1px solid #f9fafb;display:flex;justify-content:space-between;align-items:center;">
+                            <div>
+                                <div style="font-size:13px;font-weight:600;">{{ $slow['name'] }}</div>
+                                <div style="font-size:11px;color:#9ca3af;">
+                                    Last: {{ $slow['last_movement'] }}
+                                    @if($slow['days_static']) · <span style="color:#d97706;font-weight:600;">{{ $slow['days_static'] }} days static</span>@endif
+                                </div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-size:12px;font-weight:700;color:#1f2937;">{{ number_format($slow['stock']) }} units</div>
+                                <div style="font-size:11px;color:#6b7280;">UGX {{ number_format($slow['stock_value'], 0) }}</div>
+                            </div>
+                        </div>
+                    @empty
+                        <div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px;">✓ All items have recent movement</div>
+                    @endforelse
+                </div>
+                @if($slowReport['locked_value'] > 0)
+                    <div style="padding:10px 14px;background:#fffbeb;border-top:1px solid #fef3c7;font-size:12px;font-weight:700;color:#d97706;">
+                        Locked Value: UGX {{ number_format($slowReport['locked_value'], 0) }}
+                    </div>
+                @endif
+            </div>
+
+            {{-- Expiry Tracking --}}
+            <div class="inv-card" style="background:white;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
+                <div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;">
+                    <div style="font-size:14px;font-weight:700;">📅 Expiry Tracking</div>
+                    <div style="display:flex;gap:6px;">
+                        @if($expiryRep['summary']['expired_count'] > 0)
+                            <span style="padding:3px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fee2e2;color:#dc2626;">{{ $expiryRep['summary']['expired_count'] }} Expired</span>
+                        @endif
+                        @if($expiryRep['summary']['expiring_soon_count'] > 0)
+                            <span style="padding:3px 8px;border-radius:99px;font-size:10px;font-weight:700;background:#fef3c7;color:#d97706;">{{ $expiryRep['summary']['expiring_soon_count'] }} Soon</span>
+                        @endif
+                    </div>
+                </div>
+                <div style="padding:4px 0;max-height:280px;overflow-y:auto;">
+                    @php $allExpiry = array_merge(
+                        array_map(fn($e) => array_merge($e, ['status' => 'expired']), $expiryRep['expired']),
+                        array_map(fn($e) => array_merge($e, ['status' => 'expiring_soon']), $expiryRep['expiring_soon']),
+                        array_map(fn($e) => array_merge($e, ['status' => 'safe']), array_slice($expiryRep['safe'], 0, 5))
+                    ); @endphp
+                    @forelse($allExpiry as $item)
+                        @php
+                            $borderColor = $item['status'] === 'expired' ? '#dc2626' : ($item['status'] === 'expiring_soon' ? '#d97706' : '#16a34a');
+                            $tagBg = $item['status'] === 'expired' ? '#fee2e2' : ($item['status'] === 'expiring_soon' ? '#fef3c7' : '#dcfce7');
+                            $tagText = $item['status'] === 'expired' ? 'Expired' : ($item['status'] === 'expiring_soon' ? 'Soon' : 'Safe');
+                        @endphp
+                        <div style="padding:10px 14px;border-bottom:1px solid #f9fafb;display:flex;justify-content:space-between;align-items:center;border-left:3px solid {{ $borderColor }};">
+                            <div>
+                                <div style="font-size:13px;font-weight:600;">{{ $item['name'] }}</div>
+                                <div style="font-size:11px;color:#9ca3af;">Expires: {{ $item['expiry_date'] }}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <span style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:700;background:{{ $tagBg }};color:{{ $borderColor }};">{{ $tagText }}</span>
+                                <div style="font-size:11px;color:#6b7280;margin-top:2px;">{{ number_format($item['stock']) }} units</div>
+                            </div>
+                        </div>
+                    @empty
+                        <div style="text-align:center;padding:32px;color:#9ca3af;font-size:13px;">No products with expiry tracking enabled</div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        {{-- ── Section 3: Procurement Analysis ── --}}
+        <div class="inv-card" style="background:white;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
+            <div style="padding:14px 16px;border-bottom:1px solid #e5e7eb;">
+                <div style="font-size:15px;font-weight:700;">🛒 Procurement Analysis</div>
+                <div style="font-size:12px;color:#6b7280;margin-top:2px;">
+                    {{ $procReport['po_summary']['total_pos'] }} POs totalling
+                    <strong>UGX {{ number_format($procReport['po_summary']['total_value'], 0) }}</strong>
+                    in selected period
+                </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+                {{-- Top Suppliers --}}
+                <div style="padding:14px 16px;border-right:1px solid #e5e7eb;">
+                    <div style="font-size:13px;font-weight:700;margin-bottom:10px;">Top Suppliers</div>
+                    @forelse($procReport['by_supplier']->take(5) as $sup)
+                        @php $maxVal = $procReport['by_supplier']->max('value') ?: 1; @endphp
+                        <div style="margin-bottom:10px;">
+                            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+                                <span style="font-weight:600;">{{ $sup['name'] }}</span>
+                                <span style="color:#6b7280;">{{ $sup['count'] }} PO{{ $sup['count'] > 1 ? 's' : '' }} · UGX {{ number_format($sup['value'], 0) }}</span>
+                            </div>
+                            <div style="height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;">
+                                <div style="height:100%;border-radius:3px;background:#4f46e5;width:{{ round(($sup['value'] / $maxVal) * 100) }}%;"></div>
+                            </div>
+                        </div>
+                    @empty
+                        <p style="color:#9ca3af;font-size:13px;">No supplier data available</p>
+                    @endforelse
+                </div>
+
+                {{-- Quarterly Distribution --}}
+                <div style="padding:14px 16px;">
+                    <div style="font-size:13px;font-weight:700;margin-bottom:10px;">Quarterly Procurement Trend</div>
+                    @php $maxQVal = collect($procReport['quarterly'])->max('value') ?: 1; @endphp
+                    @foreach($procReport['quarterly'] as $q)
+                        <div style="margin-bottom:10px;">
+                            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+                                <span style="font-weight:600;">{{ $q['quarter'] }}</span>
+                                <span style="color:#6b7280;">{{ $q['count'] }} POs · UGX {{ number_format($q['value'], 0) }}</span>
+                            </div>
+                            <div style="height:6px;background:#e5e7eb;border-radius:3px;overflow:hidden;">
+                                <div style="height:100%;border-radius:3px;background:#059669;width:{{ $maxQVal > 0 ? round(($q['value'] / $maxQVal) * 100) : 0 }}%;"></div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- Issuance Summary --}}
+            @if($procReport['issuance_summary']['total_issuances'] > 0)
+                <div style="padding:14px 16px;border-top:1px solid #e5e7eb;background:#f9fafb;">
+                    <div style="font-size:13px;font-weight:700;margin-bottom:8px;">Material Issuance Summary</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;">
+                        @foreach($procReport['issuance_summary']['by_person'] as $person => $count)
+                            <span style="padding:4px 12px;font-size:12px;font-weight:600;border-radius:8px;background:white;border:1px solid #e5e7eb;color:#374151;">
+                                {{ $person }}: {{ $count }} issuance{{ $count > 1 ? 's' : '' }}
+                            </span>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+        </div>
+    @endif
+
+    {{-- ═══════════════ AUDIT TRAIL TAB ═══════════════ --}}
+    @if($activeInventoryTab === 'audit_trail')
+        @php $auditData = $this->getInventoryAuditTrail(200); @endphp
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+            <div>
+                <h2 style="font-size:20px;font-weight:800;margin:0;color:#1f2937;">🔒 Inventory Audit Trail</h2>
+                <p style="margin:4px 0 0;font-size:13px;color:#6b7280;">
+                    Complete immutable log of stock movements for URA compliance.
+                    Showing {{ $auditData['total_events'] }} events.
+                    Total transacted value: <strong>UGX {{ number_format($auditData['total_value'], 0) }}</strong>
+                </p>
+            </div>
+            <button wire:click="exportReport('inventory_audit')"
+                style="padding:10px 18px;font-size:13px;font-weight:700;border-radius:8px;border:none;background:#1f2937;color:white;cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                {!! $ico('M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12M12 16.5V3', 14) !!}
+                Export Full Audit (CSV)
+            </button>
+        </div>
+
+        {{-- Event type breakdown --}}
+        @if(!empty($auditData['by_event_type']))
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                @foreach($auditData['by_event_type'] as $evType => $cnt)
+                    <span style="padding:4px 12px;border-radius:99px;font-size:12px;font-weight:700;background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;">
+                        {{ \App\Models\InventoryAuditLog::$eventTypes[$evType] ?? $evType }}: {{ $cnt }}
+                    </span>
+                @endforeach
+            </div>
+        @endif
+
+        <div class="inv-card" style="background:white;border-radius:12px;border:1px solid #e5e7eb;overflow:hidden;">
+            <div style="overflow-x:auto;">
+                <table class="inv-table" style="width:100%;border-collapse:collapse;font-size:12px;">
+                    <thead>
+                        <tr style="background:#1f2937;">
+                            <th style="padding:10px 12px;text-align:left;font-weight:700;color:#9ca3af;font-size:10px;text-transform:uppercase;white-space:nowrap;">Date / Time</th>
+                            <th style="padding:10px 12px;text-align:left;font-weight:700;color:#9ca3af;font-size:10px;text-transform:uppercase;">Event Type</th>
+                            <th style="padding:10px 12px;text-align:left;font-weight:700;color:#9ca3af;font-size:10px;text-transform:uppercase;">Reference</th>
+                            <th style="padding:10px 12px;text-align:left;font-weight:700;color:#9ca3af;font-size:10px;text-transform:uppercase;">Product</th>
+                            <th style="padding:10px 12px;text-align:left;font-weight:700;color:#9ca3af;font-size:10px;text-transform:uppercase;">Location</th>
+                            <th style="padding:10px 12px;text-align:right;font-weight:700;color:#9ca3af;font-size:10px;text-transform:uppercase;">Qty Δ</th>
+                            <th style="padding:10px 12px;text-align:right;font-weight:700;color:#9ca3af;font-size:10px;text-transform:uppercase;">Value (UGX)</th>
+                            <th style="padding:10px 12px;text-align:left;font-weight:700;color:#9ca3af;font-size:10px;text-transform:uppercase;">Performed By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($auditData['events'] as $evt)
+                            <tr style="border-bottom:1px solid #f3f4f6;" onmouseenter="this.style.background='#f9fafb'" onmouseleave="this.style.background=''">
+                                <td style="padding:8px 12px;white-space:nowrap;font-family:monospace;font-size:11px;color:#6b7280;">{{ $evt['date'] }}</td>
+                                <td style="padding:8px 12px;">
+                                    <span style="padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;background:#eef2ff;color:#4f46e5;">{{ $evt['event_type'] }}</span>
+                                </td>
+                                <td style="padding:8px 12px;font-family:monospace;font-weight:600;color:#374151;">{{ $evt['reference'] }}</td>
+                                <td style="padding:8px 12px;font-weight:600;">{{ $evt['product'] }}</td>
+                                <td style="padding:8px 12px;color:#6b7280;">{{ $evt['warehouse'] }}</td>
+                                <td style="padding:8px 12px;text-align:right;font-weight:700;font-family:monospace;color:{{ ($evt['qty_change'] ?? 0) >= 0 ? '#059669' : '#dc2626' }};">
+                                    @if($evt['qty_change'] !== null)
+                                        {{ $evt['qty_change'] >= 0 ? '+' : '' }}{{ number_format($evt['qty_change'], 2) }}
+                                    @else
+                                        —
+                                    @endif
+                                </td>
+                                <td style="padding:8px 12px;text-align:right;font-family:monospace;">
+                                    @if($evt['total_value']) UGX {{ number_format($evt['total_value'], 0) }} @else — @endif
+                                </td>
+                                <td style="padding:8px 12px;color:#6b7280;">{{ $evt['performed_by'] }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" style="text-align:center;padding:48px;color:#9ca3af;">
+                                    <div style="font-size:32px;margin-bottom:8px;">🔒</div>
+                                    <div style="font-weight:700;">No audit events in selected period</div>
+                                    <div style="font-size:12px;margin-top:4px;">Audit logs are created automatically as inventory transactions occur.</div>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     @endif

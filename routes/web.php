@@ -13,6 +13,32 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// ── Health Check Endpoint ─────────────────────────────────
+Route::get('/health', function () {
+    $dbOk = false;
+    try {
+        \Illuminate\Support\Facades\DB::connection()->getPdo();
+        $dbOk = true;
+    } catch (\Throwable) {}
+
+    $cacheOk = false;
+    try {
+        \Illuminate\Support\Facades\Cache::put('_health', 1, 10);
+        $cacheOk = (bool) \Illuminate\Support\Facades\Cache::get('_health');
+    } catch (\Throwable) {}
+
+    $status = ($dbOk && $cacheOk) ? 'ok' : 'degraded';
+    $code   = ($dbOk && $cacheOk) ? 200 : 503;
+
+    return response()->json([
+        'status'    => $status,
+        'db'        => $dbOk ? 'connected' : 'error',
+        'cache'     => $cacheOk ? 'ok' : 'error',
+        'timestamp' => now()->toISOString(),
+        'version'   => config('app.version', '1.0.0'),
+    ], $code);
+})->middleware('throttle:60,1')->name('health');
+
 // Email Invitation Acceptance
 Route::get('/invitation/accept/{token}', [InvitationController::class, 'accept'])->name('invitation.accept');
 Route::post('/invitation/accept/{token}', [InvitationController::class, 'confirm'])->middleware('throttle:5,1')->name('invitation.confirm');

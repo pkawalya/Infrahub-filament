@@ -29,6 +29,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // ── Safety Guard: Never allow debug mode in production ──
+        if (app()->isProduction() && config('app.debug')) {
+            abort(500, 'APP_DEBUG must be false in production. Set APP_DEBUG=false in your .env file.');
+        }
+
         // ── Custom SMTP transport that bypasses Laravel's broken scheme detection ──
         // Register the 'infrahub' mailer in config so Laravel knows about it
         config(['mail.mailers.infrahub' => ['transport' => 'infrahub']]);
@@ -89,6 +94,15 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\MaterialRequisition::observe(\App\Observers\MaterialRequisitionObserver::class);
         \App\Models\SnagItem::observe(\App\Observers\SnagItemObserver::class);
         \App\Models\EquipmentAllocation::observe(\App\Observers\EquipmentAllocationObserver::class);
+
+        // ── Flush mail cache when SMTP settings are changed ──
+        // Ensures admin mail config changes take effect immediately.
+        Setting::saved(function (Setting $setting) {
+            $mailKeys = ['mail_host', 'mail_port', 'mail_username', 'mail_password', 'mail_from_address', 'mail_from_name'];
+            if (in_array($setting->key ?? '', $mailKeys)) {
+                \Illuminate\Support\Facades\Cache::forget('mail_settings');
+            }
+        });
 
         // Livewire components
         if (class_exists(\App\Filament\Resources\TicketResource\Pages\EditCommentModal::class)) {

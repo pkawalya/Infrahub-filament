@@ -8,7 +8,15 @@ use App\Models\Contract;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\InvoicePayment;
+use App\Models\InventoryAuditLog;
+use App\Models\MaterialIssuance;
+use App\Models\Product;
+use App\Models\PurchaseOrder;
+use App\Models\StockAdjustment;
+use App\Models\StockLevel;
 use App\Models\Task;
+use App\Models\Warehouse;
+use App\Services\InventoryReportService;
 use App\Support\CurrencyHelper;
 use Carbon\Carbon;
 
@@ -332,13 +340,18 @@ class ReportingPage extends BaseModulePage
             $handle = fopen('php://output', 'w');
 
             match ($reportType) {
-                'financial' => $this->exportFinancialCsv($handle),
-                'tasks' => $this->exportTasksCsv($handle),
-                'documents' => $this->exportDocumentsCsv($handle),
-                'contracts' => $this->exportContractsCsv($handle),
-                'safety' => $this->exportSafetyCsv($handle),
-                'rfis' => $this->exportRfisCsv($handle),
-                default => $this->exportSummaryCsv($handle),
+                'financial'          => $this->exportFinancialCsv($handle),
+                'tasks'              => $this->exportTasksCsv($handle),
+                'documents'          => $this->exportDocumentsCsv($handle),
+                'contracts'          => $this->exportContractsCsv($handle),
+                'safety'             => $this->exportSafetyCsv($handle),
+                'rfis'               => $this->exportRfisCsv($handle),
+                'stock_valuation'    => $this->exportStockValuationCsv($handle),
+                'slow_moving'        => $this->exportSlowMovingCsv($handle),
+                'expiry'             => $this->exportExpiryCsv($handle),
+                'inventory_audit'    => $this->exportInventoryAuditCsv($handle),
+                'procurement'        => $this->exportProcurementCsv($handle),
+                default              => $this->exportSummaryCsv($handle),
             };
 
             fclose($handle);
@@ -449,6 +462,121 @@ class ReportingPage extends BaseModulePage
         fputcsv($handle, ['Module', 'Total', 'Open/Active']);
         foreach ($summary as $m) {
             fputcsv($handle, [$m['module'], $m['total'], $m['open'] ?? '—']);
+        }
+    }
+
+    // ═══════════════════════════════════════════
+    // ── INVENTORY REPORTS (via InventoryReportService)
+    // ═══════════════════════════════════════════
+
+    private function reportService(): InventoryReportService
+    {
+        return app(InventoryReportService::class);
+    }
+
+    public function getStockValuationReport(): array
+    {
+        return $this->reportService()->stockValuation($this->record->company_id);
+    }
+
+    public function getSlowMovingReport(int $days = 90): array
+    {
+        return $this->reportService()->slowMoving($this->record->company_id, $days);
+    }
+
+    public function getExpiryReport(): array
+    {
+        return $this->reportService()->expiryTracking($this->record->company_id);
+    }
+
+    public function getInventoryAuditTrail(int $limit = 100): array
+    {
+        return $this->reportService()->auditTrail(
+            companyId: $this->record->company_id,
+            from: $this->from(),
+            to: $this->to(),
+            limit: $limit,
+        );
+    }
+
+    public function getProcurementReport(): array
+    {
+        return $this->reportService()->procurement(
+            companyId: $this->record->company_id,
+            projectId: $this->record->id,
+            from: $this->from(),
+            to: $this->to(),
+        );
+    }
+
+    // ── Inventory CSV Exports ──
+    private function exportStockValuationCsv($handle): void
+    {
+        $r   = $this->record;
+        $rep = $this->getStockValuationReport();
+        fputcsv($handle, ['Stock Valuation Report - ' . $r->name, 'Generated: ' . now()->format('Y-m-d H:i')]);
+        fputcsv($handle, []);
+        fputcsv($handle, ['Product', 'SKU', 'Category', 'Unit', 'Unit Cost (UGX)', 'Total Units', 'Total Value (UGX)', 'Min Level', 'Max Level', 'Status']);
+        foreach ($rep['by_product'] as $item) {
+            $status = $item['is_low'] ? 'LOW STOCK' : ($item['is_over'] ? 'OVER STOCK' : 'OK');
+            fputcsv($handle, [$item['product_name'], $item['sku'], $item['category'], $item['unit'], number_format($item['unit_cost'], 0), $item['total_units'], number_format($item['total_value'], 0), $item['reorder_level'], $item['max_level'], $status]);
+        }
+        fputcsv($handle, []);
+        fputcsv($handle, ['TOTAL INVENTORY VALUE', number_format($rep['summary']['total_value'], 0)]);
+    }
+
+    private function exportSlowMovingCsv($handle): void
+    {
+        $r   = $this->record;
+        $rep = $this->getSlowMovingReport();
+        fputcsv($handle, ['Slow-Moving Items Report - ' . $r->name, 'Threshold: ' . $rep['days_threshold'] . ' days']);
+        fputcsv($handle, []);
+        fputcsv($handle, ['Product', 'SKU', 'Stock', 'Unit Cost (UGX)', 'Locked Value (UGX)', 'Last Movement', 'Days Static']);
+        foreach ($rep['items'] as $item) {
+            fputcsv($handle, [$item['name'], $item['sku'], $item['stock'], number_format($item['cost_price'], 0), number_format($item['stock_value'], 0), $item['last_movement'], $item['days_static'] ?? 'N/A']);
+        }
+        fputcsv($handle, []);
+        fputcsv($handle, ['TOTAL LOCKED VALUE', number_format($rep['locked_value'], 0)]);
+    }
+
+    private function exportExpiryCsv($handle): void
+    {
+        $r   = $this->record;
+        $rep = $this->getExpiryReport();
+        fputcsv($handle, ['Expiry Tracking Report - ' . $r->name, 'Generated: ' . now()->format('Y-m-d')]);
+        fputcsv($handle, []);
+
+        foreach (['expired' => 'EXPIRED', 'expiring_soon' => 'EXPIRING SOON (30 days)', 'safe' => 'SAFE'] as $key => $label) {
+            fputcsv($handle, [$label]);
+            fputcsv($handle, ['Product', 'SKU', 'Expiry Date', 'Days Left', 'Stock', 'Value (UGX)']);
+            foreach ($rep[$key] as $item) {
+                fputcsv($handle, [$item['name'], $item['sku'], $item['expiry_date'], $item['days_left'], $item['stock'], number_format($item['stock_value'], 0)]);
+            }
+            fputcsv($handle, []);
+        }
+    }
+
+    private function exportInventoryAuditCsv($handle): void
+    {
+        $r   = $this->record;
+        $rep = $this->getInventoryAuditTrail(5000); // URA may need full history
+        fputcsv($handle, ['Inventory Audit Trail - ' . $r->name, 'From: ' . $this->from()->format('Y-m-d'), 'To: ' . $this->to()->format('Y-m-d'), 'URA COMPLIANCE EXPORT']);
+        fputcsv($handle, []);
+        fputcsv($handle, ['Date/Time', 'Event Type', 'Reference', 'Product', 'Location/Warehouse', 'Qty Before', 'Qty Change', 'Qty After', 'Unit Cost (UGX)', 'Total Value (UGX)', 'Description', 'Performed By', 'IP Address']);
+        foreach ($rep['events'] as $e) {
+            fputcsv($handle, [$e['date'], $e['event_type'], $e['reference'], $e['product'], $e['warehouse'], $e['qty_before'], $e['qty_change'], $e['qty_after'], number_format($e['unit_cost'], 0), number_format($e['total_value'], 0), $e['description'], $e['performed_by'], $e['ip_address']]);
+        }
+    }
+
+    private function exportProcurementCsv($handle): void
+    {
+        $r   = $this->record;
+        $rep = $this->getProcurementReport();
+        fputcsv($handle, ['Procurement Report - ' . $r->name, 'From: ' . $this->from()->format('Y-m-d'), 'To: ' . $this->to()->format('Y-m-d')]);
+        fputcsv($handle, []);
+        fputcsv($handle, ['PO #', 'Supplier', 'Status', 'Order Date', 'Expected Delivery', 'Total (UGX)', 'Items', 'Created By', 'Quarter']);
+        foreach ($rep['pos'] as $po) {
+            fputcsv($handle, [$po['po_number'], $po['supplier'], $po['status'], $po['order_date'], $po['expected'], number_format($po['total'], 0), $po['items'], $po['created_by'], $po['quarter'] ?? '—']);
         }
     }
 

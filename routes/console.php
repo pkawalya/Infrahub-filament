@@ -94,3 +94,10 @@ Schedule::command('backup:clean')
 Schedule::command('backup:monitor')
     ->dailyAt('06:30')
     ->onOneServer();
+
+// ── Security: deactivate dormant users (weekly Monday 3 AM) ──
+Schedule::command('users:deactivate-dormant --days=90')
+    ->weeklyOn(1, '03:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/dormant-users.log'));

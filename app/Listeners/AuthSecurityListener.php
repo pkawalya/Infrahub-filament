@@ -9,6 +9,7 @@ use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use App\Models\User;
 
@@ -59,6 +60,11 @@ class AuthSecurityListener
                     'new_ip' => $ip,
                     'known_ips' => $knownIps,
                 ]);
+                // ── Alert super admin about new IP login ──────
+                $this->alertSuperAdmins(
+                    '⚠️ New IP Login Detected',
+                    "User {$user->email} logged in from a new IP address: {$ip}. Previous known IPs: " . implode(', ', $knownIps)
+                );
             }
             $knownIps[] = $ip;
             Cache::put("user_ips:{$user->id}", array_slice($knownIps, -10), now()->addDays(90));
@@ -121,6 +127,22 @@ class AuthSecurityListener
                 'ip' => $ip,
                 'attempts' => $fails,
             ]);
+
+            // ── Auto-lock the account if it exists ───────────
+            if ($user && $user->is_active) {
+                $user->updateQuietly(['is_active' => false]);
+                Log::channel('security')->critical('ACCOUNT_AUTO_LOCKED', [
+                    'user_id' => $user->id,
+                    'email' => $email,
+                    'ip' => $ip,
+                ]);
+            }
+
+            // ── Alert super admin ─────────────────────────────
+            $this->alertSuperAdmins(
+                '🚨 Brute-Force Attack Detected',
+                "Account {$email} has been locked after {$fails} consecutive failed login attempts from IP: {$ip}. Please review the security logs."
+            );
         }
     }
 
@@ -186,6 +208,43 @@ class AuthSecurityListener
         } catch (\Throwable $e) {
             // Silently fail — never break login flow for audit logging
             Log::error('Failed to record login activity: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send an alert email to all super admin users.
+     * Silently fails — never interrupt the auth flow.
+     */
+    protected function alertSuperAdmins(string $subject, string $message): void
+    {
+        try {
+            $admins = User::where('user_type', 'super_admin')
+                ->where('is_active', true)
+                ->pluck('email')
+                ->toArray();
+
+            if (empty($admins)) return;
+
+            $fromAddress = config('mail.from.address', 'noreply@infrahub.click');
+            $fromName    = config('mail.from.name', 'InfraHub Security');
+
+            Mail::send([], [], function ($mail) use ($admins, $subject, $message, $fromAddress, $fromName) {
+                $mail->to($admins)
+                    ->from($fromAddress, $fromName)
+                    ->subject($subject)
+                    ->html(
+                        '<div style="font-family:sans-serif;max-width:600px;margin:auto;padding:24px;">'
+                        . '<div style="background:#dc2626;padding:16px 24px;border-radius:8px 8px 0 0;">'
+                        . '<h2 style="color:#fff;margin:0;">' . htmlspecialchars($subject) . '</h2>'
+                        . '</div>'
+                        . '<div style="background:#f9fafb;padding:24px;border:1px solid #e5e7eb;border-radius:0 0 8px 8px;">'
+                        . '<p style="color:#374151;line-height:1.7;">' . nl2br(htmlspecialchars($message)) . '</p>'
+                        . '<p style="color:#9ca3af;font-size:12px;margin-top:24px;">Timestamp: ' . now()->toDateTimeString() . '</p>'
+                        . '</div></div>'
+                    );
+            });
+        } catch (\Throwable $e) {
+            Log::error('Failed to send security alert email: ' . $e->getMessage());
         }
     }
 
