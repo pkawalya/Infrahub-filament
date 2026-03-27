@@ -91,7 +91,7 @@ class InvoiceResource extends Resource
         return $schema->schema([
             Schemas\Components\Section::make('Invoice Details')->schema([
                 Forms\Components\TextInput::make('invoice_number')
-                    ->default(fn() => 'INV-' . str_pad(Invoice::withoutGlobalScopes()->count() + 1, 5, '0', STR_PAD_LEFT))
+                    ->default(fn() => 'INV-' . str_pad(Invoice::where('company_id', auth()->user()?->company_id)->withTrashed()->count() + 1, 5, '0', STR_PAD_LEFT))
                     ->disabled()->dehydrated(),
                 Forms\Components\Select::make('client_id')
                     ->relationship('client', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))

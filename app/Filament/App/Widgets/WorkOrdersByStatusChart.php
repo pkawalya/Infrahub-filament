@@ -12,13 +12,16 @@ class WorkOrdersByStatusChart extends ChartWidget
 
     protected function getData(): array
     {
-        $statuses = WorkOrder::$statuses;
-        $counts = [];
-        $labels = [];
+        $companyId = auth()->user()?->company_id;
+        $statuses  = WorkOrder::$statuses;
+        $counts    = [];
+        $labels    = [];
 
         foreach ($statuses as $key => $label) {
             $labels[] = $label;
-            $counts[] = WorkOrder::where('status', $key)->count();
+            $counts[] = WorkOrder::where('company_id', $companyId)
+                ->where('status', $key)
+                ->count();
         }
 
         return [

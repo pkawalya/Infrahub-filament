@@ -10,7 +10,10 @@ class CrewAttendanceController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
+        $cid = $request->user()->company_id;
+
         $attendance = CrewAttendance::query()
+            ->where('company_id', $cid)
             ->when($request->project_id, fn($q, $id) => $q->where('cde_project_id', $id))
             ->when($request->date, fn($q, $d) => $q->whereDate('attendance_date', $d))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
@@ -24,41 +27,46 @@ class CrewAttendanceController extends BaseApiController
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'cde_project_id' => 'required|exists:cde_projects,id',
+            'user_id'         => 'required|exists:users,id',
+            'cde_project_id'  => 'required|exists:cde_projects,id',
             'attendance_date' => 'required|date',
-            'status' => 'required|string|in:present,absent,late,half_day,leave',
-            'check_in' => 'nullable|date_format:H:i',
-            'check_out' => 'nullable|date_format:H:i',
-            'overtime_hours' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string',
+            'status'          => 'required|string|in:present,absent,late,half_day,leave',
+            'check_in'        => 'nullable|date_format:H:i',
+            'check_out'       => 'nullable|date_format:H:i',
+            'overtime_hours'  => 'nullable|numeric|min:0',
+            'notes'           => 'nullable|string',
         ]);
 
+        $data['company_id']  = $request->user()->company_id;
         $data['recorded_by'] = $request->user()->id;
         $record = CrewAttendance::create($data);
 
         return $this->success($record->load('worker:id,name'), 'Attendance recorded', 201);
     }
 
-    public function show(CrewAttendance $attendance): JsonResponse
+    public function show(Request $request, CrewAttendance $attendance): JsonResponse
     {
+        abort_if($attendance->company_id !== $request->user()->company_id, 403);
         return $this->success($attendance->load(['worker:id,name', 'project:id,name']));
     }
 
     public function today(Request $request): JsonResponse
     {
+        $cid = $request->user()->company_id;
+
         $attendance = CrewAttendance::query()
+            ->where('company_id', $cid)
             ->whereDate('attendance_date', now())
             ->when($request->project_id, fn($q, $id) => $q->where('cde_project_id', $id))
             ->with('worker:id,name')
             ->get();
 
         $summary = [
-            'date' => now()->toDateString(),
-            'total' => $attendance->count(),
+            'date'    => now()->toDateString(),
+            'total'   => $attendance->count(),
             'present' => $attendance->where('status', 'present')->count(),
-            'absent' => $attendance->where('status', 'absent')->count(),
-            'late' => $attendance->where('status', 'late')->count(),
+            'absent'  => $attendance->where('status', 'absent')->count(),
+            'late'    => $attendance->where('status', 'late')->count(),
             'records' => $attendance,
         ];
 

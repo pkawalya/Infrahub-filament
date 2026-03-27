@@ -10,7 +10,10 @@ class SafetyController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
+        $cid = $request->user()->company_id;
+
         $incidents = SafetyIncident::query()
+            ->where('company_id', $cid)
             ->when($request->project_id, fn($q, $id) => $q->where('cde_project_id', $id))
             ->when($request->severity, fn($q, $s) => $q->where('severity', $s))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
@@ -35,15 +38,17 @@ class SafetyController extends BaseApiController
             'immediate_action' => 'nullable|string',
         ]);
 
+        $data['company_id']  = $request->user()->company_id;
         $data['reported_by'] = $request->user()->id;
-        $data['status'] = 'reported';
+        $data['status']      = 'reported';
         $incident = SafetyIncident::create($data);
 
         return $this->success($incident, 'Safety incident reported', 201);
     }
 
-    public function show(SafetyIncident $incident): JsonResponse
+    public function show(Request $request, SafetyIncident $incident): JsonResponse
     {
+        abort_if($incident->company_id !== $request->user()->company_id, 403);
         return $this->success($incident->load(['project:id,name', 'reportedBy:id,name']));
     }
 

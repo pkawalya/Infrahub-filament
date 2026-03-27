@@ -10,7 +10,10 @@ class DailySiteDiaryController extends BaseApiController
 {
     public function index(Request $request): JsonResponse
     {
+        $cid = $request->user()->company_id;
+
         $diaries = DailySiteDiary::query()
+            ->where('company_id', $cid)
             ->when($request->project_id, fn($q, $id) => $q->where('cde_project_id', $id))
             ->when($request->status, fn($q, $s) => $s === 'pending' ? $q->whereNull('approved_by') : $q->whereNotNull('approved_by'))
             ->with(['project:id,name', 'preparedBy:id,name', 'approvedBy:id,name'])
@@ -36,19 +39,22 @@ class DailySiteDiaryController extends BaseApiController
             'visitor_log' => 'nullable|string',
         ]);
 
+        $data['company_id']  = $request->user()->company_id;
         $data['prepared_by'] = $request->user()->id;
         $diary = DailySiteDiary::create($data);
 
         return $this->success($diary->load('project:id,name'), 'Site diary created', 201);
     }
 
-    public function show(DailySiteDiary $diary): JsonResponse
+    public function show(Request $request, DailySiteDiary $diary): JsonResponse
     {
+        abort_if($diary->company_id !== $request->user()->company_id, 403);
         return $this->success($diary->load(['project:id,name', 'preparedBy:id,name', 'approvedBy:id,name']));
     }
 
     public function update(Request $request, DailySiteDiary $diary): JsonResponse
     {
+        abort_if($diary->company_id !== $request->user()->company_id, 403);
         if ($diary->approved_by) {
             return $this->error('Cannot edit an approved diary', 422);
         }

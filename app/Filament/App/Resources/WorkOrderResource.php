@@ -102,7 +102,7 @@ class WorkOrderResource extends Resource
             Schemas\Components\Section::make('Work Order Details')->schema([
                 Forms\Components\TextInput::make('wo_number')
                     ->label('WO #')
-                    ->default(fn() => 'WO-' . str_pad(WorkOrder::withoutGlobalScopes()->count() + 1, 5, '0', STR_PAD_LEFT))
+                    ->default(fn() => 'WO-' . str_pad(WorkOrder::where('company_id', auth()->user()?->company_id)->withTrashed()->count() + 1, 5, '0', STR_PAD_LEFT))
                     ->disabled()
                     ->dehydrated(),
                 Forms\Components\TextInput::make('title')->required()->maxLength(255),

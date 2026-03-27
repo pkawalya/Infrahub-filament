@@ -87,7 +87,7 @@ class SafetyIncidentResource extends Resource
         return $schema->schema([
             Schemas\Components\Section::make('Incident Details')->schema([
                 Forms\Components\TextInput::make('incident_number')
-                    ->default(fn() => 'INC-' . str_pad(SafetyIncident::withoutGlobalScopes()->count() + 1, 4, '0', STR_PAD_LEFT))
+                    ->default(fn() => 'INC-' . str_pad(SafetyIncident::where('company_id', auth()->user()?->company_id)->withTrashed()->count() + 1, 4, '0', STR_PAD_LEFT))
                     ->disabled()->dehydrated(),
                 Forms\Components\TextInput::make('title')->required(),
                 Forms\Components\Select::make('cde_project_id')

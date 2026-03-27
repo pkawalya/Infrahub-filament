@@ -11,7 +11,10 @@ class EquipmentController extends BaseApiController
 {
     public function allocations(Request $request): JsonResponse
     {
+        $cid = $request->user()->company_id;
+
         $items = EquipmentAllocation::query()
+            ->where('company_id', $cid)
             ->when($request->project_id, fn($q, $id) => $q->where('cde_project_id', $id))
             ->when($request->status, fn($q, $s) => $q->where('status', $s))
             ->with(['asset:id,name', 'operator:id,name', 'project:id,name'])
@@ -24,17 +27,18 @@ class EquipmentController extends BaseApiController
     public function storeAllocation(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'asset_id' => 'required|exists:assets,id',
+            'asset_id'       => 'required|exists:assets,id',
             'cde_project_id' => 'required|exists:cde_projects,id',
-            'operator_id' => 'nullable|exists:users,id',
-            'start_date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:start_date',
-            'daily_rate' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string',
+            'operator_id'    => 'nullable|exists:users,id',
+            'start_date'     => 'required|date',
+            'end_date'       => 'nullable|date|after_or_equal:start_date',
+            'daily_rate'     => 'nullable|numeric|min:0',
+            'notes'          => 'nullable|string',
         ]);
 
-        $data['status'] = 'active';
-        $data['created_by'] = $request->user()->id;
+        $data['company_id']  = $request->user()->company_id;
+        $data['status']      = 'active';
+        $data['created_by']  = $request->user()->id;
         $alloc = EquipmentAllocation::create($data);
 
         return $this->success($alloc->load('asset:id,name'), 'Equipment allocated', 201);
@@ -42,7 +46,10 @@ class EquipmentController extends BaseApiController
 
     public function fuelLogs(Request $request): JsonResponse
     {
+        $cid = $request->user()->company_id;
+
         $logs = EquipmentFuelLog::query()
+            ->where('company_id', $cid)
             ->when($request->project_id, fn($q, $id) => $q->where('cde_project_id', $id))
             ->when($request->asset_id, fn($q, $id) => $q->where('asset_id', $id))
             ->with(['asset:id,name'])
@@ -55,17 +62,18 @@ class EquipmentController extends BaseApiController
     public function storeFuelLog(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'asset_id' => 'required|exists:assets,id',
+            'asset_id'       => 'required|exists:assets,id',
             'cde_project_id' => 'required|exists:cde_projects,id',
-            'log_date' => 'required|date',
-            'liters' => 'required|numeric|min:0.1',
+            'log_date'       => 'required|date',
+            'liters'         => 'required|numeric|min:0.1',
             'cost_per_liter' => 'nullable|numeric|min:0',
-            'total_cost' => 'nullable|numeric|min:0',
-            'meter_reading' => 'nullable|numeric',
-            'filled_by' => 'nullable|string|max:255',
+            'total_cost'     => 'nullable|numeric|min:0',
+            'meter_reading'  => 'nullable|numeric',
+            'filled_by'      => 'nullable|string|max:255',
         ]);
 
-        $data['created_by'] = $request->user()->id;
+        $data['company_id']  = $request->user()->company_id;
+        $data['created_by']  = $request->user()->id;
         if (!isset($data['total_cost']) && isset($data['cost_per_liter'])) {
             $data['total_cost'] = $data['liters'] * $data['cost_per_liter'];
         }
