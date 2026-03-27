@@ -73,7 +73,7 @@ class TenderResource extends Resource
                         ->required(),
                     Forms\Components\Select::make('assigned_to')
                         ->label('Lead Estimator')
-                        ->relationship('assignee', 'name')
+                        ->relationship('assignee', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
                         ->searchable()
                         ->preload()
                         ->nullable(),

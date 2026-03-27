@@ -130,7 +130,7 @@ class WorkOrderResource extends Resource
                     ->searchable()
                     ->preload(),
                 Forms\Components\Select::make('assigned_to')
-                    ->relationship('assignee', 'name')
+                    ->relationship('assignee', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
                     ->searchable()
                     ->preload(),
                 Forms\Components\DatePicker::make('due_date'),
@@ -262,7 +262,8 @@ class WorkOrderResource extends Resource
                 Tables\Filters\SelectFilter::make('work_order_type_id')
                     ->relationship('type', 'name')->label('Type'),
                 Tables\Filters\SelectFilter::make('assigned_to')
-                    ->relationship('assignee', 'name')->label('Assignee'),
+                    ->relationship('assignee', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->label('Assignee'),
             ])
             ->actions([
                 Actions\ViewAction::make(),

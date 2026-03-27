@@ -23,7 +23,7 @@ use Illuminate\Support\Collection;
 
 class CompanyTrash extends Page
 {
-    protected static string $view = 'filament.app.pages.company-trash';
+    protected string $view = 'filament.app.pages.company-trash';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-trash';
     protected static ?string $navigationLabel = 'Trash';

@@ -97,7 +97,8 @@ class TaskResource extends Resource
                 Forms\Components\Select::make('parent_id')
                     ->relationship('parent', 'title')->searchable()->preload()->label('Parent Task'),
                 Forms\Components\Select::make('assigned_to')
-                    ->relationship('assignee', 'name')->searchable()->preload(),
+                    ->relationship('assignee', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
+                    ->searchable()->preload(),
                 Forms\Components\Select::make('priority')
                     ->options(['low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'urgent' => 'Urgent'])
                     ->default('medium'),
@@ -129,7 +130,8 @@ class TaskResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(Task::$statuses),
                 Tables\Filters\SelectFilter::make('assigned_to')
-                    ->relationship('assignee', 'name')->label('Assignee'),
+                    ->relationship('assignee', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->label('Assignee'),
             ])
             ->actions([Actions\ViewAction::make(), Actions\EditAction::make()])
             ->bulkActions([Actions\DeleteBulkAction::make()]);

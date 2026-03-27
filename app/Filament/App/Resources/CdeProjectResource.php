@@ -80,7 +80,8 @@ class CdeProjectResource extends Resource
                                     ]))->id;
                                 }),
                             Forms\Components\Select::make('manager_id')
-                                ->relationship('manager', 'name')->searchable()->preload()->label('Project Manager')
+                                ->relationship('manager', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
+                                ->searchable()->preload()->label('Project Manager')
                                 ->createOptionForm([
                                     Forms\Components\TextInput::make('name')->required()->maxLength(255),
                                     Forms\Components\TextInput::make('email')->email()->required()->maxLength(255),
