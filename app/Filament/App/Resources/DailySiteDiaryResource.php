@@ -48,7 +48,7 @@ class DailySiteDiaryResource extends Resource
                 ->schema([
                     Forms\Components\Select::make('cde_project_id')
                         ->label('Project')
-                        ->relationship('project', 'name')
+                        ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
                         ->searchable()
                         ->preload()
                         ->required()
@@ -284,7 +284,7 @@ class DailySiteDiaryResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('cde_project_id')
                     ->label('Project')
-                    ->relationship('project', 'name'),
+                    ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)),
                 Tables\Filters\Filter::make('unapproved')
                     ->label('Pending Approval')
                     ->query(fn($q) => $q->whereNull('approved_by'))

@@ -63,7 +63,7 @@ class EquipmentFuelLogResource extends Resource
                             ]))->id),
                         Forms\Components\Select::make('cde_project_id')
                             ->label('Project (if on-site)')
-                            ->relationship('project', 'name')
+                            ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
                             ->searchable()
                             ->preload()
                             ->nullable(),
@@ -186,7 +186,7 @@ class EquipmentFuelLogResource extends Resource
                     ->relationship('asset', 'name'),
                 Tables\Filters\SelectFilter::make('cde_project_id')
                     ->label('Project')
-                    ->relationship('project', 'name'),
+                    ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)),
             ])
             ->recordActions([
                 Actions\EditAction::make(),

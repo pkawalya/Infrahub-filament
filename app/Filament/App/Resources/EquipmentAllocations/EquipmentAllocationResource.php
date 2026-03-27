@@ -62,13 +62,13 @@ class EquipmentAllocationResource extends Resource
                             ]))->id),
                         Forms\Components\Select::make('cde_project_id')
                             ->label('Assigned to Project')
-                            ->relationship('project', 'name')
+                            ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
                             ->searchable()
                             ->preload()
                             ->nullable(),
                         Forms\Components\Select::make('operator_id')
                             ->label('Operator')
-                            ->relationship('operator', 'name')
+                            ->relationship('operator', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
                             ->searchable()
                             ->preload()
                             ->nullable(),
@@ -140,7 +140,7 @@ class EquipmentAllocationResource extends Resource
                     ->label('Days')
                     ->state(function (EquipmentAllocation $record): string {
                         $end = $record->end_date ?? now();
-                        return $record->start_date->diffInDays($end) . 'd';
+                        return \Carbon\Carbon::parse($record->start_date)->diffInDays($end) . 'd';
                     }),
                 Tables\Columns\TextColumn::make('daily_rate')
                     ->label('Rate/Day')
@@ -152,7 +152,7 @@ class EquipmentAllocationResource extends Resource
                         if (!$record->daily_rate)
                             return null;
                         $end = $record->end_date ?? now();
-                        $days = max(1, $record->start_date->diffInDays($end));
+                        $days = max(1, \Carbon\Carbon::parse($record->start_date)->diffInDays($end));
                         return $record->daily_rate * $days;
                     })
                     ->formatStateUsing(CurrencyHelper::formatter())
@@ -177,7 +177,7 @@ class EquipmentAllocationResource extends Resource
                     ]),
                 Tables\Filters\SelectFilter::make('cde_project_id')
                     ->label('Project')
-                    ->relationship('project', 'name'),
+                    ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)),
             ])
             ->recordActions([
                 Actions\EditAction::make(),

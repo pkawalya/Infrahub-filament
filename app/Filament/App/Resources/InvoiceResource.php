@@ -94,9 +94,11 @@ class InvoiceResource extends Resource
                     ->default(fn() => 'INV-' . str_pad(Invoice::withoutGlobalScopes()->count() + 1, 5, '0', STR_PAD_LEFT))
                     ->disabled()->dehydrated(),
                 Forms\Components\Select::make('client_id')
-                    ->relationship('client', 'name')->searchable()->preload()->required(),
+                    ->relationship('client', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->searchable()->preload()->required(),
                 Forms\Components\Select::make('work_order_id')
-                    ->relationship('workOrder', 'wo_number')->searchable()->preload(),
+                    ->relationship('workOrder', 'wo_number', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->searchable()->preload(),
                 Forms\Components\Select::make('status')
                     ->options(Invoice::$statuses)->default('draft')->required(),
                 Forms\Components\DatePicker::make('issue_date')->default(now()),

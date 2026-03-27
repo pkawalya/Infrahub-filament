@@ -37,13 +37,13 @@ class CrewAttendanceResource extends Resource
                 ->schema([
                     Forms\Components\Select::make('user_id')
                         ->label('Worker')
-                        ->relationship('worker', 'name')
+                        ->relationship('worker', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
                         ->searchable()
                         ->preload()
                         ->required(),
                     Forms\Components\Select::make('cde_project_id')
                         ->label('Project / Site')
-                        ->relationship('project', 'name')
+                        ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
                         ->searchable()
                         ->preload()
                         ->nullable(),
@@ -130,10 +130,10 @@ class CrewAttendanceResource extends Resource
                     ->options(fn() => Company::options('attendance_statuses')),
                 Tables\Filters\SelectFilter::make('user_id')
                     ->label('Worker')
-                    ->relationship('worker', 'name'),
+                    ->relationship('worker', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)),
                 Tables\Filters\SelectFilter::make('cde_project_id')
                     ->label('Project')
-                    ->relationship('project', 'name'),
+                    ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)),
             ])
             ->actions([
                 Actions\EditAction::make(),
