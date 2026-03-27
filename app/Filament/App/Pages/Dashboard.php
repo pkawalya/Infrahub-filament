@@ -4,6 +4,7 @@ namespace App\Filament\App\Pages;
 
 use App\Filament\App\Widgets\ContractorOverviewWidget;
 use App\Filament\App\Widgets\ProjectTimelineWidget;
+use App\Filament\App\Widgets\SubscriptionUsageWidget;
 use App\Filament\App\Widgets\TenantDashboardOverview;
 use Filament\Pages\Dashboard as BaseDashboard;
 
@@ -15,6 +16,7 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
+            SubscriptionUsageWidget::class,
             TenantDashboardOverview::class,
             ContractorOverviewWidget::class,
             ProjectTimelineWidget::class,

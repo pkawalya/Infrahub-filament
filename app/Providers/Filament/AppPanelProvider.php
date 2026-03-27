@@ -101,6 +101,13 @@ class AppPanelProvider extends PanelProvider
                 \Filament\View\PanelsRenderHook::GLOBAL_SEARCH_BEFORE,
                 fn() => view('filament.app.components.project-selector'),
             )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::CONTENT_START,
+                function () {
+                    if (!auth()->check()) return '';
+                    return view('filament.app.components.subscription-limit-banner');
+                },
+            )
             ->databaseNotifications()
             ->databaseTransactions()
             ->renderHook(
