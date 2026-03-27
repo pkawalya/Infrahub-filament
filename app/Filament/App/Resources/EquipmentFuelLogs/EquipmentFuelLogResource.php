@@ -47,7 +47,20 @@ class EquipmentFuelLogResource extends Resource
                             ->getOptionLabelFromRecordUsing(fn(Asset $record) => "{$record->asset_tag} — {$record->display_name}")
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                                Forms\Components\TextInput::make('asset_tag')->label('Asset Tag')->maxLength(100),
+                                Forms\Components\TextInput::make('serial_number')->label('Serial Number')->maxLength(100),
+                                Forms\Components\Select::make('meter_unit')
+                                    ->options(['hours' => 'Hours', 'km' => 'Kilometers', 'miles' => 'Miles'])
+                                    ->label('Meter Unit')->default('hours'),
+                            ])
+                            ->createOptionUsing(fn(array $data) => Asset::create(array_merge($data, [
+                                'company_id' => auth()->user()->company_id,
+                                'status'     => 'in_use',
+                                'condition'  => 'good',
+                            ]))->id),
                         Forms\Components\Select::make('cde_project_id')
                             ->label('Project (if on-site)')
                             ->relationship('project', 'name')

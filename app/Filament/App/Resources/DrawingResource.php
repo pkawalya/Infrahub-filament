@@ -12,6 +12,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class DrawingResource extends Resource
 {
@@ -23,7 +24,9 @@ class DrawingResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->where('company_id', auth()->user()?->company_id);
+        return parent::getEloquentQuery()
+            ->withoutGlobalScope(SoftDeletingScope::class)
+            ->where('company_id', auth()->user()?->company_id);
     }
 
     public static function form(Schema $schema): Schema
@@ -102,6 +105,7 @@ class DrawingResource extends Resource
             ])
             ->defaultSort('drawing_number')
             ->filters([
+                Tables\Filters\TrashedFilter::make(),
                 Tables\Filters\SelectFilter::make('discipline')->options(Drawing::$disciplines),
                 Tables\Filters\SelectFilter::make('status')->options(Drawing::$statuses),
                 Tables\Filters\SelectFilter::make('cde_project_id')->label('Project')->relationship('project', 'name'),
@@ -109,6 +113,7 @@ class DrawingResource extends Resource
             ->actions([
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
+                Actions\RestoreAction::make(),
                 Actions\Action::make('newRevision')
                     ->icon('heroicon-o-arrow-path')->color('warning')->label('New Revision')
                     ->form([
@@ -117,23 +122,25 @@ class DrawingResource extends Resource
                         Forms\Components\FileUpload::make('file')->directory('drawings'),
                     ])
                     ->action(function (Drawing $record, array $data): void {
-                        // Supersede old current revision
                         $record->revisions()->where('status', 'current')->update(['status' => 'superseded']);
-
-                        // Create new revision
                         $record->revisions()->create([
-                            'revision_code' => $data['revision_code'],
+                            'revision_code'        => $data['revision_code'],
                             'revision_description' => $data['revision_description'] ?? null,
-                            'file_path' => $data['file'] ?? null,
-                            'status' => 'current',
-                            'revision_date' => now(),
-                            'revised_by' => auth()->id(),
+                            'file_path'            => $data['file'] ?? null,
+                            'status'               => 'current',
+                            'revision_date'        => now(),
+                            'revised_by'           => auth()->id(),
                         ]);
-
                         $record->update(['current_revision' => $data['revision_code']]);
                     }),
+                Actions\DeleteAction::make(),
+                Actions\ForceDeleteAction::make(),
             ])
-            ->bulkActions([Actions\DeleteBulkAction::make()]);
+            ->bulkActions([
+                Actions\DeleteBulkAction::make(),
+                Actions\RestoreBulkAction::make(),
+                Actions\ForceDeleteBulkAction::make(),
+            ]);
     }
 
     public static function getPages(): array

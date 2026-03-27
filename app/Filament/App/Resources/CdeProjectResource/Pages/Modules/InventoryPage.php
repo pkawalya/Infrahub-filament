@@ -554,59 +554,109 @@ class InventoryPage extends BaseModulePage implements HasTable, HasForms
             'transferItems' => 'required|array|min:1',
         ]);
         $next = StockTransfer::where('company_id', $this->cid())->count() + 1;
+        $tNumber = 'TRF-' . str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+
         $transfer = StockTransfer::create([
-            'company_id' => $this->cid(),
-            'cde_project_id' => $this->pid(),
-            'transfer_number' => 'TRF-' . str_pad((string) $next, 5, '0', STR_PAD_LEFT),
+            'company_id'        => $this->cid(),
+            'cde_project_id'    => $this->pid(),
+            'transfer_number'   => $tNumber,
             'from_warehouse_id' => $this->transferHeader['from_warehouse_id'],
-            'to_warehouse_id' => $this->transferHeader['to_warehouse_id'],
-            'status' => 'received',
-            'priority' => $this->transferHeader['priority'],
-            'transfer_date' => now(),
-            'requested_date' => now(),
-            'received_date' => now(),
-            'reason' => $this->transferHeader['reason'] ?: null,
-            'notes' => $this->transferHeader['notes'] ?: null,
-            'created_by' => auth()->id(),
-            'requested_by' => auth()->id(),
-            'received_by' => auth()->id(),
+            'to_warehouse_id'   => $this->transferHeader['to_warehouse_id'],
+            'status'            => 'in_transit',
+            'priority'          => $this->transferHeader['priority'],
+            'transfer_date'     => now(),
+            'requested_date'    => now(),
+            'reason'            => $this->transferHeader['reason'] ?: null,
+            'notes'             => $this->transferHeader['notes'] ?: null,
+            'created_by'        => auth()->id(),
+            'requested_by'      => auth()->id(),
         ]);
         foreach ($this->transferItems as $item) {
             if (empty($item['product_id']))
                 continue;
             $qty = (float) ($item['quantity'] ?? 0);
             $transfer->items()->create([
-                'product_id' => $item['product_id'],
+                'product_id'         => $item['product_id'],
                 'quantity_requested' => $qty,
-                'quantity_shipped' => $qty,
-                'quantity_received' => $qty,
+                'quantity_shipped'   => $qty,
+                'quantity_received'  => 0,
             ]);
-            // Deduct from source
-            $fromStock = StockLevel::where('product_id', $item['product_id'])
-                ->where('warehouse_id', $this->transferHeader['from_warehouse_id'])->first();
-            if ($fromStock) {
-                $fromStock->decrement('quantity_on_hand', min($qty, $fromStock->quantity_on_hand));
-                $fromStock->decrement('quantity_available', min($qty, $fromStock->quantity_available));
-            }
-            // Add to destination
-            $toStock = StockLevel::firstOrCreate(
-                ['product_id' => $item['product_id'], 'warehouse_id' => $this->transferHeader['to_warehouse_id']],
-                ['quantity_on_hand' => 0, 'quantity_reserved' => 0, 'quantity_available' => 0]
-            );
-            $toStock->increment('quantity_on_hand', $qty);
-            $toStock->increment('quantity_available', $qty);
         }
-        $this->showTransferModal = false;
-        Notification::make()->title("Transfer {$transfer->transfer_number} completed")->success()->send();
 
-        // ── Stakeholder notifications ──────────────────────────────────────────
+        // ── Auto-generate Delivery Note for this transfer ─────────────────
+        $this->generateDNForTransfer($transfer);
+        // ──────────────────────────────────────────────────────────────────
+
+        $this->showTransferModal = false;
+        Notification::make()->title("Transfer {$tNumber} created — Delivery Note issued")->success()->send();
+
+        // ── Stakeholder notifications ──────────────────────────────────────
         try {
             $transfer->load(['fromWarehouse', 'toWarehouse', 'items']);
             app(InventoryNotificationService::class)->stockTransferred($transfer, auth()->user());
         } catch (\Throwable) {
         }
-        // ──────────────────────────────────────────────────────────────────────
+        // ──────────────────────────────────────────────────────────────────
     }
+
+    /**
+     * Generate a Delivery Note for a stock transfer.
+     * Called automatically after submitTransfer() and available as an
+     * on-demand action for existing transfers.
+     */
+    public function generateDNForTransfer(StockTransfer $transfer): void
+    {
+        $dnCount = DeliveryNote::where('company_id', $this->cid())->count() + 1;
+        $dnNumber = 'DN-' . str_pad((string) $dnCount, 5, '0', STR_PAD_LEFT);
+
+        $dn = DeliveryNote::create([
+            'company_id'        => $this->cid(),
+            'cde_project_id'    => $this->pid(),
+            'dn_number'         => $dnNumber,
+            'stock_transfer_id' => $transfer->id,
+            'from_warehouse_id' => $transfer->from_warehouse_id,
+            'to_warehouse_id'   => $transfer->to_warehouse_id,
+            'warehouse_id'      => $transfer->from_warehouse_id,   // issuing store
+            'destination'       => $transfer->toWarehouse?->name ?? 'Destination Store',
+            'destination_contact' => null,
+            'dispatch_date'     => now()->format('Y-m-d'),
+            'status'            => 'dispatched',
+            'notes'             => "Auto-generated DN for Transfer {$transfer->transfer_number}" . ($transfer->reason ? " — {$transfer->reason}" : ''),
+            'dispatched_by'     => auth()->id(),
+        ]);
+
+        // Mirror transfer items into DN items
+        foreach ($transfer->items as $item) {
+            $dn->items()->create([
+                'product_id'          => $item->product_id,
+                'description'         => $item->product?->name ?? 'Item',
+                'unit'                => $item->product?->unit_of_measure ?? 'each',
+                'quantity_dispatched' => $item->quantity_shipped,
+                'quantity_received'   => 0,
+                'condition'           => 'good',
+            ]);
+        }
+
+        // Stamp DN number back onto the transfer for quick reference
+        $transfer->update(['delivery_note_number' => $dnNumber]);
+    }
+
+    /**
+     * On-demand: generate a DN for an already-saved transfer (called from Blade).
+     */
+    public function generateDNForExistingTransfer(int $transferId): void
+    {
+        $transfer = StockTransfer::with('items.product', 'fromWarehouse', 'toWarehouse')->find($transferId);
+        if (!$transfer) return;
+        if ($transfer->delivery_note_number) {
+            Notification::make()->title("DN {$transfer->delivery_note_number} already exists")->warning()->send();
+            return;
+        }
+        $this->generateDNForTransfer($transfer);
+        Notification::make()->title("Delivery Note {$transfer->delivery_note_number} generated")->success()->send();
+    }
+
+
 
     // ─── Stock Adjustment ────────────────────────────────────
     public bool $showAdjustmentModal = false;

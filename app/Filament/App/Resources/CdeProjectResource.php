@@ -66,9 +66,32 @@ class CdeProjectResource extends Resource
                                 ->reactive()
                                 ->placeholder('Select type...'),
                             Forms\Components\Select::make('client_id')
-                                ->relationship('client', 'name')->searchable()->preload(),
+                                ->relationship('client', 'name')->searchable()->preload()
+                                ->createOptionForm([
+                                    Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                                    Forms\Components\TextInput::make('email')->email()->maxLength(255),
+                                    Forms\Components\TextInput::make('phone')->maxLength(50),
+                                    Forms\Components\TextInput::make('company_name')->label('Company')->maxLength(255),
+                                ])
+                                ->createOptionUsing(function (array $data): int {
+                                    return \App\Models\Client::create(array_merge($data, [
+                                        'company_id' => auth()->user()->company_id,
+                                        'is_active'  => true,
+                                    ]))->id;
+                                }),
                             Forms\Components\Select::make('manager_id')
-                                ->relationship('manager', 'name')->searchable()->preload()->label('Project Manager'),
+                                ->relationship('manager', 'name')->searchable()->preload()->label('Project Manager')
+                                ->createOptionForm([
+                                    Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                                    Forms\Components\TextInput::make('email')->email()->required()->maxLength(255),
+                                    Forms\Components\TextInput::make('phone')->maxLength(50),
+                                ])
+                                ->createOptionUsing(function (array $data): int {
+                                    return \App\Models\User::create(array_merge($data, [
+                                        'company_id' => auth()->user()->company_id,
+                                        'password'   => bcrypt(\Illuminate\Support\Str::random(16)),
+                                    ]))->id;
+                                }),
                             Forms\Components\Select::make('status')
                                 ->options(CdeProject::$statuses)->default('planning'),
                             Forms\Components\Select::make('currency')

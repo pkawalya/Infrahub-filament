@@ -30,16 +30,26 @@ class PurchaseOrder extends Model
         'submitted_at',
         'approved_at',
         'rejection_reason',
+        'approval_level',
+        'level1_approved_by',
+        'level1_approved_at',
+        'level2_approved_by',
+        'level2_approved_at',
+        'level2_rejection_reason',
+        'approval_threshold',
     ];
 
     protected $casts = [
-        'order_date' => 'date',
-        'expected_date' => 'date',
-        'received_date' => 'date',
-        'submitted_at' => 'datetime',
-        'approved_at' => 'datetime',
-        'subtotal' => 'decimal:2',
-        'total_amount' => 'decimal:2',
+        'order_date'         => 'date',
+        'expected_date'      => 'date',
+        'received_date'      => 'date',
+        'submitted_at'       => 'datetime',
+        'approved_at'        => 'datetime',
+        'level1_approved_at' => 'datetime',
+        'level2_approved_at' => 'datetime',
+        'subtotal'           => 'decimal:2',
+        'total_amount'       => 'decimal:2',
+        'approval_threshold' => 'decimal:2',
     ];
 
     public static array $statuses = [
@@ -77,20 +87,50 @@ class PurchaseOrder extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+    public function level1Approver()
+    {
+        return $this->belongsTo(User::class, 'level1_approved_by');
+    }
+    public function level2Approver()
+    {
+        return $this->belongsTo(User::class, 'level2_approved_by');
+    }
 
-    // ─── Approval helpers ───
+    // ─── Approval helpers ───────────────────────────────────
     public function canBeSubmitted(): bool
     {
         return $this->status === 'draft' || $this->status === 'rejected';
     }
-
     public function canBeApproved(): bool
     {
         return $this->status === 'submitted';
     }
-
     public function canBeRejected(): bool
     {
         return $this->status === 'submitted';
+    }
+    /** Requires L2 approval if total exceeds threshold */
+    public function requiresDualApproval(): bool
+    {
+        return $this->approval_level >= 2
+            || ($this->approval_threshold && $this->total_amount >= $this->approval_threshold);
+    }
+    public function needsLevel1Approval(): bool
+    {
+        return $this->status === 'submitted' && is_null($this->level1_approved_at);
+    }
+    public function needsLevel2Approval(): bool
+    {
+        return $this->requiresDualApproval()
+            && !is_null($this->level1_approved_at)
+            && is_null($this->level2_approved_at)
+            && $this->status === 'submitted';
+    }
+    public function isFullyApproved(): bool
+    {
+        if ($this->requiresDualApproval()) {
+            return !is_null($this->level1_approved_at) && !is_null($this->level2_approved_at);
+        }
+        return $this->status === 'approved';
     }
 }

@@ -25,7 +25,10 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 
 use App\Filament\App\Concerns\ExportsTableCsv;
+use App\Services\MsProjectService;
+use App\Services\ImportValidationException;
 use App\Support\StoragePath;
+use Illuminate\Support\Facades\Response;
 
 class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 {
@@ -305,6 +308,16 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                     ->numeric()->prefix('$'),
             ])->columns(2)->collapsed(),
 
+            Section::make('Commissioning')->schema([
+                Forms\Components\Select::make('commissioning_phase')
+                    ->label('Commissioning / Construction Stage')
+                    ->options(Task::$commissioningPhases)
+                    ->searchable()
+                    ->nullable()
+                    ->placeholder('— None —')
+                    ->helperText('For energy/OHL projects: tag the construction stage this task belongs to'),
+            ])->collapsed(),
+
             Section::make('Dependencies (Predecessors)')->schema([
                 Forms\Components\Repeater::make('predecessor_list')
                     ->schema([
@@ -357,7 +370,135 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
     protected function getHeaderActions(): array
     {
-        return []; // Actions are handled by custom modals in the Blade template
+        return [
+            Action::make('importMsProject')
+                ->label('Import MS Project')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('info')
+                ->modalWidth('2xl')
+                ->modalHeading('Import Microsoft Project File')
+                ->modalDescription('Upload an MS Project XML file (.xml). Tasks, dependencies and milestones will be imported automatically.')
+                ->schema([
+                    Section::make('Upload File')->schema([
+                        Forms\Components\FileUpload::make('msp_file')
+                            ->label('MS Project XML File (.xml)')
+                            ->required()
+                            ->disk('local')
+                            ->directory('msp-imports/' . $this->pid())
+                            ->acceptedFileTypes(['text/xml', 'application/xml', '.xml'])
+                            ->maxSize(10240) // 10 MB
+                            ->helperText('Export your project from MS Project as XML: File → Save As → XML Format (*.xml)'),
+                    ]),
+                    Section::make('Import Options')->schema([
+                        Forms\Components\Toggle::make('clear_existing')
+                            ->label('Replace existing tasks')
+                            ->helperText('⚠️ WARNING: Enabling this will permanently delete all existing tasks and dependencies for this project before importing.')
+                            ->default(false),
+                        Forms\Components\Toggle::make('import_milestones')
+                            ->label('Auto-create Milestones from MS Project milestones')
+                            ->default(true),
+                    ])->columns(2),
+                ])
+                ->action(function (array $data): void {
+                    $path = storage_path('app/' . $data['msp_file']);
+                    if (!file_exists($path)) {
+                        Notification::make()->title('File not found')->danger()->send();
+                        return;
+                    }
+
+                    $xml = file_get_contents($path);
+                    @unlink($path); // Clean up after reading
+
+                    try {
+                        $result = app(MsProjectService::class)->import(
+                            xmlContent: $xml,
+                            projectId: $this->pid(),
+                            companyId: $this->cid(),
+                            clearExisting: (bool) ($data['clear_existing'] ?? false),
+                        );
+
+                        Task::regenerateWbs($this->pid());
+
+                        $body = "✅ {$result['tasks_created']} tasks imported" .
+                            ($result['dependencies_created'] > 0 ? " · {$result['dependencies_created']} links" : '') .
+                            ($result['milestones_created'] > 0 ? " · {$result['milestones_created']} milestones" : '') .
+                            ($result['project_name'] ? "\nProject: {$result['project_name']}" : '');
+
+                        Notification::make()
+                            ->title('MS Project Import Complete')
+                            ->body($body)
+                            ->success()
+                            ->persistent()
+                            ->send();
+
+                        $this->dispatch('gantt-refresh');
+
+                    } catch (ImportValidationException $e) {
+                        @unlink($path); // Clean up on validation failure
+                        $errors = $e->getErrors();
+                        $warnings = $e->getWarnings();
+
+                        if ($e->hasBlockingErrors()) {
+                            $msg = implode("\n", array_slice($errors, 0, 8));
+                            if (count($errors) > 8) $msg .= "\n...and " . (count($errors) - 8) . ' more.';
+                            Notification::make()
+                                ->title('Import Failed — ' . count($errors) . ' validation error(s)')
+                                ->body($msg)
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                        } elseif (!empty($warnings)) {
+                            Notification::make()
+                                ->title('Imported with ' . count($warnings) . ' warning(s)')
+                                ->body(implode("\n", array_slice($warnings, 0, 5)))
+                                ->warning()
+                                ->persistent()
+                                ->send();
+                        }
+
+                    } catch (\RuntimeException $e) {
+                        @unlink($path); // Clean up on error
+                        Notification::make()
+                            ->title('Import Error')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                }),
+
+            Action::make('exportMsProject')
+                ->label('Export to MS Project')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('success')
+                ->requiresConfirmation()
+                ->modalHeading('Export to Microsoft Project')
+                ->modalDescription('This will generate an MS Project XML file compatible with Microsoft Project 2010 and later.')
+                ->action(function (): mixed {
+                    return $this->downloadMsProjectExport();
+                }),
+        ];
+    }
+
+    /**
+     * Livewire event listener — streams the XML back as a downloadable response.
+     * Hooked via wire:listen in the Blade template or via JS dispatch.
+     */
+    public function downloadMsProjectExport(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $project = $this->record;
+        $xml = app(MsProjectService::class)->export(
+            projectId: $this->pid(),
+            projectName: $project->name,
+            projectStart: $project->start_date ?? null,
+        );
+
+        $filename = 'project-' . str($project->name)->slug() . '-' . now()->format('Ymd') . '.xml';
+
+        return response()->streamDownload(
+            function () use ($xml) { echo $xml; },
+            $filename,
+            ['Content-Type' => 'application/xml']
+        );
     }
 
     public function openTaskModal(): void

@@ -47,7 +47,19 @@ class EquipmentAllocationResource extends Resource
                             ->getOptionLabelFromRecordUsing(fn(Asset $record) => "{$record->asset_tag} — {$record->display_name}")
                             ->searchable()
                             ->preload()
-                            ->required(),
+                            ->required()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                                Forms\Components\TextInput::make('asset_tag')->label('Asset Tag')->maxLength(100),
+                                Forms\Components\TextInput::make('serial_number')->label('Serial Number')->maxLength(100),
+                                Forms\Components\Select::make('status')
+                                    ->options(['available' => 'Available', 'in_use' => 'In Use', 'maintenance' => 'Maintenance'])
+                                    ->default('available'),
+                            ])
+                            ->createOptionUsing(fn(array $data) => Asset::create(array_merge($data, [
+                                'company_id' => auth()->user()->company_id,
+                                'condition'  => 'good',
+                            ]))->id),
                         Forms\Components\Select::make('cde_project_id')
                             ->label('Assigned to Project')
                             ->relationship('project', 'name')

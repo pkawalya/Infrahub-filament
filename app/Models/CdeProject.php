@@ -151,14 +151,16 @@ class CdeProject extends Model
     ];
 
     public static array $commissioningStatuses = [
-        'not_started' => 'Not Started',
-        'pre_commissioning' => 'Pre-Commissioning',
-        'mechanical_completion' => 'Mechanical Completion',
-        'energization' => 'Energization',
-        'hot_commissioning' => 'Hot Commissioning',
-        'performance_test' => 'Performance Testing',
-        'pac' => 'PAC (Provisional Acceptance)',
-        'fac' => 'FAC (Final Acceptance)',
+        'smoking'                      => '1. Smoking (Route Survey & Pegging)',
+        'bald_pt'                      => '2. Bald / PT (Excavation)',
+        'pole_erection'                => '3. Pole Erection',
+        'pole_dressing'                => '4. Pole Dressing',
+        'pole_stringing'               => '5. Pole Stringing',
+        'transformer_switchgear'       => '6. Transformer / Switchgear Installation',
+        'pre_commissioning'            => '7. Pre-Commissioning',
+        'commissioned'                 => 'Commissioned',
+        'pac'                          => 'PAC (Provisional Acceptance)',
+        'fac'                          => 'FAC (Final Acceptance)',
     ];
 
     public static array $billingStatuses = [
@@ -259,7 +261,9 @@ class CdeProject extends Model
     }
     public function contracts()
     {
-        return $this->hasMany(Contract::class);
+        return $this->belongsToMany(Contract::class, 'contract_project', 'cde_project_id', 'contract_id')
+            ->withPivot('budget_allocation', 'notes')
+            ->withTimestamps();
     }
     public function boqs()
     {

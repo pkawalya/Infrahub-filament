@@ -89,8 +89,24 @@ class SubcontractorPage extends BaseModulePage implements HasTable
                 ->form([
                     Forms\Components\Select::make('subcontractor_id')
                         ->label('Subcontractor')
-                        ->options(Subcontractor::where('company_id', $cid)->where('status', 'active')->pluck('name', 'id'))
-                        ->searchable()->required(),
+                        ->relationship('subcontractor', 'name', fn($q) => $q->where('status', 'active'))
+                        ->searchable()
+                        ->preload(false)
+                        ->required()
+                        ->createOptionForm([
+                            Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                            Forms\Components\TextInput::make('contact_person')->maxLength(255),
+                            Forms\Components\TextInput::make('email')->email()->maxLength(255),
+                            Forms\Components\TextInput::make('phone')->maxLength(50),
+                            Forms\Components\TextInput::make('specialty')->maxLength(255),
+                            Forms\Components\TextInput::make('registration_number')->label('Reg. Number')->maxLength(100),
+                        ])
+                        ->createOptionUsing(function (array $data) use ($cid): int {
+                            return Subcontractor::create(array_merge($data, [
+                                'company_id' => $cid,
+                                'status'     => 'active',
+                            ]))->id;
+                        }),
                     Forms\Components\TextInput::make('title')->required()->maxLength(255),
                     Forms\Components\TextInput::make('scope_of_work')->maxLength(500),
                     Forms\Components\TextInput::make('contract_value')->numeric()

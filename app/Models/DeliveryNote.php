@@ -16,6 +16,7 @@ class DeliveryNote extends Model
         'dn_number',
         'material_issuance_id',
         'purchase_order_id',
+        'stock_transfer_id',
         'destination',
         'destination_contact',
         'destination_phone',
@@ -23,6 +24,8 @@ class DeliveryNote extends Model
         'driver_name',
         'driver_phone',
         'warehouse_id',
+        'from_warehouse_id',
+        'to_warehouse_id',
         'status',
         'dispatch_date',
         'delivery_date',
@@ -64,6 +67,18 @@ class DeliveryNote extends Model
     public function purchaseOrder()
     {
         return $this->belongsTo(PurchaseOrder::class);
+    }
+    public function stockTransfer()
+    {
+        return $this->belongsTo(StockTransfer::class);
+    }
+    public function fromWarehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'from_warehouse_id');
+    }
+    public function toWarehouse()
+    {
+        return $this->belongsTo(Warehouse::class, 'to_warehouse_id');
     }
     public function warehouse()
     {

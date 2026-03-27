@@ -327,7 +327,17 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                             ->required()->maxLength(50),
                         Forms\Components\Select::make('client_id')->label('Client')
                             ->options(Client::where('company_id', $this->cid())->pluck('name', 'id'))
-                            ->searchable()->required()->default($this->record->client_id),
+                            ->searchable()->required()->default($this->record->client_id)
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                                Forms\Components\TextInput::make('email')->email()->maxLength(255),
+                                Forms\Components\TextInput::make('phone')->maxLength(50),
+                                Forms\Components\TextInput::make('company_name')->label('Company')->maxLength(255),
+                            ])
+                            ->createOptionUsing(fn(array $data) => Client::create(array_merge($data, [
+                                'company_id' => $this->cid(),
+                                'is_active'  => true,
+                            ]))->id),
                         Forms\Components\Select::make('work_order_id')->label('Work Order')
                             ->options(WorkOrder::where('cde_project_id', $this->pid())->pluck('title', 'id'))
                             ->searchable()->nullable(),
@@ -425,7 +435,17 @@ class FinancialsPage extends BaseModulePage implements HasTable, HasForms
                         Forms\Components\TextInput::make('title')->placeholder('e.g. Construction Works - Phase 1')->maxLength(255),
                         Forms\Components\Select::make('client_id')->label('Client')
                             ->options(Client::where('company_id', $this->cid())->pluck('name', 'id'))
-                            ->searchable()->nullable()->default($this->record->client_id),
+                            ->searchable()->nullable()->default($this->record->client_id)
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                                Forms\Components\TextInput::make('email')->email()->maxLength(255),
+                                Forms\Components\TextInput::make('phone')->maxLength(50),
+                                Forms\Components\TextInput::make('company_name')->label('Company')->maxLength(255),
+                            ])
+                            ->createOptionUsing(fn(array $data) => Client::create(array_merge($data, [
+                                'company_id' => $this->cid(),
+                                'is_active'  => true,
+                            ]))->id),
                         Forms\Components\Select::make('status')->options(Quotation::$statuses)->required()->default('draft'),
                         Forms\Components\DatePicker::make('issue_date')->required()->default(now()),
                         Forms\Components\DatePicker::make('valid_until')->label('Valid Until')

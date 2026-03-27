@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Filament\App\Concerns\ExportsTableCsv;
+use App\Models\Asset;
 use App\Models\Company;
 use App\Models\EquipmentAllocation;
 use App\Models\EquipmentFuelLog;
@@ -98,8 +99,22 @@ class EquipmentPage extends BaseModulePage implements HasTable
                 ->form([
                     Forms\Components\Select::make('asset_id')
                         ->label('Equipment')
-                        ->options(fn() => \App\Models\Asset::where('company_id', $cid)->pluck('name', 'id'))
-                        ->searchable()->preload()->required(),
+                        ->options(fn() => Asset::where('company_id', $cid)->pluck('name', 'id'))
+                        ->searchable()->preload()->required()
+                        ->createOptionForm([
+                            Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                            Forms\Components\TextInput::make('asset_tag')->label('Asset Tag')->maxLength(100),
+                            Forms\Components\TextInput::make('serial_number')->maxLength(100),
+                            Forms\Components\Select::make('status')
+                                ->options(['available' => 'Available', 'in_use' => 'In Use', 'maintenance' => 'Maintenance'])
+                                ->default('available'),
+                        ])
+                        ->createOptionUsing(function (array $data) use ($cid): int {
+                            return Asset::create(array_merge($data, [
+                                'company_id' => $cid,
+                                'condition'  => 'good',
+                            ]))->id;
+                        }),
                     Forms\Components\Select::make('operator_id')
                         ->label('Operator')
                         ->options(fn() => \App\Models\User::where('company_id', $cid)->pluck('name', 'id'))
@@ -126,8 +141,20 @@ class EquipmentPage extends BaseModulePage implements HasTable
                 ->form([
                     Forms\Components\Select::make('asset_id')
                         ->label('Equipment')
-                        ->options(fn() => \App\Models\Asset::where('company_id', $cid)->pluck('name', 'id'))
-                        ->searchable()->preload()->required(),
+                        ->options(fn() => Asset::where('company_id', $cid)->pluck('name', 'id'))
+                        ->searchable()->preload()->required()
+                        ->createOptionForm([
+                            Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                            Forms\Components\TextInput::make('asset_tag')->label('Asset Tag')->maxLength(100),
+                            Forms\Components\TextInput::make('serial_number')->maxLength(100),
+                        ])
+                        ->createOptionUsing(function (array $data) use ($cid): int {
+                            return Asset::create(array_merge($data, [
+                                'company_id' => $cid,
+                                'status'     => 'available',
+                                'condition'  => 'good',
+                            ]))->id;
+                        }),
                     Forms\Components\DatePicker::make('log_date')->default(now())->required(),
                     Forms\Components\TextInput::make('liters')->numeric()->suffix('L')->required(),
                     Forms\Components\TextInput::make('cost_per_liter')->numeric()

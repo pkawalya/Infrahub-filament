@@ -13,7 +13,6 @@ class Contract extends Model
 
     protected $fillable = [
         'company_id',
-        'cde_project_id',
         'vendor_id',
         'contract_number',
         'title',
@@ -53,9 +52,23 @@ class Contract extends Model
         'suspended' => 'Suspended',
     ];
 
-    public function project()
+    /**
+     * All projects this contract is linked to (many-to-many).
+     */
+    public function projects()
     {
-        return $this->belongsTo(CdeProject::class, 'cde_project_id');
+        return $this->belongsToMany(CdeProject::class, 'contract_project', 'contract_id', 'cde_project_id')
+            ->withPivot('budget_allocation', 'notes')
+            ->withTimestamps();
+    }
+
+    /**
+     * Backwards-compatible helper: returns the first linked project.
+     * Use projects() for the full list.
+     */
+    public function primaryProject()
+    {
+        return $this->projects()->oldest('contract_project.id')->first();
     }
     public function vendor()
     {

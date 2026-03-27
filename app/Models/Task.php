@@ -124,12 +124,29 @@ class Task extends Model
     public static array $constraintTypes = [
         'asap' => 'As Soon As Possible',
         'alap' => 'As Late As Possible',
-        'mso' => 'Must Start On',
-        'mfo' => 'Must Finish On',
+        'mso'  => 'Must Start On',
+        'mfo'  => 'Must Finish On',
         'snet' => 'Start No Earlier Than',
         'snlt' => 'Start No Later Than',
         'fnet' => 'Finish No Earlier Than',
         'fnlt' => 'Finish No Later Than',
+    ];
+
+    /** Commissioning phases shared with WorkOrder — includes OHL construction stages */
+    public static array $commissioningPhases = [
+        // Overhead Line (OHL) / Energy Line construction stages
+        'smoking'             => 'Smoking',
+        'bald_pt'             => 'Bald / Pt (Excavation)',
+        'pole_erection'       => 'Pole (Erection)',
+        'pole_dressing'       => 'Pole (Dressing)',
+        'pole_stringing'      => 'Pole (Stringing)',
+        'transformer_install' => 'Transformer / Switchgear (Installation)',
+        'pre_commissioning'   => 'Pre-Commissioning',
+        // Generic commissioning stages
+        'mechanical_completion' => 'Mechanical Completion',
+        'energization'          => 'Energization',
+        'hot_commissioning'     => 'Hot Commissioning',
+        'performance_test'      => 'Performance Testing',
     ];
 
     // ─── Relationships ────────────────────────────────────────────

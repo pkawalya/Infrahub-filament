@@ -319,7 +319,8 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                             ->searchable()->nullable(),
                         Forms\Components\DateTimePicker::make('scheduled_date')->required()->default(now()),
                         Forms\Components\Select::make('inspector_id')->label('Inspector')
-                            ->options(fn() => $this->teamOptions())->searchable()->default(auth()->id()),
+                            ->options(fn() => $this->teamOptions())->searchable()->default(auth()->id())
+                            ->helperText('Must be an existing system user. Contact admin to add new users.'),
                         Forms\Components\TextInput::make('location')->maxLength(255),
                         Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
                     ])->columns(2),
@@ -611,7 +612,8 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                                 Forms\Components\Select::make('status')->options(SafetyInspection::$statuses)->required(),
                                 Forms\Components\DateTimePicker::make('scheduled_date')->required(),
                                 Forms\Components\Select::make('inspector_id')->label('Inspector')
-                                    ->options(fn() => $this->teamOptions())->searchable(),
+                                    ->options(fn() => $this->teamOptions())->searchable()
+                                    ->helperText('Must be an existing system user.'),
                                 Forms\Components\TextInput::make('location'),
                                 Forms\Components\TextInput::make('score')->numeric()->minValue(0)->maxValue(100),
                                 Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),

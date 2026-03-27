@@ -16,6 +16,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class SubcontractorResource extends Resource
 {
@@ -28,7 +29,9 @@ class SubcontractorResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->where('company_id', auth()->user()?->company_id);
+        return parent::getEloquentQuery()
+            ->withoutGlobalScope(SoftDeletingScope::class)
+            ->where('company_id', auth()->user()?->company_id);
     }
 
     public static function form(Schema $schema): Schema
@@ -121,6 +124,7 @@ class SubcontractorResource extends Resource
             ])
             ->defaultSort('name')
             ->filters([
+                Tables\Filters\TrashedFilter::make(),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(Subcontractor::$statuses),
                 Tables\Filters\SelectFilter::make('specialty')
@@ -129,9 +133,14 @@ class SubcontractorResource extends Resource
             ->actions([
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
+                Actions\RestoreAction::make(),
+                Actions\DeleteAction::make(),
+                Actions\ForceDeleteAction::make(),
             ])
             ->bulkActions([
                 Actions\DeleteBulkAction::make(),
+                Actions\RestoreBulkAction::make(),
+                Actions\ForceDeleteBulkAction::make(),
             ]);
     }
 

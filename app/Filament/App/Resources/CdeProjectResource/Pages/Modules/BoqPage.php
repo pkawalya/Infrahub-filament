@@ -306,8 +306,33 @@ class BoqPage extends BaseModulePage implements HasTable, HasForms
                 ->required()->maxLength(50),
             Forms\Components\TextInput::make('name')->required()->maxLength(255),
             Forms\Components\Select::make('contract_id')->label('Contract')
-                ->options(fn() => Contract::where('cde_project_id', $this->pid())->pluck('title', 'id'))
-                ->searchable()->nullable(),
+                ->options(fn() => $this->record->contracts()->pluck('title', 'contracts.id'))
+                ->searchable()->nullable()
+                ->createOptionForm([
+                    Forms\Components\TextInput::make('title')->required()->maxLength(255),
+                    Forms\Components\TextInput::make('contract_number')->label('Contract #')->maxLength(100),
+                    Forms\Components\Select::make('type')->options([
+                        'lump_sum'      => 'Lump Sum',
+                        'remeasurable'  => 'Remeasurable',
+                        'cost_plus'     => 'Cost Plus',
+                        'design_build'  => 'Design & Build',
+                        'framework'     => 'Framework',
+                        'other'         => 'Other',
+                    ])->default('lump_sum'),
+                    Forms\Components\DatePicker::make('start_date')->label('Start Date'),
+                    Forms\Components\DatePicker::make('end_date')->label('End Date'),
+                ])
+                ->createOptionUsing(function (array $data): int {
+                    $contract = Contract::create(array_merge($data, [
+                        'company_id'     => $this->cid(),
+                        'contract_value' => 0,
+                        'status'         => 'active',
+                        'created_by'     => auth()->id(),
+                    ]));
+                    // Auto-link new contract to this project via pivot
+                    $contract->projects()->syncWithoutDetaching([$this->pid()]);
+                    return $contract->id;
+                }),
             Forms\Components\Select::make('status')->options(Boq::$statuses)->required()->default($isCreate ? 'draft' : null),
             Forms\Components\TextInput::make('currency')->maxLength(3)->default('USD'),
             Forms\Components\Textarea::make('description')->rows(2)->columnSpanFull(),

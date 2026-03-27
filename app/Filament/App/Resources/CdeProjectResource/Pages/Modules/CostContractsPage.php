@@ -50,7 +50,7 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
     public function getStats(): array
     {
         $pid = $this->pid();
-        $base = Contract::where('cde_project_id', $pid);
+        $base = Contract::whereHas('projects', fn($q) => $q->where('cde_projects.id', $pid));
         $total = (clone $base)->count();
         $active = (clone $base)->where('status', 'active')->count();
         $origVal = (clone $base)->sum('original_value');
@@ -113,7 +113,7 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
     public function getContractSummary(): array
     {
         $pid = $this->pid();
-        $contracts = Contract::where('cde_project_id', $pid)->get();
+        $contracts = Contract::whereHas('projects', fn($q) => $q->where('cde_projects.id', $pid))->get();
         $totalOriginal = $contracts->sum('original_value');
         $totalRevised = $contracts->sum('revised_value');
         $totalPaid = $contracts->sum('amount_paid');
@@ -143,7 +143,7 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
         return [
             Section::make('Contract Details')->schema([
                 Forms\Components\TextInput::make('contract_number')->label('Contract #')
-                    ->default(fn() => $isCreate ? 'CON-' . str_pad((string) (Contract::where('cde_project_id', $this->pid())->count() + 1), 4, '0', STR_PAD_LEFT) : null)
+                    ->default(fn() => $isCreate ? 'CON-' . str_pad((string) (Contract::where('company_id', $cid)->count() + 1), 4, '0', STR_PAD_LEFT) : null)
                     ->required()->maxLength(50),
                 Forms\Components\TextInput::make('title')->required()->maxLength(255)->columnSpanFull(),
                 Forms\Components\Select::make('vendor_id')->label('Vendor / Contractor')
@@ -368,12 +368,43 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                 ->schema($this->contractFormSchema(isCreate: true))
                 ->action(function (array $data): void {
                     $data['company_id'] = $this->cid();
-                    $data['cde_project_id'] = $this->pid();
                     $data['created_by'] = auth()->id();
                     if (empty($data['revised_value']))
                         $data['revised_value'] = $data['original_value'];
-                    Contract::create($data);
+                    $contract = Contract::create($data);
+                    // Link the new contract to this project via the pivot
+                    $contract->projects()->attach($this->pid());
                     Notification::make()->title('Contract created')->success()->send();
+                }),
+
+            Action::make('linkContract')
+                ->label('Link Existing Contract')->icon('heroicon-o-link')->color('gray')
+                ->modalWidth('xl')
+                ->schema([
+                    Forms\Components\Select::make('contract_id')
+                        ->label('Select Contract')
+                        ->options(
+                            fn() => Contract::where('company_id', $this->cid())
+                                ->whereDoesntHave('projects', fn($q) => $q->where('cde_projects.id', $this->pid()))
+                                ->get()
+                                ->mapWithKeys(fn($c) => [$c->id => $c->contract_number . ' — ' . $c->title])
+                        )
+                        ->searchable()->required()
+                        ->helperText('Only shows contracts not already linked to this project.'),
+                    Forms\Components\TextInput::make('budget_allocation')
+                        ->label('Budget Allocation (optional)')
+                        ->numeric()->nullable()
+                        ->helperText('Amount from this contract allocated to this project.'),
+                    Forms\Components\Textarea::make('notes')
+                        ->label('Link Notes')->rows(2)->nullable(),
+                ])
+                ->action(function (array $data): void {
+                    $this->record->contracts()->attach($data['contract_id'], [
+                        'budget_allocation' => $data['budget_allocation'] ?? null,
+                        'notes'             => $data['notes'] ?? null,
+                    ]);
+                    Notification::make()->title('Contract linked to this project')->success()->send();
+                    $this->resetTable();
                 }),
             Action::make('addCertificate')
                 ->label('Add Certificate')->icon('heroicon-o-shield-check')->color('success')
@@ -388,11 +419,21 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                         Forms\Components\DatePicker::make('issue_date'),
                         Forms\Components\DatePicker::make('expiry_date'),
                         Forms\Components\Select::make('contract_id')->label('Linked Contract')
-                            ->options(fn() => Contract::where('cde_project_id', $this->pid())->pluck('title', 'id'))
+                            ->options(fn() => $this->record->contracts()->pluck('title', 'contracts.id'))
                             ->searchable()->nullable(),
                         Forms\Components\Select::make('vendor_id')->label('Vendor')
                             ->options(fn() => Vendor::where('company_id', $this->cid())->pluck('name', 'id'))
-                            ->searchable()->nullable(),
+                            ->searchable()->nullable()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')->required()->maxLength(255),
+                                Forms\Components\TextInput::make('email')->email()->maxLength(255),
+                                Forms\Components\TextInput::make('phone')->tel()->maxLength(50),
+                                Forms\Components\TextInput::make('contact_person')->maxLength(255),
+                            ])
+                            ->createOptionUsing(fn(array $data) => Vendor::create(array_merge($data, [
+                                'company_id' => $this->cid(),
+                                'is_active'  => true,
+                            ]))->id),
                         Forms\Components\FileUpload::make('file_path')
                             ->label('Certificate File')
                             ->directory(StoragePath::projectCategory($this->record, 'certificates'))
@@ -424,7 +465,11 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
     public function table(Table $table): Table
     {
         return $table
-            ->query(Contract::query()->where('cde_project_id', $this->pid())->with(['vendor', 'creator', 'boqs']))
+            ->query(
+                Contract::query()
+                    ->whereHas('projects', fn($q) => $q->where('cde_projects.id', $this->pid()))
+                    ->with(['vendor', 'creator', 'boqs', 'projects'])
+            )
             ->columns([
                 Tables\Columns\TextColumn::make('contract_number')->label('Contract #')->searchable()->sortable()->weight('bold')->toggleable()
                     ->icon('heroicon-o-document-text')->copyable(),
@@ -579,12 +624,25 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                         ->requiresConfirmation()
                         ->action(function (Contract $record): void {
                             $new = $record->replicate();
-                            $new->contract_number = 'CON-' . str_pad((string) (Contract::where('cde_project_id', $record->cde_project_id)->count() + 1), 4, '0', STR_PAD_LEFT);
+                            $new->contract_number = 'CON-' . str_pad((string) (Contract::where('company_id', $record->company_id)->count() + 1), 4, '0', STR_PAD_LEFT);
                             $new->status = 'draft';
                             $new->amount_paid = 0;
                             $new->created_by = auth()->id();
                             $new->save();
+                            // Duplicate links the same projects
+                            $new->projects()->sync($record->projects->pluck('id'));
                             Notification::make()->title('Contract duplicated as ' . $new->contract_number)->success()->send();
+                        }),
+
+                    // ── Unlink from this project (does NOT delete the contract) ──
+                    \Filament\Actions\Action::make('unlinkFromProject')
+                        ->label('Unlink from Project')->icon('heroicon-o-x-circle')->color('danger')
+                        ->requiresConfirmation()
+                        ->modalDescription('This removes the link between this contract and the current project. The contract itself is NOT deleted and can still be seen from other linked projects.')
+                        ->action(function (Contract $record): void {
+                            $record->projects()->detach($this->pid());
+                            Notification::make()->title('Contract unlinked from this project')->warning()->send();
+                            $this->resetTable();
                         }),
 
                     \Filament\Actions\Action::make('delete')
@@ -593,7 +651,7 @@ class CostContractsPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
-                $this->exportCsvAction('contracts', fn() => Contract::query()->where('cde_project_id', $this->pid())->with(['vendor', 'creator']), [
+                $this->exportCsvAction('contracts', fn() => Contract::query()->whereHas('projects', fn($q) => $q->where('cde_projects.id', $this->pid()))->with(['vendor', 'creator']), [
                     'contract_number' => 'Contract #',
                     'title' => 'Title',
                     'vendor.name' => 'Vendor',

@@ -14,6 +14,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class ChangeOrderResource extends Resource
 {
@@ -26,7 +27,9 @@ class ChangeOrderResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->where('company_id', auth()->user()?->company_id);
+        return parent::getEloquentQuery()
+            ->withoutGlobalScope(SoftDeletingScope::class)
+            ->where('company_id', auth()->user()?->company_id);
     }
 
     public static function form(Schema $schema): Schema
@@ -119,6 +122,7 @@ class ChangeOrderResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
+                Tables\Filters\TrashedFilter::make(),
                 Tables\Filters\SelectFilter::make('status')->options(ChangeOrder::$statuses),
                 Tables\Filters\SelectFilter::make('type')->options(ChangeOrder::$types),
                 Tables\Filters\SelectFilter::make('priority')->options(ChangeOrder::$priorities),
@@ -128,6 +132,7 @@ class ChangeOrderResource extends Resource
             ->actions([
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
+                Actions\RestoreAction::make(),
                 Actions\Action::make('approve')
                     ->icon('heroicon-o-check-circle')->color('success')
                     ->visible(fn(ChangeOrder $r) => in_array($r->status, ['submitted', 'under_review']))
@@ -137,16 +142,22 @@ class ChangeOrderResource extends Resource
                     ])
                     ->action(function (ChangeOrder $record, array $data): void {
                         $record->update([
-                            'status' => 'approved',
+                            'status'       => 'approved',
                             'approved_cost' => $data['approved_cost'] ?? $record->estimated_cost,
-                            'cost_impact' => $data['approved_cost'] ?? $record->estimated_cost,
+                            'cost_impact'   => $data['approved_cost'] ?? $record->estimated_cost,
                             'approval_notes' => $data['approval_notes'] ?? null,
-                            'approved_by' => auth()->id(),
+                            'approved_by'   => auth()->id(),
                             'approved_date' => now(),
                         ]);
                     }),
+                Actions\DeleteAction::make(),
+                Actions\ForceDeleteAction::make(),
             ])
-            ->bulkActions([Actions\DeleteBulkAction::make()]);
+            ->bulkActions([
+                Actions\DeleteBulkAction::make(),
+                Actions\RestoreBulkAction::make(),
+                Actions\ForceDeleteBulkAction::make(),
+            ]);
     }
 
     public static function getPages(): array

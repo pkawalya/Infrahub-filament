@@ -113,11 +113,19 @@ class WorkOrder extends Model
     ];
 
     public static array $commissioningPhases = [
-        'pre_commissioning' => 'Pre-Commissioning',
+        // ── Overhead Line (OHL) / Energy Line construction stages ──
+        'smoking'             => 'Smoking',
+        'bald_pt'             => 'Bald / Pt (Excavation)',
+        'pole_erection'       => 'Pole (Erection)',
+        'pole_dressing'       => 'Pole (Dressing)',
+        'pole_stringing'      => 'Pole (Stringing)',
+        'transformer_install' => 'Transformer / Switchgear (Installation)',
+        'pre_commissioning'   => 'Pre-Commissioning',
+        // ── Generic commissioning stages ──
         'mechanical_completion' => 'Mechanical Completion',
-        'energization' => 'Energization',
-        'hot_commissioning' => 'Hot Commissioning',
-        'performance_test' => 'Performance Testing',
+        'energization'          => 'Energization',
+        'hot_commissioning'     => 'Hot Commissioning',
+        'performance_test'      => 'Performance Testing',
     ];
 
     public static array $roadTestTypes = [

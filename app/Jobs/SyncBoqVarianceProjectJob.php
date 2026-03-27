@@ -39,4 +39,14 @@ class SyncBoqVarianceProjectJob implements ShouldQueue
     {
         return ['boq-variance', 'full-sync', "project:{$this->projectId}"];
     }
+
+    public function failed(\Throwable $e): void
+    {
+        Log::error('BOQ variance project sync job failed', [
+            'job'        => static::class,
+            'project_id' => $this->projectId,
+            'error'      => $e->getMessage(),
+            'trace'      => $e->getTraceAsString(),
+        ]);
+    }
 }
