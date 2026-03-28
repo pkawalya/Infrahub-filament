@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Task;
+use App\Policies\Concerns\EnforcesCompanyOwnership;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class TaskPolicy
 {
-    use HandlesAuthorization;
-    
+    use HandlesAuthorization, EnforcesCompanyOwnership;
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('view_any_task');
@@ -19,7 +20,7 @@ class TaskPolicy
 
     public function view(AuthUser $authUser, Task $task): bool
     {
-        return $authUser->can('view_task');
+        return $this->ownedByCompany($authUser, $task) && $authUser->can('view_task');
     }
 
     public function create(AuthUser $authUser): bool
@@ -29,22 +30,22 @@ class TaskPolicy
 
     public function update(AuthUser $authUser, Task $task): bool
     {
-        return $authUser->can('update_task');
+        return $this->ownedByCompany($authUser, $task) && $authUser->can('update_task');
     }
 
     public function delete(AuthUser $authUser, Task $task): bool
     {
-        return $authUser->can('delete_task');
+        return $this->ownedByCompany($authUser, $task) && $authUser->can('delete_task');
     }
 
     public function restore(AuthUser $authUser, Task $task): bool
     {
-        return $authUser->can('restore_task');
+        return $this->ownedByCompany($authUser, $task) && $authUser->can('restore_task');
     }
 
     public function forceDelete(AuthUser $authUser, Task $task): bool
     {
-        return $authUser->can('force_delete_task');
+        return $this->ownedByCompany($authUser, $task) && $authUser->can('force_delete_task');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
@@ -59,12 +60,11 @@ class TaskPolicy
 
     public function replicate(AuthUser $authUser, Task $task): bool
     {
-        return $authUser->can('replicate_task');
+        return $this->ownedByCompany($authUser, $task) && $authUser->can('replicate_task');
     }
 
     public function reorder(AuthUser $authUser): bool
     {
         return $authUser->can('reorder_task');
     }
-
 }

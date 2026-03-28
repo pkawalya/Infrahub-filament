@@ -103,12 +103,20 @@ class CreateClient extends CreateRecord
             } catch (\Exception $e) {
                 Log::warning('Failed to send client welcome email', ['error' => $e->getMessage()]);
 
-                // Still show the credentials since email failed
+                // WARNING: Do NOT embed password in database notification body.
+                // Instead, show it briefly as a non-persisted flash notification only.
+                // The admin must copy it now — it will NOT be stored in the database.
                 Notification::make()
                     ->warning()
-                    ->title('Client created — email failed to send')
-                    ->body("Portal account created. Please share these credentials manually:\n\n📧 Email: {$client->email}\n🔑 Password: {$password}\n🔗 Login: {$loginUrl}")
+                    ->title('Client created — email delivery failed')
+                    ->body(
+                        "⚠️ Email could not be sent. The portal account was created.\n\n" .
+                        "Please securely share the credentials with the client:\n" .
+                        "📧 {$client->email} · 🔑 {$password}\n\n" .
+                        "This message is NOT saved to the database. Copy it now."
+                    )
                     ->persistent()
+                    ->sendToDatabase(auth()->user(), isEventDispatched: false) // skip DB storage
                     ->send();
             }
         } catch (\Exception $e) {

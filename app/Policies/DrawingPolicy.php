@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Drawing;
+use App\Policies\Concerns\EnforcesCompanyOwnership;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class DrawingPolicy
 {
-    use HandlesAuthorization;
-    
+    use HandlesAuthorization, EnforcesCompanyOwnership;
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('view_any_drawing');
@@ -19,7 +20,7 @@ class DrawingPolicy
 
     public function view(AuthUser $authUser, Drawing $drawing): bool
     {
-        return $authUser->can('view_drawing');
+        return $this->ownedByCompany($authUser, $drawing) && $authUser->can('view_drawing');
     }
 
     public function create(AuthUser $authUser): bool
@@ -29,22 +30,22 @@ class DrawingPolicy
 
     public function update(AuthUser $authUser, Drawing $drawing): bool
     {
-        return $authUser->can('update_drawing');
+        return $this->ownedByCompany($authUser, $drawing) && $authUser->can('update_drawing');
     }
 
     public function delete(AuthUser $authUser, Drawing $drawing): bool
     {
-        return $authUser->can('delete_drawing');
+        return $this->ownedByCompany($authUser, $drawing) && $authUser->can('delete_drawing');
     }
 
     public function restore(AuthUser $authUser, Drawing $drawing): bool
     {
-        return $authUser->can('restore_drawing');
+        return $this->ownedByCompany($authUser, $drawing) && $authUser->can('restore_drawing');
     }
 
     public function forceDelete(AuthUser $authUser, Drawing $drawing): bool
     {
-        return $authUser->can('force_delete_drawing');
+        return $this->ownedByCompany($authUser, $drawing) && $authUser->can('force_delete_drawing');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
@@ -59,12 +60,11 @@ class DrawingPolicy
 
     public function replicate(AuthUser $authUser, Drawing $drawing): bool
     {
-        return $authUser->can('replicate_drawing');
+        return $this->ownedByCompany($authUser, $drawing) && $authUser->can('replicate_drawing');
     }
 
     public function reorder(AuthUser $authUser): bool
     {
         return $authUser->can('reorder_drawing');
     }
-
 }

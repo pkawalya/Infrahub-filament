@@ -48,6 +48,12 @@ class CdeProjectResource extends Resource
         return $query;
     }
 
+    public static function canCreate(): bool
+    {
+        $company = auth()->user()?->company;
+        return $company ? $company->canAddProject() : false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema->schema([

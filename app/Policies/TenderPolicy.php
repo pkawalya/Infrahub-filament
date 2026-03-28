@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Tender;
+use App\Policies\Concerns\EnforcesCompanyOwnership;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class TenderPolicy
 {
-    use HandlesAuthorization;
-    
+    use HandlesAuthorization, EnforcesCompanyOwnership;
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('view_any_tender');
@@ -19,7 +20,7 @@ class TenderPolicy
 
     public function view(AuthUser $authUser, Tender $tender): bool
     {
-        return $authUser->can('view_tender');
+        return $this->ownedByCompany($authUser, $tender) && $authUser->can('view_tender');
     }
 
     public function create(AuthUser $authUser): bool
@@ -29,22 +30,22 @@ class TenderPolicy
 
     public function update(AuthUser $authUser, Tender $tender): bool
     {
-        return $authUser->can('update_tender');
+        return $this->ownedByCompany($authUser, $tender) && $authUser->can('update_tender');
     }
 
     public function delete(AuthUser $authUser, Tender $tender): bool
     {
-        return $authUser->can('delete_tender');
+        return $this->ownedByCompany($authUser, $tender) && $authUser->can('delete_tender');
     }
 
     public function restore(AuthUser $authUser, Tender $tender): bool
     {
-        return $authUser->can('restore_tender');
+        return $this->ownedByCompany($authUser, $tender) && $authUser->can('restore_tender');
     }
 
     public function forceDelete(AuthUser $authUser, Tender $tender): bool
     {
-        return $authUser->can('force_delete_tender');
+        return $this->ownedByCompany($authUser, $tender) && $authUser->can('force_delete_tender');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
@@ -59,12 +60,11 @@ class TenderPolicy
 
     public function replicate(AuthUser $authUser, Tender $tender): bool
     {
-        return $authUser->can('replicate_tender');
+        return $this->ownedByCompany($authUser, $tender) && $authUser->can('replicate_tender');
     }
 
     public function reorder(AuthUser $authUser): bool
     {
         return $authUser->can('reorder_tender');
     }
-
 }

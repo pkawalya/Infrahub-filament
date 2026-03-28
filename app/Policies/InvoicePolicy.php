@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\Invoice;
+use App\Policies\Concerns\EnforcesCompanyOwnership;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class InvoicePolicy
 {
-    use HandlesAuthorization;
-    
+    use HandlesAuthorization, EnforcesCompanyOwnership;
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('view_any_invoice');
@@ -19,7 +20,7 @@ class InvoicePolicy
 
     public function view(AuthUser $authUser, Invoice $invoice): bool
     {
-        return $authUser->can('view_invoice');
+        return $this->ownedByCompany($authUser, $invoice) && $authUser->can('view_invoice');
     }
 
     public function create(AuthUser $authUser): bool
@@ -29,22 +30,22 @@ class InvoicePolicy
 
     public function update(AuthUser $authUser, Invoice $invoice): bool
     {
-        return $authUser->can('update_invoice');
+        return $this->ownedByCompany($authUser, $invoice) && $authUser->can('update_invoice');
     }
 
     public function delete(AuthUser $authUser, Invoice $invoice): bool
     {
-        return $authUser->can('delete_invoice');
+        return $this->ownedByCompany($authUser, $invoice) && $authUser->can('delete_invoice');
     }
 
     public function restore(AuthUser $authUser, Invoice $invoice): bool
     {
-        return $authUser->can('restore_invoice');
+        return $this->ownedByCompany($authUser, $invoice) && $authUser->can('restore_invoice');
     }
 
     public function forceDelete(AuthUser $authUser, Invoice $invoice): bool
     {
-        return $authUser->can('force_delete_invoice');
+        return $this->ownedByCompany($authUser, $invoice) && $authUser->can('force_delete_invoice');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
@@ -59,12 +60,11 @@ class InvoicePolicy
 
     public function replicate(AuthUser $authUser, Invoice $invoice): bool
     {
-        return $authUser->can('replicate_invoice');
+        return $this->ownedByCompany($authUser, $invoice) && $authUser->can('replicate_invoice');
     }
 
     public function reorder(AuthUser $authUser): bool
     {
         return $authUser->can('reorder_invoice');
     }
-
 }

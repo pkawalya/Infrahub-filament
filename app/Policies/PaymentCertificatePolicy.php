@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\PaymentCertificate;
+use App\Policies\Concerns\EnforcesCompanyOwnership;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class PaymentCertificatePolicy
 {
-    use HandlesAuthorization;
-    
+    use HandlesAuthorization, EnforcesCompanyOwnership;
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('view_any_payment::certificate');
@@ -19,7 +20,7 @@ class PaymentCertificatePolicy
 
     public function view(AuthUser $authUser, PaymentCertificate $paymentCertificate): bool
     {
-        return $authUser->can('view_payment::certificate');
+        return $this->ownedByCompany($authUser, $paymentCertificate) && $authUser->can('view_payment::certificate');
     }
 
     public function create(AuthUser $authUser): bool
@@ -29,22 +30,22 @@ class PaymentCertificatePolicy
 
     public function update(AuthUser $authUser, PaymentCertificate $paymentCertificate): bool
     {
-        return $authUser->can('update_payment::certificate');
+        return $this->ownedByCompany($authUser, $paymentCertificate) && $authUser->can('update_payment::certificate');
     }
 
     public function delete(AuthUser $authUser, PaymentCertificate $paymentCertificate): bool
     {
-        return $authUser->can('delete_payment::certificate');
+        return $this->ownedByCompany($authUser, $paymentCertificate) && $authUser->can('delete_payment::certificate');
     }
 
     public function restore(AuthUser $authUser, PaymentCertificate $paymentCertificate): bool
     {
-        return $authUser->can('restore_payment::certificate');
+        return $this->ownedByCompany($authUser, $paymentCertificate) && $authUser->can('restore_payment::certificate');
     }
 
     public function forceDelete(AuthUser $authUser, PaymentCertificate $paymentCertificate): bool
     {
-        return $authUser->can('force_delete_payment::certificate');
+        return $this->ownedByCompany($authUser, $paymentCertificate) && $authUser->can('force_delete_payment::certificate');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
@@ -59,12 +60,11 @@ class PaymentCertificatePolicy
 
     public function replicate(AuthUser $authUser, PaymentCertificate $paymentCertificate): bool
     {
-        return $authUser->can('replicate_payment::certificate');
+        return $this->ownedByCompany($authUser, $paymentCertificate) && $authUser->can('replicate_payment::certificate');
     }
 
     public function reorder(AuthUser $authUser): bool
     {
         return $authUser->can('reorder_payment::certificate');
     }
-
 }

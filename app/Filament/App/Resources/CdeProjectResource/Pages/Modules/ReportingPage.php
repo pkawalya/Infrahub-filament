@@ -136,14 +136,16 @@ class ReportingPage extends BaseModulePage
         $from = $this->from();
         $to = $this->to();
 
-        $invoiced = (float) Invoice::where('cde_project_id', $pid)->whereBetween('issue_date', [$from, $to])->sum('total_amount');
-        $received = (float) InvoicePayment::where('cde_project_id', $pid)->whereBetween('payment_date', [$from, $to])->sum('amount');
-        $expenses = (float) Expense::where('cde_project_id', $pid)->where('status', '!=', 'rejected')->whereBetween('expense_date', [$from, $to])->sum('amount');
-        $outstanding = (float) Invoice::where('cde_project_id', $pid)->whereNotIn('status', ['paid', 'cancelled'])->selectRaw('SUM(total_amount - amount_paid) as total')->value('total');
-        $overdue = Invoice::where('cde_project_id', $pid)->whereNotIn('status', ['paid', 'cancelled'])->whereNotNull('due_date')->where('due_date', '<', now())->count();
+        $cid = $r->company_id;
+
+        $invoiced = (float) Invoice::where('cde_project_id', $pid)->where('company_id', $cid)->whereBetween('issue_date', [$from, $to])->sum('total_amount');
+        $received = (float) InvoicePayment::where('cde_project_id', $pid)->where('company_id', $cid)->whereBetween('payment_date', [$from, $to])->sum('amount');
+        $expenses = (float) Expense::where('cde_project_id', $pid)->where('company_id', $cid)->where('status', '!=', 'rejected')->whereBetween('expense_date', [$from, $to])->sum('amount');
+        $outstanding = (float) Invoice::where('cde_project_id', $pid)->where('company_id', $cid)->whereNotIn('status', ['paid', 'cancelled'])->selectRaw('SUM(total_amount - amount_paid) as total')->value('total');
+        $overdue = Invoice::where('cde_project_id', $pid)->where('company_id', $cid)->whereNotIn('status', ['paid', 'cancelled'])->whereNotNull('due_date')->where('due_date', '<', now())->count();
 
         // Invoices by status
-        $byStatus = Invoice::where('cde_project_id', $pid)->whereBetween('issue_date', [$from, $to])
+        $byStatus = Invoice::where('cde_project_id', $pid)->where('company_id', $cid)->whereBetween('issue_date', [$from, $to])
             ->selectRaw('status, count(*) as cnt, sum(total_amount) as total')
             ->groupBy('status')->get()->map(fn($r) => ['status' => $r->status, 'count' => $r->cnt, 'total' => (float) $r->total])->toArray();
 
@@ -152,15 +154,15 @@ class ReportingPage extends BaseModulePage
         for ($i = 5; $i >= 0; $i--) {
             $m = now()->subMonths($i);
             $cashFlow[] = [
-                'label' => $m->format('M'),
-                'invoiced' => (float) Invoice::where('cde_project_id', $pid)->whereYear('issue_date', $m->year)->whereMonth('issue_date', $m->month)->sum('total_amount'),
-                'received' => (float) InvoicePayment::where('cde_project_id', $pid)->whereYear('payment_date', $m->year)->whereMonth('payment_date', $m->month)->sum('amount'),
-                'expenses' => (float) Expense::where('cde_project_id', $pid)->where('status', '!=', 'rejected')->whereYear('expense_date', $m->year)->whereMonth('expense_date', $m->month)->sum('amount'),
+                'label'    => $m->format('M'),
+                'invoiced' => (float) Invoice::where('cde_project_id', $pid)->where('company_id', $cid)->whereYear('issue_date', $m->year)->whereMonth('issue_date', $m->month)->sum('total_amount'),
+                'received' => (float) InvoicePayment::where('cde_project_id', $pid)->where('company_id', $cid)->whereYear('payment_date', $m->year)->whereMonth('payment_date', $m->month)->sum('amount'),
+                'expenses' => (float) Expense::where('cde_project_id', $pid)->where('company_id', $cid)->where('status', '!=', 'rejected')->whereYear('expense_date', $m->year)->whereMonth('expense_date', $m->month)->sum('amount'),
             ];
         }
 
         // Expense breakdown
-        $expenseBreakdown = Expense::where('cde_project_id', $pid)->where('status', '!=', 'rejected')
+        $expenseBreakdown = Expense::where('cde_project_id', $pid)->where('company_id', $cid)->where('status', '!=', 'rejected')
             ->whereBetween('expense_date', [$from, $to])
             ->selectRaw('category, SUM(amount) as total, COUNT(*) as cnt')
             ->groupBy('category')->orderByDesc('total')->get()
@@ -168,6 +170,7 @@ class ReportingPage extends BaseModulePage
 
         return compact('invoiced', 'received', 'expenses', 'outstanding', 'overdue', 'byStatus', 'cashFlow', 'expenseBreakdown');
     }
+
 
     // ═══════════════════════════════════════════
     // Report: Tasks
@@ -360,17 +363,18 @@ class ReportingPage extends BaseModulePage
 
     private function exportFinancialCsv($handle): void
     {
-        $r = $this->record;
-        $pid = $r->id;
+        $r    = $this->record;
+        $pid  = $r->id;
+        $cid  = $r->company_id;
         $from = $this->from();
-        $to = $this->to();
+        $to   = $this->to();
         fputcsv($handle, ['Financial Report - ' . $r->name, 'From: ' . $from->format('M d, Y'), 'To: ' . $to->format('M d, Y')]);
         fputcsv($handle, []);
 
         // Invoices
         fputcsv($handle, ['INVOICES']);
         fputcsv($handle, ['Invoice #', 'Client', 'Status', 'Issue Date', 'Due Date', 'Total', 'Paid', 'Balance']);
-        $invoices = Invoice::where('cde_project_id', $pid)->whereBetween('issue_date', [$from, $to])->with('client')->get();
+        $invoices = Invoice::where('cde_project_id', $pid)->where('company_id', $cid)->whereBetween('issue_date', [$from, $to])->with('client')->get();
         foreach ($invoices as $inv) {
             fputcsv($handle, [$inv->invoice_number, $inv->client?->name, $inv->status, $inv->issue_date?->format('Y-m-d'), $inv->due_date?->format('Y-m-d'), $inv->total_amount, $inv->amount_paid, $inv->total_amount - $inv->amount_paid]);
         }
@@ -379,11 +383,12 @@ class ReportingPage extends BaseModulePage
         // Expenses
         fputcsv($handle, ['EXPENSES']);
         fputcsv($handle, ['Title', 'Category', 'Amount', 'Date', 'Status']);
-        $expenses = Expense::where('cde_project_id', $pid)->whereBetween('expense_date', [$from, $to])->get();
+        $expenses = Expense::where('cde_project_id', $pid)->where('company_id', $cid)->whereBetween('expense_date', [$from, $to])->get();
         foreach ($expenses as $exp) {
             fputcsv($handle, [$exp->title, $exp->category, $exp->amount, $exp->expense_date?->format('Y-m-d'), $exp->status]);
         }
     }
+
 
     private function exportTasksCsv($handle): void
     {

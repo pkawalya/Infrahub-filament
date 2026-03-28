@@ -4,14 +4,15 @@ declare(strict_types=1);
 
 namespace App\Policies;
 
-use Illuminate\Foundation\Auth\User as AuthUser;
 use App\Models\CdeProject;
+use App\Policies\Concerns\EnforcesCompanyOwnership;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Foundation\Auth\User as AuthUser;
 
 class CdeProjectPolicy
 {
-    use HandlesAuthorization;
-    
+    use HandlesAuthorization, EnforcesCompanyOwnership;
+
     public function viewAny(AuthUser $authUser): bool
     {
         return $authUser->can('view_any_cde::project');
@@ -19,7 +20,7 @@ class CdeProjectPolicy
 
     public function view(AuthUser $authUser, CdeProject $cdeProject): bool
     {
-        return $authUser->can('view_cde::project');
+        return $this->ownedByCompany($authUser, $cdeProject) && $authUser->can('view_cde::project');
     }
 
     public function create(AuthUser $authUser): bool
@@ -29,22 +30,22 @@ class CdeProjectPolicy
 
     public function update(AuthUser $authUser, CdeProject $cdeProject): bool
     {
-        return $authUser->can('update_cde::project');
+        return $this->ownedByCompany($authUser, $cdeProject) && $authUser->can('update_cde::project');
     }
 
     public function delete(AuthUser $authUser, CdeProject $cdeProject): bool
     {
-        return $authUser->can('delete_cde::project');
+        return $this->ownedByCompany($authUser, $cdeProject) && $authUser->can('delete_cde::project');
     }
 
     public function restore(AuthUser $authUser, CdeProject $cdeProject): bool
     {
-        return $authUser->can('restore_cde::project');
+        return $this->ownedByCompany($authUser, $cdeProject) && $authUser->can('restore_cde::project');
     }
 
     public function forceDelete(AuthUser $authUser, CdeProject $cdeProject): bool
     {
-        return $authUser->can('force_delete_cde::project');
+        return $this->ownedByCompany($authUser, $cdeProject) && $authUser->can('force_delete_cde::project');
     }
 
     public function forceDeleteAny(AuthUser $authUser): bool
@@ -59,12 +60,11 @@ class CdeProjectPolicy
 
     public function replicate(AuthUser $authUser, CdeProject $cdeProject): bool
     {
-        return $authUser->can('replicate_cde::project');
+        return $this->ownedByCompany($authUser, $cdeProject) && $authUser->can('replicate_cde::project');
     }
 
     public function reorder(AuthUser $authUser): bool
     {
         return $authUser->can('reorder_cde::project');
     }
-
 }

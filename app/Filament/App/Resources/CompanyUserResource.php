@@ -48,6 +48,12 @@ class CompanyUserResource extends Resource
         return $query;
     }
 
+    public static function canCreate(): bool
+    {
+        $company = auth()->user()?->company;
+        return $company ? $company->canAddUser() : false;
+    }
+
     public static function form(Schema $schema): Schema
     {
         $user = auth()->user();
