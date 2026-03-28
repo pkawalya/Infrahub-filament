@@ -101,3 +101,10 @@ Schedule::command('users:deactivate-dormant --days=90')
     ->withoutOverlapping()
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/dormant-users.log'));
+
+// ── Deadline reminders + subscription limit warnings (daily 7:30 AM) ──
+Schedule::command('infrahub:deadline-reminders')
+    ->dailyAt('07:30')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/deadline-reminders.log'));

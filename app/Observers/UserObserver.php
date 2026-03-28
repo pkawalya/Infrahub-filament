@@ -60,5 +60,18 @@ class UserObserver
         } catch (\Throwable $e) {
             Log::warning('Failed to send welcome/invitation email to ' . $user->email . ': ' . $e->getMessage());
         }
+
+        // Bust cached user count so plan limits reflect the new user immediately
+        $user->company?->bustLimitCaches();
+    }
+
+    public function deleted(User $user): void
+    {
+        $user->company?->bustLimitCaches();
+    }
+
+    public function restored(User $user): void
+    {
+        $user->company?->bustLimitCaches();
     }
 }

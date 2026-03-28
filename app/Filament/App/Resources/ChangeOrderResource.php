@@ -127,7 +127,7 @@ class ChangeOrderResource extends Resource
                 Tables\Filters\SelectFilter::make('type')->options(ChangeOrder::$types),
                 Tables\Filters\SelectFilter::make('priority')->options(ChangeOrder::$priorities),
                 Tables\Filters\SelectFilter::make('cde_project_id')->label('Project')
-                    ->relationship('project', 'name'),
+                    ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)),
             ])
             ->actions([
                 Actions\ViewAction::make(),

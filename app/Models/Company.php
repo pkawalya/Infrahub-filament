@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use App\Models\Concerns\HasHashedRouteKey;
 
@@ -349,16 +350,39 @@ class Company extends Model
         return ($this->max_storage_gb ?? 0) + ($this->extra_storage_gb ?? 0);
     }
 
+    /** Cached user count (60 s TTL) — call bustLimitCaches() on user created/deleted */
+    public function getCachedUserCount(): int
+    {
+        return (int) Cache::remember("company:{$this->id}:user_count", 60,
+            fn() => $this->users()->count()
+        );
+    }
+
+    /** Cached project count (60 s TTL) */
+    public function getCachedProjectCount(): int
+    {
+        return (int) Cache::remember("company:{$this->id}:project_count", 60,
+            fn() => $this->projects()->count()
+        );
+    }
+
+    /** Call from UserObserver + CdeProjectObserver on created/deleted */
+    public function bustLimitCaches(): void
+    {
+        Cache::forget("company:{$this->id}:user_count");
+        Cache::forget("company:{$this->id}:project_count");
+    }
+
     public function canAddUser(): bool
     {
         $limit = $this->getEffectiveMaxUsers();
-        return !$limit || $this->users()->count() < $limit;
+        return !$limit || $this->getCachedUserCount() < $limit;
     }
 
     public function canAddProject(): bool
     {
         $limit = $this->getEffectiveMaxProjects();
-        return !$limit || $this->projects()->count() < $limit;
+        return !$limit || $this->getCachedProjectCount() < $limit;
     }
 
     public function canAddStorage(int $additionalBytes = 0): bool
@@ -373,12 +397,12 @@ class Company extends Model
 
     public function getRemainingUsers(): int
     {
-        return max(0, $this->getEffectiveMaxUsers() - $this->users()->count());
+        return max(0, $this->getEffectiveMaxUsers() - $this->getCachedUserCount());
     }
 
     public function getRemainingProjects(): int
     {
-        return max(0, $this->getEffectiveMaxProjects() - $this->projects()->count());
+        return max(0, $this->getEffectiveMaxProjects() - $this->getCachedProjectCount());
     }
 
     /**

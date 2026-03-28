@@ -67,6 +67,12 @@ class MsProjectService
         int $companyId,
         bool $clearExisting = false
     ): array {
+        // ── 0. Ownership guard — project must belong to the importing company ──
+        $project = \App\Models\CdeProject::withoutGlobalScopes()->find($projectId);
+        if (!$project || $project->company_id !== $companyId) {
+            throw new \RuntimeException('Access denied: project does not belong to your company.');
+        }
+
         // ── 1. Parse & Validate XML ──────────────────────────────────
         $xml = $this->parseXml($xmlContent);
         $this->validateProjectXml($xml);

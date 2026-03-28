@@ -53,6 +53,14 @@ class ProjectController extends BaseApiController
             'country' => 'nullable|string',
         ]);
 
+        $company = $request->user()->company;
+        if ($company && !$company->canAddProject()) {
+            return $this->error(
+                'Project limit reached. Your plan allows ' . $company->getEffectiveMaxProjects() . ' projects. Please upgrade.',
+                403
+            );
+        }
+
         $project = CdeProject::create([
             ...$data,
             'company_id' => $request->user()->company_id,

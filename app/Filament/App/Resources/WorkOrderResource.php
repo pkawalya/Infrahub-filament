@@ -60,7 +60,7 @@ class WorkOrderResource extends Resource
                     ->label('Assigned To')
                     ->icon('heroicon-o-user-circle')
                     ->placeholder('Unassigned'),
-            ])->columns(2),
+            ])->columns(['default' => 1, 'md' => 2]),
 
             Schemas\Components\Section::make('Schedule')->schema([
                 Infolists\Components\TextEntry::make('due_date')
@@ -82,7 +82,7 @@ class WorkOrderResource extends Resource
                 Infolists\Components\TextEntry::make('created_at')
                     ->label('Created')
                     ->dateTime(UIStandards::DATETIME_FORMAT),
-            ])->columns(3),
+            ])->columns(['default' => 1, 'md' => 2, 'xl' => 3]),
 
             Schemas\Components\Section::make('Description & Notes')->schema([
                 Infolists\Components\TextEntry::make('description')
@@ -271,7 +271,9 @@ class WorkOrderResource extends Resource
             ])
             ->bulkActions([
                 Actions\DeleteBulkAction::make(),
-            ]);
+            ])
+            ->persistFiltersInSession()
+            ->persistSearchInSession();
     }
 
     public static function getRelations(): array

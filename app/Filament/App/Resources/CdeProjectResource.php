@@ -66,7 +66,7 @@ class CdeProjectResource extends Resource
                                 ->reactive()
                                 ->placeholder('Select type...'),
                             Forms\Components\Select::make('client_id')
-                                ->relationship('client', 'name')->searchable()->preload()
+                                ->relationship('client', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))->searchable()->preload()
                                 ->createOptionForm([
                                     Forms\Components\TextInput::make('name')->required()->maxLength(255),
                                     Forms\Components\TextInput::make('email')->email()->maxLength(255),
