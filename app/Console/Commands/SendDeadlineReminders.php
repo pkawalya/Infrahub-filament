@@ -23,7 +23,9 @@ class SendDeadlineReminders extends Command
         $sent = 0;
 
         // ── Task reminders ────────────────────────────────────────────
-        $dueSoon = Task::with('assignee')
+        // withoutGlobalScopes(): BelongsToCompany global scope is inactive in CLI
+        // but we make this explicit for clarity and forward safety.
+        $dueSoon = Task::withoutGlobalScopes()->with('assignee')
             ->whereNotNull('assigned_to')
             ->whereNotIn('status', ['done', 'cancelled'])
             ->whereBetween('due_date', [now()->startOfDay(), now()->addDays(2)->endOfDay()])
@@ -41,7 +43,8 @@ class SendDeadlineReminders extends Command
         $this->line("  Tasks: {$dueSoon->count()} reminders queued.");
 
         // ── Work Order reminders ──────────────────────────────────────
-        $wosDue = WorkOrder::with('assignee')
+        // withoutGlobalScopes(): same reasoning as Task query above.
+        $wosDue = WorkOrder::withoutGlobalScopes()->with('assignee')
             ->whereNotNull('assigned_to')
             ->whereNotIn('status', ['completed', 'cancelled'])
             ->whereBetween('due_date', [now()->startOfDay(), now()->addDays(2)->endOfDay()])

@@ -305,7 +305,9 @@ class DailySiteDiaryResource extends Resource
             ])
             ->bulkActions([
                 Actions\DeleteBulkAction::make(),
-            ]);
+            ])
+            ->persistFiltersInSession()
+            ->persistSearchInSession();
     }
 
     public static function getPages(): array

@@ -103,6 +103,7 @@ class CrewAttendanceResource extends Resource
                 Tables\Columns\TextColumn::make('project.name')
                     ->label('Project')
                     ->placeholder('— Office —')
+                    ->searchable()
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('clock_in')
                     ->label('In')
@@ -141,7 +142,9 @@ class CrewAttendanceResource extends Resource
             ])
             ->bulkActions([
                 Actions\DeleteBulkAction::make(),
-            ]);
+            ])
+            ->persistFiltersInSession()
+            ->persistSearchInSession();
     }
 
     public static function getPages(): array

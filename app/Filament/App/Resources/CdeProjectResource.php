@@ -67,12 +67,38 @@ class CdeProjectResource extends Resource
                             Forms\Components\TextInput::make('code')->label('Project Code'),
                             Forms\Components\Select::make('project_type')
                                 ->label('Project Type')
-                                ->options(CdeProject::$projectTypes)
+                                ->options(function ($get, $record) {
+                                    $base = CdeProject::$projectTypes;
+                                    // If editing and the saved type is not in the static list, surface it
+                                    $current = $record?->project_type ?? $get('project_type');
+                                    if ($current && !array_key_exists($current, $base)) {
+                                        $base[$current] = \Illuminate\Support\Str::title(str_replace('_', ' ', $current));
+                                    }
+                                    return $base;
+                                })
                                 ->searchable()
                                 ->reactive()
-                                ->placeholder('Select type...'),
+                                ->placeholder('Select type...')
+                                ->createOptionForm([
+                                    Forms\Components\TextInput::make('label')
+                                        ->label('Project Type Name')
+                                        ->required()
+                                        ->maxLength(80)
+                                        ->placeholder('e.g. Irrigation, Bridge, Survey'),
+                                ])
+                                ->createOptionUsing(function (array $data): string {
+                                    // Convert label to a slug key — stored directly in the varchar column
+                                    return \Illuminate\Support\Str::slug($data['label'], '_');
+                                })
+                                ->getOptionLabelUsing(function ($value): string {
+                                    return CdeProject::$projectTypes[$value]
+                                        ?? \Illuminate\Support\Str::title(str_replace('_', ' ', (string) $value));
+                                }),
                             Forms\Components\Select::make('client_id')
-                                ->relationship('client', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))->searchable()->preload()
+                                ->relationship('client', 'name', function (\Illuminate\Database\Eloquent\Builder $query) {
+                                    $cid = auth()->user()?->company_id;
+                                    return $cid ? $query->where('company_id', $cid) : $query->whereRaw('1=0');
+                                })->searchable()->preload()
                                 ->createOptionForm([
                                     Forms\Components\TextInput::make('name')->required()->maxLength(255),
                                     Forms\Components\TextInput::make('email')->email()->maxLength(255),
@@ -86,7 +112,10 @@ class CdeProjectResource extends Resource
                                     ]))->id;
                                 }),
                             Forms\Components\Select::make('manager_id')
-                                ->relationship('manager', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
+                                ->relationship('manager', 'name', function (\Illuminate\Database\Eloquent\Builder $query) {
+                                    $cid = auth()->user()?->company_id;
+                                    return $cid ? $query->where('company_id', $cid)->where('is_active', true) : $query->whereRaw('1=0');
+                                })
                                 ->searchable()->preload()->label('Project Manager')
                                 ->createOptionForm([
                                     Forms\Components\TextInput::make('name')->required()->maxLength(255),
@@ -100,14 +129,43 @@ class CdeProjectResource extends Resource
                                     ]))->id;
                                 }),
                             Forms\Components\Select::make('status')
-                                ->options(CdeProject::$statuses)->default('planning'),
+                                ->options(function ($record, $get) {
+                                    $base = CdeProject::$statuses;
+                                    $current = $record?->status ?? $get('status');
+                                    if ($current && !array_key_exists($current, $base)) {
+                                        $base[$current] = \Illuminate\Support\Str::title(str_replace('_', ' ', $current));
+                                    }
+                                    return $base;
+                                })
+                                ->default('planning')
+                                ->searchable()
+                                ->createOptionForm([
+                                    Forms\Components\TextInput::make('label')
+                                        ->label('Status Name')
+                                        ->required()
+                                        ->maxLength(60)
+                                        ->placeholder('e.g. Under Review, Tendering, Mobilisation'),
+                                ])
+                                ->createOptionUsing(function (array $data): string {
+                                    return \Illuminate\Support\Str::slug($data['label'], '_');
+                                })
+                                ->getOptionLabelUsing(function ($value): string {
+                                    return CdeProject::$statuses[$value]
+                                        ?? \Illuminate\Support\Str::title(str_replace('_', ' ', (string) $value));
+                                }),
                             Forms\Components\Select::make('currency')
                                 ->label('Project Currency')
-                                ->options(
-                                    collect(CdeProject::$currencies)
-                                        ->mapWithKeys(fn($def, $code) => [$code => $def['symbol'] . ' — ' . $def['name'] . ' (' . ($def['position'] === 'before' ? $def['symbol'] . '100' : '100 ' . $def['symbol']) . ')'])
-                                        ->toArray()
-                                )
+                                ->options(function ($record, $get) {
+                                    $base = collect(CdeProject::$currencies)
+                                        ->mapWithKeys(fn($def, $code) => [
+                                            $code => $def['symbol'] . ' — ' . $def['name'] . ' (' . ($def['position'] === 'before' ? $def['symbol'] . '100' : '100 ' . $def['symbol']) . ')'
+                                        ])->toArray();
+                                    $current = $record?->currency ?? $get('currency');
+                                    if ($current && !array_key_exists($current, $base)) {
+                                        $base[$current] = strtoupper($current) . ' (Custom)';
+                                    }
+                                    return $base;
+                                })
                                 ->searchable()
                                 ->placeholder('Inherit from company')
                                 ->reactive()
@@ -120,6 +178,46 @@ class CdeProjectResource extends Resource
                                         $set('currency_symbol', null);
                                         $set('currency_position', 'before');
                                     }
+                                })
+                                ->createOptionForm([
+                                    \Filament\Schemas\Components\Grid::make(2)->schema([
+                                        Forms\Components\TextInput::make('code')
+                                            ->label('Currency Code')
+                                            ->required()
+                                            ->maxLength(10)
+                                            ->placeholder('e.g. XOF, TRY, BTC')
+                                            ->helperText('Short ISO code or abbreviation'),
+                                        Forms\Components\TextInput::make('symbol')
+                                            ->label('Symbol')
+                                            ->required()
+                                            ->maxLength(10)
+                                            ->placeholder('e.g. CFA, ₺, ₿'),
+                                        Forms\Components\TextInput::make('name')
+                                            ->label('Currency Name')
+                                            ->required()
+                                            ->maxLength(80)
+                                            ->placeholder('e.g. West African Franc')
+                                            ->columnSpan(2),
+                                        Forms\Components\Select::make('position')
+                                            ->label('Symbol Position')
+                                            ->options(['before' => 'Before amount ($100)', 'after' => 'After amount (100 UGX)'])
+                                            ->default('before')
+                                            ->required()
+                                            ->columnSpan(2),
+                                    ]),
+                                ])
+                                ->createOptionUsing(function (array $data, callable $set): string {
+                                    $code = strtoupper(trim($data['code']));
+                                    $set('currency_symbol', $data['symbol']);
+                                    $set('currency_position', $data['position'] ?? 'before');
+                                    return $code;
+                                })
+                                ->getOptionLabelUsing(function ($value): string {
+                                    if (isset(CdeProject::$currencies[$value])) {
+                                        $def = CdeProject::$currencies[$value];
+                                        return $def['symbol'] . ' — ' . $def['name'];
+                                    }
+                                    return strtoupper((string) $value) . ' (Custom)';
                                 })
                                 ->helperText('Leave empty to use company default'),
                             Forms\Components\Hidden::make('currency_symbol'),

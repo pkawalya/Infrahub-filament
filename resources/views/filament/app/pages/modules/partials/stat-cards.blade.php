@@ -1,15 +1,20 @@
 {{-- Reusable stat cards row for module pages --}}
-{{-- Supports: icon (heroicon name) OR icon_svg (raw SVG) --}}
+{{-- Supports: icon (heroicon name) OR icon_svg (raw SVG), optional href for click-through --}}
 
 <div class="mod-stat-grid" style="grid-template-columns: repeat({{ count($stats) }}, 1fr);">
     @foreach($stats as $stat)
-        <div class="mod-stat-card {{ ($stat['primary'] ?? false) ? 'primary' : '' }}">
-            <div
-                style="display: flex; align-items: flex-start; justify-content: space-between; position: relative; z-index: 1;">
-                <div>
+        @php $href = $stat['href'] ?? null; @endphp
+
+        @if($href)
+            <a href="{{ $href }}" class="mod-stat-card {{ ($stat['primary'] ?? false) ? 'primary' : '' }} mod-stat-card--link" wire:navigate>
+        @else
+            <div class="mod-stat-card {{ ($stat['primary'] ?? false) ? 'primary' : '' }}">
+        @endif
+
+            <div style="display: flex; align-items: flex-start; justify-content: space-between; position: relative; z-index: 1;">
+                <div style="min-width:0; flex:1;">
                     <div class="mod-stat-label">{{ $stat['label'] }}</div>
-                    <div class="mod-stat-value" title="{{ $stat['full_value'] ?? $stat['value'] }}">{{ $stat['value'] }}
-                    </div>
+                    <div class="mod-stat-value" title="{{ $stat['full_value'] ?? $stat['value'] }}">{{ $stat['value'] }}</div>
                     @if(!empty($stat['sub']))
                         <div class="mod-stat-sub {{ $stat['sub_type'] ?? '' }}">{{ $stat['sub'] }}</div>
                     @endif
@@ -28,6 +33,19 @@
                     </div>
                 @endif
             </div>
-        </div>
+
+            @if($href)
+                <div class="mod-stat-card__arrow">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" style="width:0.75rem;height:0.75rem;opacity:0.4;">
+                        <path fill-rule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+            @endif
+
+        @if($href)
+            </a>
+        @else
+            </div>
+        @endif
     @endforeach
 </div>

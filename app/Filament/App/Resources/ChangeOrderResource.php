@@ -157,7 +157,9 @@ class ChangeOrderResource extends Resource
                 Actions\DeleteBulkAction::make(),
                 Actions\RestoreBulkAction::make(),
                 Actions\ForceDeleteBulkAction::make(),
-            ]);
+            ])
+            ->persistFiltersInSession()
+            ->persistSearchInSession();
     }
 
     public static function getPages(): array

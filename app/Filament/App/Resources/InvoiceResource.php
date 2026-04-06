@@ -166,7 +166,9 @@ class InvoiceResource extends Resource
                     ->icon('heroicon-o-printer')->color('gray')
                     ->url(fn(Invoice $record) => route('print.invoice', $record), shouldOpenInNewTab: true),
             ])
-            ->bulkActions([Actions\DeleteBulkAction::make()]);
+            ->bulkActions([Actions\DeleteBulkAction::make()])
+            ->persistFiltersInSession()
+            ->persistSearchInSession();
     }
 
     public static function getPages(): array

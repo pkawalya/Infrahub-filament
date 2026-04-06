@@ -220,7 +220,9 @@ class SafetyIncidentResource extends Resource
                     ->options(['low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'critical' => 'Critical']),
             ])
             ->actions([Actions\ViewAction::make(), Actions\EditAction::make()])
-            ->bulkActions([Actions\DeleteBulkAction::make()]);
+            ->bulkActions([Actions\DeleteBulkAction::make()])
+            ->persistFiltersInSession()
+            ->persistSearchInSession();
     }
 
     public static function getPages(): array

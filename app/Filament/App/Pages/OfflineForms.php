@@ -15,6 +15,11 @@ class OfflineForms extends Page
     protected static ?string $slug = 'offline-forms';
     protected static bool $navigationHidden = true;
 
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
     public function getSubheading(): ?string
     {
         return 'Capture site diary, attendance, and safety data — even without internet.';
