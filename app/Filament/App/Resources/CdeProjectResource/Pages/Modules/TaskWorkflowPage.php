@@ -26,6 +26,7 @@ use Filament\Tables\Contracts\HasTable;
 
 use App\Filament\App\Concerns\ExportsTableCsv;
 use App\Services\MsProjectService;
+use App\Services\ScheduleExcelImportService;
 use App\Services\ImportValidationException;
 use App\Support\StoragePath;
 use Illuminate\Support\Facades\Response;
@@ -462,6 +463,92 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                             ->title('Import Error')
                             ->body($e->getMessage())
                             ->danger()
+                            ->send();
+                    }
+                }),
+
+            Action::make('importExcelSchedule')
+                ->label('Import Excel Schedule')
+                ->icon('heroicon-o-table-cells')
+                ->color('warning')
+                ->modalWidth('2xl')
+                ->modalHeading('Import Construction Schedule (Excel)')
+                ->modalDescription('Upload an Excel schedule (.xlsx) with columns: Task Name | Duration | Predecessors. This format is compatible with the sample CONSTRUCTION SCHEDULE.xlsx.')
+                ->schema([
+                    Section::make('Upload File')->schema([
+                        Forms\Components\FileUpload::make('xlsx_file')
+                            ->label('Excel Schedule File (.xlsx)')
+                            ->required()
+                            ->disk('local')
+                            ->directory('schedule-imports/' . $this->pid())
+                            ->acceptedFileTypes([
+                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                'application/vnd.ms-excel',
+                                '.xlsx',
+                            ])
+                            ->maxSize(20480) // 20 MB
+                            ->helperText('Columns expected: A = Task Name, B = Duration (e.g. "70 days"), C = Predecessors (e.g. "4", "14SS+7 days")'),
+                    ]),
+                    Section::make('Import Options')->schema([
+                        Forms\Components\DatePicker::make('project_start')
+                            ->label('Project Start Date')
+                            ->helperText('Leave blank to use today as day 1')
+                            ->nullable(),
+                        Forms\Components\Toggle::make('clear_existing')
+                            ->label('Replace existing tasks')
+                            ->helperText('⚠️ WARNING: This will permanently delete all existing tasks and dependencies before importing.')
+                            ->default(false),
+                    ])->columns(2),
+                ])
+                ->action(function (array $data): void {
+                    $path = storage_path('app/' . $data['xlsx_file']);
+                    if (!file_exists($path)) {
+                        Notification::make()->title('File not found')->danger()->send();
+                        return;
+                    }
+
+                    $startDate = !empty($data['project_start'])
+                        ? \Carbon\Carbon::parse($data['project_start'])
+                        : null;
+
+                    try {
+                        $result = app(ScheduleExcelImportService::class)->import(
+                            filePath:      $path,
+                            projectId:     $this->pid(),
+                            companyId:     $this->cid(),
+                            projectStart:  $startDate,
+                            clearExisting: (bool) ($data['clear_existing'] ?? false),
+                        );
+
+                        @unlink($path); // Clean up uploaded file
+
+                        $body = "✅ {$result['tasks_created']} tasks imported";
+                        if ($result['dependencies_created'] > 0) {
+                            $body .= " · {$result['dependencies_created']} dependency links";
+                        }
+                        if (!empty($result['warnings'])) {
+                            $body .= "\n⚠️ " . count($result['warnings']) . ' warning(s) — check logs.';
+                            foreach ($result['warnings'] as $w) {
+                                \Illuminate\Support\Facades\Log::warning('[ExcelScheduleImport] ' . $w);
+                            }
+                        }
+
+                        Notification::make()
+                            ->title('Excel Schedule Import Complete')
+                            ->body($body)
+                            ->success()
+                            ->persistent()
+                            ->send();
+
+                        $this->dispatch('gantt-refresh');
+
+                    } catch (\Throwable $e) {
+                        @unlink($path);
+                        Notification::make()
+                            ->title('Import Failed')
+                            ->body($e->getMessage())
+                            ->danger()
+                            ->persistent()
                             ->send();
                     }
                 }),
