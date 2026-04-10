@@ -31,7 +31,7 @@ use Illuminate\Support\Facades\Response;
 
 class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
 {
-    use ExportsTableCsv, InteractsWithForms, InteractsWithTable;
+    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
 
     /**
      * This unified Schedule page merges task_workflow + core (Work Orders) + planning_progress.
