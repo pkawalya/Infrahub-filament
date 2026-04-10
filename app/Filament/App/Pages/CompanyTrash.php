@@ -2,20 +2,6 @@
 
 namespace App\Filament\App\Pages;
 
-use App\Models\Asset;
-use App\Models\ChangeOrder;
-use App\Models\Client;
-use App\Models\Contract;
-use App\Models\Drawing;
-use App\Models\GoodsReceivedNote;
-use App\Models\Invoice;
-use App\Models\PurchaseOrder;
-use App\Models\Quotation;
-use App\Models\StockTransfer;
-use App\Models\Subcontractor;
-use App\Models\Supplier;
-use App\Models\Task;
-use App\Models\WorkOrder;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -26,9 +12,13 @@ class CompanyTrash extends Page
     protected string $view = 'filament.app.pages.company-trash';
 
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-trash';
+
     protected static ?string $navigationLabel = 'Trash';
+
     protected static string|\UnitEnum|null $navigationGroup = 'Company';
+
     protected static ?int $navigationSort = 99;
+
     protected static ?string $title = 'Company Trash';
 
     /** Active type filter tab */
@@ -46,20 +36,25 @@ class CompanyTrash extends Page
     public static function modelRegistry(): array
     {
         return [
-            'assets'          => ['label' => 'Assets',           'model' => Asset::class,            'labelField' => 'name',          'icon' => 'heroicon-o-cube'],
-            'change_orders'   => ['label' => 'Change Orders',    'model' => ChangeOrder::class,      'labelField' => 'title',         'icon' => 'heroicon-o-document-plus'],
-            'clients'         => ['label' => 'Clients',          'model' => Client::class,           'labelField' => 'name',          'icon' => 'heroicon-o-user-group'],
-            'contracts'       => ['label' => 'Contracts',        'model' => Contract::class,         'labelField' => 'title',         'icon' => 'heroicon-o-document-text'],
-            'drawings'        => ['label' => 'Drawings',         'model' => Drawing::class,          'labelField' => 'title',         'icon' => 'heroicon-o-map'],
-            'grns'            => ['label' => 'Goods Received',   'model' => GoodsReceivedNote::class,'labelField' => 'grn_number',    'icon' => 'heroicon-o-inbox-arrow-down'],
-            'invoices'        => ['label' => 'Invoices',         'model' => Invoice::class,          'labelField' => 'invoice_number','icon' => 'heroicon-o-receipt-percent'],
-            'purchase_orders' => ['label' => 'Purchase Orders',  'model' => PurchaseOrder::class,    'labelField' => 'po_number',     'icon' => 'heroicon-o-shopping-cart'],
-            'quotations'      => ['label' => 'Quotations',       'model' => Quotation::class,        'labelField' => 'quote_number',  'icon' => 'heroicon-o-clipboard-document-list'],
-            'stock_transfers' => ['label' => 'Stock Transfers',  'model' => StockTransfer::class,    'labelField' => 'reference',     'icon' => 'heroicon-o-arrows-right-left'],
-            'subcontractors'  => ['label' => 'Subcontractors',   'model' => Subcontractor::class,    'labelField' => 'name',          'icon' => 'heroicon-o-building-storefront'],
-            'suppliers'       => ['label' => 'Suppliers',        'model' => Supplier::class,         'labelField' => 'name',          'icon' => 'heroicon-o-truck'],
-            'tasks'           => ['label' => 'Tasks',            'model' => Task::class,             'labelField' => 'title',         'icon' => 'heroicon-o-check-square'],
-            'work_orders'     => ['label' => 'Work Orders',      'model' => WorkOrder::class,        'labelField' => 'title',         'icon' => 'heroicon-o-wrench-screwdriver'],
+            'assets' => ['label' => 'Assets',               'model' => \App\Models\Asset::class,               'labelField' => 'name',                'icon' => 'heroicon-o-cube'],
+            'change_orders' => ['label' => 'Change Orders',        'model' => \App\Models\ChangeOrder::class,         'labelField' => 'title',               'icon' => 'heroicon-o-document-plus'],
+            'clients' => ['label' => 'Clients',              'model' => \App\Models\Client::class,              'labelField' => 'name',                'icon' => 'heroicon-o-user-group'],
+            'contracts' => ['label' => 'Contracts',            'model' => \App\Models\Contract::class,            'labelField' => 'title',               'icon' => 'heroicon-o-document-text'],
+            'crew_attendance' => ['label' => 'Crew Attendance',      'model' => \App\Models\CrewAttendance::class,      'labelField' => 'site_location',       'icon' => 'heroicon-o-clock'],
+            'daily_site_diaries' => ['label' => 'Daily Site Diaries',   'model' => \App\Models\DailySiteDiary::class,      'labelField' => 'diary_date',          'icon' => 'heroicon-o-calendar-days'],
+            'drawings' => ['label' => 'Drawings',             'model' => \App\Models\Drawing::class,             'labelField' => 'title',               'icon' => 'heroicon-o-map'],
+            'equipment_allocations' => ['label' => 'Equipment Allocations', 'model' => \App\Models\EquipmentAllocation::class, 'labelField' => 'notes',               'icon' => 'heroicon-o-wrench'],
+            'equipment_fuel_logs' => ['label' => 'Equipment Fuel Logs',  'model' => \App\Models\EquipmentFuelLog::class,    'labelField' => 'supplier',            'icon' => 'heroicon-o-fuel'],
+            'grns' => ['label' => 'Goods Received',       'model' => \App\Models\GoodsReceivedNote::class,   'labelField' => 'grn_number',          'icon' => 'heroicon-o-inbox-arrow-down'],
+            'invoices' => ['label' => 'Invoices',             'model' => \App\Models\Invoice::class,             'labelField' => 'invoice_number',      'icon' => 'heroicon-o-receipt-percent'],
+            'purchase_orders' => ['label' => 'Purchase Orders',      'model' => \App\Models\PurchaseOrder::class,       'labelField' => 'po_number',           'icon' => 'heroicon-o-shopping-cart'],
+            'quotations' => ['label' => 'Quotations',           'model' => \App\Models\Quotation::class,           'labelField' => 'quote_number',        'icon' => 'heroicon-o-clipboard-document-list'],
+            'safety_incidents' => ['label' => 'Safety Incidents',     'model' => \App\Models\SafetyIncident::class,      'labelField' => 'title',               'icon' => 'heroicon-o-exclamation-triangle'],
+            'stock_transfers' => ['label' => 'Stock Transfers',      'model' => \App\Models\StockTransfer::class,       'labelField' => 'reference',           'icon' => 'heroicon-o-arrows-right-left'],
+            'subcontractors' => ['label' => 'Subcontractors',       'model' => \App\Models\Subcontractor::class,       'labelField' => 'name',                'icon' => 'heroicon-o-building-storefront'],
+            'suppliers' => ['label' => 'Suppliers',            'model' => \App\Models\Supplier::class,            'labelField' => 'name',                'icon' => 'heroicon-o-truck'],
+            'tasks' => ['label' => 'Tasks',                'model' => \App\Models\Task::class,                'labelField' => 'title',               'icon' => 'heroicon-o-check-square'],
+            'work_orders' => ['label' => 'Work Orders',          'model' => \App\Models\WorkOrder::class,           'labelField' => 'title',               'icon' => 'heroicon-o-wrench-screwdriver'],
         ];
     }
 
@@ -76,9 +71,9 @@ class CompanyTrash extends Page
      */
     public function getTrashedItems(): Collection
     {
-        $cid      = $this->cid();
+        $cid = $this->cid();
         $registry = static::modelRegistry();
-        $results  = collect();
+        $results = collect();
 
         foreach ($registry as $typeKey => $meta) {
             if ($this->activeType !== 'all' && $this->activeType !== $typeKey) {
@@ -86,24 +81,24 @@ class CompanyTrash extends Page
             }
 
             /** @var \Illuminate\Database\Eloquent\Model $model */
-            $model      = $meta['model'];
+            $model = $meta['model'];
             $labelField = $meta['labelField'];
 
             $query = $model::onlyTrashed()->where('company_id', $cid);
 
             if ($this->search !== '') {
-                $query->where($labelField, 'like', '%' . $this->search . '%');
+                $query->where($labelField, 'like', '%'.$this->search.'%');
             }
 
             $records = $query->select(['id', $labelField, 'deleted_at'])->get();
 
             foreach ($records as $record) {
                 $results->push([
-                    'id'         => $record->id,
-                    'type_key'   => $typeKey,
+                    'id' => $record->id,
+                    'type_key' => $typeKey,
                     'type_label' => $meta['label'],
-                    'icon'       => $meta['icon'],
-                    'label'      => $record->{$labelField} ?? "#{$record->id}",
+                    'icon' => $meta['icon'],
+                    'label' => $record->{$labelField} ?? "#{$record->id}",
                     'deleted_at' => $record->deleted_at,
                 ]);
             }
@@ -117,13 +112,13 @@ class CompanyTrash extends Page
      */
     public function getTypeCounts(): array
     {
-        $cid     = $this->cid();
-        $counts  = ['all' => 0];
+        $cid = $this->cid();
+        $counts = ['all' => 0];
 
         foreach (static::modelRegistry() as $typeKey => $meta) {
-            $count              = $meta['model']::onlyTrashed()->where('company_id', $cid)->count();
-            $counts[$typeKey]   = $count;
-            $counts['all']     += $count;
+            $count = $meta['model']::onlyTrashed()->where('company_id', $cid)->count();
+            $counts[$typeKey] = $count;
+            $counts['all'] += $count;
         }
 
         return $counts;
@@ -134,11 +129,15 @@ class CompanyTrash extends Page
     /** Restore a single record */
     public function restore(string $typeKey, int $id): void
     {
-        $meta   = static::modelRegistry()[$typeKey] ?? null;
-        if (!$meta) return;
+        $meta = static::modelRegistry()[$typeKey] ?? null;
+        if (! $meta) {
+            return;
+        }
 
         $record = $meta['model']::onlyTrashed()->where('company_id', $this->cid())->find($id);
-        if (!$record) return;
+        if (! $record) {
+            return;
+        }
 
         $record->restore();
 
@@ -151,11 +150,15 @@ class CompanyTrash extends Page
     /** Permanently delete a single record */
     public function forceDelete(string $typeKey, int $id): void
     {
-        $meta   = static::modelRegistry()[$typeKey] ?? null;
-        if (!$meta) return;
+        $meta = static::modelRegistry()[$typeKey] ?? null;
+        if (! $meta) {
+            return;
+        }
 
         $record = $meta['model']::onlyTrashed()->where('company_id', $this->cid())->find($id);
-        if (!$record) return;
+        if (! $record) {
+            return;
+        }
 
         $record->forceDelete();
 
@@ -168,14 +171,14 @@ class CompanyTrash extends Page
     /** Restore ALL trashed records for the current company */
     public function restoreAll(): void
     {
-        $cid   = $this->cid();
+        $cid = $this->cid();
         $total = 0;
 
         foreach (static::modelRegistry() as $typeKey => $meta) {
             if ($this->activeType !== 'all' && $this->activeType !== $typeKey) {
                 continue;
             }
-            $count  = $meta['model']::onlyTrashed()->where('company_id', $cid)->count();
+            $count = $meta['model']::onlyTrashed()->where('company_id', $cid)->count();
             $meta['model']::onlyTrashed()->where('company_id', $cid)->restore();
             $total += $count;
         }
@@ -189,14 +192,14 @@ class CompanyTrash extends Page
     /** Permanently delete ALL trashed records for the current company */
     public function emptyTrash(): void
     {
-        $cid   = $this->cid();
+        $cid = $this->cid();
         $total = 0;
 
         foreach (static::modelRegistry() as $typeKey => $meta) {
             if ($this->activeType !== 'all' && $this->activeType !== $typeKey) {
                 continue;
             }
-            $count  = $meta['model']::onlyTrashed()->where('company_id', $cid)->count();
+            $count = $meta['model']::onlyTrashed()->where('company_id', $cid)->count();
             $meta['model']::onlyTrashed()->where('company_id', $cid)->forceDelete();
             $total += $count;
         }
@@ -219,7 +222,7 @@ class CompanyTrash extends Page
                 ->requiresConfirmation()
                 ->modalHeading('Restore All Trashed Records?')
                 ->modalDescription('This will restore all items currently visible in the trash. Items will return to their original location.')
-                ->action(fn() => $this->restoreAll()),
+                ->action(fn () => $this->restoreAll()),
 
             Action::make('emptyTrash')
                 ->label('Empty Trash')
@@ -229,7 +232,7 @@ class CompanyTrash extends Page
                 ->modalHeading('Permanently Delete All?')
                 ->modalDescription('⚠️ This action CANNOT be undone. All trashed records will be permanently removed from the database.')
                 ->modalSubmitActionLabel('Yes, empty trash')
-                ->action(fn() => $this->emptyTrash()),
+                ->action(fn () => $this->emptyTrash()),
         ];
     }
 
@@ -237,9 +240,11 @@ class CompanyTrash extends Page
 
     public static function getNavigationBadge(): ?string
     {
-        if (!auth()->check()) return null;
+        if (! auth()->check()) {
+            return null;
+        }
 
-        $cid   = auth()->user()->company_id;
+        $cid = auth()->user()->company_id;
         $total = 0;
 
         foreach (static::modelRegistry() as $meta) {

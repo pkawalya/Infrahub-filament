@@ -38,12 +38,12 @@ class ScheduleExcelImportService
     /**
      * Import an Excel construction schedule.
      *
-     * @param  string  $filePath    Absolute path to the .xlsx file
-     * @param  int     $projectId   CdeProject ID
-     * @param  int     $companyId   Company ID (ownership guard)
+     * @param  string  $filePath  Absolute path to the .xlsx file
+     * @param  int  $projectId  CdeProject ID
+     * @param  int  $companyId  Company ID (ownership guard)
      * @param  \Carbon\Carbon|null  $projectStart  Override start date (defaults to today)
-     * @param  bool    $clearExisting  Wipe existing tasks first
-     * @return array   ['tasks_created', 'dependencies_created', 'warnings']
+     * @param  bool  $clearExisting  Wipe existing tasks first
+     * @return array ['tasks_created', 'dependencies_created', 'warnings']
      */
     public function import(
         string $filePath,
@@ -54,13 +54,26 @@ class ScheduleExcelImportService
     ): array {
         // --- ownership guard ---
         $project = \App\Models\CdeProject::withoutGlobalScopes()->find($projectId);
-        if (!$project || (int) $project->company_id !== (int) $companyId) {
+        if (! $project || (int) $project->company_id !== (int) $companyId) {
             throw new \RuntimeException('Access denied: project does not belong to your company.');
         }
 
-        $start     = $projectStart ?? now()->startOfDay();
-        $warnings  = [];
-        $rawRows   = $this->readRawRows($filePath, $warnings);
+        $start = $projectStart ?? now()->startOfDay();
+        $warnings = [];
+
+        \Illuminate\Support\Facades\Log::info('Excel Import: Starting import', [
+            'project_id' => $projectId,
+            'company_id' => $companyId,
+            'start_date' => $start,
+            'clear_existing' => $clearExisting,
+        ]);
+
+        $rawRows = $this->readRawRows($filePath, $warnings);
+
+        \Illuminate\Support\Facades\Log::info('Excel Import: Read rows', [
+            'row_count' => count($rawRows),
+            'warnings' => $warnings,
+        ]);
 
         if (empty($rawRows)) {
             throw new \InvalidArgumentException('The Excel file appears to be empty or unreadable.');
@@ -69,7 +82,7 @@ class ScheduleExcelImportService
         DB::beginTransaction();
         try {
             if ($clearExisting) {
-                TaskDependency::whereHas('task', fn($q) => $q->where('cde_project_id', $projectId))->delete();
+                TaskDependency::whereHas('task', fn ($q) => $q->where('cde_project_id', $projectId))->delete();
                 Task::where('cde_project_id', $projectId)->forceDelete();
             }
 
@@ -78,6 +91,16 @@ class ScheduleExcelImportService
             );
 
             $warnings = array_merge($warnings, $importWarns);
+
+            \Illuminate\Support\Facades\Log::info('Excel Import: Persisted data', [
+                'tasks_created' => $tasks_created,
+                'dependencies_created' => $dependencies_created,
+                'total_warnings' => count($warnings),
+            ]);
+
+            // Run CPM forward-pass to calculate proper start/due dates based on dependencies
+            $this->runCpmForwardPass($projectId);
+
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -93,6 +116,89 @@ class ScheduleExcelImportService
         return compact('tasks_created', 'dependencies_created', 'warnings');
     }
 
+    /**
+     * Run a CPM (Critical Path Method) forward-pass to recalculate start/due dates
+     * based on task dependencies, ensuring proper scheduling.
+     */
+    private function runCpmForwardPass(int $projectId): void
+    {
+        $tasks = Task::where('cde_project_id', $projectId)
+            ->with(['predecessors'])
+            ->get()
+            ->keyBy('id');
+
+        $maxIterations = 10; // Prevent infinite loops
+        $changed = true;
+        $iteration = 0;
+
+        while ($changed && $iteration < $maxIterations) {
+            $changed = false;
+            $iteration++;
+
+            foreach ($tasks as $task) {
+                $earliestStart = $task->start_date; // Default to current
+
+                // If no predecessors, can start at project start (assuming start_date is project start)
+                if ($task->predecessors->isEmpty()) {
+                    // Keep current start_date
+                    continue;
+                }
+
+                // Calculate earliest start based on predecessors
+                $maxPredFinish = null;
+                foreach ($task->predecessors as $predTask) {
+                    $predFinish = $predTask->due_date ?? $predTask->start_date;
+
+                    if ($predFinish) {
+                        $predFinishCarbon = Carbon::parse($predFinish);
+
+                        // Add lag days
+                        $lag = $predTask->pivot->lag_days ?? 0;
+                        if ($lag > 0) {
+                            $predFinishCarbon = $predFinishCarbon->addDays($lag);
+                        } elseif ($lag < 0) {
+                            $predFinishCarbon = $predFinishCarbon->subDays(abs($lag));
+                        }
+
+                        // For finish_to_start (most common), start after predecessor finishes
+                        $depType = $predTask->pivot->dependency_type ?? 'finish_to_start';
+                        if ($depType === 'finish_to_start') {
+                            $predFinishCarbon = $predFinishCarbon->addWeekdays(1); // Start next business day
+                        }
+                        // For other types, we could adjust, but for simplicity, use finish_to_start logic
+
+                        if (! $maxPredFinish || $predFinishCarbon->gt($maxPredFinish)) {
+                            $maxPredFinish = $predFinishCarbon;
+                        }
+                    }
+                }
+
+                if ($maxPredFinish) {
+                    $newStart = $maxPredFinish->toDateString();
+                    if ($newStart !== $task->start_date) {
+                        $task->start_date = $newStart;
+                        $changed = true;
+                    }
+                }
+
+                // Recalculate due date based on new start
+                if ($task->duration_days > 0 && $task->start_date) {
+                    $startCarbon = Carbon::parse($task->start_date);
+                    $newDue = $startCarbon->copy()->addWeekdays($task->duration_days)->toDateString();
+                    if ($newDue !== $task->due_date) {
+                        $task->due_date = $newDue;
+                        $changed = true;
+                    }
+                }
+            }
+        }
+
+        // Save all changes
+        foreach ($tasks as $task) {
+            $task->saveQuietly();
+        }
+    }
+
     // -----------------------------------------------------------------
     // Step 1 — Read raw rows from the xlsx via PHP ZipArchive + XML
     // (avoids loading the full Maatwebsite\Excel chunk for large files)
@@ -100,23 +206,23 @@ class ScheduleExcelImportService
 
     private function readRawRows(string $filePath, array &$warnings): array
     {
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             throw new \InvalidArgumentException("File not found: {$filePath}");
         }
 
         $rows = [];
 
         try {
-            $zip = new \ZipArchive();
+            $zip = new \ZipArchive;
             if ($zip->open($filePath) !== true) {
                 throw new \RuntimeException('Cannot open xlsx file.');
             }
 
-            $ns  = ['x' => 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'];
+            $ns = ['x' => 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'];
 
             // Shared strings (text values)
             $strings = [];
-            $sstXml  = $zip->getFromName('xl/sharedStrings.xml');
+            $sstXml = $zip->getFromName('xl/sharedStrings.xml');
             if ($sstXml) {
                 $sst = simplexml_load_string($sstXml);
                 $sst->registerXPathNamespace('x', 'http://schemas.openxmlformats.org/spreadsheetml/2006/main');
@@ -133,7 +239,7 @@ class ScheduleExcelImportService
             $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
             $zip->close();
 
-            if (!$sheetXml) {
+            if (! $sheetXml) {
                 throw new \RuntimeException('sheet1.xml not found inside the xlsx.');
             }
 
@@ -145,49 +251,55 @@ class ScheduleExcelImportService
             foreach ($ws->xpath('//x:row') as $row) {
                 $cells = [];
                 foreach ($row->xpath('x:c') as $c) {
-                    $ref  = (string) ($c['r'] ?? '');
-                    $col  = preg_replace('/\d/', '', $ref); // e.g. "A3" → "A"
-                    $t    = (string) ($c['t'] ?? '');
-                    $v    = $c->xpath('x:v');
-                    $val  = '';
-                    if (!empty($v) && (string) $v[0] !== '') {
+                    $ref = (string) ($c['r'] ?? '');
+                    $col = preg_replace('/\d/', '', $ref); // e.g. "A3" → "A"
+                    $t = (string) ($c['t'] ?? '');
+                    $v = $c->xpath('x:v');
+                    $val = '';
+                    if (! empty($v) && (string) $v[0] !== '') {
                         $raw = (string) $v[0];
                         $val = ($t === 's') ? ($strings[(int) $raw] ?? $raw) : $raw;
                     }
                     $cells[$col] = $val;
                 }
 
-                if (empty($cells['A'])) continue;
+                if (empty($cells['A'])) {
+                    continue;
+                }
 
                 // First row with text in A is the header → skip it
-                if (!$headerSkipped) {
+                if (! $headerSkipped) {
                     if (stripos($cells['A'], 'task') !== false || stripos($cells['A'], 'name') !== false) {
                         $headerSkipped = true;
+
                         continue;
                     }
                     $headerSkipped = true; // Skip anyway if no heading found in first row
                 }
 
                 $taskName = trim($cells['A'] ?? '');
-                if ($taskName === '') continue;
+                if ($taskName === '') {
+                    continue;
+                }
 
                 // Detect leading spaces for outline nesting
                 $leadingSpaces = strlen($cells['A']) - strlen(ltrim($cells['A']));
-                $outlineLevel  = (int) floor($leadingSpaces / 3);
+                $outlineLevel = (int) floor($leadingSpaces / 3);
 
-                $durationRaw   = trim($cells['B'] ?? '');
-                $durationDays  = $this->parseDays($durationRaw);
-                $predecessors  = trim($cells['C'] ?? '');
+                $durationRaw = trim($cells['B'] ?? '');
+                $durationDays = $this->parseDays($durationRaw);
+                $predecessors = trim($cells['C'] ?? '');
 
                 $rows[] = [
-                    'title'        => $taskName,
-                    'outline'      => $outlineLevel,
-                    'duration'     => $durationDays,
+                    'title' => $taskName,
+                    'outline' => $outlineLevel,
+                    'duration' => $durationDays,
                     'predecessors' => $predecessors,
                 ];
             }
         } catch (\Throwable $e) {
-            $warnings[] = 'Low-level read failed, falling back to Maatwebsite: ' . $e->getMessage();
+            $warnings[] = 'Low-level read failed, falling back to Maatwebsite: '.$e->getMessage();
+
             return $this->readViaLaravel($filePath, $warnings);
         }
 
@@ -198,9 +310,14 @@ class ScheduleExcelImportService
     private function readViaLaravel(string $filePath, array &$warnings): array
     {
         // toArray requires an importer; we use an anonymous class implementing ToArray
-        $importer = new class implements \Maatwebsite\Excel\Concerns\ToArray {
+        $importer = new class implements \Maatwebsite\Excel\Concerns\ToArray
+        {
             public array $data = [];
-            public function array(array $array): void { $this->data = $array; }
+
+            public function array(array $array): void
+            {
+                $this->data = $array;
+            }
         };
         Excel::import($importer, $filePath);
         $data = $importer->data ?? [];
@@ -210,16 +327,22 @@ class ScheduleExcelImportService
 
         foreach ($data as $row) {
             $a = trim((string) ($row[0] ?? ''));
-            if ($a === '') continue;
-            if (!$headerSkipped) { $headerSkipped = true; continue; }
+            if ($a === '') {
+                continue;
+            }
+            if (! $headerSkipped) {
+                $headerSkipped = true;
 
-            $leading      = strlen($row[0] ?? '') - strlen(ltrim((string) ($row[0] ?? '')));
+                continue;
+            }
+
+            $leading = strlen($row[0] ?? '') - strlen(ltrim((string) ($row[0] ?? '')));
             $outlineLevel = (int) floor($leading / 3);
 
             $rows[] = [
-                'title'        => $a,
-                'outline'      => $outlineLevel,
-                'duration'     => $this->parseDays((string) ($row[1] ?? '')),
+                'title' => $a,
+                'outline' => $outlineLevel,
+                'duration' => $this->parseDays((string) ($row[1] ?? '')),
                 'predecessors' => trim((string) ($row[2] ?? '')),
             ];
         }
@@ -239,20 +362,20 @@ class ScheduleExcelImportService
      */
     private function persistRows(array $rows, int $projectId, int $companyId, Carbon $start): array
     {
-        $warnings          = [];
-        $taskIdByRow       = []; // 1-based row number → DB task ID
-        $taskIdByExcelSeq  = []; // sequential task number (1,2,3…) → DB task ID
-        $parentStack       = []; // outline_level → task_id used to assign parent_id
-        $sortOrder         = 0;
-        $currentDate       = $start->copy();
-        $tasks_created     = 0;
+        $warnings = [];
+        $taskIdByRow = []; // 1-based row number → DB task ID
+        $taskIdByExcelSeq = []; // sequential task number (1,2,3…) → DB task ID
+        $parentStack = []; // outline_level → task_id used to assign parent_id
+        $sortOrder = 0;
+        $currentDate = $start->copy();
+        $tasks_created = 0;
 
         // ----- PASS 1: Insert tasks -----
         foreach ($rows as $rowIdx => $row) {
-            $rowNum  = $rowIdx + 1;   // 1-based
-            $title   = $row['title'];
+            $rowNum = $rowIdx + 1;   // 1-based
+            $title = $row['title'];
             $outline = $row['outline'];
-            $dur     = max(0, (int) $row['duration']);
+            $dur = max(0, (int) $row['duration']);
             $isSummary = ($dur === 0 && strpos($row['predecessors'], '') === 0);
 
             // Determine parent from stack
@@ -269,37 +392,39 @@ class ScheduleExcelImportService
 
             // Calculate start/due (simple sequential: starts after previous sibling ends)
             $taskStart = $currentDate->copy();
-            $taskDue   = $dur > 0 ? $taskStart->copy()->addWeekdays($dur) : $taskStart->copy();
+            $taskDue = $dur > 0 ? $taskStart->copy()->addWeekdays($dur) : $taskStart->copy();
 
             $task = Task::create([
-                'company_id'     => $companyId,
+                'company_id' => $companyId,
                 'cde_project_id' => $projectId,
-                'parent_id'      => $parentId,
-                'title'          => $title,
-                'status'         => 'todo',
-                'priority'       => 'medium',
-                'duration_days'  => $dur > 0 ? $dur : null,
-                'start_date'     => $taskStart->toDateString(),
-                'due_date'       => $dur > 0 ? $taskDue->toDateString() : null,
-                'outline_level'  => $outline,
-                'is_summary'     => $outline === 0 && $row['predecessors'] === '',
-                'is_milestone'   => $dur === 0 && $row['predecessors'] !== '',
-                'sort_order'     => $sortOrder++,
-                'created_by'     => auth()->id(),
+                'parent_id' => $parentId,
+                'title' => $title,
+                'status' => 'todo',
+                'priority' => 'medium',
+                'duration_days' => $dur > 0 ? $dur : null,
+                'start_date' => $taskStart->toDateString(),
+                'due_date' => $dur > 0 ? $taskDue->toDateString() : null,
+                'outline_level' => $outline,
+                'is_summary' => $outline === 0 && $row['predecessors'] === '',
+                'is_milestone' => $dur === 0 && $row['predecessors'] !== '',
+                'sort_order' => $sortOrder++,
+                'created_by' => auth()->id(),
             ]);
 
-            $taskIdByRow[$rowNum]      = $task->id;
+            $taskIdByRow[$rowNum] = $task->id;
             $taskIdByExcelSeq[$rowNum] = $task->id;
-            $parentStack[$outline]     = $task->id;
+            $parentStack[$outline] = $task->id;
 
             // Clear any deeper levels from stack
             foreach (array_keys($parentStack) as $lvl) {
-                if ($lvl > $outline) unset($parentStack[$lvl]);
+                if ($lvl > $outline) {
+                    unset($parentStack[$lvl]);
+                }
             }
 
             // Advance date only for leaf tasks
             if ($dur > 0 && $row['predecessors'] === '') {
-                $currentDate = $taskDue->copy()->addWeekday();
+                $currentDate = $taskDue->copy()->addWeekdays(1);
             }
 
             $tasks_created++;
@@ -309,38 +434,44 @@ class ScheduleExcelImportService
         $dependencies_created = 0;
 
         foreach ($rows as $rowIdx => $row) {
-            $rowNum       = $rowIdx + 1;
+            $rowNum = $rowIdx + 1;
             $predecessors = $row['predecessors'];
-            if ($predecessors === '') continue;
+            if ($predecessors === '') {
+                continue;
+            }
 
             $taskId = $taskIdByRow[$rowNum] ?? null;
-            if (!$taskId) continue;
+            if (! $taskId) {
+                continue;
+            }
 
             foreach ($this->parsePredecessors($predecessors) as $pred) {
                 $predRowNum = (int) $pred['row'];
                 $predTaskId = $taskIdByExcelSeq[$predRowNum] ?? null;
 
-                if (!$predTaskId) {
+                if (! $predTaskId) {
                     $warnings[] = "Row {$rowNum}: predecessor row #{$predRowNum} not found — skipped.";
+
                     continue;
                 }
 
                 if ($predTaskId === $taskId) {
                     $warnings[] = "Row {$rowNum}: task cannot depend on itself — skipped.";
+
                     continue;
                 }
 
                 try {
                     TaskDependency::firstOrCreate([
-                        'task_id'      => $taskId,
+                        'task_id' => $taskId,
                         'depends_on_id' => $predTaskId,
                     ], [
                         'dependency_type' => $pred['type'],
-                        'lag_days'        => $pred['lag'],
+                        'lag_days' => $pred['lag'],
                     ]);
                     $dependencies_created++;
                 } catch (\Throwable $e) {
-                    $warnings[] = "Row {$rowNum}: could not create dependency → " . $e->getMessage();
+                    $warnings[] = "Row {$rowNum}: could not create dependency → ".$e->getMessage();
                 }
             }
         }
@@ -357,8 +488,11 @@ class ScheduleExcelImportService
      */
     private function parseDays(string $raw): int
     {
-        if ($raw === '') return 0;
+        if ($raw === '') {
+            return 0;
+        }
         preg_match('/(\d+(?:\.\d+)?)\s*(?:day|d)?/i', $raw, $m);
+
         return isset($m[1]) ? (int) round((float) $m[1]) : 0;
     }
 
@@ -383,18 +517,20 @@ class ScheduleExcelImportService
 
         foreach ($parts as $part) {
             $part = trim($part);
-            if ($part === '') continue;
-
-            // Regex: row_number, optional type (SS|SF|FS|FF), optional lag (+/-N days)
-            if (!preg_match('/^(\d+)(SS|SF|FS|FF)?([+-]\d+\s*(?:day|d)?)?$/i', $part, $m)) {
+            if ($part === '') {
                 continue;
             }
 
-            $row     = (int) $m[1];
-            $typeRaw = strtoupper($m[2] ?? 'FS');
-            $lagRaw  = $m[3] ?? '';
+            // Regex: row_number, optional type (SS|SF|FS|FF), optional lag (+/-N days)
+            if (! preg_match('/^(\d+)(SS|SF|FS|FF)?([+-]\d+\s*(?:day|d)?)?$/i', $part, $m)) {
+                continue;
+            }
 
-            $type = match($typeRaw) {
+            $row = (int) $m[1];
+            $typeRaw = strtoupper($m[2] ?? 'FS');
+            $lagRaw = $m[3] ?? '';
+
+            $type = match ($typeRaw) {
                 'SS' => 'start_to_start',
                 'SF' => 'start_to_finish',
                 'FF' => 'finish_to_finish',

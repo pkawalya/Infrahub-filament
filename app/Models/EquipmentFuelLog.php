@@ -4,10 +4,11 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToCompany;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EquipmentFuelLog extends Model
 {
-    use BelongsToCompany;
+    use BelongsToCompany, SoftDeletes;
 
     protected $fillable = [
         'company_id',
@@ -48,4 +49,3 @@ class EquipmentFuelLog extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 }
-

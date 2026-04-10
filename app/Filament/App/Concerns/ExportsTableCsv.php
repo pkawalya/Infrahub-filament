@@ -18,10 +18,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 trait ExportsTableCsv
 {
     /**
-     * @param  string               $filename   Base file name (no extension)
-     * @param  callable(): Builder  $queryFn    Returns the query to export (unscoped by pagination)
-     * @param  array<string,string> $columns    Associative array: db_column_or_accessor => CSV header label
-     * @param  string|null          $label      Button label (default: "Export CSV")
+     * @param  string  $filename  Base file name (no extension)
+     * @param  callable(): Builder  $queryFn  Returns the query to export (unscoped by pagination)
+     * @param  array<string,string>  $columns  Associative array: db_column_or_accessor => CSV header label
+     * @param  string|null  $label  Button label (default: "Export CSV")
      */
     protected function exportCsvAction(
         string $filename,
@@ -29,12 +29,19 @@ trait ExportsTableCsv
         array $columns,
         ?string $label = null,
     ): Action {
-        return Action::make('export_' . $filename)
+        return Action::make('export_'.$filename)
             ->label($label ?? 'Export CSV')
             ->icon('heroicon-o-arrow-down-tray')
             ->color('gray')
             ->action(function () use ($filename, $queryFn, $columns): StreamedResponse {
                 $query = $queryFn();
+
+                // Enforce company ownership: ensure all exported data belongs to current user's company
+                $companyId = auth()->user()->company_id;
+                if ($companyId) {
+                    $query->where('company_id', $companyId);
+                }
+
                 $records = $query->get();
                 $headers = array_values($columns);
                 $keys = array_keys($columns);

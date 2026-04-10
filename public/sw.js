@@ -97,7 +97,7 @@ async function cacheFirst(request, cacheName) {
 
     try {
         const response = await fetch(request);
-        if (response.ok) {
+        if (response.ok && (request.url.startsWith('http://') || request.url.startsWith('https://'))) {
             const cache = await caches.open(cacheName);
             cache.put(request, response.clone());
         }

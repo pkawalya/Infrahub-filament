@@ -115,3 +115,10 @@ Schedule::command('activitylog:clean --days=180')
     ->withoutOverlapping()
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/activitylog-clean.log'));
+
+// ── Notification cleanup: delete read notifications older than 90 days (1st of month 6 AM) ──
+Schedule::command('app:cleanup-read-notifications')
+    ->monthlyOn(1, '06:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/notification-cleanup.log'));

@@ -2,46 +2,48 @@
 
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
+use App\Filament\App\Concerns\ExportsTableCsv;
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
-use App\Support\CurrencyHelper;
 use App\Models\CdeProject;
 use App\Models\Milestone;
 use App\Models\Task;
 use App\Models\TaskDependency;
 use App\Models\User;
 use App\Models\WorkOrder;
-use App\Models\WorkOrderItem;
+use App\Services\ImportValidationException;
+use App\Services\MsProjectService;
+use App\Services\ScheduleExcelImportService;
+use App\Support\CurrencyHelper;
+use App\Support\StoragePath;
 use Filament\Actions\Action;
 use Filament\Forms;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Tables;
-use Filament\Tables\Table;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-
-use App\Filament\App\Concerns\ExportsTableCsv;
-use App\Services\MsProjectService;
-use App\Services\ScheduleExcelImportService;
-use App\Services\ImportValidationException;
-use App\Support\StoragePath;
+use Filament\Tables\Table;
 use Illuminate\Support\Facades\Response;
 
-class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
+class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
 {
-    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
+    use ExportsTableCsv, InteractsWithForms, InteractsWithTable;
 
     /**
      * This unified Schedule page merges task_workflow + core (Work Orders) + planning_progress.
      */
     protected static string $moduleCode = 'task_workflow';
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
+
     protected static ?string $navigationLabel = 'Schedule';
+
     protected static ?string $title = 'Project Schedule';
+
     protected string $view = 'filament.app.pages.modules.task-workflow';
 
     /** Active sub-tab: schedule | work_orders | milestones */
@@ -49,9 +51,13 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
     // ─── Modal / Form State (Livewire-driven) ───────────────────
     public bool $showTaskModal = false;
+
     public bool $showMilestoneModal = false;
+
     public bool $showEditModal = false;
+
     public bool $showProgressModal = false;
+
     public ?int $editingTaskId = null;
 
     public array $editTask = [
@@ -93,13 +99,19 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
     // ─── Work Orders & Milestones: server-side pagination/filter state ──
     public string $woSearch = '';
+
     public string $woStatusFilter = '';
+
     public int $woPage = 1;
+
     public int $woPerPage = 15;
 
     public string $msSearch = '';
+
     public string $msStatusFilter = '';
+
     public int $msPage = 1;
+
     public int $msPerPage = 15;
 
     /**
@@ -111,7 +123,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
         $enabled = $this->record->getEnabledModules();
         $accepted = ['task_workflow', 'core', 'planning_progress'];
-        if (!array_intersect($accepted, $enabled)) {
+        if (! array_intersect($accepted, $enabled)) {
             abort(403, 'Schedule module is not enabled for this project.');
         }
     }
@@ -121,8 +133,10 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
         $record = $parameters['record'] ?? null;
         if ($record instanceof CdeProject) {
             $enabled = $record->getEnabledModules();
+
             return (bool) array_intersect(['task_workflow', 'core', 'planning_progress'], $enabled);
         }
+
         return true;
     }
 
@@ -130,6 +144,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     {
         return $this->record->id;
     }
+
     private function cid(): int
     {
         return $this->record->company_id;
@@ -181,18 +196,18 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
             [
                 'label' => 'Total Tasks',
                 'value' => $total,
-                'sub' => $done . ' completed · ' . (int) $stats->milestones . ' milestones',
+                'sub' => $done.' completed · '.(int) $stats->milestones.' milestones',
                 'sub_type' => 'success',
                 'primary' => true,
-                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" /></svg>'
+                'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:1.125rem;height:1.125rem;color:white;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" /></svg>',
             ],
             [
                 'label' => 'In Progress',
                 'value' => $inProgress,
-                'sub' => $blocked > 0 ? $blocked . ' blocked' : 'Active',
+                'sub' => $blocked > 0 ? $blocked.' blocked' : 'Active',
                 'sub_type' => $blocked > 0 ? 'danger' : 'info',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#2563eb" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>',
-                'icon_bg' => '#eff6ff'
+                'icon_bg' => '#eff6ff',
             ],
             [
                 'label' => 'Overdue',
@@ -200,15 +215,15 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                 'sub' => 'Past due date',
                 'sub_type' => $overdue > 0 ? 'danger' : 'success',
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#d97706" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
-                'icon_bg' => '#fffbeb'
+                'icon_bg' => '#fffbeb',
             ],
             [
                 'label' => 'Effort',
-                'value' => round($totalActHours) . 'h / ' . round($totalEstHours) . 'h',
-                'sub' => $avgProg . '% avg progress',
+                'value' => round($totalActHours).'h / '.round($totalEstHours).'h',
+                'sub' => $avgProg.'% avg progress',
                 'sub_type' => $avgProg >= 70 ? 'success' : ($avgProg >= 40 ? 'warning' : 'neutral'),
                 'icon_svg' => '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="#059669" style="width:1.125rem;height:1.125rem;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>',
-                'icon_bg' => '#ecfdf5'
+                'icon_bg' => '#ecfdf5',
             ],
         ];
     }
@@ -249,7 +264,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                 Forms\Components\Select::make('priority')->options(Task::$priorities)->required()->default('medium'),
                 Forms\Components\Select::make('status')->options(Task::$statuses)->required()->default($isCreate ? 'to_do' : null),
                 Forms\Components\Select::make('parent_id')->label('Parent Task / Phase')
-                    ->options(fn() => $this->taskOptions())
+                    ->options(fn () => $this->taskOptions())
                     ->searchable()->nullable()
                     ->helperText('Select a parent to create a WBS hierarchy'),
                 Forms\Components\Hidden::make('is_milestone')->default(false),
@@ -280,12 +295,12 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                     ->options(Task::$constraintTypes)->nullable()
                     ->helperText('ASAP is default'),
                 Forms\Components\DatePicker::make('constraint_date')
-                    ->visible(fn(Get $get) => in_array($get('constraint_type'), ['mso', 'mfo', 'snet', 'snlt', 'fnet', 'fnlt'])),
+                    ->visible(fn (Get $get) => in_array($get('constraint_type'), ['mso', 'mfo', 'snet', 'snlt', 'fnet', 'fnlt'])),
             ])->columns(3),
 
             Section::make('Resources & Effort')->schema([
                 Forms\Components\Select::make('assigned_to')->label('Primary Assignee')
-                    ->options(fn() => $this->teamOptions())
+                    ->options(fn () => $this->teamOptions())
                     ->searchable()->nullable(),
                 Forms\Components\TextInput::make('resource_names')
                     ->label('Resource Names')
@@ -294,7 +309,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                 Forms\Components\TextInput::make('estimated_hours')->label('Work (hrs)')
                     ->numeric()->suffix('hrs'),
                 Forms\Components\TextInput::make('actual_hours')->label('Actual (hrs)')
-                    ->numeric()->suffix('hrs')->visible(!$isCreate),
+                    ->numeric()->suffix('hrs')->visible(! $isCreate),
                 Forms\Components\TextInput::make('progress_percent')->label('% Complete')
                     ->numeric()->minValue(0)->maxValue(100)->suffix('%')->default(0),
                 Forms\Components\TextInput::make('resource_units')->label('Units %')
@@ -323,7 +338,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                 Forms\Components\Repeater::make('predecessor_list')
                     ->schema([
                         Forms\Components\Select::make('depends_on_id')->label('Predecessor Task')
-                            ->options(fn() => $this->taskOptions())
+                            ->options(fn () => $this->taskOptions())
                             ->searchable()->required(),
                         Forms\Components\Select::make('dependency_type')->label('Type')
                             ->options(TaskDependency::$types)
@@ -344,7 +359,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                     ->toolbarButtons(['bold', 'italic', 'bulletList', 'orderedList', 'link'])
                     ->columnSpanFull(),
                 Forms\Components\Textarea::make('notes')->label('Notes')->rows(2)->columnSpanFull(),
-            ])->collapsed(!$isCreate),
+            ])->collapsed(! $isCreate),
 
             Section::make('Attachments')->schema([
                 Forms\Components\FileUpload::make('attachments')
@@ -379,7 +394,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                 ->modalWidth('2xl')
                 ->modalHeading('Import Microsoft Project File')
                 ->modalDescription('Upload an MS Project XML file (.xml). Tasks, dependencies and milestones will be imported automatically.')
-                ->schema([
+                ->schema(fn () => [
                     Section::make('Upload File')->schema([
                         Forms\Components\FileUpload::make('msp_file')
                             ->label('MS Project XML File (.xml)')
@@ -401,9 +416,10 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                     ])->columns(2),
                 ])
                 ->action(function (array $data): void {
-                    $path = storage_path('app/' . $data['msp_file']);
-                    if (!file_exists($path)) {
+                    $path = \Illuminate\Support\Facades\Storage::disk('local')->path($data['msp_file']);
+                    if (! file_exists($path)) {
                         Notification::make()->title('File not found')->danger()->send();
+
                         return;
                     }
 
@@ -420,9 +436,9 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
                         Task::regenerateWbs($this->pid());
 
-                        $body = "✅ {$result['tasks_created']} tasks imported" .
-                            ($result['dependencies_created'] > 0 ? " · {$result['dependencies_created']} links" : '') .
-                            ($result['milestones_created'] > 0 ? " · {$result['milestones_created']} milestones" : '') .
+                        $body = "✅ {$result['tasks_created']} tasks imported".
+                            ($result['dependencies_created'] > 0 ? " · {$result['dependencies_created']} links" : '').
+                            ($result['milestones_created'] > 0 ? " · {$result['milestones_created']} milestones" : '').
                             ($result['project_name'] ? "\nProject: {$result['project_name']}" : '');
 
                         Notification::make()
@@ -441,16 +457,18 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
                         if ($e->hasBlockingErrors()) {
                             $msg = implode("\n", array_slice($errors, 0, 8));
-                            if (count($errors) > 8) $msg .= "\n...and " . (count($errors) - 8) . ' more.';
+                            if (count($errors) > 8) {
+                                $msg .= "\n...and ".(count($errors) - 8).' more.';
+                            }
                             Notification::make()
-                                ->title('Import Failed — ' . count($errors) . ' validation error(s)')
+                                ->title('Import Failed — '.count($errors).' validation error(s)')
                                 ->body($msg)
                                 ->danger()
                                 ->persistent()
                                 ->send();
-                        } elseif (!empty($warnings)) {
+                        } elseif (! empty($warnings)) {
                             Notification::make()
-                                ->title('Imported with ' . count($warnings) . ' warning(s)')
+                                ->title('Imported with '.count($warnings).' warning(s)')
                                 ->body(implode("\n", array_slice($warnings, 0, 5)))
                                 ->warning()
                                 ->persistent()
@@ -474,13 +492,13 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                 ->modalWidth('2xl')
                 ->modalHeading('Import Construction Schedule (Excel)')
                 ->modalDescription('Upload an Excel schedule (.xlsx) with columns: Task Name | Duration | Predecessors. This format is compatible with the sample CONSTRUCTION SCHEDULE.xlsx.')
-                ->schema([
+                ->schema(fn () => [
                     Section::make('Upload File')->schema([
                         Forms\Components\FileUpload::make('xlsx_file')
                             ->label('Excel Schedule File (.xlsx)')
                             ->required()
                             ->disk('local')
-                            ->directory('schedule-imports/' . $this->pid())
+                            ->directory('schedule-imports')
                             ->acceptedFileTypes([
                                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                                 'application/vnd.ms-excel',
@@ -492,8 +510,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                     Section::make('Import Options')->schema([
                         Forms\Components\DatePicker::make('project_start')
                             ->label('Project Start Date')
-                            ->helperText('Leave blank to use today as day 1')
-                            ->nullable(),
+                            ->helperText('Leave blank to use today as day 1'),
                         Forms\Components\Toggle::make('clear_existing')
                             ->label('Replace existing tasks')
                             ->helperText('⚠️ WARNING: This will permanently delete all existing tasks and dependencies before importing.')
@@ -501,22 +518,61 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                     ])->columns(2),
                 ])
                 ->action(function (array $data): void {
-                    $path = storage_path('app/' . $data['xlsx_file']);
-                    if (!file_exists($path)) {
+                    $path = \Illuminate\Support\Facades\Storage::disk('local')->path($data['xlsx_file']);
+                    if (! file_exists($path)) {
                         Notification::make()->title('File not found')->danger()->send();
+                        \Illuminate\Support\Facades\Log::error('Excel Import: File not found', ['path' => $path]);
+
                         return;
                     }
 
-                    $startDate = !empty($data['project_start'])
+                    // Validate file size and type
+                    $fileSize = filesize($path);
+                    if ($fileSize === 0) {
+                        Notification::make()->title('Empty file')->body('The uploaded file is empty.')->danger()->send();
+                        @unlink($path);
+
+                        return;
+                    }
+
+                    if ($fileSize > 20971520) { // 20MB
+                        Notification::make()->title('File too large')->body('File size exceeds 20MB limit.')->danger()->send();
+                        @unlink($path);
+
+                        return;
+                    }
+
+                    // Check if it's a valid ZIP file (XLSX is ZIP-based)
+                    $zip = new \ZipArchive;
+                    if ($zip->open($path) !== true) {
+                        Notification::make()->title('Invalid file format')->body('The file is not a valid Excel (.xlsx) file.')->danger()->send();
+                        @unlink($path);
+
+                        return;
+                    }
+                    $zip->close();
+
+                    $startDate = ! empty($data['project_start'])
                         ? \Carbon\Carbon::parse($data['project_start'])
                         : null;
 
                     try {
+                        // Debug logging
+                        \Illuminate\Support\Facades\Log::info('Excel Import Debug', [
+                            'file_path' => $path,
+                            'file_exists' => file_exists($path),
+                            'file_size' => file_exists($path) ? filesize($path) : 'N/A',
+                            'project_id' => $this->pid(),
+                            'company_id' => $this->cid(),
+                            'start_date' => $startDate,
+                            'clear_existing' => (bool) ($data['clear_existing'] ?? false),
+                        ]);
+
                         $result = app(ScheduleExcelImportService::class)->import(
-                            filePath:      $path,
-                            projectId:     $this->pid(),
-                            companyId:     $this->cid(),
-                            projectStart:  $startDate,
+                            filePath: $path,
+                            projectId: $this->pid(),
+                            companyId: $this->cid(),
+                            projectStart: $startDate,
                             clearExisting: (bool) ($data['clear_existing'] ?? false),
                         );
 
@@ -526,10 +582,10 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                         if ($result['dependencies_created'] > 0) {
                             $body .= " · {$result['dependencies_created']} dependency links";
                         }
-                        if (!empty($result['warnings'])) {
-                            $body .= "\n⚠️ " . count($result['warnings']) . ' warning(s) — check logs.';
+                        if (! empty($result['warnings'])) {
+                            $body .= "\n⚠️ ".count($result['warnings']).' warning(s) — check logs.';
                             foreach ($result['warnings'] as $w) {
-                                \Illuminate\Support\Facades\Log::warning('[ExcelScheduleImport] ' . $w);
+                                \Illuminate\Support\Facades\Log::warning('[ExcelScheduleImport] '.$w);
                             }
                         }
 
@@ -542,8 +598,22 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
                         $this->dispatch('gantt-refresh');
 
+                        // Since CPM may shift dates significantly, do a hard page reload to ensure Gantt reflects changes
+                        $this->redirect(request()->url());
+
                     } catch (\Throwable $e) {
                         @unlink($path);
+
+                        // Detailed error logging
+                        \Illuminate\Support\Facades\Log::error('Excel Import Failed', [
+                            'error' => $e->getMessage(),
+                            'file' => $e->getFile(),
+                            'line' => $e->getLine(),
+                            'trace' => $e->getTraceAsString(),
+                            'project_id' => $this->pid(),
+                            'company_id' => $this->cid(),
+                        ]);
+
                         Notification::make()
                             ->title('Import Failed')
                             ->body($e->getMessage())
@@ -579,10 +649,12 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
             projectStart: $project->start_date ?? null,
         );
 
-        $filename = 'project-' . str($project->name)->slug() . '-' . now()->format('Ymd') . '.xml';
+        $filename = 'project-'.str($project->name)->slug().'-'.now()->format('Ymd').'.xml';
 
         return response()->streamDownload(
-            function () use ($xml) { echo $xml; },
+            function () use ($xml) {
+                echo $xml;
+            },
             $filename,
             ['Content-Type' => 'application/xml']
         );
@@ -628,7 +700,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
         Task::regenerateWbs($this->pid());
 
         $this->showTaskModal = false;
-        Notification::make()->title('Task created: ' . $data['title'])->success()->send();
+        Notification::make()->title('Task created: '.$data['title'])->success()->send();
         $this->dispatch('gantt-refresh');
     }
 
@@ -671,8 +743,9 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     {
         /** @var Task|null $task */
         $task = Task::find($taskId);
-        if (!$task)
+        if (! $task) {
             return;
+        }
 
         $this->editingTaskId = $taskId;
         $this->editTask = [
@@ -696,8 +769,9 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
         ]);
 
         $task = Task::find($this->editingTaskId);
-        if (!$task)
+        if (! $task) {
             return;
+        }
 
         $task->update($this->editTask);
         $this->showEditModal = false;
@@ -708,8 +782,9 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     public function openProgressModal(int $taskId): void
     {
         $task = Task::find($taskId);
-        if (!$task)
+        if (! $task) {
             return;
+        }
 
         $this->editingTaskId = $taskId;
         $this->progressTask = [
@@ -723,8 +798,9 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     public function submitProgress(): void
     {
         $task = Task::find($this->editingTaskId);
-        if (!$task)
+        if (! $task) {
             return;
+        }
 
         $data = $this->progressTask;
         if ($data['status'] === 'done') {
@@ -732,7 +808,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
             $data['completed_at'] = now();
             $data['actual_finish'] = now()->format('Y-m-d');
         }
-        if ($data['status'] === 'in_progress' && !$task->actual_start) {
+        if ($data['status'] === 'in_progress' && ! $task->actual_start) {
             $data['actual_start'] = now()->format('Y-m-d');
         }
 
@@ -757,8 +833,8 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
         });
         $this->record->update(['baseline_saved_at' => now()]);
         Notification::make()
-            ->title('Baseline saved for ' . $tasks->count() . ' tasks')
-            ->body('Snapshot taken at ' . now()->format('M d, Y H:i'))
+            ->title('Baseline saved for '.$tasks->count().' tasks')
+            ->body('Snapshot taken at '.now()->format('M d, Y H:i'))
             ->success()->send();
         $this->dispatch('gantt-refresh');
     }
@@ -773,12 +849,14 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     public function updateTaskField(int $taskId, string $field, $value): void
     {
         $task = Task::where('cde_project_id', $this->pid())->find($taskId);
-        if (!$task)
+        if (! $task) {
             return;
+        }
 
         $allowedFields = ['title', 'duration_days', 'start_date', 'progress'];
-        if (!in_array($field, $allowedFields))
+        if (! in_array($field, $allowedFields)) {
             return;
+        }
 
         if ($field === 'duration_days') {
             $value = max(0, (int) $value);
@@ -796,12 +874,13 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
         } elseif ($field === 'progress') {
             $value = min(100, max(0, (int) $value));
             $task->progress_percent = $value; // Changed from $task->progress = $value;
-            if ($value === 100)
+            if ($value === 100) {
                 $task->status = 'done';
-            elseif ($value > 0)
+            } elseif ($value > 0) {
                 $task->status = 'in_progress';
-            elseif ($task->status === 'done' && $value < 100)
+            } elseif ($task->status === 'done' && $value < 100) {
                 $task->status = 'in_progress';
+            }
         } else {
             $task->{$field} = $value;
         }
@@ -818,8 +897,9 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     public function indentTask(int $taskId): void
     {
         $task = Task::where('cde_project_id', $this->pid())->find($taskId);
-        if (!$task)
+        if (! $task) {
             return;
+        }
 
         // Find the task immediately preceding this one in the same WBS sibling list
         $previousSibling = Task::where('cde_project_id', $this->pid())
@@ -842,8 +922,9 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     {
         $task = Task::where('cde_project_id', $this->pid())->find($taskId);
         // Cannot outdent if it's already at top level
-        if (!$task || !$task->parent_id)
+        if (! $task || ! $task->parent_id) {
             return;
+        }
 
         $parent = Task::find($task->parent_id);
         if ($parent) {
@@ -875,16 +956,18 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                     ->trueColor('warning')->falseColor('gray')
                     ->width('30px'),
                 Tables\Columns\TextColumn::make('title')->searchable()->limit(45)->toggleable()
-                    ->description(fn(Task $r) => $r->parent ? '↳ ' . $r->parent->title : null)
-                    ->weight(fn(Task $r) => $r->is_summary ? 'bold' : null),
+                    ->description(fn (Task $r) => $r->parent ? '↳ '.$r->parent->title : null)
+                    ->weight(fn (Task $r) => $r->is_summary ? 'bold' : null),
                 Tables\Columns\TextColumn::make('duration_days')->label('Duration')->toggleable()
                     ->suffix('d')->placeholder('—')->sortable()->width('70px')
-                    ->state(fn(Task $r) => $r->is_milestone ? '0' : ($r->duration_days ?? '—')),
+                    ->state(fn (Task $r) => $r->is_milestone ? '0' : ($r->duration_days ?? '—')),
                 Tables\Columns\TextColumn::make('start_date')->label('Start')->date('M d')->sortable()->width('80px')->toggleable(),
                 Tables\Columns\TextColumn::make('due_date')->label('Finish')->date('M d')->sortable()->width('80px')->toggleable()
-                    ->color(fn($record) => $record->due_date?->isPast() && !in_array($record->status, ['done', 'cancelled']) ? 'danger' : null),
+                    ->color(fn ($record) => $record->due_date?->isPast() && ! in_array($record->status, ['done', 'cancelled']) ? 'danger' : null),
                 Tables\Columns\TextColumn::make('status')->badge()->toggleable()
-                    ->color(fn(string $state) => match ($state) { 'done' => 'success', 'in_progress' => 'info', 'review' => 'primary', 'blocked' => 'danger', default => 'gray'})->sortable(),
+                    ->color(fn (string $state) => match ($state) {
+                        'done' => 'success', 'in_progress' => 'info', 'review' => 'primary', 'blocked' => 'danger', default => 'gray'
+                    })->sortable(),
                 Tables\Columns\TextColumn::make('progress_percent')->label('Timeline')->toggleable()
                     ->html()
                     ->sortable()
@@ -905,7 +988,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                             $timeElapsed = min(100, round(($daysSpent / $totalDays) * 100));
                         }
 
-                        $isOverdue = $dueDate && \Carbon\Carbon::parse((string) $dueDate)->isPast() && !$isDone;
+                        $isOverdue = $dueDate && \Carbon\Carbon::parse((string) $dueDate)->isPast() && ! $isDone;
                         $variance = $progress - $timeElapsed;
 
                         // Colors
@@ -914,17 +997,17 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
                         // Time marker
                         $marker = '';
-                        if ($startDate && $dueDate && !$isDone && $timeElapsed > 0 && $timeElapsed < 100) {
-                            $marker = '<div style="position:absolute;top:-2px;bottom:-2px;left:' . $timeElapsed . '%;width:2px;background:#ef4444;z-index:2;box-shadow:0 0 3px rgba(239,68,68,0.5);"></div>';
+                        if ($startDate && $dueDate && ! $isDone && $timeElapsed > 0 && $timeElapsed < 100) {
+                            $marker = '<div style="position:absolute;top:-2px;bottom:-2px;left:'.$timeElapsed.'%;width:2px;background:#ef4444;z-index:2;box-shadow:0 0 3px rgba(239,68,68,0.5);"></div>';
                         }
 
                         // Variance label
                         $varLabel = '';
-                        if ($startDate && $dueDate && !$isDone) {
+                        if ($startDate && $dueDate && ! $isDone) {
                             if ($variance < 0) {
-                                $varLabel = '<span style="font-size:9px;font-weight:600;color:#dc2626;">▼' . abs($variance) . '%</span>';
+                                $varLabel = '<span style="font-size:9px;font-weight:600;color:#dc2626;">▼'.abs($variance).'%</span>';
                             } elseif ($variance > 0) {
-                                $varLabel = '<span style="font-size:9px;font-weight:600;color:#10b981;">▲' . $variance . '%</span>';
+                                $varLabel = '<span style="font-size:9px;font-weight:600;color:#10b981;">▲'.$variance.'%</span>';
                             } else {
                                 $varLabel = '<span style="font-size:9px;font-weight:600;color:#6b7280;">On track</span>';
                             }
@@ -932,29 +1015,31 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
                         $pctColor = $isDone ? '#10b981' : ($isOverdue ? '#dc2626' : '#374151');
 
-                        $tooltip = $progress . '% done';
+                        $tooltip = $progress.'% done';
                         if ($startDate && $dueDate) {
-                            $tooltip .= ' · ' . $timeElapsed . '% time used';
-                            if (!$isDone) {
-                                $tooltip .= ' · ' . ($variance >= 0 ? $variance . '% ahead' : abs($variance) . '% behind');
+                            $tooltip .= ' · '.$timeElapsed.'% time used';
+                            if (! $isDone) {
+                                $tooltip .= ' · '.($variance >= 0 ? $variance.'% ahead' : abs($variance).'% behind');
                             }
                         }
 
                         return new \Illuminate\Support\HtmlString(
-                            '<div title="' . e($tooltip) . '" style="min-width:120px;max-width:160px;">' .
-                            '<div style="position:relative;height:14px;border-radius:7px;overflow:hidden;background:' . $bgColor . ';">' .
-                            '<div style="position:absolute;top:0;left:0;bottom:0;width:' . $progress . '%;background:' . $barColor . ';border-radius:7px 0 0 7px;transition:width 0.3s;"></div>' .
-                            $marker .
-                            '</div>' .
-                            '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">' .
-                            '<span style="font-size:10px;font-weight:700;color:' . $pctColor . ';">' . $progress . '%</span>' .
-                            $varLabel .
-                            '</div>' .
+                            '<div title="'.e($tooltip).'" style="min-width:120px;max-width:160px;">'.
+                            '<div style="position:relative;height:14px;border-radius:7px;overflow:hidden;background:'.$bgColor.';">'.
+                            '<div style="position:absolute;top:0;left:0;bottom:0;width:'.$progress.'%;background:'.$barColor.';border-radius:7px 0 0 7px;transition:width 0.3s;"></div>'.
+                            $marker.
+                            '</div>'.
+                            '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px;">'.
+                            '<span style="font-size:10px;font-weight:700;color:'.$pctColor.';">'.$progress.'%</span>'.
+                            $varLabel.
+                            '</div>'.
                             '</div>'
                         );
                     }),
                 Tables\Columns\TextColumn::make('priority')->badge()->toggleable()
-                    ->color(fn(string $state) => match ($state) { 'urgent' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'})->sortable(),
+                    ->color(fn (string $state) => match ($state) {
+                        'urgent' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'
+                    })->sortable(),
                 Tables\Columns\TextColumn::make('assignee.name')->label('Resource')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('estimated_hours')->label('Work')->suffix('h')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('actual_hours')->label('Actual')->suffix('h')->placeholder('—')->toggleable(),
@@ -965,13 +1050,13 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Filters\SelectFilter::make('status')->options(Task::$statuses)->multiple(),
                 Tables\Filters\SelectFilter::make('priority')->options(Task::$priorities)->multiple(),
                 Tables\Filters\Filter::make('milestones')->label('Milestones')
-                    ->query(fn($q) => $q->where('is_milestone', true))->toggle(),
+                    ->query(fn ($q) => $q->where('is_milestone', true))->toggle(),
                 Tables\Filters\Filter::make('summary')->label('Summary Tasks')
-                    ->query(fn($q) => $q->where('is_summary', true))->toggle(),
+                    ->query(fn ($q) => $q->where('is_summary', true))->toggle(),
                 Tables\Filters\Filter::make('overdue')->label('Overdue')
-                    ->query(fn($q) => $q->whereNotIn('status', ['done', 'cancelled'])->whereNotNull('due_date')->where('due_date', '<', now()))->toggle(),
+                    ->query(fn ($q) => $q->whereNotIn('status', ['done', 'cancelled'])->whereNotNull('due_date')->where('due_date', '<', now()))->toggle(),
                 Tables\Filters\Filter::make('has_baseline')->label('Has Baseline')
-                    ->query(fn($q) => $q->whereNotNull('baseline_start'))->toggle(),
+                    ->query(fn ($q) => $q->whereNotNull('baseline_start'))->toggle(),
             ])
             ->recordActions([
                 \Filament\Actions\ActionGroup::make([
@@ -985,9 +1070,9 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                                 ->numeric()->suffix('hrs'),
                             Forms\Components\DatePicker::make('actual_start')->label('Actual Start'),
                             Forms\Components\DatePicker::make('actual_finish')->label('Actual Finish')
-                                ->visible(fn(Get $get) => $get('status') === 'done'),
+                                ->visible(fn (Get $get) => $get('status') === 'done'),
                         ])
-                        ->fillForm(fn(Task $record) => [
+                        ->fillForm(fn (Task $record) => [
                             'status' => $record->status,
                             'progress_percent' => $record->progress_percent,
                             'actual_hours' => $record->actual_hours,
@@ -1000,7 +1085,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                                 $data['completed_at'] = now();
                                 $data['actual_finish'] = $data['actual_finish'] ?? now()->format('Y-m-d');
                             }
-                            if ($data['status'] === 'in_progress' && !$record->actual_start) {
+                            if ($data['status'] === 'in_progress' && ! $record->actual_start) {
                                 $data['actual_start'] = now()->format('Y-m-d');
                             }
                             $record->update($data);
@@ -1025,7 +1110,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                             Forms\Components\TextInput::make('resource_units')->label('Units %')
                                 ->numeric()->default(100)->suffix('%'),
                         ])
-                        ->fillForm(fn(Task $record) => [
+                        ->fillForm(fn (Task $record) => [
                             'assigned_to' => $record->assigned_to,
                             'resource_names' => $record->resource_names,
                             'resource_units' => $record->resource_units,
@@ -1033,7 +1118,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                         ->action(function (array $data, Task $record): void {
                             $record->update($data);
                             $name = User::find($data['assigned_to'])?->name ?? 'Unknown';
-                            Notification::make()->title('Assigned to ' . $name)->success()->send();
+                            Notification::make()->title('Assigned to '.$name)->success()->send();
                             $this->dispatch('gantt-refresh');
                         }),
 
@@ -1043,7 +1128,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                             Forms\Components\Repeater::make('predecessors')
                                 ->schema([
                                     Forms\Components\Select::make('depends_on_id')->label('Predecessor')
-                                        ->options(fn() => $this->taskOptions())
+                                        ->options(fn () => $this->taskOptions())
                                         ->searchable()->required(),
                                     Forms\Components\Select::make('dependency_type')->label('Type')
                                         ->options(TaskDependency::$types)
@@ -1055,8 +1140,8 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                                 ->defaultItems(1)
                                 ->addActionLabel('+ Add'),
                         ])
-                        ->fillForm(fn(Task $record) => [
-                            'predecessors' => $record->predecessorLinks->map(fn($d) => [
+                        ->fillForm(fn (Task $record) => [
+                            'predecessors' => $record->predecessorLinks->map(fn ($d) => [
                                 'depends_on_id' => $d->depends_on_id,
                                 'dependency_type' => $d->dependency_type,
                                 'lag_days' => $d->lag_days,
@@ -1066,7 +1151,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                             // Replace all dependencies
                             $record->predecessorLinks()->delete();
                             foreach ($data['predecessors'] ?? [] as $pred) {
-                                if (!empty($pred['depends_on_id'])) {
+                                if (! empty($pred['depends_on_id'])) {
                                     TaskDependency::create([
                                         'task_id' => $record->id,
                                         'depends_on_id' => $pred['depends_on_id'],
@@ -1092,14 +1177,14 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                                 $record->update(['parent_id' => $above->id]);
                                 $above->update(['is_summary' => true]);
                                 Task::regenerateWbs($this->pid());
-                                Notification::make()->title('Task indented under ' . $above->title)->success()->send();
+                                Notification::make()->title('Task indented under '.$above->title)->success()->send();
                                 $this->dispatch('gantt-refresh');
                             }
                         }),
 
                     \Filament\Actions\Action::make('outdent')
                         ->label('← Outdent')->icon('heroicon-o-arrow-left')->color('gray')
-                        ->visible(fn(Task $record) => $record->parent_id !== null)
+                        ->visible(fn (Task $record) => $record->parent_id !== null)
                         ->action(function (Task $record): void {
                             $oldParentId = $record->parent_id;
                             $parent = Task::find($oldParentId);
@@ -1120,7 +1205,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
 
                     \Filament\Actions\Action::make('quickComplete')
                         ->label('Complete ✓')->icon('heroicon-o-check-circle')->color('success')
-                        ->visible(fn(Task $record) => !in_array($record->status, ['done', 'cancelled']))
+                        ->visible(fn (Task $record) => ! in_array($record->status, ['done', 'cancelled']))
                         ->requiresConfirmation()
                         ->action(function (Task $record): void {
                             $record->update([
@@ -1139,8 +1224,8 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                     \Filament\Actions\Action::make('edit')
                         ->icon('heroicon-o-pencil')->modalWidth('4xl')
                         ->schema($this->taskFormSchema())
-                        ->fillForm(fn(Task $record) => array_merge($record->toArray(), [
-                            'predecessor_list' => $record->predecessorLinks->map(fn($d) => [
+                        ->fillForm(fn (Task $record) => array_merge($record->toArray(), [
+                            'predecessor_list' => $record->predecessorLinks->map(fn ($d) => [
                                 'depends_on_id' => $d->depends_on_id,
                                 'dependency_type' => $d->dependency_type,
                                 'lag_days' => $d->lag_days,
@@ -1164,7 +1249,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                             // Update dependencies
                             $record->predecessorLinks()->delete();
                             foreach ($predecessors as $pred) {
-                                if (!empty($pred['depends_on_id'])) {
+                                if (! empty($pred['depends_on_id'])) {
                                     TaskDependency::create([
                                         'task_id' => $record->id,
                                         'depends_on_id' => $pred['depends_on_id'],
@@ -1215,7 +1300,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                 ]),
             ])
             ->toolbarActions([
-                $this->exportCsvAction('tasks', fn() => Task::query()->where('cde_project_id', $this->pid())->with(['creator', 'assignee', 'parent']), [
+                $this->exportCsvAction('tasks', fn () => Task::query()->where('cde_project_id', $this->pid())->with(['creator', 'assignee', 'parent']), [
                     'wbs_code' => 'WBS',
                     'title' => 'Task Name',
                     'type' => 'Type',
@@ -1246,21 +1331,23 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                                 }
                                 $r->update($u);
                             }
-                            Notification::make()->title($records->count() . ' tasks updated')->success()->send();
+                            Notification::make()->title($records->count().' tasks updated')->success()->send();
                         })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\BulkAction::make('bulkPriority')->label('Set Priority')->icon('heroicon-o-flag')
                         ->schema([Forms\Components\Select::make('priority')->options(Task::$priorities)->required()])
                         ->action(function (array $data, $records): void {
-                            foreach ($records as $r)
+                            foreach ($records as $r) {
                                 $r->update(['priority' => $data['priority']]);
-                            Notification::make()->title($records->count() . ' tasks updated')->success()->send();
+                            }
+                            Notification::make()->title($records->count().' tasks updated')->success()->send();
                         })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\BulkAction::make('bulkSaveBaseline')->label('Save Baseline')->icon('heroicon-o-camera')
                         ->requiresConfirmation()
                         ->action(function ($records): void {
-                            foreach ($records as $r)
+                            foreach ($records as $r) {
                                 $r->saveBaseline();
-                            Notification::make()->title('Baseline saved for ' . $records->count() . ' tasks')->success()->send();
+                            }
+                            Notification::make()->title('Baseline saved for '.$records->count().' tasks')->success()->send();
                         })->deselectRecordsAfterCompletion(),
                     \Filament\Actions\DeleteBulkAction::make(),
                 ]),
@@ -1282,8 +1369,8 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
             ->with(['assignee:id,name', 'client:id,name', 'type:id,name', 'items']);
 
         if ($this->woSearch) {
-            $s = '%' . $this->woSearch . '%';
-            $query->where(fn($q) => $q->where('title', 'like', $s)->orWhere('wo_number', 'like', $s)->orWhere('description', 'like', $s));
+            $s = '%'.$this->woSearch.'%';
+            $query->where(fn ($q) => $q->where('title', 'like', $s)->orWhere('wo_number', 'like', $s)->orWhere('description', 'like', $s));
         }
         if ($this->woStatusFilter) {
             $query->where('status', $this->woStatusFilter);
@@ -1315,7 +1402,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
                     'items_cost' => $wo->items->sum('amount'),
                     'tasks_count' => $wo->tasks->count(),
                     'notes' => $wo->notes,
-                    'is_overdue' => $dueDate && $dueDate->isPast() && !in_array($wo->status, ['completed', 'cancelled']),
+                    'is_overdue' => $dueDate && $dueDate->isPast() && ! in_array($wo->status, ['completed', 'cancelled']),
                     'days_until_due' => $dueDate ? (int) now()->diffInDays($dueDate, false) : null,
                 ];
             })->toArray(),
@@ -1331,22 +1418,27 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
     {
         $this->woPage = max(1, $page);
     }
+
     public function msGoPage(int $page): void
     {
         $this->msPage = max(1, $page);
     }
+
     public function updatedWoSearch(): void
     {
         $this->woPage = 1;
     }
+
     public function updatedWoStatusFilter(): void
     {
         $this->woPage = 1;
     }
+
     public function updatedMsSearch(): void
     {
         $this->msPage = 1;
     }
+
     public function updatedMsStatusFilter(): void
     {
         $this->msPage = 1;
@@ -1361,8 +1453,8 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
         $query = Milestone::where('cde_project_id', $pid);
 
         if ($this->msSearch) {
-            $s = '%' . $this->msSearch . '%';
-            $query->where(fn($q) => $q->where('name', 'like', $s)->orWhere('description', 'like', $s));
+            $s = '%'.$this->msSearch.'%';
+            $query->where(fn ($q) => $q->where('name', 'like', $s)->orWhere('description', 'like', $s));
         }
         if ($this->msStatusFilter) {
             $query->where('status', $this->msStatusFilter);
@@ -1440,41 +1532,41 @@ class TaskWorkflowPage extends BaseModulePage implements HasTable, HasForms
         $due = $data['due_date'] ?? null;
         $duration = (int) ($data['duration_days'] ?? 0);
 
-        if ($start && $due && !$duration) {
+        if ($start && $due && ! $duration) {
             // Both dates set but no duration — calculate it
             $task = new Task($data);
             $data['duration_days'] = $task->calculateDuration();
-        } elseif ($start && !$due && $duration > 0) {
+        } elseif ($start && ! $due && $duration > 0) {
             // Start + duration but no due date — compute finish
             $data['due_date'] = Task::calculateFinishDate($start, $duration)->format('Y-m-d');
-        } elseif (!$start && $due && $duration > 0) {
+        } elseif (! $start && $due && $duration > 0) {
             // Due date + duration but no start — compute start (subtract working days)
             $date = \Carbon\Carbon::parse($due);
             $remaining = max(1, $duration) - 1;
             while ($remaining > 0) {
                 $date->subDay();
-                if (!$date->isWeekend()) {
+                if (! $date->isWeekend()) {
                     $remaining--;
                 }
             }
             $data['start_date'] = $date->format('Y-m-d');
-        } elseif (!$start && $due) {
+        } elseif (! $start && $due) {
             // Only due date — default to 5 working days before
             $date = \Carbon\Carbon::parse($due);
             $remaining = 4;
             while ($remaining > 0) {
                 $date->subDay();
-                if (!$date->isWeekend()) {
+                if (! $date->isWeekend()) {
                     $remaining--;
                 }
             }
             $data['start_date'] = $date->format('Y-m-d');
             $data['duration_days'] = $data['duration_days'] ?: 5;
-        } elseif ($start && !$due) {
+        } elseif ($start && ! $due) {
             // Only start date — default 5 working days ahead
             $data['due_date'] = Task::calculateFinishDate($start, $duration ?: 5)->format('Y-m-d');
             $data['duration_days'] = $data['duration_days'] ?: 5;
-        } elseif (!$start && !$due) {
+        } elseif (! $start && ! $due) {
             // No dates at all — default to today + 5 days
             $data['start_date'] = now()->format('Y-m-d');
             $data['due_date'] = Task::calculateFinishDate(now(), $duration ?: 5)->format('Y-m-d');

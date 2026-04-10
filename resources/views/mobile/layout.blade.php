@@ -12,6 +12,7 @@
     <link rel="icon" href="/images/icons/icon-192x192.png">
     <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
     <title>@yield('title', 'InfraHub')</title>
+    <link rel="preload" href="/css/mobile.css?v={{ filemtime(public_path('css/mobile.css')) }}" as="style">
     <link rel="stylesheet" href="/css/mobile.css?v={{ filemtime(public_path('css/mobile.css')) }}">
     @stack('head')
 </head>

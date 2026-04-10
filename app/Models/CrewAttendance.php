@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\HasHashedRouteKey;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class CrewAttendance extends Model
 {
-    use BelongsToCompany, HasHashedRouteKey;
+    use BelongsToCompany, HasHashedRouteKey, SoftDeletes;
 
     protected $table = 'crew_attendance';
 

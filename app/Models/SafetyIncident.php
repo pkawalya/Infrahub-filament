@@ -6,10 +6,11 @@ use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\HasHashedRouteKey;
 use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SafetyIncident extends Model
 {
-    use BelongsToCompany, HasHashedRouteKey, LogsActivity;
+    use BelongsToCompany, HasHashedRouteKey, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'company_id',
@@ -99,18 +100,22 @@ class SafetyIncident extends Model
     {
         return $this->belongsTo(CdeProject::class, 'cde_project_id');
     }
+
     public function reporter()
     {
         return $this->belongsTo(User::class, 'reported_by');
     }
+
     public function investigator()
     {
         return $this->belongsTo(User::class, 'investigated_by');
     }
+
     public function ptwIssuer()
     {
         return $this->belongsTo(User::class, 'ptw_issuer_id');
     }
+
     public function ptwReceiver()
     {
         return $this->belongsTo(User::class, 'ptw_receiver_id');
