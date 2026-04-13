@@ -11,6 +11,7 @@ class InvoicePayment extends Model
     protected $fillable = [
         'invoice_id',
         'cde_project_id',
+        'company_id',
         'amount',
         'payment_method',
         'reference',
@@ -33,5 +34,10 @@ class InvoicePayment extends Model
     public function cdeProject()
     {
         return $this->belongsTo(CdeProject::class, 'cde_project_id');
+    }
+
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
     }
 }
