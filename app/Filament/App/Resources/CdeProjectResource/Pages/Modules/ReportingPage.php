@@ -139,7 +139,7 @@ class ReportingPage extends BaseModulePage
         $cid = $r->company_id;
 
         $invoiced = (float) Invoice::where('cde_project_id', $pid)->where('company_id', $cid)->whereBetween('issue_date', [$from, $to])->sum('total_amount');
-        $received = (float) InvoicePayment::where('cde_project_id', $pid)->where('company_id', $cid)->whereBetween('payment_date', [$from, $to])->sum('amount');
+        $received = (float) InvoicePayment::where('cde_project_id', $pid)->whereBetween('payment_date', [$from, $to])->sum('amount');
         $expenses = (float) Expense::where('cde_project_id', $pid)->where('company_id', $cid)->where('status', '!=', 'rejected')->whereBetween('expense_date', [$from, $to])->sum('amount');
         $outstanding = (float) Invoice::where('cde_project_id', $pid)->where('company_id', $cid)->whereNotIn('status', ['paid', 'cancelled'])->selectRaw('SUM(total_amount - amount_paid) as total')->value('total');
         $overdue = Invoice::where('cde_project_id', $pid)->where('company_id', $cid)->whereNotIn('status', ['paid', 'cancelled'])->whereNotNull('due_date')->where('due_date', '<', now())->count();
@@ -156,7 +156,7 @@ class ReportingPage extends BaseModulePage
             $cashFlow[] = [
                 'label'    => $m->format('M'),
                 'invoiced' => (float) Invoice::where('cde_project_id', $pid)->where('company_id', $cid)->whereYear('issue_date', $m->year)->whereMonth('issue_date', $m->month)->sum('total_amount'),
-                'received' => (float) InvoicePayment::where('cde_project_id', $pid)->where('company_id', $cid)->whereYear('payment_date', $m->year)->whereMonth('payment_date', $m->month)->sum('amount'),
+                'received' => (float) InvoicePayment::where('cde_project_id', $pid)->whereYear('payment_date', $m->year)->whereMonth('payment_date', $m->month)->sum('amount'),
                 'expenses' => (float) Expense::where('cde_project_id', $pid)->where('company_id', $cid)->where('status', '!=', 'rejected')->whereYear('expense_date', $m->year)->whereMonth('expense_date', $m->month)->sum('amount'),
             ];
         }
