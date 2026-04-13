@@ -362,7 +362,7 @@ class CdeProject extends Model
     public function enableModule(string $code, $by = null): bool
     {
         // Guard: only allow modules the parent company has enabled
-        if (!$this->company->hasModule($code)) {
+        if (!$this->company || !$this->company->hasModule($code)) {
             return false;
         }
 
@@ -438,6 +438,11 @@ class CdeProject extends Model
      */
     public function syncModules(array $moduleCodes, $by = null): void
     {
+        // Guard: if this project has no company (e.g. SuperAdmin context), skip silently
+        if (!$this->company) {
+            return;
+        }
+
         $companyModules = $this->company->getEnabledModules();
 
         // Enable selected modules (only those the company has)
