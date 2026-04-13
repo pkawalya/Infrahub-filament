@@ -394,7 +394,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
                 ->modalWidth('2xl')
                 ->modalHeading('Import Microsoft Project File')
                 ->modalDescription('Upload an MS Project XML file (.xml). Tasks, dependencies and milestones will be imported automatically.')
-                ->schema(fn () => [
+                ->schema([
                     Section::make('Upload File')->schema([
                         Forms\Components\FileUpload::make('msp_file')
                             ->label('MS Project XML File (.xml)')
@@ -402,13 +402,13 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
                             ->disk('local')
                             ->directory('msp-imports/' . $this->pid())
                             ->acceptedFileTypes(['text/xml', 'application/xml', '.xml'])
-                            ->maxSize(10240) // 10 MB
+                            ->maxSize(10240)
                             ->helperText('Export your project from MS Project as XML: File → Save As → XML Format (*.xml)'),
                     ]),
                     Section::make('Import Options')->schema([
                         Forms\Components\Toggle::make('clear_existing')
                             ->label('Replace existing tasks')
-                            ->helperText('⚠️ WARNING: Enabling this will permanently delete all existing tasks and dependencies for this project before importing.')
+                            ->helperText('⚠️ WARNING: This will permanently delete all existing tasks and dependencies before importing.')
                             ->default(false),
                         Forms\Components\Toggle::make('import_milestones')
                             ->label('Auto-create Milestones from MS Project milestones')
@@ -416,15 +416,14 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
                     ])->columns(2),
                 ])
                 ->action(function (array $data): void {
-                    $path = \Illuminate\Support\Facades\Storage::disk('local')->path($data['msp_file']);
-                    if (! file_exists($path)) {
+                    $path = storage_path('app/' . $data['msp_file']);
+                    if (!file_exists($path)) {
                         Notification::make()->title('File not found')->danger()->send();
-
                         return;
                     }
 
                     $xml = file_get_contents($path);
-                    @unlink($path); // Clean up after reading
+                    @unlink($path);
 
                     try {
                         $result = app(MsProjectService::class)->import(
@@ -436,9 +435,9 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
 
                         Task::regenerateWbs($this->pid());
 
-                        $body = "✅ {$result['tasks_created']} tasks imported".
-                            ($result['dependencies_created'] > 0 ? " · {$result['dependencies_created']} links" : '').
-                            ($result['milestones_created'] > 0 ? " · {$result['milestones_created']} milestones" : '').
+                        $body = "✅ {$result['tasks_created']} tasks imported" .
+                            ($result['dependencies_created'] > 0 ? " · {$result['dependencies_created']} links" : '') .
+                            ($result['milestones_created'] > 0 ? " · {$result['milestones_created']} milestones" : '') .
                             ($result['project_name'] ? "\nProject: {$result['project_name']}" : '');
 
                         Notification::make()
@@ -451,24 +450,22 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
                         $this->dispatch('gantt-refresh');
 
                     } catch (ImportValidationException $e) {
-                        @unlink($path); // Clean up on validation failure
+                        @unlink($path);
                         $errors = $e->getErrors();
                         $warnings = $e->getWarnings();
 
                         if ($e->hasBlockingErrors()) {
                             $msg = implode("\n", array_slice($errors, 0, 8));
-                            if (count($errors) > 8) {
-                                $msg .= "\n...and ".(count($errors) - 8).' more.';
-                            }
+                            if (count($errors) > 8) $msg .= "\n...and " . (count($errors) - 8) . ' more.';
                             Notification::make()
-                                ->title('Import Failed — '.count($errors).' validation error(s)')
+                                ->title('Import Failed — ' . count($errors) . ' validation error(s)')
                                 ->body($msg)
                                 ->danger()
                                 ->persistent()
                                 ->send();
-                        } elseif (! empty($warnings)) {
+                        } elseif (!empty($warnings)) {
                             Notification::make()
-                                ->title('Imported with '.count($warnings).' warning(s)')
+                                ->title('Imported with ' . count($warnings) . ' warning(s)')
                                 ->body(implode("\n", array_slice($warnings, 0, 5)))
                                 ->warning()
                                 ->persistent()
@@ -476,7 +473,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
                         }
 
                     } catch (\RuntimeException $e) {
-                        @unlink($path); // Clean up on error
+                        @unlink($path);
                         Notification::make()
                             ->title('Import Error')
                             ->body($e->getMessage())
@@ -491,21 +488,21 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
                 ->color('warning')
                 ->modalWidth('2xl')
                 ->modalHeading('Import Construction Schedule (Excel)')
-                ->modalDescription('Upload an Excel schedule (.xlsx) with columns: Task Name | Duration | Predecessors. This format is compatible with the sample CONSTRUCTION SCHEDULE.xlsx.')
-                ->schema(fn () => [
+                ->modalDescription('Upload an Excel schedule (.xlsx) — columns: Task Name | Duration | Predecessors.')
+                ->schema([
                     Section::make('Upload File')->schema([
                         Forms\Components\FileUpload::make('xlsx_file')
                             ->label('Excel Schedule File (.xlsx)')
                             ->required()
                             ->disk('local')
-                            ->directory('schedule-imports')
+                            ->directory('schedule-imports/' . $this->pid())
                             ->acceptedFileTypes([
                                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                                 'application/vnd.ms-excel',
                                 '.xlsx',
                             ])
-                            ->maxSize(20480) // 20 MB
-                            ->helperText('Columns expected: A = Task Name, B = Duration (e.g. "70 days"), C = Predecessors (e.g. "4", "14SS+7 days")'),
+                            ->maxSize(20480)
+                            ->helperText('Columns: A = Task Name, B = Duration (e.g. "70 days"), C = Predecessors (e.g. "4", "14SS+7 days")'),
                     ]),
                     Section::make('Import Options')->schema([
                         Forms\Components\DatePicker::make('project_start')
@@ -513,61 +510,22 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
                             ->helperText('Leave blank to use today as day 1'),
                         Forms\Components\Toggle::make('clear_existing')
                             ->label('Replace existing tasks')
-                            ->helperText('⚠️ WARNING: This will permanently delete all existing tasks and dependencies before importing.')
+                            ->helperText('⚠️ WARNING: Deletes all existing tasks before importing.')
                             ->default(false),
                     ])->columns(2),
                 ])
                 ->action(function (array $data): void {
-                    $path = \Illuminate\Support\Facades\Storage::disk('local')->path($data['xlsx_file']);
-                    if (! file_exists($path)) {
+                    $path = storage_path('app/' . $data['xlsx_file']);
+                    if (!file_exists($path)) {
                         Notification::make()->title('File not found')->danger()->send();
-                        \Illuminate\Support\Facades\Log::error('Excel Import: File not found', ['path' => $path]);
-
                         return;
                     }
 
-                    // Validate file size and type
-                    $fileSize = filesize($path);
-                    if ($fileSize === 0) {
-                        Notification::make()->title('Empty file')->body('The uploaded file is empty.')->danger()->send();
-                        @unlink($path);
-
-                        return;
-                    }
-
-                    if ($fileSize > 20971520) { // 20MB
-                        Notification::make()->title('File too large')->body('File size exceeds 20MB limit.')->danger()->send();
-                        @unlink($path);
-
-                        return;
-                    }
-
-                    // Check if it's a valid ZIP file (XLSX is ZIP-based)
-                    $zip = new \ZipArchive;
-                    if ($zip->open($path) !== true) {
-                        Notification::make()->title('Invalid file format')->body('The file is not a valid Excel (.xlsx) file.')->danger()->send();
-                        @unlink($path);
-
-                        return;
-                    }
-                    $zip->close();
-
-                    $startDate = ! empty($data['project_start'])
+                    $startDate = !empty($data['project_start'])
                         ? \Carbon\Carbon::parse($data['project_start'])
                         : null;
 
                     try {
-                        // Debug logging
-                        \Illuminate\Support\Facades\Log::info('Excel Import Debug', [
-                            'file_path' => $path,
-                            'file_exists' => file_exists($path),
-                            'file_size' => file_exists($path) ? filesize($path) : 'N/A',
-                            'project_id' => $this->pid(),
-                            'company_id' => $this->cid(),
-                            'start_date' => $startDate,
-                            'clear_existing' => (bool) ($data['clear_existing'] ?? false),
-                        ]);
-
                         $result = app(ScheduleExcelImportService::class)->import(
                             filePath: $path,
                             projectId: $this->pid(),
@@ -576,17 +534,14 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
                             clearExisting: (bool) ($data['clear_existing'] ?? false),
                         );
 
-                        @unlink($path); // Clean up uploaded file
+                        @unlink($path);
 
                         $body = "✅ {$result['tasks_created']} tasks imported";
                         if ($result['dependencies_created'] > 0) {
                             $body .= " · {$result['dependencies_created']} dependency links";
                         }
-                        if (! empty($result['warnings'])) {
-                            $body .= "\n⚠️ ".count($result['warnings']).' warning(s) — check logs.';
-                            foreach ($result['warnings'] as $w) {
-                                \Illuminate\Support\Facades\Log::warning('[ExcelScheduleImport] '.$w);
-                            }
+                        if (!empty($result['warnings'])) {
+                            $body .= "\n⚠️ " . count($result['warnings']) . ' warning(s) — check logs.';
                         }
 
                         Notification::make()
@@ -598,22 +553,8 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
 
                         $this->dispatch('gantt-refresh');
 
-                        // Since CPM may shift dates significantly, do a hard page reload to ensure Gantt reflects changes
-                        $this->redirect(request()->url());
-
                     } catch (\Throwable $e) {
                         @unlink($path);
-
-                        // Detailed error logging
-                        \Illuminate\Support\Facades\Log::error('Excel Import Failed', [
-                            'error' => $e->getMessage(),
-                            'file' => $e->getFile(),
-                            'line' => $e->getLine(),
-                            'trace' => $e->getTraceAsString(),
-                            'project_id' => $this->pid(),
-                            'company_id' => $this->cid(),
-                        ]);
-
                         Notification::make()
                             ->title('Import Failed')
                             ->body($e->getMessage())
