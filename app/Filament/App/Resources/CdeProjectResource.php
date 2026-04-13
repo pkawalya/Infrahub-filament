@@ -347,7 +347,14 @@ class CdeProjectResource extends Resource
                                 ->bulkToggleable()
                                 ->afterStateHydrated(function (Forms\Components\CheckboxList $component, $record) {
                                     if ($record) {
+                                        // Edit: load the project's current enabled modules
                                         $component->state($record->getEnabledModules());
+                                    } else {
+                                        // Create: pre-select ALL modules the company has enabled
+                                        $user = auth()->user();
+                                        if ($user?->company) {
+                                            $component->state($user->company->getEnabledModules());
+                                        }
                                     }
                                 }),
                         ]),

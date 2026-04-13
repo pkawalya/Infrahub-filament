@@ -35,10 +35,25 @@ class CreateCdeProject extends CreateRecord
 
     protected function afterCreate(): void
     {
+        $company = auth()->user()->company;
         $modules = $this->data['modules'] ?? [];
+
+        // If user didn't select any modules, default to ALL modules the company has enabled
+        if (empty($modules) && $company) {
+            $modules = $company->getEnabledModules();
+        }
 
         if (!empty($modules)) {
             $this->record->syncModules($modules, auth()->id());
+
+            Notification::make()
+                ->title('Project created successfully')
+                ->body(count($modules) . ' module(s) enabled: ' . implode(', ', array_map(
+                    fn($code) => \App\Models\Module::$availableModules[$code]['name'] ?? $code,
+                    $modules
+                )))
+                ->success()
+                ->send();
         }
     }
 }
