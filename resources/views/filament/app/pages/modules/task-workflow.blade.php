@@ -76,7 +76,91 @@
                 Processing...
             </div>
         </div>
+
+        {{-- ── Import / Export Dropdown ── --}}
+        <div x-data="{ open: false }" @click.outside="open = false" style="position:relative;">
+            <button @click="open = !open" type="button"
+                style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid #6366f1;background:#eef2ff;color:#4f46e5;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;"
+                onmouseover="this.style.background='#e0e7ff'"
+                onmouseout="this.style.background='#eef2ff'">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                Import / Export
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    :class="open ? 'rotate-180' : ''" style="transition:transform .2s">
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
+            </button>
+
+            <div x-show="open" x-transition:enter="transition ease-out duration-100"
+                x-transition:enter-start="opacity-0 scale-95" x-transition:enter-end="opacity-100 scale-100"
+                x-transition:leave="transition ease-in duration-75"
+                x-transition:leave-start="opacity-100 scale-100" x-transition:leave-end="opacity-0 scale-95"
+                x-cloak
+                style="position:absolute;right:0;top:calc(100% + 6px);z-index:50;min-width:210px;background:white;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);overflow:hidden;">
+
+                {{-- Import MS Project --}}
+                <button type="button"
+                    wire:click="mountAction('importMsProject')" @click="open = false"
+                    style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;color:#374151;text-align:left;transition:background .1s"
+                    onmouseover="this.style.background='#f0f4ff'"
+                    onmouseout="this.style.background='none'">
+                    <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:#e0e7ff;flex-shrink:0">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        </svg>
+                    </span>
+                    <div>
+                        <div style="font-weight:600">Import MS Project</div>
+                        <div style="font-size:11px;color:#9ca3af">Upload .xml file</div>
+                    </div>
+                </button>
+
+                <div style="height:1px;background:#f3f4f6;margin:0 10px"></div>
+
+                {{-- Import Excel Schedule --}}
+                <button type="button"
+                    wire:click="mountAction('importExcelSchedule')" @click="open = false"
+                    style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;color:#374151;text-align:left;transition:background .1s"
+                    onmouseover="this.style.background='#f0fdf4'"
+                    onmouseout="this.style.background='none'">
+                    <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:#d1fae5;flex-shrink:0">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <line x1="3" y1="9" x2="21" y2="9" />
+                            <line x1="3" y1="15" x2="21" y2="15" />
+                            <line x1="9" y1="3" x2="9" y2="21" />
+                        </svg>
+                    </span>
+                    <div>
+                        <div style="font-weight:600">Import Excel Schedule</div>
+                        <div style="font-size:11px;color:#9ca3af">Upload .xlsx file</div>
+                    </div>
+                </button>
+
+                <div style="height:1px;background:#f3f4f6;margin:0 10px"></div>
+
+                {{-- Export to MS Project --}}
+                <button type="button"
+                    wire:click="mountAction('exportMsProject')" @click="open = false"
+                    style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;color:#374151;text-align:left;transition:background .1s"
+                    onmouseover="this.style.background='#fffbeb'"
+                    onmouseout="this.style.background='none'">
+                    <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:#fef3c7;flex-shrink:0">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                        </svg>
+                    </span>
+                    <div>
+                        <div style="font-weight:600">Export to MS Project</div>
+                        <div style="font-size:11px;color:#9ca3af">Download .xml file</div>
+                    </div>
+                </button>
+            </div>
+        </div>
     </div>
+
 
     {{-- ═══════════════ SCHEDULE TAB ═══════════════ --}}
     <div id="scheduleModule" class="module-content" style="display:{{ $activeTab === 'schedule' ? 'block' : 'none' }};">
