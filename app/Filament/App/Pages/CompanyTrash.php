@@ -6,6 +6,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Schema;
 
 class CompanyTrash extends Page
 {
@@ -82,8 +83,14 @@ class CompanyTrash extends Page
 
             /** @var \Illuminate\Database\Eloquent\Model $model */
             $model = $meta['model'];
-            $labelField = $meta['labelField'];
+            $table = (new $model)->getTable();
 
+            // Skip gracefully if the table hasn't been migrated yet
+            if (! Schema::hasTable($table)) {
+                continue;
+            }
+
+            $labelField = $meta['labelField'];
             $query = $model::onlyTrashed()->where('company_id', $cid);
 
             if ($this->search !== '') {
@@ -116,7 +123,13 @@ class CompanyTrash extends Page
         $counts = ['all' => 0];
 
         foreach (static::modelRegistry() as $typeKey => $meta) {
-            $count = $meta['model']::onlyTrashed()->where('company_id', $cid)->count();
+            $model = $meta['model'];
+            $table = (new $model)->getTable();
+            if (! Schema::hasTable($table)) {
+                $counts[$typeKey] = 0;
+                continue;
+            }
+            $count = $model::onlyTrashed()->where('company_id', $cid)->count();
             $counts[$typeKey] = $count;
             $counts['all'] += $count;
         }
@@ -178,8 +191,12 @@ class CompanyTrash extends Page
             if ($this->activeType !== 'all' && $this->activeType !== $typeKey) {
                 continue;
             }
-            $count = $meta['model']::onlyTrashed()->where('company_id', $cid)->count();
-            $meta['model']::onlyTrashed()->where('company_id', $cid)->restore();
+            $model = $meta['model'];
+            if (! Schema::hasTable((new $model)->getTable())) {
+                continue;
+            }
+            $count = $model::onlyTrashed()->where('company_id', $cid)->count();
+            $model::onlyTrashed()->where('company_id', $cid)->restore();
             $total += $count;
         }
 
@@ -199,8 +216,12 @@ class CompanyTrash extends Page
             if ($this->activeType !== 'all' && $this->activeType !== $typeKey) {
                 continue;
             }
-            $count = $meta['model']::onlyTrashed()->where('company_id', $cid)->count();
-            $meta['model']::onlyTrashed()->where('company_id', $cid)->forceDelete();
+            $model = $meta['model'];
+            if (! Schema::hasTable((new $model)->getTable())) {
+                continue;
+            }
+            $count = $model::onlyTrashed()->where('company_id', $cid)->count();
+            $model::onlyTrashed()->where('company_id', $cid)->forceDelete();
             $total += $count;
         }
 
@@ -248,7 +269,11 @@ class CompanyTrash extends Page
         $total = 0;
 
         foreach (static::modelRegistry() as $meta) {
-            $total += $meta['model']::onlyTrashed()->where('company_id', $cid)->count();
+            $model = $meta['model'];
+            if (! Schema::hasTable((new $model)->getTable())) {
+                continue;
+            }
+            $total += $model::onlyTrashed()->where('company_id', $cid)->count();
         }
 
         return $total > 0 ? (string) $total : null;
