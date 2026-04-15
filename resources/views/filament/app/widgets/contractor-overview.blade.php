@@ -66,16 +66,49 @@
         ];
     @endphp
 
-    {{-- Section Header --}}
-    <div class="db-section-hdr">
-        <div class="db-section-hdr__inner">
-            <div class="db-section-hdr__icon">
-                <x-heroicon-o-building-office-2 class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+    {{-- Collapsible Contractor Operations --}}
+    <div
+        x-data="{
+            open: JSON.parse(localStorage.getItem('widget_contractor_open') ?? 'true'),
+            toggle() { this.open = !this.open; localStorage.setItem('widget_contractor_open', this.open); }
+        }"
+    >
+        {{-- Clickable Section Header --}}
+        <button
+            type="button"
+            @click="toggle()"
+            class="db-section-hdr w-full text-left group"
+            :aria-expanded="open"
+            aria-controls="contractor-widget-body"
+        >
+            <div class="db-section-hdr__inner">
+                <div class="db-section-hdr__icon">
+                    <x-heroicon-o-building-office-2 class="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                </div>
+                <span class="db-section-hdr__lbl">Contractor Operations</span>
             </div>
-            <span class="db-section-hdr__lbl">Contractor Operations</span>
-        </div>
-        <div class="db-section-hdr__line"></div>
-    </div>
+            <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+                <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 group-hover:text-slate-600 dark:group-hover:text-slate-300 transition-colors"
+                      x-text="open ? 'Hide' : 'Show'"></span>
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="w-3.5 h-3.5 text-slate-400 dark:text-slate-500 transition-transform duration-200 group-hover:text-slate-600 dark:group-hover:text-slate-300"
+                     :class="open ? 'rotate-0' : '-rotate-90'"
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
+            </div>
+            <div class="db-section-hdr__line flex-1 ml-2"></div>
+        </button>
 
-    @include('filament.app.pages.modules.partials.stat-cards', ['stats' => $contractorStats])
+        {{-- Collapsible Body --}}
+        <div
+            id="contractor-widget-body"
+            x-show="open"
+            x-collapse
+            x-cloak
+        >
+            @include('filament.app.pages.modules.partials.stat-cards', ['stats' => $contractorStats])
+        </div>
+    </div>
 </x-filament-widgets::widget>
