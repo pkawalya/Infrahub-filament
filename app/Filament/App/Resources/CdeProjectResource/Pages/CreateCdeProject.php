@@ -10,24 +10,28 @@ class CreateCdeProject extends CreateRecord
 {
     protected static string $resource = CdeProjectResource::class;
 
-    protected function mutateFormDataBeforeCreate(array $data): array
+    public function mount(): void
     {
-        $company = auth()->user()->company;
+        $company = auth()->user()?->company;
 
-        // Enforce project limit
         if ($company && !$company->canAddProject()) {
             $effectiveMax = $company->getEffectiveMaxProjects();
             Notification::make()
                 ->danger()
                 ->title('Project limit reached')
-                ->body("Your plan allows a maximum of {$effectiveMax} projects (including addons). You currently have {$company->projects()->count()}. Please upgrade your plan or add extra projects.")
+                ->body("Your plan allows a maximum of {$effectiveMax} projects. Please upgrade your plan to create more.")
                 ->persistent()
                 ->send();
 
-            $this->redirect(route('filament.app.pages.settings.upgrade'));
-            $this->halt();
+            $this->redirect(CdeProjectResource::getUrl('index'));
+            return;
         }
 
+        parent::mount();
+    }
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
         // Remove the virtual 'modules' field before saving the project record
         unset($data['modules']);
         return $data;
@@ -57,3 +61,4 @@ class CreateCdeProject extends CreateRecord
         }
     }
 }
+
