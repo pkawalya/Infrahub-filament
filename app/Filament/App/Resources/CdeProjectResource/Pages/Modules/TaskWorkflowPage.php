@@ -58,6 +58,24 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
 
     public bool $showProgressModal = false;
 
+    // Import modals
+    public bool $showImportMspModal = false;
+
+    public bool $showImportExcelModal = false;
+
+    public array $importMsp = [
+        'msp_file'          => null,
+        'clear_existing'    => false,
+        'import_milestones' => true,
+    ];
+
+    public array $importExcel = [
+        'xlsx_file'      => null,
+        'project_start'  => '',
+        'clear_existing' => false,
+    ];
+
+
     public ?int $editingTaskId = null;
 
     public array $editTask = [
@@ -602,6 +620,133 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
             ['Content-Type' => 'application/xml']
         );
     }
+
+    // ─── Import Modal Methods ─────────────────────────────────────
+
+    public function openImportMspModal(): void
+    {
+        $this->importMsp = [
+            'msp_file'          => null,
+            'clear_existing'    => false,
+            'import_milestones' => true,
+        ];
+        $this->showImportMspModal = true;
+    }
+
+    public function submitImportMsp(): void
+    {
+        if (empty($this->importMsp['msp_file'])) {
+            Notification::make()->title('Please upload an MS Project XML file.')->danger()->send();
+            return;
+        }
+
+        $path = storage_path('app/livewire-tmp/' . $this->importMsp['msp_file']);
+        if (!file_exists($path)) {
+            // Try local disk root (Livewire stores in livewire-tmp by default)
+            $path = storage_path('app/' . $this->importMsp['msp_file']);
+        }
+        if (!file_exists($path)) {
+            Notification::make()->title('Uploaded file not found. Please try again.')->danger()->send();
+            return;
+        }
+
+        $xml = file_get_contents($path);
+        @unlink($path);
+
+        try {
+            $result = app(MsProjectService::class)->import(
+                xmlContent: $xml,
+                projectId: $this->pid(),
+                companyId: $this->cid(),
+                clearExisting: (bool) ($this->importMsp['clear_existing'] ?? false),
+            );
+
+            Task::regenerateWbs($this->pid());
+
+            $body = "✅ {$result['tasks_created']} tasks imported"
+                . ($result['dependencies_created'] > 0 ? " · {$result['dependencies_created']} links" : '')
+                . ($result['milestones_created'] > 0 ? " · {$result['milestones_created']} milestones" : '');
+
+            Notification::make()->title('MS Project Import Complete')->body($body)->success()->persistent()->send();
+            $this->showImportMspModal = false;
+            $this->dispatch('gantt-refresh');
+
+        } catch (ImportValidationException $e) {
+            $errors = $e->getErrors();
+            if ($e->hasBlockingErrors()) {
+                $msg = implode("\n", array_slice($errors, 0, 6));
+                Notification::make()->title('Import Failed — ' . count($errors) . ' error(s)')->body($msg)->danger()->persistent()->send();
+            } else {
+                $warnings = $e->getWarnings();
+                Notification::make()->title('Imported with warnings')->body(implode("\n", array_slice($warnings, 0, 5)))->warning()->persistent()->send();
+                $this->showImportMspModal = false;
+                $this->dispatch('gantt-refresh');
+            }
+        } catch (\Throwable $e) {
+            Notification::make()->title('Import Error')->body($e->getMessage())->danger()->send();
+        }
+    }
+
+    public function openImportExcelModal(): void
+    {
+        $this->importExcel = [
+            'xlsx_file'      => null,
+            'project_start'  => '',
+            'clear_existing' => false,
+        ];
+        $this->showImportExcelModal = true;
+    }
+
+    public function submitImportExcel(): void
+    {
+        if (empty($this->importExcel['xlsx_file'])) {
+            Notification::make()->title('Please upload an Excel file.')->danger()->send();
+            return;
+        }
+
+        $path = storage_path('app/livewire-tmp/' . $this->importExcel['xlsx_file']);
+        if (!file_exists($path)) {
+            $path = storage_path('app/' . $this->importExcel['xlsx_file']);
+        }
+        if (!file_exists($path)) {
+            Notification::make()->title('Uploaded file not found. Please try again.')->danger()->send();
+            return;
+        }
+
+        $startDate = !empty($this->importExcel['project_start'])
+            ? \Carbon\Carbon::parse($this->importExcel['project_start'])
+            : null;
+
+        try {
+            $result = app(ScheduleExcelImportService::class)->import(
+                filePath: $path,
+                projectId: $this->pid(),
+                companyId: $this->cid(),
+                projectStart: $startDate,
+                clearExisting: (bool) ($this->importExcel['clear_existing'] ?? false),
+            );
+
+            @unlink($path);
+
+            $body = "✅ {$result['tasks_created']} tasks imported";
+            if ($result['dependencies_created'] > 0) {
+                $body .= " · {$result['dependencies_created']} dependency links";
+            }
+            if (!empty($result['warnings'])) {
+                $body .= "\n⚠️ " . count($result['warnings']) . ' warning(s).';
+            }
+
+            Notification::make()->title('Excel Import Complete')->body($body)->success()->persistent()->send();
+            $this->showImportExcelModal = false;
+            $this->dispatch('gantt-refresh');
+
+        } catch (\Throwable $e) {
+            @unlink($path);
+            Notification::make()->title('Import Failed')->body($e->getMessage())->danger()->persistent()->send();
+        }
+    }
+
+    // ─── End Import Modal Methods ─────────────────────────────────
 
     public function openTaskModal(): void
     {

@@ -102,7 +102,7 @@
 
                 {{-- Import MS Project --}}
                 <button type="button"
-                    wire:click="mountAction('importMsProject')" @click="open = false"
+                    wire:click="openImportMspModal" @click="open = false"
                     style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;color:#374151;text-align:left;transition:background .1s"
                     onmouseover="this.style.background='#f0f4ff'"
                     onmouseout="this.style.background='none'">
@@ -121,7 +121,7 @@
 
                 {{-- Import Excel Schedule --}}
                 <button type="button"
-                    wire:click="mountAction('importExcelSchedule')" @click="open = false"
+                    wire:click="openImportExcelModal" @click="open = false"
                     style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;color:#374151;text-align:left;transition:background .1s"
                     onmouseover="this.style.background='#f0fdf4'"
                     onmouseout="this.style.background='none'">
@@ -142,9 +142,9 @@
                 <div style="height:1px;background:#f3f4f6;margin:0 10px"></div>
 
                 {{-- Export to MS Project --}}
-                <button type="button"
-                    wire:click="mountAction('exportMsProject')" @click="open = false"
-                    style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;color:#374151;text-align:left;transition:background .1s"
+                <a href="{{ route('filament.app.schedule.export-msp', ['record' => $this->record->id]) }}"
+                    target="_blank" @click="open = false"
+                    style="display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;background:none;border:none;cursor:pointer;font-size:13px;font-weight:500;color:#374151;text-align:left;transition:background .1s;text-decoration:none"
                     onmouseover="this.style.background='#fffbeb'"
                     onmouseout="this.style.background='none'">
                     <span style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:#fef3c7;flex-shrink:0">
@@ -156,7 +156,7 @@
                         <div style="font-weight:600">Export to MS Project</div>
                         <div style="font-size:11px;color:#9ca3af">Download .xml file</div>
                     </div>
-                </button>
+                </a>
             </div>
         </div>
     </div>
@@ -2842,14 +2842,165 @@
             </div>
         </div>
     @endif
+    {{-- ══════════════════════════════════════════════════════════ --}}
+    {{-- ──────────── IMPORT MS PROJECT MODAL ──────────────────── --}}
+    {{-- ══════════════════════════════════════════════════════════ --}}
+    @if($showImportMspModal)
+    <div style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;">
+        {{-- Backdrop --}}
+        <div wire:click="$set('showImportMspModal',false)"
+             style="position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(2px)"></div>
 
-    {{-- ── Export URL listener (for file downloads that can't go via Livewire) ── --}}
-    <script>
-        document.addEventListener('livewire:initialized', () => {
-            Livewire.on('open-url', ({ url }) => {
-                window.open(url, '_blank');
-            });
-        });
-    </script>
+        {{-- Panel --}}
+        <div style="position:relative;z-index:10;width:100%;max-width:560px;background:white;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;">
+            {{-- Header --}}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9px;background:#e0e7ff;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+                    </span>
+                    <div>
+                        <div style="font-weight:700;font-size:15px;color:#111827">Import MS Project</div>
+                        <div style="font-size:12px;color:#6b7280">Upload an MS Project XML file (.xml)</div>
+                    </div>
+                </div>
+                <button wire:click="$set('showImportMspModal',false)" type="button"
+                    style="background:none;border:none;cursor:pointer;color:#9ca3af;padding:4px;border-radius:6px"
+                    onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9ca3af'">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            {{-- Body --}}
+            <form wire:submit.prevent="submitImportMsp">
+                <div style="padding:24px;display:flex;flex-direction:column;gap:18px;">
+                    {{-- File upload --}}
+                    <div>
+                        <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">
+                            MS Project XML File (.xml) <span style="color:#ef4444">*</span>
+                        </label>
+                        <input type="file" wire:model="importMsp.msp_file" accept=".xml,text/xml,application/xml"
+                            style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;cursor:pointer;outline:none">
+                        <div style="font-size:11px;color:#6b7280;margin-top:4px">
+                            💡 Export from MS Project: File → Save As → XML Format (*.xml)
+                        </div>
+                    </div>
+
+                    {{-- Options --}}
+                    <div style="background:#f9fafb;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;">
+                        <div style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px">Import Options</div>
+                        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+                            <input type="checkbox" wire:model="importMsp.import_milestones"
+                                style="margin-top:2px;width:15px;height:15px;accent-color:#4f46e5;cursor:pointer">
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:#374151">Auto-create Milestones</div>
+                                <div style="font-size:11px;color:#6b7280">Convert MS Project milestones to Infrahub milestones</div>
+                            </div>
+                        </label>
+                        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+                            <input type="checkbox" wire:model="importMsp.clear_existing"
+                                style="margin-top:2px;width:15px;height:15px;accent-color:#ef4444;cursor:pointer">
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:#ef4444">Replace existing tasks</div>
+                                <div style="font-size:11px;color:#6b7280">⚠️ Permanently deletes all current tasks before importing</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                {{-- Footer --}}
+                <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #e5e7eb;">
+                    <button type="button" wire:click="$set('showImportMspModal',false)"
+                        style="padding:8px 18px;border:1px solid #d1d5db;background:white;color:#374151;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        style="padding:8px 20px;border:none;background:#4f46e5;color:white;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">
+                        <svg wire:loading wire:target="submitImportMsp" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                        <span wire:loading wire:target="submitImportMsp">Importing...</span>
+                        <span wire:loading.remove wire:target="submitImportMsp">Import Tasks</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
+
+    {{-- ══════════════════════════════════════════════════════════ --}}
+    {{-- ──────────── IMPORT EXCEL SCHEDULE MODAL ───────────────── --}}
+    {{-- ══════════════════════════════════════════════════════════ --}}
+    @if($showImportExcelModal)
+    <div style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;">
+        <div wire:click="$set('showImportExcelModal',false)"
+             style="position:absolute;inset:0;background:rgba(0,0,0,.45);backdrop-filter:blur(2px)"></div>
+
+        <div style="position:relative;z-index:10;width:100%;max-width:560px;background:white;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.2);overflow:hidden;">
+            {{-- Header --}}
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px 16px;border-bottom:1px solid #e5e7eb;">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <span style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:9px;background:#d1fae5;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                    </span>
+                    <div>
+                        <div style="font-weight:700;font-size:15px;color:#111827">Import Excel Schedule</div>
+                        <div style="font-size:12px;color:#6b7280">Upload a construction schedule (.xlsx)</div>
+                    </div>
+                </div>
+                <button wire:click="$set('showImportExcelModal',false)" type="button"
+                    style="background:none;border:none;cursor:pointer;color:#9ca3af;padding:4px;border-radius:6px"
+                    onmouseover="this.style.color='#374151'" onmouseout="this.style.color='#9ca3af'">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+
+            <form wire:submit.prevent="submitImportExcel">
+                <div style="padding:24px;display:flex;flex-direction:column;gap:18px;">
+                    <div>
+                        <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">
+                            Excel Schedule File (.xlsx) <span style="color:#ef4444">*</span>
+                        </label>
+                        <input type="file" wire:model="importExcel.xlsx_file"
+                            accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                            style="width:100%;padding:8px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;cursor:pointer;outline:none">
+                        <div style="font-size:11px;color:#6b7280;margin-top:4px">
+                            📋 Columns: A = Task Name · B = Duration (e.g. "5 days") · C = Predecessors (e.g. "3,4")
+                        </div>
+                    </div>
+
+                    <div style="background:#f9fafb;border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;">
+                        <div style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px">Import Options</div>
+                        <div>
+                            <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:4px">Project Start Date</label>
+                            <input type="date" wire:model="importExcel.project_start"
+                                style="padding:7px 12px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;outline:none;width:100%">
+                            <div style="font-size:11px;color:#6b7280;margin-top:2px">Leave blank to use today as Day 1</div>
+                        </div>
+                        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+                            <input type="checkbox" wire:model="importExcel.clear_existing"
+                                style="margin-top:2px;width:15px;height:15px;accent-color:#ef4444;cursor:pointer">
+                            <div>
+                                <div style="font-size:13px;font-weight:600;color:#ef4444">Replace existing tasks</div>
+                                <div style="font-size:11px;color:#6b7280">⚠️ Deletes all current tasks before importing</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <div style="display:flex;justify-content:flex-end;gap:10px;padding:14px 24px;border-top:1px solid #e5e7eb;">
+                    <button type="button" wire:click="$set('showImportExcelModal',false)"
+                        style="padding:8px 18px;border:1px solid #d1d5db;background:white;color:#374151;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        style="padding:8px 20px;border:none;background:#059669;color:white;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px">
+                        <svg wire:loading wire:target="submitImportExcel" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation:spin 1s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg>
+                        <span wire:loading wire:target="submitImportExcel">Importing...</span>
+                        <span wire:loading.remove wire:target="submitImportExcel">Import Schedule</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
 
 </x-filament-panels::page>
