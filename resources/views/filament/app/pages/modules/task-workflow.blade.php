@@ -2843,4 +2843,13 @@
         </div>
     @endif
 
+    {{-- ── Export URL listener (for file downloads that can't go via Livewire) ── --}}
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            Livewire.on('open-url', ({ url }) => {
+                window.open(url, '_blank');
+            });
+        });
+    </script>
+
 </x-filament-panels::page>

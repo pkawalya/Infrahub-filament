@@ -89,7 +89,12 @@ Route::middleware(['auth'])->group(function () {
         ->name('print.receipt');
     Route::get('/print/quotation/{quotation}', [\App\Http\Controllers\FinancialPrintController::class, 'printQuotation'])
         ->name('print.quotation');
+
+    // Schedule Export Routes
+    Route::get('/app/schedule/{record}/export-msp', [\App\Http\Controllers\ScheduleExportController::class, 'exportMsProject'])
+        ->name('filament.app.schedule.export-msp');
 });
+
 
 // ── Mobile PWA ─────────────────────────────────────────────
 Route::prefix('mobile')->group(function () {

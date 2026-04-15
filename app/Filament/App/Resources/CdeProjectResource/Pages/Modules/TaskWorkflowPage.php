@@ -400,7 +400,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
                             ->label('MS Project XML File (.xml)')
                             ->required()
                             ->disk('local')
-                            ->directory('msp-imports/' . $this->pid())
+                            ->directory(fn () => 'msp-imports/' . $this->pid())
                             ->acceptedFileTypes(['text/xml', 'application/xml', '.xml'])
                             ->maxSize(10240)
                             ->helperText('Export your project from MS Project as XML: File → Save As → XML Format (*.xml)'),
@@ -495,7 +495,7 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
                             ->label('Excel Schedule File (.xlsx)')
                             ->required()
                             ->disk('local')
-                            ->directory('schedule-imports/' . $this->pid())
+                            ->directory(fn () => 'schedule-imports/' . $this->pid())
                             ->acceptedFileTypes([
                                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
                                 'application/vnd.ms-excel',
@@ -571,8 +571,10 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
                 ->requiresConfirmation()
                 ->modalHeading('Export to Microsoft Project')
                 ->modalDescription('This will generate an MS Project XML file compatible with Microsoft Project 2010 and later.')
-                ->action(function (): mixed {
-                    return $this->downloadMsProjectExport();
+                ->modalSubmitActionLabel('Export & Download')
+                ->action(function (): void {
+                    $url = route('filament.app.schedule.export-msp', ['record' => $this->record->id]);
+                    $this->dispatch('open-url', url: $url);
                 }),
         ];
     }
