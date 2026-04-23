@@ -271,6 +271,79 @@
 
     @include('filament.app.pages.modules.partials.stat-cards', ['stats' => $this->getStats()])
 
+    {{-- ── AI Project Pulse ─────────────────────────────────────────────── --}}
+    <div style="background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%);border-radius:12px;padding:1.25rem;margin-bottom:1rem;border:1px solid rgba(99,102,241,0.3);position:relative;overflow:hidden;">
+        {{-- Background glow --}}
+        <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:radial-gradient(circle,rgba(99,102,241,0.4) 0%,transparent 70%);border-radius:50%;pointer-events:none;"></div>
+
+        {{-- Header row --}}
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:32px;height:32px;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+                    <svg fill="none" viewBox="0 0 24 24" stroke="#a5b4fc" stroke-width="1.5" style="width:16px;height:16px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-size:13px;font-weight:700;color:#e2e8f0;letter-spacing:0.02em;">AI Project Pulse</div>
+                    <div style="font-size:11px;color:#6366f1;">Powered by Google Gemini · Live project intelligence</div>
+                </div>
+            </div>
+            <button wire:click="generateAiPulse"
+                wire:loading.attr="disabled"
+                style="display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;transition:opacity .2s;"
+                wire:loading.class="opacity-50">
+                <svg wire:loading.remove wire:target="generateAiPulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                </svg>
+                <svg wire:loading wire:target="generateAiPulse" class="animate-spin" fill="none" viewBox="0 0 24 24" style="width:14px;height:14px;">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="white" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="white" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span wire:loading.remove wire:target="generateAiPulse">Generate AI Pulse</span>
+                <span wire:loading wire:target="generateAiPulse">Analysing…</span>
+            </button>
+        </div>
+
+        {{-- AI Pulse output --}}
+        @if($this->aiPulse)
+            <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:1rem;margin-bottom:1rem;color:#e2e8f0;font-size:13px;line-height:1.7;white-space:pre-line;">{{ $this->aiPulse }}</div>
+        @elseif(!$this->aiPulseLoading)
+            <div style="background:rgba(255,255,255,0.03);border:1px dashed rgba(99,102,241,0.3);border-radius:8px;padding:1rem;text-align:center;margin-bottom:1rem;">
+                <div style="color:#6b7280;font-size:12px;">Click "Generate AI Pulse" to get a live, plain-English analysis of this project's current status across all modules.</div>
+            </div>
+        @endif
+
+        {{-- Divider --}}
+        <div style="height:1px;background:rgba(255,255,255,0.06);margin-bottom:1rem;"></div>
+
+        {{-- Conversational Q&A --}}
+        <div style="font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Ask About This Project</div>
+        <div style="display:flex;gap:8px;align-items:stretch;">
+            <input
+                wire:model="aiQuestion"
+                wire:keydown.enter="askAi"
+                type="text"
+                placeholder="e.g. What are the biggest risks right now? How many tasks are overdue?"
+                style="flex:1;padding:8px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(99,102,241,0.3);border-radius:8px;color:#e2e8f0;font-size:12px;outline:none;"
+            >
+            <button wire:click="askAi"
+                wire:loading.attr="disabled"
+                wire:loading.class="opacity-50"
+                style="padding:8px 16px;background:rgba(99,102,241,0.2);border:1px solid rgba(99,102,241,0.4);border-radius:8px;color:#a5b4fc;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;">
+                <span wire:loading.remove wire:target="askAi">Ask AI</span>
+                <span wire:loading wire:target="askAi">…</span>
+            </button>
+        </div>
+
+        @if($this->aiAnswer)
+            <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(99,102,241,0.2);border-radius:8px;padding:0.875rem;margin-top:10px;color:#e2e8f0;font-size:13px;line-height:1.7;white-space:pre-line;">
+                <div style="font-size:10px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:6px;">AI Response</div>
+                {{ $this->aiAnswer }}
+            </div>
+        @endif
+    </div>
+
     {{-- ── Report Selector & Date Range Toolbar ── --}}
     <div class="rpt-toolbar">
         <div style="display:flex;align-items:center;gap:6px;flex:1;overflow-x:auto;">

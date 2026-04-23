@@ -27,6 +27,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Storage;
 
 use App\Filament\App\Concerns\ExportsTableCsv;
+use App\Services\AiAssistantService;
 use App\Support\StoragePath;
 
 class CdePage extends BaseModulePage implements HasTable, HasForms
@@ -963,6 +964,40 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                     }),
 
                 \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('aiSummarise')
+                        ->label('AI Summarise')
+                        ->icon('heroicon-o-sparkles')
+                        ->color('warning')
+                        ->action(function (CdeDocument $record): void {
+                            $ai = app(AiAssistantService::class);
+
+                            if (!$ai->isAvailable()) {
+                                Notification::make()
+                                    ->title('AI not configured')
+                                    ->body('Add GEMINI_API_KEY to your .env file.')
+                                    ->warning()->send();
+                                return;
+                            }
+
+                            $summary = $ai->summariseDocument(
+                                $record->title,
+                                $record->description ?? '',
+                                $record->discipline ?? ''
+                            );
+
+                            // Auto-fill description if empty
+                            if (empty($record->description)) {
+                                $record->update(['description' => $summary]);
+                            }
+
+                            Notification::make()
+                                ->title('AI Summary — ' . $record->document_number)
+                                ->body($summary)
+                                ->info()
+                                ->persistent()
+                                ->send();
+                        }),
+
                     \Filament\Actions\Action::make('copyLink')
                         ->label('Copy Public Link')
                         ->icon('heroicon-o-link')

@@ -9,6 +9,7 @@ use App\Models\SafetyInspection;
 use App\Models\SnagItem;
 use App\Models\SocialRecord;
 use App\Models\User;
+use App\Services\AiAssistantService;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -529,6 +530,67 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                         ->action(function (array $data, SafetyIncident $record): void {
                             $record->update($data);
                             Notification::make()->title('Incident updated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('aiAnalyse')
+                        ->label('AI Analyse')
+                        ->icon('heroicon-o-sparkles')
+                        ->color('warning')
+                        ->modalHeading(fn(SafetyIncident $record) => '🤖 AI Analysis — ' . $record->incident_number)
+                        ->modalWidth('2xl')
+                        ->action(function (SafetyIncident $record): void {
+                            $ai = app(AiAssistantService::class);
+
+                            if (!$ai->isAvailable()) {
+                                Notification::make()
+                                    ->title('AI not configured')
+                                    ->body('Add GEMINI_API_KEY to your .env file.')
+                                    ->warning()
+                                    ->send();
+                                return;
+                            }
+
+                            $desc = strip_tags($record->description ?? $record->title);
+                            $analysis = $ai->analyseSafetyIncident(
+                                $record->title,
+                                $desc,
+                                $record->type ?? '',
+                                $record->severity ?? ''
+                            );
+
+                            // Auto-fill root_cause and corrective_action if they're empty
+                            $updates = [];
+                            if (empty($record->root_cause) && !empty($analysis['root_cause'])) {
+                                $updates['root_cause'] = $analysis['root_cause'];
+                            }
+                            if (empty($record->corrective_action) && !empty($analysis['corrective_actions'])) {
+                                $updates['corrective_action'] = implode("\n• ", $analysis['corrective_actions']);
+                            }
+                            if (!empty($updates)) {
+                                $record->update($updates);
+                            }
+
+                            $actions = !empty($analysis['corrective_actions'])
+                                ? implode("\n• ", $analysis['corrective_actions'])
+                                : '—';
+                            $tips = !empty($analysis['prevention_tips'])
+                                ? implode("\n• ", $analysis['prevention_tips'])
+                                : '—';
+                            $level = $analysis['risk_level'] ?? '—';
+                            $reg   = $analysis['regulatory_reference'] ?? '';
+
+                            Notification::make()
+                                ->title('AI Analysis Complete')
+                                ->body(
+                                    "**Root Cause:** {$analysis['root_cause']}\n\n" .
+                                    "**Risk Level:** {$level}" .
+                                    ($reg ? " | **Standard:** {$reg}" : '') . "\n\n" .
+                                    "**Corrective Actions:**\n• {$actions}\n\n" .
+                                    "**Prevention Tips:**\n• {$tips}"
+                                )
+                                ->success()
+                                ->persistent()
+                                ->send();
                         }),
 
                     \Filament\Actions\Action::make('delete')

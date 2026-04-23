@@ -40,4 +40,16 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('APP_URL') . '/auth/google/callback',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI — Google Gemini (Free Tier)
+    |--------------------------------------------------------------------------
+    | Get your free API key at: https://aistudio.google.com/app/apikey
+    | Free tier: 15 req/min, 1M tokens/day — sufficient for a multi-tenant SaaS.
+    */
+    'gemini' => [
+        'key'   => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.0-flash'),
+    ],
 ];

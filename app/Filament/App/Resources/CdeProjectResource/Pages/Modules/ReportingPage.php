@@ -16,6 +16,7 @@ use App\Models\StockAdjustment;
 use App\Models\StockLevel;
 use App\Models\Task;
 use App\Models\Warehouse;
+use App\Services\AiAssistantService;
 use App\Services\InventoryReportService;
 use App\Support\CurrencyHelper;
 use Carbon\Carbon;
@@ -33,6 +34,13 @@ class ReportingPage extends BaseModulePage
     public ?string $dateTo = null;
     public string $activeReport = 'summary';
 
+    // ── AI Project Pulse ──
+    public string $aiPulse = '';
+    public bool $aiPulseLoading = false;
+    public string $aiQuestion = '';
+    public string $aiAnswer = '';
+    public bool $aiAnswerLoading = false;
+
     public function mount(int|string $record): void
     {
         parent::mount($record);
@@ -49,6 +57,132 @@ class ReportingPage extends BaseModulePage
     public function updatedActiveReport(): void
     { /* triggers Livewire re-render */
     }
+
+    // ─────────────────────────────────────────────────────────
+    // AI Project Pulse — live project status analysis
+    // ─────────────────────────────────────────────────────────
+
+    /**
+     * Called by the Blade template "Generate AI Pulse" button.
+     * Assembles live project KPIs and asks Gemini for a status analysis.
+     */
+    public function generateAiPulse(): void
+    {
+        $this->aiPulseLoading = true;
+        $this->aiPulse = '';
+
+        $r  = $this->record;
+        $ai = app(AiAssistantService::class);
+
+        if (!$ai->isAvailable()) {
+            $this->aiPulse = '⚠️ AI is not configured. Add your GEMINI_API_KEY to the .env file.';
+            $this->aiPulseLoading = false;
+            return;
+        }
+
+        // Gather live KPIs from all modules
+        $totalTasks     = $r->tasks()->count();
+        $doneTasks      = $r->tasks()->where('status', 'done')->count();
+        $overdueTasks   = $r->tasks()->where('status', '!=', 'done')->whereNotNull('due_date')->where('due_date', '<', now())->count();
+        $taskPct        = $totalTasks > 0 ? round(($doneTasks / $totalTasks) * 100) : 0;
+
+        $totalDocs      = $r->documents()->count();
+        $wip            = $r->documents()->where('status', 'S0')->count();
+        $approved       = $r->documents()->whereIn('status', ['S4', 'S6', 'S7'])->count();
+
+        $openRfis       = $r->rfis()->whereIn('status', ['open', 'submitted'])->count();
+        $totalRfis      = $r->rfis()->count();
+
+        $openIncidents  = $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count();
+        $critIncidents  = $r->safetyIncidents()->whereIn('severity', ['critical', 'fatal'])->whereNotIn('status', ['closed', 'resolved'])->count();
+
+        $contractOriginal = (float) $r->contracts()->sum('original_value');
+        $contractRevised  = (float) $r->contracts()->sum('revised_value');
+        $costVariancePct  = $contractOriginal > 0 ? round((($contractRevised - $contractOriginal) / $contractOriginal) * 100, 1) : 0;
+
+        $invoiced   = (float) Invoice::where('cde_project_id', $r->id)->sum('total_amount');
+        $received   = (float) InvoicePayment::where('cde_project_id', $r->id)->sum('amount');
+        $expenses   = (float) Expense::where('cde_project_id', $r->id)->where('status', '!=', 'rejected')->sum('amount');
+
+        $openSnags  = $r->snagItems()->whereIn('status', ['open', 'in_progress'])->count();
+        $totalMilestones  = $r->milestones()->count();
+        $lateMilestones   = $r->milestones()->where('status', '!=', 'completed')->whereNotNull('target_date')->where('target_date', '<', now())->count();
+
+        $kpis = [
+            'overall_task_completion'   => "{$taskPct}% ({$doneTasks}/{$totalTasks} tasks done)",
+            'overdue_tasks'             => $overdueTasks,
+            'total_documents'           => $totalDocs . " ({$wip} WIP, {$approved} approved/published)",
+            'open_rfis'                 => "{$openRfis} of {$totalRfis} total",
+            'open_safety_incidents'     => "{$openIncidents}" . ($critIncidents > 0 ? " (⚠️ {$critIncidents} critical)" : ''),
+            'contract_cost_variance'    => ($costVariancePct >= 0 ? '+' : '') . "{$costVariancePct}%",
+            'total_invoiced'            => CurrencyHelper::formatCompact($invoiced),
+            'total_received'            => CurrencyHelper::formatCompact($received),
+            'total_expenses'            => CurrencyHelper::formatCompact($expenses),
+            'open_snags_defects'        => $openSnags,
+            'milestone_delays'          => "{$lateMilestones} of {$totalMilestones} milestones behind schedule",
+        ];
+
+        $this->aiPulse = $ai->generateProjectSummary($r->name, $kpis);
+        $this->aiPulseLoading = false;
+    }
+
+    /**
+     * Called by the Blade template "Ask" button for conversational Q&A.
+     * The AI has access to the same live KPI context.
+     */
+    public function askAi(): void
+    {
+        if (empty(trim($this->aiQuestion))) {
+            return;
+        }
+
+        $this->aiAnswerLoading = true;
+        $this->aiAnswer = '';
+
+        $r  = $this->record;
+        $ai = app(AiAssistantService::class);
+
+        if (!$ai->isAvailable()) {
+            $this->aiAnswer = '⚠️ AI is not configured. Add your GEMINI_API_KEY to .env.';
+            $this->aiAnswerLoading = false;
+            return;
+        }
+
+        // Build live context snapshot
+        $totalTasks   = $r->tasks()->count();
+        $doneTasks    = $r->tasks()->where('status', 'done')->count();
+        $overdueTasks = $r->tasks()->where('status', '!=', 'done')->whereNotNull('due_date')->where('due_date', '<', now())->count();
+        $openRfis     = $r->rfis()->whereIn('status', ['open', 'submitted'])->count();
+        $openIncidents = $r->safetyIncidents()->whereNotIn('status', ['closed', 'resolved'])->count();
+        $critIncidents = $r->safetyIncidents()->whereIn('severity', ['critical', 'fatal'])->whereNotIn('status', ['closed', 'resolved'])->count();
+        $invoiced     = (float) Invoice::where('cde_project_id', $r->id)->sum('total_amount');
+        $received     = (float) InvoicePayment::where('cde_project_id', $r->id)->sum('amount');
+        $openSnags    = $r->snagItems()->whereIn('status', ['open', 'in_progress'])->count();
+
+        $context = <<<CONTEXT
+You are the AI Project Intelligence assistant for Infrahub, a construction management platform.
+You have access to the following LIVE project data for "{$r->name}":
+
+PROJECT SNAPSHOT (as of today):
+- Name: {$r->name}
+- Status: {$r->status}
+- Tasks: {$doneTasks}/{$totalTasks} done, {$overdueTasks} overdue
+- Documents: {$r->documents()->count()} total
+- Open RFIs: {$openRfis}
+- Safety Incidents: {$openIncidents} open (including {$critIncidents} critical)
+- Total Invoiced: {$invoiced}
+- Total Received: {$received}
+- Open Snags/Defects: {$openSnags}
+
+Answer the user's question based on this data. Be concise, direct, and actionable.
+If the question is outside the scope of this project data, say so politely.
+CONTEXT;
+
+        $this->aiAnswer = $ai->ask($this->aiQuestion, $context, 800, 0.4);
+        $this->aiAnswerLoading = false;
+    }
+
+
 
     private function from(): Carbon
     {
