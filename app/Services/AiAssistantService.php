@@ -24,7 +24,7 @@ class AiAssistantService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key', '');
-        $this->model  = config('services.gemini.model', 'gemini-2.0-flash');
+        $this->model  = config('services.gemini.model', 'gemini-2.5-flash');
     }
 
     /**
@@ -40,18 +40,39 @@ class AiAssistantService
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Send a prompt to the Gemini API and return the text response.
+     * Ordered list of models to try. First available and non-rate-limited wins.
+     * Configured via GEMINI_MODEL in .env; fallbacks are hardcoded by stability.
+     */
+    protected function modelChain(): array
+    {
+        $primary = $this->model;
+
+        $fallbacks = [
+            'gemini-flash-latest',
+            'gemini-2.0-flash-lite',
+            'gemini-2.0-flash',
+            'gemini-2.5-flash',
+        ];
+
+        // Put primary first, then the rest (deduped)
+        return array_values(array_unique(array_merge([$primary], $fallbacks)));
+    }
+
+    /**
+     * Send a prompt to Gemini with automatic model fallback on 429/503 errors.
      *
      * @param  string  $prompt         The user prompt / question.
      * @param  string  $systemContext  Optional system-level instruction for the AI role.
      * @param  int     $maxTokens      Max output tokens (default 1024).
      * @param  float   $temperature    Creativity 0.0–1.0 (lower = more deterministic).
+     * @param  bool    $jsonMode       Request JSON response mode (Gemini native).
      */
     public function ask(
         string $prompt,
         string $systemContext = '',
         int    $maxTokens = 1024,
-        float  $temperature = 0.3
+        float  $temperature = 0.3,
+        bool   $jsonMode = false
     ): string {
         if (!$this->isAvailable()) {
             return '⚠️ AI is not configured. Add GEMINI_API_KEY to your .env file.';
@@ -63,43 +84,90 @@ class AiAssistantService
         }
         $parts[] = ['text' => $prompt];
 
-        try {
-            $response = Http::timeout(45)->post(
-                "{$this->baseUrl}/{$this->model}:generateContent?key={$this->apiKey}",
-                [
-                    'contents' => [
-                        ['parts' => $parts],
-                    ],
-                    'generationConfig' => [
-                        'temperature'     => $temperature,
-                        'maxOutputTokens' => $maxTokens,
-                    ],
-                    'safetySettings' => [
-                        ['category' => 'HARM_CATEGORY_HARASSMENT',        'threshold' => 'BLOCK_ONLY_HIGH'],
-                        ['category' => 'HARM_CATEGORY_HATE_SPEECH',       'threshold' => 'BLOCK_ONLY_HIGH'],
-                        ['category' => 'HARM_CATEGORY_SEXUALLY_EXPLICIT', 'threshold' => 'BLOCK_ONLY_HIGH'],
-                        ['category' => 'HARM_CATEGORY_DANGEROUS_CONTENT', 'threshold' => 'BLOCK_ONLY_HIGH'],
-                    ],
-                ]
-            );
+        $payload = [
+            'contents' => [['parts' => $parts]],
+            'generationConfig' => [
+                'temperature'     => $temperature,
+                'maxOutputTokens' => $maxTokens,
+            ],
+        ];
 
-            if ($response->failed()) {
-                Log::error('Gemini API error', [
-                    'status' => $response->status(),
-                    'body'   => $response->body(),
-                ]);
-                return '⚠️ AI service returned an error. Please try again in a moment.';
-            }
-
-            return data_get(
-                $response->json(),
-                'candidates.0.content.parts.0.text',
-                'No response generated.'
-            );
-        } catch (\Throwable $e) {
-            Log::error('Gemini API exception', ['message' => $e->getMessage()]);
-            return '⚠️ AI is temporarily unavailable. Please try again.';
+        if ($jsonMode) {
+            $payload['generationConfig']['responseMimeType'] = 'application/json';
         }
+
+        $lastError = '⚠️ AI is temporarily unavailable. Please try again.';
+
+        foreach ($this->modelChain() as $model) {
+            try {
+                $response = Http::timeout(45)->post(
+                    "{$this->baseUrl}/{$model}:generateContent?key={$this->apiKey}",
+                    $payload
+                );
+
+                $status = $response->status();
+
+                // Retryable errors — try next model
+                if (in_array($status, [429, 503, 500, 502, 504])) {
+                    Log::warning("Gemini model [{$model}] returned {$status}, trying fallback.");
+                    $lastError = match($status) {
+                        429 => '⚠️ AI rate limit reached. Please try again in a moment.',
+                        503 => '⚠️ AI service overloaded. Please try again shortly.',
+                        default => '⚠️ AI service error. Please try again.',
+                    };
+                    continue;
+                }
+
+                if ($response->failed()) {
+                    Log::error('Gemini API error', ['model' => $model, 'status' => $status, 'body' => $response->body()]);
+                    $lastError = '⚠️ AI service returned an error. Please try again in a moment.';
+                    continue;
+                }
+
+                return data_get(
+                    $response->json(),
+                    'candidates.0.content.parts.0.text',
+                    'No response generated.'
+                );
+
+            } catch (\Throwable $e) {
+                Log::error('Gemini API exception', ['model' => $model, 'message' => $e->getMessage()]);
+                $lastError = '⚠️ AI is temporarily unavailable. Please try again.';
+            }
+        }
+
+        return $lastError;
+    }
+
+    /**
+     * Robustly extract and decode JSON from a Gemini response.
+     * Handles markdown code fences (```json ... ```) that Gemini 2.5 always adds.
+     */
+    private function parseJson(string $raw): ?array
+    {
+        // Try direct decode first
+        $decoded = json_decode(trim($raw), true);
+        if (json_last_error() === JSON_ERROR_NONE) {
+            return $decoded;
+        }
+
+        // Extract from code fence: ```json ... ``` or ``` ... ```
+        if (preg_match('/```(?:json)?\s*([\s\S]*?)\s*```/i', $raw, $matches)) {
+            $decoded = json_decode(trim($matches[1]), true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $decoded;
+            }
+        }
+
+        // Last resort: find first { or [ and extract to matching closer
+        if (preg_match('/(\{[\s\S]*\}|\[[\s\S]*\])/s', $raw, $matches)) {
+            $decoded = json_decode(trim($matches[1]), true);
+            if (json_last_error() === JSON_ERROR_NONE) {
+                return $decoded;
+            }
+        }
+
+        return null;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -151,10 +219,9 @@ Description: {$description}
 Return ONLY valid JSON like: {"discipline":"structural","status":"S0","document_type":"Drawing"}
 PROMPT;
 
-        $raw = $this->ask($prompt, 'You are a construction document management expert.', 128, 0.1);
-        $raw = preg_replace('/```json\s*|\s*```/', '', trim($raw));
+        $raw = $this->ask($prompt, 'You are a construction document management expert.', 128, 0.1, true);
 
-        return json_decode($raw, true) ?? [];
+        return $this->parseJson($raw) ?? [];
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -188,12 +255,11 @@ PROMPT;
             $prompt,
             'You are a certified HSE (Health, Safety and Environment) expert specializing in construction safety.',
             800,
-            0.2
+            0.2,
+            true  // JSON mode
         );
 
-        $raw = preg_replace('/```json\s*|\s*```/', '', trim($raw));
-
-        return json_decode($raw, true) ?? [
+        return $this->parseJson($raw) ?? [
             'root_cause'             => 'Unable to parse AI response. Please analyse manually.',
             'corrective_actions'     => [],
             'prevention_tips'        => [],
@@ -223,12 +289,11 @@ PROMPT;
             $prompt,
             'You are a construction safety inspector with 20 years of experience.',
             1024,
-            0.3
+            0.3,
+            true  // JSON mode
         );
 
-        $raw = preg_replace('/```json\s*|\s*```/', '', trim($raw));
-
-        return json_decode($raw, true) ?? [];
+        return $this->parseJson($raw) ?? [];
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -262,12 +327,11 @@ PROMPT;
             $prompt,
             'You are an expert project manager for infrastructure and construction projects.',
             1200,
-            0.3
+            0.3,
+            true  // JSON mode
         );
 
-        $raw = preg_replace('/```json\s*|\s*```/', '', trim($raw));
-
-        return json_decode($raw, true) ?? [];
+        return $this->parseJson($raw) ?? [];
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -366,12 +430,11 @@ PROMPT;
             $prompt,
             'You are a bid manager with 15 years of experience evaluating construction tenders.',
             1024,
-            0.3
+            0.3,
+            true  // JSON mode
         );
 
-        $raw = preg_replace('/```json\s*|\s*```/', '', trim($raw));
-
-        return json_decode($raw, true) ?? [];
+        return $this->parseJson($raw) ?? [];
     }
 
     // ─────────────────────────────────────────────────────────────────────────
