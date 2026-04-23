@@ -28,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // ── Aliases ────────────────────────────────────────
         $middleware->alias([
             'module' => \App\Http\Middleware\CheckModulePermission::class,
+            'admin'  => \App\Http\Middleware\EnsureAdminAccess::class,
         ]);
     })
     ->withEvents(discover: [__DIR__ . '/../app/Listeners'])

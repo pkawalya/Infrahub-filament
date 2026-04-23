@@ -161,9 +161,6 @@
                                             <a href="{{ config('app.url') }}/app"
                                                 style="color:#e8a229; text-decoration:none; font-weight:500;">Dashboard</a>
                                             <span style="color:#d1d5db; padding:0 8px;">|</span>
-                                            <a href="{{ config('app.url') }}/docs"
-                                                style="color:#e8a229; text-decoration:none; font-weight:500;">Documentation</a>
-                                            <span style="color:#d1d5db; padding:0 8px;">|</span>
                                             <a href="mailto:info@infrahub.click"
                                                 style="color:#e8a229; text-decoration:none; font-weight:500;">Support</a>
                                         </p>

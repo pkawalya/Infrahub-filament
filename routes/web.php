@@ -1,13 +1,13 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Livewire\ExternalLogin;
-use App\Livewire\ExternalDashboard;
-use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\Auth\GoogleController;
 use App\Http\Controllers\InvitationController;
-use App\Http\Controllers\ProjectInvitationController;
 use App\Http\Controllers\MobileController;
+use App\Http\Controllers\OnboardingController;
+use App\Http\Controllers\ProjectInvitationController;
+use App\Livewire\ExternalDashboard;
+use App\Livewire\ExternalLogin;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
@@ -19,23 +19,25 @@ Route::get('/health', function () {
     try {
         \Illuminate\Support\Facades\DB::connection()->getPdo();
         $dbOk = true;
-    } catch (\Throwable) {}
+    } catch (\Throwable) {
+    }
 
     $cacheOk = false;
     try {
         \Illuminate\Support\Facades\Cache::put('_health', 1, 10);
         $cacheOk = (bool) \Illuminate\Support\Facades\Cache::get('_health');
-    } catch (\Throwable) {}
+    } catch (\Throwable) {
+    }
 
     $status = ($dbOk && $cacheOk) ? 'ok' : 'degraded';
-    $code   = ($dbOk && $cacheOk) ? 200 : 503;
+    $code = ($dbOk && $cacheOk) ? 200 : 503;
 
     return response()->json([
-        'status'    => $status,
-        'db'        => $dbOk ? 'connected' : 'error',
-        'cache'     => $cacheOk ? 'ok' : 'error',
+        'status' => $status,
+        'db' => $dbOk ? 'connected' : 'error',
+        'cache' => $cacheOk ? 'ok' : 'error',
         'timestamp' => now()->toISOString(),
-        'version'   => config('app.version', '1.0.0'),
+        'version' => config('app.version', '1.0.0'),
     ], $code);
 })->middleware('throttle:60,1')->name('health');
 
@@ -53,8 +55,12 @@ Route::get('/offline', function () {
 });
 
 Route::get('/docs', function () {
+    return view('user-manual');
+})->middleware(['auth', 'admin'])->name('docs');
+
+Route::get('/specs', function () {
     return view('docs');
-})->name('docs');
+})->middleware(['auth', 'admin'])->name('specs');
 
 // Company Onboarding
 Route::get('/get-started', [OnboardingController::class, 'show'])->name('onboarding');
@@ -94,7 +100,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/app/schedule/{record}/export-msp', [\App\Http\Controllers\ScheduleExportController::class, 'exportMsProject'])
         ->name('filament.app.schedule.export-msp');
 });
-
 
 // ── Mobile PWA ─────────────────────────────────────────────
 Route::prefix('mobile')->group(function () {

@@ -27,11 +27,12 @@ use Filament\Tables;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Response;
 
 class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
 {
-    use InteractsWithTable, InteractsWithForms, ExportsTableCsv;
+    use InteractsWithTable, InteractsWithForms, ExportsTableCsv, WithFileUploads;
 
     /**
      * This unified Schedule page merges task_workflow + core (Work Orders) + planning_progress.
@@ -63,17 +64,18 @@ class TaskWorkflowPage extends BaseModulePage implements HasForms, HasTable
 
     public bool $showImportExcelModal = false;
 
-    public array $importMsp = [
-        'msp_file'          => null,
-        'clear_existing'    => false,
-        'import_milestones' => true,
-    ];
+    // Top-level file properties required by Livewire WithFileUploads
+    public $mspFile = null;
 
-    public array $importExcel = [
-        'xlsx_file'      => null,
-        'project_start'  => '',
-        'clear_existing' => false,
-    ];
+    public $xlsxFile = null;
+
+    public bool $mspClearExisting = false;
+
+    public bool $mspImportMilestones = true;
+
+    public string $excelProjectStart = '';
+
+    public bool $excelClearExisting = false;
 
 
     public ?int $editingTaskId = null;

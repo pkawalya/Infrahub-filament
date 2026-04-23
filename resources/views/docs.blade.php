@@ -625,18 +625,23 @@
                     <a href="#navigation" class="sidebar-link"><span class="icon">🧭</span> Navigating the App</a>
                 </div>
 
-                <div class="sidebar-group">
-                    <div class="sidebar-group-label">Features</div>
-                    <a href="#projects" class="sidebar-link"><span class="icon">📁</span> Projects</a>
-                    <a href="#documents" class="sidebar-link"><span class="icon">📄</span> Documents</a>
-                    <a href="#tasks" class="sidebar-link"><span class="icon">✅</span> Tasks</a>
-                    <a href="#safety" class="sidebar-link"><span class="icon">⚠️</span> Safety & SHEQ</a>
-                    <a href="#field" class="sidebar-link"><span class="icon">👷</span> Field Management</a>
-                    <a href="#equipment" class="sidebar-link"><span class="icon">🚜</span> Equipment</a>
-                    <a href="#financials" class="sidebar-link"><span class="icon">💰</span> Financials</a>
-                    <a href="#inventory" class="sidebar-link"><span class="icon">📦</span> Inventory</a>
-                    <a href="#contracts" class="sidebar-link"><span class="icon">🏗️</span> Contracts</a>
-                </div>
+                 <div class="sidebar-group">
+                     <div class="sidebar-group-label">Features</div>
+                     <a href="#projects" class="sidebar-link"><span class="icon">📁</span> Projects</a>
+                     <a href="#documents" class="sidebar-link"><span class="icon">📄</span> Documents</a>
+                     <a href="#quotations" class="sidebar-link"><span class="icon">📋</span> Quotations</a>
+                     <a href="#submissions" class="sidebar-link"><span class="icon">📤</span> Document Submissions</a>
+                     <a href="#sharing" class="sidebar-link"><span class="icon">🔗</span> Document Sharing</a>
+                     <a href="#tasks" class="sidebar-link"><span class="icon">✅</span> Tasks</a>
+                     <a href="#safety" class="sidebar-link"><span class="icon">⚠️</span> Safety & SHEQ</a>
+                     <a href="#field" class="sidebar-link"><span class="icon">👷</span> Field Management</a>
+                     <a href="#equipment" class="sidebar-link"><span class="icon">🚜</span> Equipment</a>
+                     <a href="#financials" class="sidebar-link"><span class="icon">💰</span> Financials</a>
+                     <a href="#contract-payments" class="sidebar-link"><span class="icon">💳</span> Contract Payments</a>
+                     <a href="#inventory" class="sidebar-link"><span class="icon">📦</span> Inventory</a>
+                     <a href="#contracts" class="sidebar-link"><span class="icon">🏗️</span> Contracts</a>
+                     <a href="#schedule" class="sidebar-link"><span class="icon">📅</span> Schedule Management</a>
+                 </div>
 
                 <div class="sidebar-group">
                     <div class="sidebar-group-label">Using the App</div>
@@ -813,6 +818,104 @@
                 </div>
             </section>
 
+            <!-- Quotations -->
+            <section id="quotations">
+                <h2>📋 Quotations</h2>
+                <p>Create professional quotations for your clients with detailed line items, pricing, and terms.</p>
+
+                <h3>Creating a Quotation</h3>
+                <ol>
+                    <li>Open your project and go to the <strong>Quotations</strong> tab.</li>
+                    <li>Click <strong>New Quotation</strong>.</li>
+                    <li>Select a client and enter quotation details (reference number, date, expiry date).</li>
+                    <li>Add line items with descriptions, quantities, unit rates, and amounts.</li>
+                    <li>Add terms and conditions, payment schedule, and any special notes.</li>
+                    <li>Click <strong>Save</strong> — generate a PDF quotation to send to your client.</li>
+                </ol>
+
+                <h3>Quotation Workflow</h3>
+                <ul>
+                    <li><strong>Draft</strong> — The quotation is being prepared.</li>
+                    <li><strong>Sent</strong> — The quotation has been sent to the client.</li>
+                    <li><strong>Accepted</strong> — The client has accepted the quotation.</li>
+                    <li><strong>Rejected</strong> — The client has declined the quotation.</li>
+                    <li><strong>Expired</strong> — The quotation expiry date has passed.</li>
+                </ul>
+
+                <div class="info-box info-tip">
+                    <span class="box-icon">📊</span>
+                    <div>
+                        <strong>Tip:</strong> Quotations automatically link to projects. Once accepted, they can be
+                        converted into contracts with full financial tracking.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Document Submissions -->
+            <section id="submissions">
+                <h2>📤 Document Submissions</h2>
+                <p>Submit documents, drawings, and samples to clients or authorities for review and approval.</p>
+
+                <h3>Creating a Submission</h3>
+                <ol>
+                    <li>Go to the project's <strong>Submissions</strong> tab.</li>
+                    <li>Click <strong>New Submission</strong>.</li>
+                    <li>Select the type of submission (Shop Drawings, Samples, Technical Documents, etc.).</li>
+                    <li>Attach the relevant documents and add any required details.</li>
+                    <li>Set the submission deadline and assign reviewers.</li>
+                    <li>Submit — notifications are sent to all reviewers.</li>
+                </ol>
+
+                <h3>Review Process</h3>
+                <ul>
+                    <li><strong>Pending Review</strong> — The submission is awaiting review.</li>
+                    <li><strong>Under Review</strong> — Reviewers are examining the documents.</li>
+                    <li><strong>Approved</strong> — The submission has been approved.</li>
+                    <li><strong>Rejected</strong> — The submission requires revisions.</li>
+                    <li><strong>Revised</strong> — A revised version has been resubmitted.</li>
+                </ul>
+
+                <div class="info-box info-warn">
+                    <span class="box-icon">⏰</span>
+                    <div>
+                        <strong>Important:</strong> Set realistic deadlines for submissions to avoid delays in your
+                        project timeline.
+                    </div>
+                </div>
+            </section>
+
+            <!-- Document Sharing -->
+            <section id="sharing">
+                <h2>🔗 Document Sharing</h2>
+                <p>Share project documents securely with external parties without giving them full access to InfraHub.</p>
+
+                <h3>Creating a Share Link</h3>
+                <ol>
+                    <li>Open the document you want to share.</li>
+                    <li>Click the <strong>Share</strong> button.</li>
+                    <li>Select the sharing method (Public Link, Email, or Password Protected).</li>
+                    <li>Set an expiry date and access permissions (view only or download allowed).</li>
+                    <li>Send the link to your recipients.</li>
+                </ol>
+
+                <h3>Sharing Options</h3>
+                <ul>
+                    <li><strong>Public Links</strong> — Anyone with the link can access the document.</li>
+                    <li><strong>Password Protection</strong> — Require a password for access.</li>
+                    <li><strong>Email Sharing</strong> — Send documents directly via email with secure links.</li>
+                    <li><strong>Expiry Dates</strong> — Links automatically expire after a set time.</li>
+                    <li><strong>Access Tracking</strong> — See who has viewed or downloaded shared documents.</li>
+                </ul>
+
+                <div class="info-box info-tip">
+                    <span class="box-icon">🔒</span>
+                    <div>
+                        <strong>Security:</strong> Shared documents are still protected by your company's security
+                        settings. External users cannot access other project files.
+                    </div>
+                </div>
+            </section>
+
             <!-- Tasks -->
             <section id="tasks">
                 <h2>✅ Tasks & Workflow</h2>
@@ -944,6 +1047,39 @@
                 </ul>
             </section>
 
+            <!-- Contract Payments -->
+            <section id="contract-payments">
+                <h2>💳 Contract Payments</h2>
+                <p>Track payments against contracts, including progress payments, retention, and final settlements.</p>
+
+                <h3>Recording a Payment</h3>
+                <ol>
+                    <li>Go to the project's <strong>Payments</strong> tab.</li>
+                    <li>Click <strong>Record Payment</strong>.</li>
+                    <li>Select the contract and payment type (Progress, Retention Release, Final, etc.).</li>
+                    <li>Enter the payment amount, date, and reference details.</li>
+                    <li>Upload supporting documents (receipts, bank statements, certificates).</li>
+                    <li>Save — the payment is recorded and contract balances are updated.</li>
+                </ol>
+
+                <h3>Payment Types</h3>
+                <ul>
+                    <li><strong>Progress Payments</strong> — Based on work completed percentage.</li>
+                    <li><strong>Retention Release</strong> — Release of retention money held back.</li>
+                    <li><strong>Variation Payments</strong> — Payments for approved contract changes.</li>
+                    <li><strong>Final Payment</strong> — Final settlement and release of all retentions.</li>
+                    <li><strong>Advance Payments</strong> — Upfront payments made to contractors.</li>
+                </ul>
+
+                <div class="info-box info-note">
+                    <span class="box-icon">📈</span>
+                    <div>
+                        <strong>Reporting:</strong> Payment data integrates with financial reports and contract
+                        performance tracking.
+                    </div>
+                </div>
+            </section>
+
             <!-- Inventory -->
             <section id="inventory">
                 <h2>📦 Inventory & Procurement</h2>
@@ -1004,6 +1140,62 @@
                     <li><strong>Submittals</strong> — Submit shop drawings, samples, and technical documents for review.
                     </li>
                 </ul>
+            </section>
+
+            <!-- Schedule Management -->
+            <section id="schedule">
+                <h2>📅 Schedule Management</h2>
+                <p>Import, manage, and export project schedules with Gantt charts and progress tracking.</p>
+
+                <h3>Importing Schedules</h3>
+                <ol>
+                    <li>Open your project and go to the <strong>Schedule</strong> tab.</li>
+                    <li>Click <strong>Import Schedule</strong>.</li>
+                    <li>Upload your schedule file (Excel, Primavera P6, MS Project XML, or CSV).</li>
+                    <li>Map the columns to InfraHub fields (Task Name, Start Date, End Date, etc.).</li>
+                    <li>Review and adjust dependencies, milestones, and critical path items.</li>
+                    <li>Save — your schedule is now integrated with project tasks and progress tracking.</li>
+                </ol>
+
+                <h3>Schedule Features</h3>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="fc-icon">📊</div>
+                        <div class="fc-title">Gantt Charts</div>
+                        <div class="fc-desc">Visual timeline view of all project activities with dependencies and milestones.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="fc-icon">📈</div>
+                        <div class="fc-title">Progress Tracking</div>
+                        <div class="fc-desc">Update task completion percentages and see schedule variance reports.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="fc-icon">⚠️</div>
+                        <div class="fc-title">Delay Alerts</div>
+                        <div class="fc-desc">Get notifications when tasks are running behind schedule.</div>
+                    </div>
+                    <div class="feature-card">
+                        <div class="fc-icon">📤</div>
+                        <div class="fc-title">Export Options</div>
+                        <div class="fc-desc">Export updated schedules back to Excel, PDF, or Primavera format.</div>
+                    </div>
+                </div>
+
+                <h3>Updating Progress</h3>
+                <ul>
+                    <li>Mark tasks as completed to update the schedule automatically.</li>
+                    <li>Adjust dates for delayed or accelerated work.</li>
+                    <li>Add new tasks or modify existing ones as the project evolves.</li>
+                    <li>View critical path analysis to identify schedule risks.</li>
+                </ul>
+
+                <div class="info-box info-tip">
+                    <span class="box-icon">🔄</span>
+                    <div>
+                        <strong>Integration:</strong> Schedule data syncs with tasks, resources, and progress reports for
+                        comprehensive project control.
+                    </div>
+                </div>
             </section>
 
             <!-- Offline -->

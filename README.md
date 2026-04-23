@@ -12,7 +12,7 @@ InfraHub is an all-in-one project management solution designed for construction 
 
 - 🏗️ **Multi-project dashboard** with real-time stat cards and interactive project timeline
 - 🏢 **Multi-company tenancy** — each company manages its own users, roles, and projects
-- 📁 **15+ integrated modules** per project (Documents, Tasks, SHEQ, BOQ, Inventory, Contracts, Equipment, and more)
+- 📁 **15+ integrated modules** per project (Documents, Schedule, SHEQ, BOQ, Inventory, Contracts, Equipment, and more)
 - 🔐 **Three-panel architecture** — Admin panel, Company App panel, and Client Portal
 - 📱 **Mobile PWA** at `/mobile` — offline-first, bottom nav, works on 3G
 - 🌐 **REST API v1** — 60+ endpoints with Sanctum auth and module-based permissions
@@ -47,8 +47,8 @@ Company
 Work Orders
   ├── Work Orders
   └── Invoices
-Task & Workflow
-  └── Tasks
+Schedule
+  └── Schedule
 SHEQ
   └── Safety Incidents
 Settings (Admin-only)
@@ -64,7 +64,7 @@ When viewing a project record, a collapsible sidebar (`SubNavigationPosition::St
 
 | Group | Modules |
 |-------|---------|
-| **Operations** | Core FSM (Work Orders), Tasks & Workflow, Planning & Progress |
+| **Operations** | Schedule (Work Orders, Tasks, Planning & Progress) |
 | **Site** | Field Logs, Inventory, SHEQ, Equipment |
 | **Commercial** | Financials, Contracts, BOQ, Subcontractors |
 | **Information** | Documents (CDE), RFIs & Submittals, Reports, Suggestion Box |
@@ -130,6 +130,14 @@ Each module page includes:
 - **Incidents, Inspections, Snags, Social records** — tabbed interface
 - **Social records** — grievances, stakeholder engagement, labour welfare, CSR activities
 - **Bulk actions** — resolve, delete across multiple records
+
+### Schedule
+
+- **Unified Gantt Timeline** — interactive project schedule with tasks, work orders, and milestones
+- **Import/Export Support** — Excel (.xlsx) and MS Project (.mpp) file integration
+- **Progress Tracking** — visual progress bars, variance calculations, and deadline alerts
+- **Resource Allocation** — assign team members, equipment, and track time
+- **Milestone Management** — set and monitor project milestones with dependencies
 
 ### Client Portal
 
@@ -349,6 +357,16 @@ InfraHub uses background jobs for heavy processing:
 | `loan:process-alerts` | Daily 7:00 AM | Sends loan payment & overdue alerts |
 | `queue:prune-batches` | Sunday 3:00 AM | Cleans up old queue batch records |
 | `auth:clear-resets` | Daily | Removes expired password reset tokens |
+| `billing:generate --finalize` | Daily | Generates and finalizes billing invoices |
+| `financial:process-alerts` | Daily | Sends financial alerts and notifications |
+| `sanctum:prune-expired` | Daily | Removes expired API tokens |
+| `security:audit --clean` | Weekly | Runs security audit and cleans vulnerabilities |
+| `backup:run` | Daily | Executes automated backups |
+| `backup:monitor` | Daily | Monitors backup status and alerts on failures |
+| `users:deactivate-dormant --days=90` | Daily | Deactivates users inactive for 90 days |
+| `infrahub:deadline-reminders` | Daily | Sends project deadline reminders |
+| `activitylog:clean --days=180` | Daily | Cleans activity logs older than 180 days |
+| `app:cleanup-read-notifications` | Daily | Removes old read notifications |
 
 To run the scheduler in development:
 ```bash
