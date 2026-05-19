@@ -91,16 +91,16 @@ class TaskResource extends Resource
             Schemas\Components\Section::make('Task Details')->schema([
                 Forms\Components\TextInput::make('title')->required(),
                 Forms\Components\Select::make('cde_project_id')
-                    ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload()->label('Project'),
                 Forms\Components\Select::make('work_order_id')
-                    ->relationship('workOrder', 'wo_number', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->relationship('workOrder', 'wo_number', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload()->label('Work Order'),
                 Forms\Components\Select::make('parent_id')
-                    ->relationship('parent', 'title', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->relationship('parent', 'title', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload()->label('Parent Task'),
                 Forms\Components\Select::make('assigned_to')
-                    ->relationship('assignee', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
+                    ->relationship('assignee', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id)->where('is_active', true))
                     ->searchable()->preload(),
                 Forms\Components\Select::make('priority')
                     ->options(['low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'urgent' => 'Urgent'])
@@ -133,7 +133,7 @@ class TaskResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')->options(Task::$statuses),
                 Tables\Filters\SelectFilter::make('assigned_to')
-                    ->relationship('assignee', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->relationship('assignee', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->label('Assignee'),
             ])
             ->actions([Actions\ViewAction::make(), Actions\EditAction::make()])

@@ -6,9 +6,12 @@ use App\Filament\App\Resources\TenderResource\Pages;
 use App\Filament\Concerns\UIStandards;
 use App\Models\Company;
 use App\Models\Tender;
+use App\Models\TenderStage;
+use App\Services\StageWorkflowService;
 use App\Support\CurrencyHelper;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Infolists;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
@@ -71,9 +74,25 @@ class TenderResource extends Resource
                         ->options(Tender::$statuses)
                         ->default('identified')
                         ->required(),
+                    Forms\Components\Select::make('tender_stage_id')
+                        ->label('Stage')
+                        ->relationship('stage', 'name', function ($query) {
+                            $companyId = auth()->user()?->company_id;
+                            return $companyId
+                                ? $query->where('company_id', $companyId)->where('is_active', true)->orderBy('sort_order')
+                                : $query->whereRaw('1=0');
+                        })
+                        ->preload()
+                        ->searchable()
+                        ->nullable(),
                     Forms\Components\Select::make('assigned_to')
                         ->label('Lead Estimator')
-                        ->relationship('assignee', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
+                        ->relationship('assignee', 'name', function ($query) {
+                            $companyId = auth()->user()?->company_id;
+                            return $companyId
+                                ? $query->where('company_id', $companyId)->where('is_active', true)
+                                : $query->whereRaw('1=0');
+                        })
                         ->searchable()
                         ->preload()
                         ->nullable(),
@@ -149,6 +168,13 @@ class TenderResource extends Resource
                     ->limit(40)
                     ->weight('bold')
                     ->description(fn(Tender $r) => $r->client_name),
+                Tables\Columns\TextColumn::make('stage.name')
+                    ->label('Stage')
+                    ->badge()
+                    ->color(fn(Tender $r) => $r->stage?->color ?? 'gray')
+                    ->icon(fn(Tender $r) => $r->stage?->icon)
+                    ->placeholder('—')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('category')
                     ->badge()
                     ->color('info')
@@ -179,6 +205,13 @@ class TenderResource extends Resource
                             return 'Today!';
                         return $days . 'd left';
                     }),
+                Tables\Columns\TextColumn::make('bids_count')
+                    ->label('Bids')
+                    ->counts('bids')
+                    ->badge()
+                    ->color(fn(?int $state) => $state > 0 ? 'primary' : 'gray')
+                    ->placeholder('0')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('win_probability')
                     ->label('Win %')
                     ->suffix('%')
@@ -201,7 +234,8 @@ class TenderResource extends Resource
                         'lost' => 'danger',
                         'withdrawn' => 'gray',
                         default => 'gray',
-                    }),
+                    })
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('assignee.name')
                     ->label('Lead')
                     ->placeholder('—')
@@ -209,6 +243,11 @@ class TenderResource extends Resource
             ])
             ->defaultSort('submission_deadline', 'asc')
             ->filters([
+                Tables\Filters\SelectFilter::make('tender_stage_id')
+                    ->label('Stage')
+                    ->relationship('stage', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id)->where('is_active', true)->orderBy('sort_order'))
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(Tender::$statuses)
                     ->multiple(),
@@ -220,14 +259,65 @@ class TenderResource extends Resource
                         ->whereNotNull('submission_deadline')
                         ->where('submission_deadline', '<', now()))
                     ->toggle(),
+                Tables\Filters\Filter::make('has_bids')
+                    ->label('Has Bids')
+                    ->query(fn($q) => $q->has('bids'))
+                    ->toggle(),
             ])
             ->actions([
+                Actions\Action::make('ai_analyse')
+                    ->label('AI')
+                    ->icon('heroicon-o-sparkles')
+                    ->color('info')
+                    ->tooltip('AI Analyse this tender')
+                    ->modalHeading(fn(Tender $record) => '🤖 AI Analysis: ' . $record->title)
+                    ->modalWidth('3xl')
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Close')
+                    ->modalContent(function (Tender $record) {
+                        $ai = app(\App\Services\AiAssistantService::class);
+                        if (!$ai->isAvailable()) {
+                            return new HtmlString('<div class="p-4 text-amber-600">⚠️ AI not configured.</div>');
+                        }
+                        $desc = implode("\n", array_filter([
+                            "Tender: {$record->title}",
+                            $record->client_name ? "Client: {$record->client_name}" : null,
+                            $record->category ? "Category: {$record->category}" : null,
+                            $record->estimated_value ? "Value: {$record->estimated_value}" : null,
+                            $record->strategy_notes ? "Notes: {$record->strategy_notes}" : null,
+                        ]));
+                        $result = $ai->extractTenderRequirements($desc);
+                        if (empty($result)) {
+                            return new HtmlString('<div class="p-4 text-gray-500">Add more tender details for better analysis.</div>');
+                        }
+                        $rec = $result['bid_recommendation'] ?? 'N/A';
+                        $c = $rec === 'Bid' ? 'green' : ($rec === 'No-Bid' ? 'red' : 'amber');
+                        $html = "<div class='space-y-3 text-sm'>";
+                        $html .= "<div class='p-3 rounded-xl bg-{$c}-50 dark:bg-{$c}-950/30 border border-{$c}-200 dark:border-{$c}-800'><p class='font-bold text-lg'>{$rec}</p><p class='text-gray-600 dark:text-gray-400'>" . e($result['bid_reason'] ?? '') . "</p></div>";
+                        foreach (['key_requirements' => '📋 Requirements', 'risks' => '⚠️ Risks'] as $k => $l) {
+                            if (!empty($result[$k])) {
+                                $html .= "<div class='p-3 bg-gray-50 dark:bg-gray-800 rounded-xl'><p class='font-semibold mb-1'>{$l}</p><ul class='list-disc list-inside space-y-0.5 text-gray-700 dark:text-gray-300'>";
+                                foreach ($result[$k] as $item) { $html .= "<li>" . e($item) . "</li>"; }
+                                $html .= "</ul></div>";
+                            }
+                        }
+                        $html .= "</div>";
+                        return new HtmlString($html);
+                    }),
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
             ])
             ->bulkActions([
                 Actions\DeleteBulkAction::make(),
             ]);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            \App\Filament\App\Resources\TenderResource\RelationManagers\BidsRelationManager::class,
+            \App\Filament\App\Resources\TenderResource\RelationManagers\AuditLogsRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

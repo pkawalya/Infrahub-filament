@@ -107,7 +107,7 @@ class WorkOrderResource extends Resource
                     ->dehydrated(),
                 Forms\Components\TextInput::make('title')->required()->maxLength(255),
                 Forms\Components\Select::make('work_order_type_id')
-                    ->relationship('type', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->relationship('type', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->preload()
                     ->createOptionForm([
                         Forms\Components\TextInput::make('name')->required(),
@@ -122,7 +122,7 @@ class WorkOrderResource extends Resource
                     ->default('pending')
                     ->required(),
                 Forms\Components\Select::make('client_id')
-                    ->relationship('client', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->relationship('client', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()
                     ->preload(),
                 Forms\Components\Select::make('asset_id')
@@ -130,7 +130,7 @@ class WorkOrderResource extends Resource
                     ->searchable()
                     ->preload(),
                 Forms\Components\Select::make('assigned_to')
-                    ->relationship('assignee', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
+                    ->relationship('assignee', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id)->where('is_active', true))
                     ->searchable()
                     ->preload(),
                 Forms\Components\DatePicker::make('due_date'),
@@ -260,9 +260,9 @@ class WorkOrderResource extends Resource
                 Tables\Filters\SelectFilter::make('status')->options(WorkOrder::$statuses),
                 Tables\Filters\SelectFilter::make('priority')->options(WorkOrder::$priorities),
                 Tables\Filters\SelectFilter::make('work_order_type_id')
-                    ->relationship('type', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))->label('Type'),
+                    ->relationship('type', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))->label('Type'),
                 Tables\Filters\SelectFilter::make('assigned_to')
-                    ->relationship('assignee', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->relationship('assignee', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->label('Assignee'),
             ])
             ->actions([

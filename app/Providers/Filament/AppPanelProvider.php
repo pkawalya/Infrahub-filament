@@ -94,6 +94,7 @@ class AppPanelProvider extends PanelProvider
                 'Dashboard',
                 'Projects',
                 'Company',
+                'AI',
                 'Settings',
             ])
             ->globalSearch(false)

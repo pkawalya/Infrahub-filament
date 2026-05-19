@@ -89,7 +89,7 @@ class SubcontractorPage extends BaseModulePage implements HasTable
                 ->form([
                     Forms\Components\Select::make('subcontractor_id')
                         ->label('Subcontractor')
-                        ->relationship('subcontractor', 'name', fn($q) => $q->where('status', 'active'))
+                        ->relationship('subcontractor', 'name', fn($q) => $q?->where('status', 'active'))
                         ->searchable()
                         ->preload(false)
                         ->required()

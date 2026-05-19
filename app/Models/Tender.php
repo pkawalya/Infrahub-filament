@@ -5,6 +5,9 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\HasHashedRouteKey;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tender extends Model
@@ -18,6 +21,8 @@ class Tender extends Model
         'client_name',
         'source',
         'status',
+        'tender_stage_id',
+        'stage_changed_at',
         'estimated_value',
         'bid_amount',
         'submission_deadline',
@@ -36,54 +41,75 @@ class Tender extends Model
     ];
 
     protected $casts = [
-        'estimated_value' => 'decimal:2',
-        'bid_amount' => 'decimal:2',
+        'estimated_value'     => 'decimal:2',
+        'bid_amount'          => 'decimal:2',
         'submission_deadline' => 'date',
-        'submitted_at' => 'date',
-        'decision_date' => 'date',
-        'attachments' => 'array',
-        'win_probability' => 'integer',
+        'submitted_at'        => 'date',
+        'decision_date'       => 'date',
+        'stage_changed_at'    => 'datetime',
+        'attachments'         => 'array',
+        'win_probability'     => 'integer',
     ];
 
     public static array $statuses = [
         'identified' => 'Identified',
-        'preparing' => 'Preparing',
-        'submitted' => 'Submitted',
+        'preparing'  => 'Preparing',
+        'submitted'  => 'Submitted',
         'shortlisted' => 'Shortlisted',
-        'awarded' => 'Awarded',
-        'lost' => 'Lost',
-        'withdrawn' => 'Withdrawn',
+        'awarded'    => 'Awarded',
+        'lost'       => 'Lost',
+        'withdrawn'  => 'Withdrawn',
     ];
 
     public static array $categories = [
-        'construction' => 'Construction',
-        'renovation' => 'Renovation',
-        'maintenance' => 'Maintenance',
-        'supply' => 'Supply & Install',
-        'design_build' => 'Design & Build',
-        'civil' => 'Civil Works',
+        'construction'  => 'Construction',
+        'renovation'    => 'Renovation',
+        'maintenance'   => 'Maintenance',
+        'supply'        => 'Supply & Install',
+        'design_build'  => 'Design & Build',
+        'civil'         => 'Civil Works',
         'infrastructure' => 'Infrastructure',
-        'other' => 'Other',
+        'other'         => 'Other',
     ];
 
     public static array $sources = [
-        'public' => 'Public Tender',
-        'private' => 'Private Invitation',
+        'public'   => 'Public Tender',
+        'private'  => 'Private Invitation',
         'referral' => 'Referral',
-        'portal' => 'Online Portal',
+        'portal'   => 'Online Portal',
         'newspaper' => 'Newspaper',
-        'other' => 'Other',
+        'other'    => 'Other',
     ];
 
-    public function assignee()
+    // ─── Relationships ───────────────────────────────────────
+
+    public function assignee(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
 
-    public function creator()
+    public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+
+    public function stage(): BelongsTo
+    {
+        return $this->belongsTo(TenderStage::class, 'tender_stage_id');
+    }
+
+    public function bids(): HasMany
+    {
+        return $this->hasMany(TenderBid::class);
+    }
+
+    public function auditLogs(): MorphMany
+    {
+        return $this->morphMany(StageAuditLog::class, 'auditable')
+            ->orderByDesc('transitioned_at');
+    }
+
+    // ─── Computed ────────────────────────────────────────────
 
     public function isOverdue(): bool
     {
@@ -97,5 +123,10 @@ class Tender extends Model
         if (!$this->submission_deadline)
             return null;
         return now()->startOfDay()->diffInDays($this->submission_deadline->startOfDay(), false);
+    }
+
+    public function getActiveBidsCountAttribute(): int
+    {
+        return $this->bids()->count();
     }
 }

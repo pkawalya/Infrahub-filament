@@ -48,7 +48,7 @@ class DailySiteDiaryResource extends Resource
                 ->schema([
                     Forms\Components\Select::make('cde_project_id')
                         ->label('Project')
-                        ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                        ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                         ->searchable()
                         ->preload()
                         ->required()
@@ -96,6 +96,30 @@ class DailySiteDiaryResource extends Resource
                         ->rows(4)
                         ->columnSpanFull()
                         ->placeholder('Describe the work activities completed today...'),
+                    Forms\Components\Actions::make([
+                        Forms\Components\Actions\Action::make('ai_draft')
+                            ->label('✨ Draft with AI')
+                            ->icon('heroicon-o-sparkles')
+                            ->color('info')
+                            ->size('sm')
+                            ->action(function (Forms\Get $get, Forms\Set $set) {
+                                $ai = app(\App\Services\AiAssistantService::class);
+                                if (!$ai->isAvailable()) {
+                                    \Filament\Notifications\Notification::make()->warning()->title('AI not configured')->body('Add GEMINI_API_KEY to .env')->send();
+                                    return;
+                                }
+                                $activities = $get('work_performed') ?: 'General construction activities';
+                                $result = $ai->draftDiaryEntry([
+                                    'crew_count' => ($get('workers_on_site') ?? 0) + ($get('subcontractor_workers') ?? 0),
+                                    'weather'    => $get('weather') ?? 'clear',
+                                    'activities' => $activities,
+                                    'issues'     => $get('delays') ?? '',
+                                    'date'       => $get('diary_date') ?? now()->toDateString(),
+                                ]);
+                                $set('work_performed', $result);
+                                \Filament\Notifications\Notification::make()->success()->title('AI Draft Ready')->body('Review and edit the generated entry.')->send();
+                            }),
+                    ])->columnSpanFull(),
                     Forms\Components\Textarea::make('work_planned_tomorrow')
                         ->label('Work Planned for Tomorrow')
                         ->rows(3)
@@ -284,7 +308,7 @@ class DailySiteDiaryResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('cde_project_id')
                     ->label('Project')
-                    ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)),
+                    ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id)),
                 Tables\Filters\Filter::make('unapproved')
                     ->label('Pending Approval')
                     ->query(fn($q) => $q->whereNull('approved_by'))

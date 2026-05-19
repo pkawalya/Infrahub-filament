@@ -91,7 +91,7 @@ class SafetyIncidentResource extends Resource
                     ->disabled()->dehydrated(),
                 Forms\Components\TextInput::make('title')->required(),
                 Forms\Components\Select::make('cde_project_id')
-                    ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                    ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload()->label('Project'),
                 Forms\Components\Select::make('type')
                     ->options(['near_miss' => 'Near Miss', 'first_aid' => 'First Aid', 'medical' => 'Medical Treatment', 'lost_time' => 'Lost Time', 'fatality' => 'Fatality']),
@@ -135,12 +135,12 @@ class SafetyIncidentResource extends Resource
                                 ->placeholder('List all isolation points'),
                             Forms\Components\Select::make('ptw_issuer_id')
                                 ->label('Permit Issuer')
-                                ->relationship('ptwIssuer', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
+                                ->relationship('ptwIssuer', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id)->where('is_active', true))
                                 ->searchable()
                                 ->preload(),
                             Forms\Components\Select::make('ptw_receiver_id')
                                 ->label('Permit Receiver')
-                                ->relationship('ptwReceiver', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
+                                ->relationship('ptwReceiver', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id)->where('is_active', true))
                                 ->searchable()
                                 ->preload(),
                             Forms\Components\DateTimePicker::make('ptw_valid_from')

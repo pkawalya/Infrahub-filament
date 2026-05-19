@@ -62,13 +62,13 @@ class EquipmentAllocationResource extends Resource
                             ]))->id),
                         Forms\Components\Select::make('cde_project_id')
                             ->label('Assigned to Project')
-                            ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id))
+                            ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                             ->searchable()
                             ->preload()
                             ->nullable(),
                         Forms\Components\Select::make('operator_id')
                             ->label('Operator')
-                            ->relationship('operator', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)->where('is_active', true))
+                            ->relationship('operator', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id)->where('is_active', true))
                             ->searchable()
                             ->preload()
                             ->nullable(),
@@ -177,7 +177,7 @@ class EquipmentAllocationResource extends Resource
                     ]),
                 Tables\Filters\SelectFilter::make('cde_project_id')
                     ->label('Project')
-                    ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)),
+                    ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id)),
             ])
             ->recordActions([
                 Actions\EditAction::make(),

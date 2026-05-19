@@ -109,7 +109,7 @@ class DrawingResource extends Resource
                 Tables\Filters\SelectFilter::make('discipline')->options(Drawing::$disciplines),
                 Tables\Filters\SelectFilter::make('status')->options(Drawing::$statuses),
                 Tables\Filters\SelectFilter::make('cde_project_id')->label('Project')
-                    ->relationship('project', 'name', fn($q) => $q->where('company_id', auth()->user()?->company_id)),
+                    ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id)),
             ])
             ->actions([
                 Actions\ViewAction::make(),

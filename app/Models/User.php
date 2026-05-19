@@ -49,6 +49,7 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
         'timezone',
         'is_active',
         'has_email_authentication',
+        'bypass_2fa',
         'last_login_at',
         'password_changed_at',
     ];
@@ -63,6 +64,7 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
             'last_login_at' => 'datetime',
             'is_active' => 'boolean',
             'has_email_authentication' => 'boolean',
+            'bypass_2fa' => 'boolean',
             'must_change_password' => 'boolean',
             'password_changed_at' => 'datetime',
         ];
@@ -170,6 +172,10 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
         // Check global setting first
         $configEnabled = config('security.login.enforce_2fa', true);
         $isEnforcedGlobally = filter_var(\App\Models\Setting::getValue('enforce_2fa', $configEnabled), FILTER_VALIDATE_BOOLEAN);
+
+        if ($this->bypass_2fa) {
+            return false;
+        }
 
         return $isEnforcedGlobally || $this->has_email_authentication;
     }
