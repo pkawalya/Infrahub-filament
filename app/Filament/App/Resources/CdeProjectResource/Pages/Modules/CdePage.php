@@ -88,29 +88,13 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                     Forms\Components\FileUpload::make('file')
                         ->label('Select File')
                         ->directory(StoragePath::documents($this->record))
-                        ->maxSize(51200) // 50MB
-                        ->acceptedFileTypes([
-                            'application/pdf',
-                            'application/msword',
-                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                            'application/vnd.ms-excel',
-                            'application/vnd.ms-powerpoint',
-                            'image/jpeg',
-                            'image/png',
-                            'image/gif',
-                            'image/webp',
-                            'image/svg+xml',
-                            'application/zip',
-                            'application/x-rar-compressed',
-                            'text/plain',
-                            'text/csv',
-                            'application/dxf',
-                            'application/dwg',
-                            'image/vnd.dwg',
-                        ])
-                        ->required(),
+                        ->maxSize(102400) // 100MB
+                        ->required()
+                        ->validationAttribute('file')
+                        ->validationMessages([
+                            'required' => 'Please select a file to upload.',
+                            'max' => 'The file is too large. Maximum size is 100MB.',
+                        ]),
                     Forms\Components\TextInput::make('title')
                         ->required()->maxLength(255)
                         ->placeholder('Document title'),
@@ -360,24 +344,13 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                         ->label('Upload Document')
                         ->directory(StoragePath::projectCategory($this->record, 'submissions'))
                         ->disk('public')
-                        ->maxSize(51200) // 50MB
-                        ->acceptedFileTypes([
-                            'application/pdf',
-                            'application/msword',
-                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                            'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                            'application/vnd.ms-excel',
-                            'application/vnd.ms-powerpoint',
-                            'image/jpeg',
-                            'image/png',
-                            'image/gif',
-                            'image/webp',
-                            'application/zip',
-                            'text/plain',
-                            'text/csv',
-                        ])
-                        ->required(),
+                        ->maxSize(102400) // 100MB
+                        ->required()
+                        ->validationAttribute('document')
+                        ->validationMessages([
+                            'required' => 'Please select a document to upload.',
+                            'max' => 'The document is too large. Maximum size is 100MB.',
+                        ]),
                     Forms\Components\Textarea::make('review_notes')
                         ->label('Notes (optional)')
                         ->rows(2),

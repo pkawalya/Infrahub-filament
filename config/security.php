@@ -47,29 +47,8 @@ return [
 
     // ── File Upload Security ───────────────────────────────
     'uploads' => [
-        'max_file_size_mb' => 50,       // Maximum upload size
-        'allowed_extensions' => [
-            'pdf',
-            'doc',
-            'docx',
-            'xls',
-            'xlsx',
-            'csv',
-            'png',
-            'jpg',
-            'jpeg',
-            'gif',
-            'webp',
-            'svg',
-            'dwg',
-            'dxf',
-            'dwf',       // CAD files
-            'ifc',
-            'rvt',              // BIM files
-            'zip',
-            'rar',
-            '7z',        // Archives
-        ],
+        'max_file_size_mb' => 100,       // Maximum upload size
+        'allowed_extensions' => [], // Empty = allow all (only blocked_extensions are enforced)
         'blocked_extensions' => [
             'exe',
             'bat',
