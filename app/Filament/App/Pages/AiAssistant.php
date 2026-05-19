@@ -85,7 +85,7 @@ class AiAssistant extends Page
     }
 
     /**
-     * General-purpose chat with the AI.
+     * General-purpose chat with the AI — searches user's project data first.
      */
     public function askChat(): void
     {
@@ -102,11 +102,18 @@ class AiAssistant extends Page
             return;
         }
 
-        $context = 'You are InfraHub AI, an expert assistant for construction project management. '
-            . 'You help with project planning, safety, procurement, BOQ, contracts, and general construction questions. '
-            . 'Be concise, professional, and actionable. Format responses with clear headings and bullet points where appropriate.';
+        // ── Pull the user's real company data as context ──────────────────
+        $companyId = auth()->user()->company_id;
+        $dataContext = $this->gatherCompanyContext($companyId, $this->chatQuestion);
 
-        $this->chatAnswer = $ai->ask($this->chatQuestion, $context, 1200, 0.4);
+        $context = 'You are InfraHub AI, an intelligent assistant embedded in a construction project management platform. '
+            . 'You have access to the user\'s ACTUAL project data shown below. '
+            . 'ALWAYS answer based on this real data first. Only use general knowledge if the data doesn\'t cover the question. '
+            . 'When referencing data, cite specific project names, document titles, task names, or numbers. '
+            . 'Be concise, professional, and actionable. Format responses with clear headings and bullet points where appropriate.'
+            . "\n\n═══ USER'S COMPANY DATA ═══\n" . $dataContext;
+
+        $this->chatAnswer = $ai->ask($this->chatQuestion, $context, 2048, 0.3);
 
         $this->history[] = [
             'tool' => 'Chat',
@@ -115,6 +122,171 @@ class AiAssistant extends Page
         ];
 
         $this->chatLoading = false;
+    }
+
+    /**
+     * Gather relevant company data to inject as AI context.
+     * Queries projects, documents, tasks, tenders, BOQ, safety, and more.
+     */
+    protected function gatherCompanyContext(int $companyId, string $question): string
+    {
+        $sections = [];
+        $q = strtolower($question);
+
+        // ── Always include: Projects overview ──
+        $projects = \App\Models\CdeProject::where('company_id', $companyId)
+            ->select('id', 'name', 'status', 'start_date', 'end_date', 'budget', 'created_at')
+            ->latest()
+            ->limit(20)
+            ->get();
+
+        if ($projects->isNotEmpty()) {
+            $sections[] = "PROJECTS ({$projects->count()}):\n" . $projects->map(fn($p) =>
+                "• [{$p->id}] {$p->name} | Status: {$p->status} | Budget: " . number_format($p->budget ?? 0) .
+                " | Start: " . ($p->start_date ?? 'N/A') . " | End: " . ($p->end_date ?? 'N/A')
+            )->implode("\n");
+        }
+
+        // ── Documents (if question relates to docs/files/documents) ──
+        if ($this->questionRelatesTo($q, ['document', 'file', 'drawing', 'report', 'upload', 'cde', 'revision', 'transmittal', 'rfi'])) {
+            $docs = \App\Models\CdeDocument::where('company_id', $companyId)
+                ->select('id', 'title', 'document_number', 'discipline', 'status', 'revision', 'file_type', 'created_at')
+                ->latest()
+                ->limit(30)
+                ->get();
+
+            if ($docs->isNotEmpty()) {
+                $sections[] = "DOCUMENTS ({$docs->count()} recent):\n" . $docs->map(fn($d) =>
+                    "• [{$d->document_number}] {$d->title} | Discipline: {$d->discipline} | Status: {$d->status} | Rev: {$d->revision} | Type: {$d->file_type}"
+                )->implode("\n");
+            }
+        }
+
+        // ── Tasks ──
+        if ($this->questionRelatesTo($q, ['task', 'todo', 'progress', 'assign', 'deadline', 'workflow', 'milestone', 'schedule'])) {
+            $tasks = \App\Models\Task::whereHas('project', fn($pq) => $pq->where('company_id', $companyId))
+                ->select('id', 'title', 'status', 'priority', 'assignee_id', 'due_date', 'cde_project_id')
+                ->latest()
+                ->limit(30)
+                ->get();
+
+            if ($tasks->isNotEmpty()) {
+                $sections[] = "TASKS ({$tasks->count()} recent):\n" . $tasks->map(fn($t) =>
+                    "• {$t->title} | Status: {$t->status} | Priority: {$t->priority} | Due: " . ($t->due_date ?? 'N/A')
+                )->implode("\n");
+            }
+        }
+
+        // ── Tenders ──
+        if ($this->questionRelatesTo($q, ['tender', 'bid', 'procurement', 'rfp', 'rfq', 'quotation', 'award'])) {
+            $tenders = \App\Models\Tender::where('company_id', $companyId)
+                ->select('id', 'title', 'status', 'submission_deadline', 'estimated_value', 'created_at')
+                ->latest()
+                ->limit(20)
+                ->get();
+
+            if ($tenders->isNotEmpty()) {
+                $sections[] = "TENDERS ({$tenders->count()}):\n" . $tenders->map(fn($t) =>
+                    "• {$t->title} | Status: {$t->status} | Deadline: " . ($t->submission_deadline ?? 'N/A') .
+                    " | Est. Value: " . number_format($t->estimated_value ?? 0)
+                )->implode("\n");
+            }
+        }
+
+        // ── BOQ ──
+        if ($this->questionRelatesTo($q, ['boq', 'bill of quantities', 'cost', 'budget', 'expense', 'amount', 'payment', 'price'])) {
+            $boqs = \App\Models\Boq::whereHas('project', fn($pq) => $pq->where('company_id', $companyId))
+                ->with('items:id,boq_id,description,quantity,unit,unit_rate')
+                ->latest()
+                ->limit(5)
+                ->get();
+
+            if ($boqs->isNotEmpty()) {
+                $boqData = $boqs->map(function ($boq) {
+                    $itemsSummary = $boq->items->take(10)->map(function ($i) {
+                        $rate = number_format($i->unit_rate ?? 0);
+                        $total = number_format(($i->quantity ?? 0) * ($i->unit_rate ?? 0));
+                        return "  - {$i->description} | Qty: {$i->quantity} {$i->unit} × {$rate} = {$total}";
+                    })->implode("\n");
+                    $projectName = $boq->project->name ?? 'N/A';
+                    return "• BOQ #{$boq->id} (Project: {$projectName}):\n{$itemsSummary}";
+                })->implode("\n");
+
+                $sections[] = "BILLS OF QUANTITIES:\n{$boqData}";
+            }
+        }
+
+        // ── Safety / SHEQ ──
+        if ($this->questionRelatesTo($q, ['safety', 'incident', 'hazard', 'risk', 'sheq', 'inspection', 'accident', 'injury'])) {
+            $incidents = \App\Models\SafetyIncident::where('company_id', $companyId)
+                ->select('id', 'title', 'type', 'severity', 'status', 'location', 'created_at')
+                ->latest()
+                ->limit(20)
+                ->get();
+
+            if ($incidents->isNotEmpty()) {
+                $sections[] = "SAFETY INCIDENTS ({$incidents->count()}):\n" . $incidents->map(fn($i) =>
+                    "• {$i->title} | Type: {$i->type} | Severity: {$i->severity} | Status: {$i->status} | Location: " . ($i->location ?? 'N/A')
+                )->implode("\n");
+            }
+        }
+
+        // ── Contracts ──
+        if ($this->questionRelatesTo($q, ['contract', 'subcontract', 'agreement', 'vendor', 'supplier'])) {
+            $contracts = \App\Models\Contract::where('company_id', $companyId)
+                ->select('id', 'title', 'contract_number', 'type', 'original_value', 'status', 'start_date', 'end_date')
+                ->latest()
+                ->limit(15)
+                ->get();
+
+            if ($contracts->isNotEmpty()) {
+                $sections[] = "CONTRACTS ({$contracts->count()}):\n" . $contracts->map(fn($c) =>
+                    "• [{$c->contract_number}] {$c->title} | Type: {$c->type}" .
+                    " | Value: " . number_format($c->original_value ?? 0) . " | Status: {$c->status}"
+                )->implode("\n");
+            }
+        }
+
+        // ── Fallback: if no specific topic matched, include a broad summary ──
+        if (count($sections) <= 1) {
+            $docCount = \App\Models\CdeDocument::where('company_id', $companyId)->count();
+            $taskCount = \App\Models\Task::whereHas('project', fn($pq) => $pq->where('company_id', $companyId))->count();
+            $tenderCount = \App\Models\Tender::where('company_id', $companyId)->count();
+            $incidentCount = \App\Models\SafetyIncident::where('company_id', $companyId)->count();
+
+            $sections[] = "SUMMARY STATS:\n"
+                . "• Total Projects: {$projects->count()}\n"
+                . "• Total Documents: {$docCount}\n"
+                . "• Total Tasks: {$taskCount}\n"
+                . "• Total Tenders: {$tenderCount}\n"
+                . "• Total Safety Incidents: {$incidentCount}";
+
+            // Include recent activity across all types
+            $recentDocs = \App\Models\CdeDocument::where('company_id', $companyId)
+                ->select('title', 'document_number', 'status', 'created_at')
+                ->latest()->limit(10)->get();
+
+            if ($recentDocs->isNotEmpty()) {
+                $sections[] = "RECENT DOCUMENTS:\n" . $recentDocs->map(fn($d) =>
+                    "• [{$d->document_number}] {$d->title} | {$d->status} | {$d->created_at->diffForHumans()}"
+                )->implode("\n");
+            }
+        }
+
+        return implode("\n\n", $sections) ?: 'No project data found for this company.';
+    }
+
+    /**
+     * Check if the user's question relates to specific topics.
+     */
+    protected function questionRelatesTo(string $question, array $keywords): bool
+    {
+        foreach ($keywords as $keyword) {
+            if (str_contains($question, $keyword)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
