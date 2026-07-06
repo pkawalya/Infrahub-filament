@@ -54,13 +54,19 @@ Route::get('/offline', function () {
     return response()->file(public_path('offline.html'));
 });
 
-Route::get('/docs', function () {
-    return view('user-manual');
-})->middleware(['auth', 'admin'])->name('docs');
+Route::get('/login', function () {
+    return redirect()->route('filament.app.auth.login');
+})->name('login');
 
-Route::get('/specs', function () {
-    return view('docs');
-})->middleware(['auth', 'admin'])->name('specs');
+Route::get('/docs', function () {
+    $markdown = App\Models\Setting::getValue('user_manual_markdown');
+    if (empty($markdown)) {
+        $path = base_path('USER_MANUAL.md');
+        $markdown = file_exists($path) ? file_get_contents($path) : '# User Manual Missing';
+    }
+    $html = Illuminate\Support\Str::markdown($markdown);
+    return view('user-manual', ['content' => $html]);
+})->middleware(['auth'])->name('docs');
 
 // Company Onboarding
 Route::get('/get-started', [OnboardingController::class, 'show'])->name('onboarding');
