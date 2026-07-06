@@ -3,8 +3,12 @@
 namespace App\Filament\Admin\Pages;
 
 use App\Models\Setting;
+use App\Support\UserManualHelper;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\MarkdownEditor;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
@@ -26,21 +30,8 @@ class EditUserManual extends Page implements HasForms
 
     public function mount(): void
     {
-        $defaultMarkdown = '';
-        $path = base_path('USER_MANUAL.md');
-        if (file_exists($path)) {
-            $defaultMarkdown = file_get_contents($path);
-        }
-
-        $imagesValue = Setting::getValue('user_manual_images', []);
-        $images = is_string($imagesValue) ? json_decode($imagesValue, true) : $imagesValue;
-        if (!is_array($images)) {
-            $images = [];
-        }
-
         $this->form->fill([
-            'markdown' => Setting::getValue('user_manual_markdown', $defaultMarkdown),
-            'images' => $images,
+            'sections' => UserManualHelper::getSections(),
         ]);
     }
 
@@ -48,27 +39,50 @@ class EditUserManual extends Page implements HasForms
     {
         return $form
             ->schema([
-                Section::make('Edit Manual Content')
-                    ->description('Modify the end-user and site operations manual. Supports Markdown format.')
+                Section::make('Manage User Manual Sections')
+                    ->description('Organize the manual into distinct sections. For each section, provide a title, group, navigation icon, markdown content, and an optional screenshot.')
                     ->schema([
-                        MarkdownEditor::make('markdown')
-                            ->label('Manual (Markdown)')
-                            ->required()
+                        Repeater::make('sections')
+                            ->schema([
+                                Select::make('group')
+                                    ->label('Navigation Group')
+                                    ->options([
+                                        'Introduction' => 'Introduction',
+                                        'Operations' => 'Operations',
+                                        'Site & Resources' => 'Site & Resources',
+                                        'Commercial & Cost' => 'Commercial & Cost',
+                                        'Collaboration' => 'Collaboration',
+                                    ])
+                                    ->required()
+                                    ->columnSpan(1),
+                                TextInput::make('title')
+                                    ->label('Section Title')
+                                    ->placeholder('e.g. Project Schedule & Tasks')
+                                    ->required()
+                                    ->columnSpan(2),
+                                TextInput::make('icon')
+                                    ->label('Navigation Icon (Emoji)')
+                                    ->placeholder('e.g. 🧭, 📅, 📦')
+                                    ->required()
+                                    ->columnSpan(1),
+                                MarkdownEditor::make('content')
+                                    ->label('Content (Markdown)')
+                                    ->required()
+                                    ->columnSpanFull(),
+                                FileUpload::make('image_path')
+                                    ->label('Section Image (Optional)')
+                                    ->directory('manual-images')
+                                    ->visibility('public')
+                                    ->preserveFilenames()
+                                    ->image()
+                                    ->columnSpanFull()
+                                    ->helperText('Upload a screenshot/image for this section.'),
+                            ])
+                            ->columns(4)
+                            ->collapsible()
+                            ->cloneable()
+                            ->itemLabel(fn (array $state): ?string => ($state['title'] ?? null) ? ($state['icon'] ?? '') . ' ' . $state['title'] : 'New Section')
                             ->columnSpanFull(),
-                    ]),
-
-                Section::make('Upload & Manage Manual Images')
-                    ->description('Upload images to reference in the manual. After uploading, copy their URLs to embed in the markdown above.')
-                    ->schema([
-                        FileUpload::make('images')
-                            ->label('Images')
-                            ->multiple()
-                            ->directory('manual-images')
-                            ->visibility('public')
-                            ->preserveFilenames()
-                            ->reorderable()
-                            ->columnSpanFull()
-                            ->helperText('Allowed formats: png, jpg, jpeg, gif, svg. Max size: 5MB.'),
                     ]),
             ])
             ->statePath('data');
@@ -78,12 +92,11 @@ class EditUserManual extends Page implements HasForms
     {
         $state = $this->form->getState();
 
-        Setting::setValue('user_manual_markdown', $state['markdown'], 'manual');
-        Setting::setValue('user_manual_images', $state['images'] ?? [], 'manual');
+        Setting::setValue('user_manual_sections', $state['sections'] ?? [], 'manual');
 
         Notification::make()
             ->title('User Manual Saved')
-            ->body('Manual content and image references updated successfully.')
+            ->body('Manual sections and images updated successfully.')
             ->success()
             ->send();
     }

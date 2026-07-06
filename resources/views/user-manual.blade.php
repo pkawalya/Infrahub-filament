@@ -498,42 +498,18 @@
             </div>
 
             <nav class="sidebar-nav">
-                <div class="sidebar-group">
-                    <div class="sidebar-group-label">Introduction</div>
-                    <a href="#1-system-navigation--layout" class="sidebar-link active"><span class="icon">🧭</span> Navigation</a>
-                </div>
-
-                <div class="sidebar-group">
-                    <div class="sidebar-group-label">Operations</div>
-                    <a href="#project-schedule--tasks" class="sidebar-link"><span class="icon">📅</span> Schedule & Tasks</a>
-                    <a href="#work-order-management-core-fsm" class="sidebar-link"><span class="icon">🔧</span> Work Orders</a>
-                    <a href="#planning--progress-milestones" class="sidebar-link"><span class="icon">🚩</span> Milestones</a>
-                </div>
-
-                <div class="sidebar-group">
-                    <div class="sidebar-group-label">Site & Resources</div>
-                    <a href="#inventory--store-management" class="sidebar-link"><span class="icon">📦</span> Inventory</a>
-                    <a href="#sheq-safety-health-environment-quality--social" class="sidebar-link"><span class="icon">⚠️</span> SHEQ & Safety</a>
-                    <a href="#plant--equipment-management" class="sidebar-link"><span class="icon">🚜</span> Equipment</a>
-                    <a href="#field-operations-daily-site-logs" class="sidebar-link"><span class="icon">👷</span> Daily Site Diaries</a>
-                </div>
-
-                <div class="sidebar-group">
-                    <div class="sidebar-group-label">Commercial & Cost</div>
-                    <a href="#bill-of-quantities-boq" class="sidebar-link"><span class="icon">📊</span> BOQ</a>
-                    <a href="#financial-tracking-invoicing--expenses" class="sidebar-link"><span class="icon">💳</span> Financials</a>
-                    <a href="#cost--contract-management" class="sidebar-link"><span class="icon">📝</span> Contracts Manager</a>
-                    <a href="#subcontractor-management" class="sidebar-link"><span class="icon">🤝</span> Subcontractors</a>
-                    <a href="#tenders--bids" class="sidebar-link"><span class="icon">💸</span> Tenders & Bids</a>
-                </div>
-
-                <div class="sidebar-group">
-                    <div class="sidebar-group-label">Collaboration</div>
-                    <a href="#cde-common-data-environment-document-management" class="sidebar-link"><span class="icon">📁</span> Document CDE</a>
-                    <a href="#rfis--submittals" class="sidebar-link"><span class="icon">❓</span> RFIs & Submittals</a>
-                    <a href="#reporting-ai-analytics--exports" class="sidebar-link"><span class="icon">📈</span> AI Reports & Exports</a>
-                    <a href="#suggestion-box" class="sidebar-link"><span class="icon">📥</span> Suggestion Box</a>
-                </div>
+                @php $isFirst = true; @endphp
+                @foreach ($groupedSections as $groupName => $sections)
+                    <div class="sidebar-group">
+                        <div class="sidebar-group-label">{{ $groupName }}</div>
+                        @foreach ($sections as $section)
+                            <a href="#{{ $section['slug'] }}" class="sidebar-link {{ $isFirst ? 'active' : '' }}">
+                                <span class="icon">{{ $section['icon'] ?? '📄' }}</span> {{ $section['title'] }}
+                            </a>
+                            @php $isFirst = false; @endphp
+                        @endforeach
+                    </div>
+                @endforeach
             </nav>
 
             <div class="sidebar-footer">
@@ -556,7 +532,24 @@
 
             <!-- Content Area -->
             <article class="docs-content">
-                {!! $content !!}
+                @foreach ($groupedSections as $groupName => $sections)
+                    @foreach ($sections as $section)
+                        <section id="{{ $section['slug'] }}" class="manual-section mb-12">
+                            <h2 id="{{ $section['slug'] }}" class="flex items-center gap-2">
+                                <span class="text-2xl">{{ $section['icon'] ?? '' }}</span>
+                                {{ $section['title'] }}
+                            </h2>
+
+                            @if (!empty($section['image_path']))
+                                <img src="{{ App\Support\UserManualHelper::getImageUrl($section['image_path']) }}" alt="{{ $section['title'] }}" />
+                            @endif
+
+                            <div class="mt-4">
+                                {!! Illuminate\Support\Str::markdown($section['content'] ?? '') !!}
+                            </div>
+                        </section>
+                    @endforeach
+                @endforeach
             </article>
         </main>
     </div>
@@ -572,10 +565,12 @@
                 .replace(/\s/g, '-'); // Replace spaces with dashes
         }
 
-        // Apply slugs dynamically to markdown headers on load
+        // Apply slugs dynamically to markdown headers on load if they don't already have one
         document.querySelectorAll('.docs-content h1, .docs-content h2, .docs-content h3').forEach(header => {
-            const slug = slugify(header.textContent);
-            header.id = slug;
+            if (!header.id) {
+                const slug = slugify(header.textContent);
+                header.id = slug;
+            }
         });
 
         // ── Active Navigation Links Highlighter on Scroll ──

@@ -59,13 +59,8 @@ Route::get('/login', function () {
 })->name('login');
 
 Route::get('/docs', function () {
-    $markdown = App\Models\Setting::getValue('user_manual_markdown');
-    if (empty($markdown)) {
-        $path = base_path('USER_MANUAL.md');
-        $markdown = file_exists($path) ? file_get_contents($path) : '# User Manual Missing';
-    }
-    $html = Illuminate\Support\Str::markdown($markdown);
-    return view('user-manual', ['content' => $html]);
+    $groupedSections = App\Support\UserManualHelper::getGroupedSections();
+    return view('user-manual', ['groupedSections' => $groupedSections]);
 })->middleware(['auth'])->name('docs');
 
 // Company Onboarding
