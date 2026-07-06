@@ -569,7 +569,7 @@
                 .replace(/&/g, '') // Remove ampersands
                 .replace(/[^\w\s-]/g, '') // Remove other special characters
                 .trim()
-                .replace(/\s+/g, '-'); // Replace spaces/multiple spaces with dashes
+                .replace(/\s/g, '-'); // Replace spaces with dashes
         }
 
         // Apply slugs dynamically to markdown headers on load
