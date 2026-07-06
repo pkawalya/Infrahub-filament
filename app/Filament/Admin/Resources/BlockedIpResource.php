@@ -23,7 +23,7 @@ class BlockedIpResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Forms\Components\Section::make('Block Details')->schema([
+            \Filament\Schemas\Components\Section::make('Block Details')->schema([
                 Forms\Components\TextInput::make('ip_address')
                     ->label('IP Address')
                     ->required()
