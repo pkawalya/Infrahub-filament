@@ -55,7 +55,7 @@ Route::get('/offline', function () {
 });
 
 Route::get('/login', function () {
-    return redirect()->route('filament.app.auth.login');
+    return redirect('/app/login');
 })->name('login');
 
 Route::get('/docs', function () {

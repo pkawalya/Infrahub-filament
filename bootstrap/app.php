@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->statefulApi();
 
+        $middleware->redirectTo('/login');
+
         // ── Global Security ────────────────────────────────
         $middleware->append(\App\Http\Middleware\GeoAccessControl::class);
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
