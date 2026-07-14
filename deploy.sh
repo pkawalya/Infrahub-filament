@@ -8,7 +8,7 @@ set -e
 export COMPOSER_ALLOW_SUPERUSER=1
 
 APP_DIR="/var/www/infrahub.click"
-LOG_FILE="/var/log/infrahub-deploy.log"
+LOG_FILE="$APP_DIR/storage/logs/deploy.log"
 
 echo "========================================" >> "$LOG_FILE"
 echo "🚀 Deployment started at $(date)" >> "$LOG_FILE"
