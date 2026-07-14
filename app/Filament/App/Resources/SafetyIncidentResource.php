@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\SafetyIncidentResource\Pages;
 use App\Filament\Concerns\UIStandards;
 use App\Models\SafetyIncident;
+use App\Models\CdeActivityLog;
 use Filament\Actions;
 use Filament\Infolists;
 use Filament\Schemas;
@@ -210,6 +211,11 @@ class SafetyIncidentResource extends Resource
                     ->color(fn(string $state) => UIStandards::priorityColor($state)),
                 Tables\Columns\TextColumn::make('status')->badge()
                     ->color(fn(string $state) => UIStandards::statusColor($state)),
+                Tables\Columns\TextColumn::make('workflowInstance.currentStep.name')
+                    ->label('Workflow Step')
+                    ->placeholder('None')
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('project.name')->label('Project')->limit(UIStandards::LIMIT_PROJECT),
                 Tables\Columns\TextColumn::make('incident_date')->dateTime(UIStandards::DATETIME_FORMAT)->sortable(),
             ])
@@ -219,7 +225,70 @@ class SafetyIncidentResource extends Resource
                 Tables\Filters\SelectFilter::make('severity')
                     ->options(['low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'critical' => 'Critical']),
             ])
-            ->actions([Actions\ViewAction::make(), Actions\EditAction::make()])
+            ->actions([
+                Tables\Actions\Action::make('workflow_approve')
+                    ->label(fn($record) => $record->workflowInstance?->currentStep()?->name ?? 'Approve Step')
+                    ->icon('heroicon-o-shield-check')
+                    ->color('success')
+                    ->visible(fn($record) => 
+                        $record->workflowInstance && 
+                        $record->workflowInstance->status === 'pending' &&
+                        $record->workflowInstance->canUserApprove(auth()->user())
+                    )
+                    ->form([
+                        Forms\Components\Select::make('decision')
+                            ->options([
+                                'approved' => 'Approve',
+                                'rejected' => 'Reject',
+                            ])
+                            ->required(),
+                        Forms\Components\Textarea::make('comments')
+                            ->label('Comments')
+                            ->placeholder('Add comments...')
+                    ])
+                    ->action(function (array $data, SafetyIncident $record): void {
+                        $instance = $record->workflowInstance;
+                        $currentStep = $instance->currentStep();
+
+                        // Record log
+                        $instance->logs()->create([
+                            'workflow_step_id' => $currentStep->id,
+                            'performed_by' => auth()->id(),
+                            'action' => $data['decision'],
+                            'comments' => $data['comments'] ?? null,
+                        ]);
+
+                        if ($data['decision'] === 'approved') {
+                            $nextStepExists = $instance->template->steps()
+                                ->where('step_sequence', $instance->current_step_sequence + 1)
+                                ->exists();
+
+                            if ($nextStepExists) {
+                                $instance->increment('current_step_sequence');
+                            } else {
+                                $instance->update(['status' => 'approved']);
+                                $record->update(['status' => 'resolved']);
+                            }
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Step Approved')
+                                ->success()
+                                ->send();
+                        } else {
+                            $instance->update(['status' => 'rejected']);
+                            $record->update(['status' => 'reported']);
+
+                            \Filament\Notifications\Notification::make()
+                                ->title('Step Rejected')
+                                ->danger()
+                                ->send();
+                        }
+
+                        CdeActivityLog::record($record, 'status_changed', "Safety Incident {$record->incident_number} workflow step {$currentStep->name} processed: " . $data['decision']);
+                    }),
+                Actions\ViewAction::make(),
+                Actions\EditAction::make(),
+            ])
             ->bulkActions([Actions\DeleteBulkAction::make()])
             ->persistFiltersInSession()
             ->persistSearchInSession();

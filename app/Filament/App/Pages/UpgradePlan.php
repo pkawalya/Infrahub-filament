@@ -16,6 +16,7 @@ class UpgradePlan extends Page
     protected static ?string $title = 'Upgrade Your Plan';
     protected static ?string $slug = 'settings/upgrade';
     protected string $view = 'filament.app.pages.upgrade-plan';
+    protected static bool $shouldRegisterNavigation = false;
 
     // Livewire properties
     public int $extraUsers = 0;

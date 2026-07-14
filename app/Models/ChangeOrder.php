@@ -13,43 +13,21 @@ class ChangeOrder extends Model
 
     protected $fillable = [
         'company_id',
-        'cde_project_id',
         'contract_id',
-        'reference',
+        'co_number',
         'title',
         'description',
-        'reason',
-        'type',
         'status',
-        'priority',
-        'initiated_by',
-        'estimated_cost',
-        'approved_cost',
-        'cost_impact',
-        'time_impact_days',
-        'submitted_date',
-        'approved_date',
-        'implementation_date',
-        'submitted_by',
-        'reviewed_by',
+        'amount',
+        'time_extension_days',
+        'requested_by',
         'approved_by',
-        'approval_notes',
-        'rejection_reason',
-        'affected_boq_items',
-        'affected_tasks',
-        'attachments',
+        'approved_at',
     ];
 
     protected $casts = [
-        'estimated_cost' => 'decimal:2',
-        'approved_cost' => 'decimal:2',
-        'cost_impact' => 'decimal:2',
-        'submitted_date' => 'date',
-        'approved_date' => 'date',
-        'implementation_date' => 'date',
-        'affected_boq_items' => 'array',
-        'affected_tasks' => 'array',
-        'attachments' => 'array',
+        'amount' => 'decimal:2',
+        'approved_at' => 'datetime',
     ];
 
     public static array $types = [
@@ -75,21 +53,13 @@ class ChangeOrder extends Model
         'critical' => 'Critical',
     ];
 
-    public function project()
-    {
-        return $this->belongsTo(CdeProject::class, 'cde_project_id');
-    }
     public function contract()
     {
         return $this->belongsTo(Contract::class);
     }
-    public function submitter()
+    public function requester()
     {
-        return $this->belongsTo(User::class, 'submitted_by');
-    }
-    public function reviewer()
-    {
-        return $this->belongsTo(User::class, 'reviewed_by');
+        return $this->belongsTo(User::class, 'requested_by');
     }
     public function approver()
     {

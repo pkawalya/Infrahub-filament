@@ -13,7 +13,6 @@ class ProjectSuggestion extends Model
         'author_id',
         'is_anonymous',
         'category',
-        'priority',
         'content',
         'status',
         'admin_response',

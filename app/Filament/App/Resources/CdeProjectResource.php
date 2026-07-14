@@ -453,6 +453,7 @@ class CdeProjectResource extends Resource
                     $makeItem('financials', 'Financials', 'heroicon-o-banknotes', Modules\FinancialsPage::class),
                     $makeItem('cost_contracts', 'Contracts', 'heroicon-o-currency-dollar', Modules\CostContractsPage::class),
                     $makeItem('boq_management', 'BOQ', 'heroicon-o-calculator', Modules\BoqPage::class),
+                    $makeItem('bidding', 'Tenders & Bids', 'heroicon-o-trophy', Modules\BiddingPage::class),
                 ],
             ],
             'Information' => [
@@ -578,6 +579,7 @@ class CdeProjectResource extends Resource
             'module-reporting' => Modules\ReportingPage::route('/{record}/reports'),
             'module-equipment' => Modules\EquipmentPage::route('/{record}/equipment'),
             'module-subcontractors' => Modules\SubcontractorPage::route('/{record}/subcontractors'),
+            'module-bidding' => Modules\BiddingPage::route('/{record}/bidding'),
             'module-suggestion-box' => Modules\SuggestionBoxPage::route('/{record}/suggestions'),
         ];
     }

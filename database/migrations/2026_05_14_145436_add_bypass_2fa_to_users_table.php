@@ -11,9 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->boolean('bypass_2fa')->default(false);
-        });
+        if (!Schema::hasColumn('users', 'bypass_2fa')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->boolean('bypass_2fa')->default(false);
+            });
+        }
     }
 
     /**
@@ -21,8 +23,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn('bypass_2fa');
-        });
+        if (Schema::hasColumn('users', 'bypass_2fa')) {
+            Schema::table('users', function (Blueprint $table) {
+                $table->dropColumn('bypass_2fa');
+            });
+        }
     }
 };

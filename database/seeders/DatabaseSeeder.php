@@ -13,6 +13,9 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             SaasFoundationSeeder::class,
+            TestCompanySeeder::class,
+            TenderWorkflowSeeder::class,
+            RolesAndPermissionsSeeder::class,
         ]);
     }
 }

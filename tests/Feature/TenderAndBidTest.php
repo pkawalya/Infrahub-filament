@@ -9,6 +9,10 @@ use App\Models\TenderBid;
 use function Pest\Laravel\actingAs;
 use function Pest\Laravel\get;
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
+
+uses(RefreshDatabase::class);
+
 beforeEach(function () {
     $this->company = Company::firstOrCreate(
         ['slug' => 'acme-field-services'],

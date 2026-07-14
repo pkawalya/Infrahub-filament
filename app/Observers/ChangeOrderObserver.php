@@ -14,16 +14,20 @@ class ChangeOrderObserver
 
     public function created(ChangeOrder $co): void
     {
-        // Notify project team about new change order
+        // Derive project from the linked contract
+        $project = $co->contract?->primaryProject();
+        if (!$project) {
+            return;
+        }
+
         $this->notifications->notifyProjectTeam(
             'change-order-created',
-            $co->cde_project_id,
+            $project->id,
             [
-                'co_reference' => $co->reference,
+                'co_reference' => $co->co_number,
                 'co_title' => $co->title,
-                'co_type' => ChangeOrder::$types[$co->type] ?? $co->type,
-                'estimated_cost' => number_format($co->estimated_cost, 2),
-                'initiated_by' => $co->initiated_by ?? 'Unknown',
+                'amount' => number_format($co->amount ?? 0, 2),
+                'requested_by' => $co->requester?->name ?? 'Unknown',
             ],
             url("/app/change-orders/{$co->id}"),
             auth()->id(),
@@ -41,26 +45,25 @@ class ChangeOrderObserver
             };
 
             if ($slug) {
-                // Notify the submitter
-                $submitter = $co->submitted_by ? User::find($co->submitted_by) : null;
-                if ($submitter && $submitter->id !== auth()->id()) {
-                    $this->notifications->notifyUser($slug, $submitter, [
-                        'co_reference' => $co->reference,
+                // Notify the requester
+                $requester = $co->requested_by ? User::find($co->requested_by) : null;
+                if ($requester && $requester->id !== auth()->id()) {
+                    $this->notifications->notifyUser($slug, $requester, [
+                        'co_reference' => $co->co_number,
                         'co_title' => $co->title,
-                        'approved_cost' => $co->approved_cost ? number_format($co->approved_cost, 2) : 'N/A',
-                        'approval_notes' => $co->approval_notes ?? '',
-                        'rejection_reason' => $co->rejection_reason ?? '',
+                        'amount' => $co->amount ? number_format($co->amount, 2) : 'N/A',
                         'actioned_by' => auth()->user()?->name ?? 'System',
                     ], url("/app/change-orders/{$co->id}"));
                 }
 
                 // Notify company admins on approval
                 if ($co->status === 'approved' && $co->company_id) {
+                    $project = $co->contract?->primaryProject();
                     $this->notifications->notifyCompanyAdmins('change-order-approved', $co->company_id, [
-                        'co_reference' => $co->reference,
+                        'co_reference' => $co->co_number,
                         'co_title' => $co->title,
-                        'approved_cost' => number_format($co->approved_cost ?? $co->estimated_cost, 2),
-                        'project_name' => $co->project?->name ?? '',
+                        'amount' => number_format($co->amount ?? 0, 2),
+                        'project_name' => $project?->name ?? '',
                     ], url("/app/change-orders/{$co->id}"));
                 }
             }

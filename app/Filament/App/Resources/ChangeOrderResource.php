@@ -36,61 +36,38 @@ class ChangeOrderResource extends Resource
     {
         return $schema->schema([
             Section::make('Change Order Details')->schema([
-                Forms\Components\TextInput::make('reference')
+                Forms\Components\TextInput::make('co_number')->label('CO Number')
                     ->required()->maxLength(50)->unique(ignoreRecord: true)
                     ->default(fn() => 'CO-' . str_pad(
                         ChangeOrder::where('company_id', auth()->user()?->company_id)->count() + 1,
                         3, '0', STR_PAD_LEFT
                     )),
                 Forms\Components\TextInput::make('title')->required()->maxLength(255)->columnSpan(2),
-                Forms\Components\Select::make('cde_project_id')->label('Project')
-                    ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
-                    ->searchable()->preload()->required(),
                 Forms\Components\Select::make('contract_id')->label('Contract')
                     ->relationship('contract', 'title', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
-                    ->searchable()->preload(),
-                Forms\Components\Select::make('type')->options(ChangeOrder::$types)->default('addition')->required(),
-                Forms\Components\Select::make('priority')->options(ChangeOrder::$priorities)->default('medium')->required(),
-                Forms\Components\Select::make('initiated_by')->options([
-                    'contractor' => 'Contractor',
-                    'client' => 'Client',
-                    'consultant' => 'Consultant',
-                    'engineer' => 'Engineer',
-                ]),
+                    ->searchable()->preload()->required(),
                 Forms\Components\Select::make('status')->options(ChangeOrder::$statuses)->default('draft')->required(),
             ])->columns(3),
 
-            Section::make('Description & Justification')->schema([
+            Section::make('Description')->schema([
                 Forms\Components\RichEditor::make('description')->columnSpanFull(),
-                Forms\Components\Textarea::make('reason')->label('Reason for Change')->rows(3)->columnSpanFull(),
             ]),
 
             Section::make('Impact Assessment')->schema([
-                Forms\Components\TextInput::make('estimated_cost')->numeric()
+                Forms\Components\TextInput::make('amount')->numeric()
                     ->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix()),
-                Forms\Components\TextInput::make('approved_cost')->numeric()
-                    ->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix()),
-                Forms\Components\TextInput::make('cost_impact')->numeric()
-                    ->prefix(fn() => CurrencyHelper::prefix())->suffix(fn() => CurrencyHelper::suffix())
-                    ->helperText('Net impact on contract value (negative for omissions)'),
-                Forms\Components\TextInput::make('time_impact_days')->numeric()->suffix('days')
-                    ->helperText('Additional days needed (negative to reduce)'),
+                Forms\Components\TextInput::make('time_extension_days')->numeric()->suffix('days')
+                    ->helperText('Additional days needed'),
             ])->columns(2),
 
-            Section::make('Dates & Workflow')->schema([
-                Forms\Components\DatePicker::make('submitted_date'),
-                Forms\Components\DatePicker::make('approved_date'),
-                Forms\Components\DatePicker::make('implementation_date'),
-                Forms\Components\Select::make('submitted_by')
-                    ->relationship('submitter', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
-                    ->searchable()->preload(),
-                Forms\Components\Select::make('reviewed_by')
-                    ->relationship('reviewer', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
+            Section::make('People & Approval')->schema([
+                Forms\Components\Select::make('requested_by')
+                    ->relationship('requester', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload(),
                 Forms\Components\Select::make('approved_by')
                     ->relationship('approver', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload(),
-                Forms\Components\Textarea::make('approval_notes')->rows(2)->columnSpanFull(),
+                Forms\Components\DateTimePicker::make('approved_at'),
             ])->columns(3)->collapsed(),
 
             Forms\Components\Hidden::make('company_id')->default(fn() => auth()->user()?->company_id),
@@ -101,33 +78,22 @@ class ChangeOrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('reference')->searchable()->sortable()->weight('bold')->color('primary'),
+                Tables\Columns\TextColumn::make('co_number')->label('CO #')->searchable()->sortable()->weight('bold')->color('primary'),
                 Tables\Columns\TextColumn::make('title')->searchable()->limit(40),
-                Tables\Columns\TextColumn::make('project.name')->label('Project')->limit(20),
-                Tables\Columns\TextColumn::make('type')->badge()->color(fn(string $s) => match ($s) {
-                    'addition' => 'success', 'omission' => 'danger', 'time_extension' => 'info', default => 'warning'
-                }),
+                Tables\Columns\TextColumn::make('contract.title')->label('Contract')->limit(20),
                 Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $s) => match ($s) {
                     'draft' => 'gray', 'submitted' => 'info', 'under_review' => 'warning',
                     'approved' => 'success', 'rejected' => 'danger', 'implemented' => 'primary', default => 'gray'
                 }),
-                Tables\Columns\TextColumn::make('priority')->badge()->color(fn(string $s) => match ($s) {
-                    'critical' => 'danger', 'high' => 'warning', 'medium' => 'info', default => 'gray'
-                }),
-                Tables\Columns\TextColumn::make('estimated_cost')->formatStateUsing(CurrencyHelper::formatter())->sortable(),
-                Tables\Columns\TextColumn::make('cost_impact')->formatStateUsing(CurrencyHelper::formatter())
-                    ->color(fn($state) => $state > 0 ? 'danger' : ($state < 0 ? 'success' : 'gray')),
-                Tables\Columns\TextColumn::make('time_impact_days')->suffix(' days')->placeholder('—'),
-                Tables\Columns\TextColumn::make('submitted_date')->date('M d, Y')->sortable(),
+                Tables\Columns\TextColumn::make('amount')->formatStateUsing(CurrencyHelper::formatter())->sortable(),
+                Tables\Columns\TextColumn::make('time_extension_days')->suffix(' days')->placeholder('—'),
+                Tables\Columns\TextColumn::make('requester.name')->label('Requested By'),
+                Tables\Columns\TextColumn::make('approved_at')->date('M d, Y')->sortable()->placeholder('—'),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
                 Tables\Filters\SelectFilter::make('status')->options(ChangeOrder::$statuses),
-                Tables\Filters\SelectFilter::make('type')->options(ChangeOrder::$types),
-                Tables\Filters\SelectFilter::make('priority')->options(ChangeOrder::$priorities),
-                Tables\Filters\SelectFilter::make('cde_project_id')->label('Project')
-                    ->relationship('project', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id)),
             ])
             ->actions([
                 Actions\ViewAction::make(),
@@ -142,12 +108,9 @@ class ChangeOrderResource extends Resource
                     ])
                     ->action(function (ChangeOrder $record, array $data): void {
                         $record->update([
-                            'status'       => 'approved',
-                            'approved_cost' => $data['approved_cost'] ?? $record->estimated_cost,
-                            'cost_impact'   => $data['approved_cost'] ?? $record->estimated_cost,
-                            'approval_notes' => $data['approval_notes'] ?? null,
-                            'approved_by'   => auth()->id(),
-                            'approved_date' => now(),
+                            'status'      => 'approved',
+                            'approved_by' => auth()->id(),
+                            'approved_at' => now(),
                         ]);
                     }),
                 Actions\DeleteAction::make(),

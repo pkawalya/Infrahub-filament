@@ -613,6 +613,66 @@ php artisan db:seed --class=SaasFoundationSeeder
 
 > **Tip:** Log in as `admin@infrahub.io` on `/admin` to explore platform management, then switch to `admin@acme-fs.com` on `/app` to see the company experience.
 
+### Test Company (Full 18-Module Enterprise Seed)
+
+For comprehensive local testing with all 18 modules populated:
+
+```bash
+php artisan db:seed --class=TestCompanySeeder
+```
+
+This creates **Test Company Ltd** — a fully initialized enterprise company with 5 projects and realistic data across every module.
+
+#### Test Company Credentials
+
+| Email | Role | Password |
+|-------|------|----------|
+| `admin@test-company.com` | Company Admin | `password` |
+| `manager@test-company.com` | Manager | `password` |
+| `tech@test-company.com` | Technician | `password` |
+
+> All test users have **2FA bypassed** for faster local testing.
+
+#### Projects Created
+
+| Code | Name | Type | Status |
+|------|------|------|--------|
+| `TST-ROAD-01` | Kampala Northern Bypass Upgrade | Road | Active |
+| `TST-SOLAR-02` | Soroti Solar Power Station | Energy | Active |
+| `TST-BUILD-03` | Naguru Housing Complex | Building | Active |
+| `TST-WATER-04` | Gulu Water Treatment Plant | Water | Completed |
+| `TST-FIBER-05` | Jinja Fiber Backbone | Telecom | Planning |
+
+#### Module Coverage (18 Modules)
+
+| # | Module | Entities Seeded |
+|---|--------|----------------|
+| 1 | Core | Work Orders (5) |
+| 2 | CDE | RFIs (5), Submittals (5), Transmittals (5), Drawings (5) |
+| 3 | Field Management | Daily Site Logs (3), Daily Site Diaries (3) |
+| 4 | Task & Workflow | Tasks (15) |
+| 5 | Inventory | Products (2), Purchase Orders (5), Material Requisitions (5) |
+| 6 | Cost & Contracts | Contracts (5), Payments (5), Change Orders (5), Payment Certs (5) |
+| 7 | Planning & Progress | Milestones (10) |
+| 8 | BOQ Management | BOQs (5), BOQ Items (15) |
+| 9 | Plant & Equipment | Assets (2), Allocations (3), Fuel Logs (3) |
+| 10 | Labor & HR | Crew Attendance (1), Worker Certifications (1) |
+| 11 | Subcontractors | Subcontractors (1), Packages (1) |
+| 12 | Tender & Bidding | Tenders (3), Bids (4), Stages (6+6), Transitions |
+| 13 | SHEQ | Safety Incidents (5), Inspections (5), Snag Items (5) |
+| 14 | Reporting | Data-driven from other modules |
+| 15 | Suggestion Box | Suggestions (5) |
+| 16 | Financials | Invoices (5), Expenses (5) |
+| 17 | Assets | Assets (2) with depreciation and QR data |
+| 18 | Settings | All modules enabled via enterprise subscription |
+
+#### Key Features
+
+- **Idempotent** — uses `updateOrCreate` so you can run it repeatedly without duplicates
+- **Standalone** — does not depend on other seeders; can be run independently
+- **Realistic data** — Uganda-based construction companies, suppliers, and project types
+- **Shared entities** — Client (UNRA), Supplier (Hima Cement), Vendor (Kolin Construction), Warehouse (Main Site Store)
+
 ---
 
 ## User Roles & Permissions

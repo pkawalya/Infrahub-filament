@@ -4,12 +4,13 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\LogsActivity;
+use App\Models\Concerns\HasWorkflow;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Rfi extends Model
 {
-    use SoftDeletes, BelongsToCompany, LogsActivity;
+    use SoftDeletes, BelongsToCompany, LogsActivity, HasWorkflow;
 
     protected $fillable = [
         'company_id',

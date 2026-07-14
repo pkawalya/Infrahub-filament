@@ -312,6 +312,13 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
                         default => 'gray',
                     }),
 
+                Tables\Columns\TextColumn::make('workflowInstance.currentStep.name')
+                    ->label('Workflow Step')
+                    ->placeholder('None')
+                    ->badge()
+                    ->color('info')
+                    ->toggleable(),
+
                 Tables\Columns\TextColumn::make('assignee.name')->toggleable()
                     ->label('Assigned To')
                     ->placeholder('Unassigned'),
@@ -349,6 +356,69 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
                         ->modalContent(fn($record) => view('filament.app.pages.modules.partials.rfi-detail', ['rfi' => $record]))
                         ->modalSubmitAction(false)
                         ->modalCancelActionLabel('Close'),
+
+                    \Filament\Actions\Action::make('workflow_approve')
+                        ->label(fn($record) => $record->workflowInstance?->currentStep()?->name ?? 'Approve Step')
+                        ->icon('heroicon-o-shield-check')
+                        ->color('success')
+                        ->visible(fn($record) => 
+                            $record->workflowInstance && 
+                            $record->workflowInstance->status === 'pending' &&
+                            $record->workflowInstance->canUserApprove(auth()->user())
+                        )
+                        ->form([
+                            Forms\Components\Select::make('decision')
+                                ->options([
+                                    'approved' => 'Approve',
+                                    'rejected' => 'Reject',
+                                ])
+                                ->required(),
+                            Forms\Components\Textarea::make('comments')
+                                ->label('Comments')
+                                ->placeholder('Add comments...')
+                        ])
+                        ->action(function (array $data, Rfi $record): void {
+                            $instance = $record->workflowInstance;
+                            $currentStep = $instance->currentStep();
+
+                            // Record workflow log
+                            $instance->logs()->create([
+                                'workflow_step_id' => $currentStep->id,
+                                'performed_by' => auth()->id(),
+                                'action' => $data['decision'],
+                                'comments' => $data['comments'] ?? null,
+                            ]);
+
+                            if ($data['decision'] === 'approved') {
+                                // Find next step
+                                $nextStepExists = $instance->template->steps()
+                                    ->where('step_sequence', $instance->current_step_sequence + 1)
+                                    ->exists();
+
+                                if ($nextStepExists) {
+                                    $instance->increment('current_step_sequence');
+                                } else {
+                                    $instance->update(['status' => 'approved']);
+                                    $record->update(['status' => 'closed']);
+                                }
+
+                                Notification::make()
+                                    ->title('Step Approved')
+                                    ->success()
+                                    ->send();
+                            } else {
+                                // Rejected
+                                $instance->update(['status' => 'rejected']);
+                                $record->update(['status' => 'void']);
+
+                                Notification::make()
+                                    ->title('Step Rejected')
+                                    ->danger()
+                                    ->send();
+                            }
+
+                            CdeActivityLog::record($record, 'status_changed', "RFI {$record->rfi_number} workflow step {$currentStep->name} processed: " . $data['decision']);
+                        }),
 
                     \Filament\Actions\Action::make('answer_rfi')
                         ->label('Answer')

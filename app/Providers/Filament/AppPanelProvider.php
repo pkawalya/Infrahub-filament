@@ -90,6 +90,22 @@ class AppPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make(),
             ])
+            ->userMenuItems([
+                'manage-plan' => \Filament\Navigation\MenuItem::make()
+                    ->label(function () {
+                        $company = auth()->user()?->company;
+                        if (!$company?->subscription) return 'Manage Plan';
+                        $planName = $company->subscription->name;
+                        if ($company->subscription_expires_at?->isFuture()) {
+                            $days = (int) now()->diffInDays($company->subscription_expires_at);
+                            return "{$planName} · Renews in {$days}d";
+                        }
+                        return $planName;
+                    })
+                    ->icon('heroicon-o-arrow-trending-up')
+                    ->url(fn () => \App\Filament\App\Pages\UpgradePlan::getUrl())
+                    ->sort(1),
+            ])
             ->navigationGroups([
                 'Dashboard',
                 'Projects',
@@ -155,7 +171,7 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 \Filament\View\PanelsRenderHook::BODY_END,
-                fn() => \Illuminate\Support\Facades\Blade::render('@livewire(\'floating-suggestion-box\')'),
+                fn() => auth()->check() ? \Illuminate\Support\Facades\Blade::render('@livewire(\'floating-suggestion-box\')') : '',
             )
             ->viteTheme('resources/css/filament/app/theme.css');
     }

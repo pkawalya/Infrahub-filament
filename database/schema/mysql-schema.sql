@@ -2845,6 +2845,7 @@ CREATE TABLE `project_suggestions` (
   `author_id` bigint unsigned DEFAULT NULL,
   `is_anonymous` tinyint(1) NOT NULL DEFAULT '1',
   `category` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'general',
+  `priority` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'normal',
   `content` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `status` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'new',
   `admin_response` text COLLATE utf8mb4_unicode_ci,

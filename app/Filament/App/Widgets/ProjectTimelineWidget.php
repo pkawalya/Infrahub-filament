@@ -101,18 +101,28 @@ class ProjectTimelineWidget extends Widget
                 if ($project->status === 'completed') {
                     $varianceLabel = 'Complete';
                     $varianceColor = '#10b981';
+                    $varianceBg = 'rgba(16, 185, 129, 0.15)';
+                    $popoverVarianceLabel = 'Complete';
                 } elseif ($project->status === 'on_hold') {
                     $varianceLabel = 'On Hold';
                     $varianceColor = '#f59e0b';
-                } elseif (abs($variance) <= 5) {
-                    $varianceLabel = 'On Track';
-                    $varianceColor = '#10b981';
-                } elseif ($variance > 0) {
-                    $varianceLabel = abs($variance) . '% Ahead';
-                    $varianceColor = '#3b82f6';
-                } else {
+                    $varianceBg = 'rgba(245, 158, 11, 0.15)';
+                    $popoverVarianceLabel = 'On Hold';
+                } elseif ($variance < 0) {
                     $varianceLabel = abs($variance) . '% Behind';
                     $varianceColor = '#ef4444';
+                    $varianceBg = 'rgba(239, 68, 68, 0.15)';
+                    $popoverVarianceLabel = '▼ ' . abs($variance) . '% Behind';
+                } elseif ($variance > 5) {
+                    $varianceLabel = abs($variance) . '% Ahead';
+                    $varianceColor = '#3b82f6';
+                    $varianceBg = 'rgba(59, 130, 246, 0.15)';
+                    $popoverVarianceLabel = '▲ ' . abs($variance) . '% Ahead';
+                } else {
+                    $varianceLabel = 'On Track';
+                    $varianceColor = '#10b981';
+                    $varianceBg = 'rgba(16, 185, 129, 0.15)';
+                    $popoverVarianceLabel = '● On Track';
                 }
 
                 // Use eager-loaded milestones (no extra queries) — filter out any with null dates
@@ -151,6 +161,8 @@ class ProjectTimelineWidget extends Widget
                     'variance' => $variance,
                     'varianceLabel' => $varianceLabel,
                     'varianceColor' => $varianceColor,
+                    'varianceBg' => $varianceBg,
+                    'popoverVarianceLabel' => $popoverVarianceLabel,
                     'color' => $statusColors[$project->status] ?? '#6366f1',
                     'milestones' => $milestones,
                     'url' => route('filament.app.resources.cde-projects.view', $project),

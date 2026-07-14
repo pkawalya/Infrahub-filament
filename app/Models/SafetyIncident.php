@@ -5,12 +5,13 @@ namespace App\Models;
 use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\HasHashedRouteKey;
 use App\Models\Concerns\LogsActivity;
+use App\Models\Concerns\HasWorkflow;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SafetyIncident extends Model
 {
-    use BelongsToCompany, HasHashedRouteKey, LogsActivity, SoftDeletes;
+    use BelongsToCompany, HasHashedRouteKey, LogsActivity, SoftDeletes, HasWorkflow;
 
     protected $fillable = [
         'company_id',

@@ -167,8 +167,8 @@
                                             </span>
                                             @if(!$isDone && !$isCancelled)
                                                 <span class="text-[8px] font-bold px-1.5 py-0.5 rounded-md whitespace-nowrap"
-                                                    style="background: {{ $variance >= 0 ? 'rgba(5,150,105,0.15)' : 'rgba(220,38,38,0.15)' }};
-                                                           color: {{ $variance >= 0 ? '#059669' : '#dc2626' }};">
+                                                    style="background: {{ $project['varianceBg'] }};
+                                                           color: {{ $project['varianceColor'] }};">
                                                     {{ $project['varianceLabel'] }}
                                                 </span>
                                             @endif
@@ -204,11 +204,8 @@
                                                 <div class="flex justify-between items-center">
                                                     <span class="text-gray-500">Variance</span>
                                                     <span class="font-bold px-1.5 py-0.5 rounded-md text-[10px]"
-                                                        style="color: {{ $variance >= 0 ? '#059669' : '#dc2626' }}; background: {{ $variance >= 0 ? 'rgba(5,150,105,0.1)' : 'rgba(220,38,38,0.1)' }};">
-                                                        @if($variance > 0) ▲ {{ abs($variance) }}% Ahead
-                                                        @elseif($variance < 0) ▼ {{ abs($variance) }}% Behind
-                                                        @else ● On Track
-                                                        @endif
+                                                         style="color: {{ $project['varianceColor'] }}; background: {{ str_replace('0.15', '0.1', $project['varianceBg']) }};">
+                                                         {{ $project['popoverVarianceLabel'] }}
                                                     </span>
                                                 </div>
                                                 @if($mTotal > 0)
@@ -253,8 +250,8 @@
                                     @endif
                                     @if($expectedPct > 0 && $expectedPct < 100 && !$isDone && !$isCancelled && abs($variance) > 0)
                                         <span class="text-[9px] font-bold whitespace-nowrap px-1 rounded"
-                                            style="color: {{ $variance >= 0 ? '#059669' : '#dc2626' }}; background: {{ $variance >= 0 ? 'rgba(5,150,105,0.08)' : 'rgba(220,38,38,0.08)' }};">
-                                            {{ $expectedPct }}% time · {{ abs($variance) }}% {{ $variance >= 0 ? 'ahead' : 'behind' }}
+                                             style="color: {{ $project['varianceColor'] }}; background: {{ str_replace('0.15', '0.08', $project['varianceBg']) }};">
+                                             {{ $expectedPct }}% time · {{ abs($variance) }}% {{ $variance >= 0 ? 'ahead' : 'behind' }}
                                         </span>
                                     @endif
                                 </div>
