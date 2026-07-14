@@ -70,5 +70,31 @@ return Application::configure(basePath: dirname(__DIR__))
                 abort(422, $message);
             }
         });
+
+        // Global handler for other unhandled exceptions to prevent default Laravel screen
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            // Bypass AJAX, Livewire, and API requests to let their native/JSON handlers work
+            if ($request->expectsJson() || $request->hasHeader('X-Livewire') || $request->isXmlHttpRequest()) {
+                return null;
+            }
+
+            // Bypass redirects and validation/auth errors
+            if ($e instanceof \Illuminate\Validation\ValidationException ||
+                $e instanceof \Illuminate\Auth\AuthenticationException ||
+                $e instanceof \Illuminate\Http\Exceptions\HttpResponseException) {
+                return null;
+            }
+
+            // If it is an HTTP exception, render the specific error page if it exists
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                $status = $e->getStatusCode();
+                if (view()->exists("errors.{$status}")) {
+                    return response()->view("errors.{$status}", ['exception' => $e], $status);
+                }
+            }
+
+            // Default to custom 500 error page
+            return response()->view('errors.500', ['exception' => $e], 500);
+        });
     })->create();
 

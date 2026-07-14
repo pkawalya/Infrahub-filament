@@ -165,7 +165,7 @@ class CompanyRegistration extends BaseRegister
         ]);
 
         // Enable default modules
-        $defaultModules = ['core', 'cde', 'sheq', 'tasks'];
+        $defaultModules = ['core', 'cde', 'sheq', 'task_workflow', 'bidding'];
         foreach ($defaultModules as $code) {
             $company->enableModule($code);
         }

@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Str;
 use App\Models\Concerns\HasHashedRouteKey;
+use App\Models\TenderStage;
+use App\Models\TenderStageTransition;
+use App\Models\BidStage;
+use App\Models\BidStageTransition;
 
 class Company extends Model
 {
@@ -76,6 +80,9 @@ class Company extends Model
     {
         parent::boot();
         static::creating(fn($c) => $c->slug = $c->slug ?? Str::slug($c->name));
+        static::created(function ($company) {
+            $company->seedDefaultWorkflowStages();
+        });
     }
 
     // ─── Configurable Options ────────────────────────────────────
@@ -434,7 +441,7 @@ class Company extends Model
     }
 
     // ─── Actions ─────────────────────────────────────────────────
-    public function suspend(string $reason = null): void
+    public function suspend(?string $reason = null): void
     {
         $this->update(['is_active' => false, 'suspended_at' => now(), 'suspension_reason' => $reason]);
     }
@@ -551,5 +558,95 @@ class Company extends Model
         return $position === 'before'
             ? $symbol . $separator . $formatted
             : $formatted . $separator . $symbol;
+    }
+
+    /**
+     * Seed default workflow stages and transitions for Tenders and Bids.
+     */
+    public function seedDefaultWorkflowStages(): void
+    {
+        // 1. Seed Tender Stages
+        $tenderStages = [
+            ['name' => 'Draft',      'slug' => 'draft',      'color' => 'gray',    'icon' => 'heroicon-o-pencil-square', 'sort_order' => 1, 'is_default' => true],
+            ['name' => 'Published',  'slug' => 'published',  'color' => 'info',    'icon' => 'heroicon-o-megaphone',     'sort_order' => 2],
+            ['name' => 'Evaluation', 'slug' => 'evaluation', 'color' => 'warning', 'icon' => 'heroicon-o-clipboard-document-check', 'sort_order' => 3],
+            ['name' => 'Awarded',    'slug' => 'awarded',    'color' => 'success', 'icon' => 'heroicon-o-trophy',        'sort_order' => 4, 'is_terminal' => true],
+            ['name' => 'Closed',     'slug' => 'closed',     'color' => 'primary', 'icon' => 'heroicon-o-lock-closed',   'sort_order' => 5, 'is_terminal' => true],
+            ['name' => 'Cancelled',  'slug' => 'cancelled',  'color' => 'danger',  'icon' => 'heroicon-o-x-circle',      'sort_order' => 6, 'is_terminal' => true],
+        ];
+
+        $createdTender = [];
+        foreach ($tenderStages as $stage) {
+            $createdTender[$stage['slug']] = TenderStage::firstOrCreate(
+                ['company_id' => $this->id, 'slug' => $stage['slug']],
+                array_merge($stage, ['company_id' => $this->id, 'is_active' => true])
+            );
+        }
+
+        $tenderTransitions = [
+            'draft'      => ['published', 'cancelled'],
+            'published'  => ['evaluation', 'cancelled'],
+            'evaluation' => ['awarded', 'closed', 'cancelled'],
+            'awarded'    => ['closed'],
+            'closed'     => [],
+            'cancelled'  => [],
+        ];
+
+        foreach ($tenderTransitions as $from => $toList) {
+            foreach ($toList as $to) {
+                if (isset($createdTender[$from], $createdTender[$to])) {
+                    TenderStageTransition::firstOrCreate([
+                        'company_id'    => $this->id,
+                        'from_stage_id' => $createdTender[$from]->id,
+                        'to_stage_id'   => $createdTender[$to]->id,
+                    ], [
+                        'company_id'    => $this->id,
+                        'is_active'     => true,
+                    ]);
+                }
+            }
+        }
+
+        // 2. Seed Bid Stages
+        $bidStages = [
+            ['name' => 'Submitted',     'slug' => 'submitted',     'color' => 'info',    'icon' => 'heroicon-o-document-arrow-up', 'sort_order' => 1, 'is_default' => true],
+            ['name' => 'Under Review',  'slug' => 'under_review',  'color' => 'warning', 'icon' => 'heroicon-o-eye',               'sort_order' => 2],
+            ['name' => 'Shortlisted',   'slug' => 'shortlisted',   'color' => 'primary', 'icon' => 'heroicon-o-star',              'sort_order' => 3],
+            ['name' => 'Accepted',      'slug' => 'accepted',      'color' => 'success', 'icon' => 'heroicon-o-check-circle',      'sort_order' => 4, 'is_terminal' => true],
+            ['name' => 'Rejected',      'slug' => 'rejected',      'color' => 'danger',  'icon' => 'heroicon-o-x-circle',          'sort_order' => 5, 'is_terminal' => true],
+            ['name' => 'Disqualified',  'slug' => 'disqualified',  'color' => 'danger',  'icon' => 'heroicon-o-no-symbol',         'sort_order' => 6, 'is_terminal' => true],
+        ];
+
+        $createdBid = [];
+        foreach ($bidStages as $stage) {
+            $createdBid[$stage['slug']] = BidStage::firstOrCreate(
+                ['company_id' => $this->id, 'slug' => $stage['slug']],
+                array_merge($stage, ['company_id' => $this->id, 'is_active' => true])
+            );
+        }
+
+        $bidTransitions = [
+            'submitted'    => ['under_review', 'disqualified'],
+            'under_review' => ['shortlisted', 'rejected', 'disqualified'],
+            'shortlisted'  => ['accepted', 'rejected'],
+            'accepted'     => [],
+            'rejected'     => [],
+            'disqualified' => [],
+        ];
+
+        foreach ($bidTransitions as $from => $toList) {
+            foreach ($toList as $to) {
+                if (isset($createdBid[$from], $createdBid[$to])) {
+                    BidStageTransition::firstOrCreate([
+                        'company_id'    => $this->id,
+                        'from_stage_id' => $createdBid[$from]->id,
+                        'to_stage_id'   => $createdBid[$to]->id,
+                    ], [
+                        'company_id'    => $this->id,
+                        'is_active'     => true,
+                    ]);
+                }
+            }
+        }
     }
 }
