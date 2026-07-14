@@ -38,21 +38,6 @@ return new class extends Migration
                 }
             });
         }
-
-        if (Schema::hasTable('grn_items')) {
-            Schema::table('grn_items', function (Blueprint $table) {
-                if (!Schema::hasColumn('grn_items', 'purchase_order_item_id')) {
-                    $table->unsignedBigInteger('purchase_order_item_id')->nullable()->after('goods_received_note_id');
-                    $table->foreign('purchase_order_item_id')->references('id')->on('purchase_order_items')->nullOnDelete();
-                }
-                if (!Schema::hasColumn('grn_items', 'quantity_accepted')) {
-                    $table->decimal('quantity_accepted', 12, 2)->default(0.00)->after('quantity_received');
-                }
-                if (!Schema::hasColumn('grn_items', 'condition')) {
-                    $table->string('condition', 30)->default('good')->after('quantity_rejected');
-                }
-            });
-        }
     }
 
     /**
@@ -60,24 +45,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        if (Schema::hasTable('grn_items')) {
-            Schema::table('grn_items', function (Blueprint $table) {
-                $columns = ['condition', 'quantity_accepted', 'purchase_order_item_id'];
-                foreach ($columns as $col) {
-                    if (Schema::hasColumn('grn_items', $col)) {
-                        if ($col === 'purchase_order_item_id') {
-                            try {
-                                $table->dropForeign(['purchase_order_item_id']);
-                            } catch (\Exception $e) {
-                                // Ignore if constraint doesn't exist
-                            }
-                        }
-                        $table->dropColumn($col);
-                    }
-                }
-            });
-        }
-
         if (Schema::hasTable('goods_received_notes')) {
             Schema::table('goods_received_notes', function (Blueprint $table) {
                 $columns = ['invoice_reference', 'inspection_passed', 'inspector_id', 'driver_name', 'vehicle_plate', 'carrier_name', 'delivery_date'];
