@@ -67,7 +67,7 @@ class ClientInvoiceResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('invoice_number')->searchable()->weight('bold')->color('primary'),
                 Tables\Columns\TextColumn::make('cdeProject.name')->label('Project')->limit(20),
-                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $s) => match ($s) {
+                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $state) => match ($state) {
                     'sent' => 'info', 'partially_paid' => 'warning', 'paid' => 'success', 'overdue' => 'danger', default => 'gray'
                 }),
                 Tables\Columns\TextColumn::make('total_amount')->formatStateUsing(CurrencyHelper::formatter())->weight('bold'),

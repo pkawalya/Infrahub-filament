@@ -638,7 +638,7 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('type')->badge()->color('info')->toggleable()
                     ->formatStateUsing(fn($state) => InspectionTemplate::$types[$state] ?? $state),
                 Tables\Columns\TextColumn::make('status')->badge()->toggleable()
-                    ->color(fn(string $s) => match ($s) { 'completed' => 'success', 'in_progress' => 'warning', default => 'info'})->sortable(),
+                    ->color(fn(string $state) => match ($state) { 'completed' => 'success', 'in_progress' => 'warning', default => 'info'})->sortable(),
                 Tables\Columns\TextColumn::make('score')->label('Score')->placeholder('—')->sortable()->toggleable()
                     ->color(fn($state) => $state >= 80 ? 'success' : ($state >= 50 ? 'warning' : 'danger')),
                 Tables\Columns\TextColumn::make('scheduled_date')->dateTime('M d, Y')->sortable()->toggleable(),
@@ -723,9 +723,9 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('category')->badge()->color('info')->toggleable()
                     ->formatStateUsing(fn($state) => SnagItem::$categories[$state] ?? $state),
                 Tables\Columns\TextColumn::make('severity')->badge()->toggleable()
-                    ->color(fn(string $s) => match ($s) { 'critical' => 'danger', 'major' => 'warning', default => 'gray'})->sortable(),
+                    ->color(fn(string $state) => match ($state) { 'critical' => 'danger', 'major' => 'warning', default => 'gray'})->sortable(),
                 Tables\Columns\TextColumn::make('status')->badge()->toggleable()
-                    ->color(fn(string $s) => match ($s) { 'open' => 'danger', 'in_progress' => 'info', 'resolved' => 'success', 'verified' => 'success', 'closed' => 'gray', default => 'gray'})->sortable(),
+                    ->color(fn(string $state) => match ($state) { 'open' => 'danger', 'in_progress' => 'info', 'resolved' => 'success', 'verified' => 'success', 'closed' => 'gray', default => 'gray'})->sortable(),
                 Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('due_date')->date('M d, Y')->sortable()->toggleable()
                     ->color(fn(SnagItem $r) => $r->due_date?->isPast() && !in_array($r->status, ['resolved', 'verified', 'closed']) ? 'danger' : null)
@@ -830,9 +830,9 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('category')->badge()->color('info')->toggleable()
                     ->formatStateUsing(fn($state) => SocialRecord::$categories[$state] ?? $state),
                 Tables\Columns\TextColumn::make('priority')->badge()->toggleable()
-                    ->color(fn(string $s) => match ($s) { 'urgent' => 'danger', 'high' => 'warning', 'normal' => 'info', default => 'gray'})->sortable(),
+                    ->color(fn(string $state) => match ($state) { 'urgent' => 'danger', 'high' => 'warning', 'normal' => 'info', default => 'gray'})->sortable(),
                 Tables\Columns\TextColumn::make('status')->badge()->toggleable()
-                    ->color(fn(string $s) => match ($s) { 'open' => 'danger', 'in_progress' => 'warning', 'resolved' => 'success', 'closed' => 'gray', default => 'gray'})->sortable(),
+                    ->color(fn(string $state) => match ($state) { 'open' => 'danger', 'in_progress' => 'warning', 'resolved' => 'success', 'closed' => 'gray', default => 'gray'})->sortable(),
                 Tables\Columns\TextColumn::make('affected_party')->label('Affected Party')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('record_date')->date('M d, Y')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('—')->toggleable(),

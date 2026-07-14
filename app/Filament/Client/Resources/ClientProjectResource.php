@@ -66,7 +66,7 @@ class ClientProjectResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')->searchable()->sortable()->weight('bold'),
                 Tables\Columns\TextColumn::make('project_code')->badge()->color('primary'),
-                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $s) => match ($s) {
+                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $state) => match ($state) {
                     'active' => 'success', 'completed' => 'info', 'on_hold' => 'warning', default => 'gray'
                 }),
                 Tables\Columns\TextColumn::make('start_date')->date('M d, Y'),

@@ -89,15 +89,15 @@ class DrawingResource extends Resource
                 Tables\Columns\TextColumn::make('drawing_number')->searchable()->sortable()->weight('bold')->color('primary'),
                 Tables\Columns\TextColumn::make('title')->searchable()->limit(35),
                 Tables\Columns\TextColumn::make('project.name')->label('Project')->limit(20),
-                Tables\Columns\TextColumn::make('discipline')->badge()->color(fn(string $s) => match ($s) {
+                Tables\Columns\TextColumn::make('discipline')->badge()->color(fn(string $state) => match ($state) {
                     'architectural' => 'primary', 'structural' => 'danger', 'mechanical' => 'warning',
                     'electrical' => 'info', 'civil' => 'success', default => 'gray'
                 }),
                 Tables\Columns\TextColumn::make('current_revision')->badge()->color('warning')->label('Rev'),
-                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $s) => match ($s) {
+                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $state) => match ($state) {
                     'wip' => 'gray', 'for_review' => 'warning', 'approved' => 'success',
                     'ifc' => 'primary', 'as_built' => 'info', 'superseded' => 'danger', default => 'gray'
-                })->formatStateUsing(fn(string $s) => Drawing::$statuses[$s] ?? $s),
+                })->formatStateUsing(fn(string $state) => Drawing::$statuses[$state] ?? $state),
                 Tables\Columns\TextColumn::make('suitability_code')->badge()->color('info')->placeholder('—'),
                 Tables\Columns\TextColumn::make('sheet_size')->placeholder('—'),
                 Tables\Columns\TextColumn::make('drawnByUser.name')->label('Drawn By')->limit(15)->placeholder('—'),

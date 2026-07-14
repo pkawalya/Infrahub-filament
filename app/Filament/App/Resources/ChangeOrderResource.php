@@ -81,7 +81,7 @@ class ChangeOrderResource extends Resource
                 Tables\Columns\TextColumn::make('co_number')->label('CO #')->searchable()->sortable()->weight('bold')->color('primary'),
                 Tables\Columns\TextColumn::make('title')->searchable()->limit(40),
                 Tables\Columns\TextColumn::make('contract.title')->label('Contract')->limit(20),
-                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $s) => match ($s) {
+                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $state) => match ($state) {
                     'draft' => 'gray', 'submitted' => 'info', 'under_review' => 'warning',
                     'approved' => 'success', 'rejected' => 'danger', 'implemented' => 'primary', default => 'gray'
                 }),

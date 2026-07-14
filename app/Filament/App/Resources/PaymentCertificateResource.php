@@ -105,10 +105,10 @@ class PaymentCertificateResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('certificate_number')->searchable()->sortable()->weight('bold')->color('primary'),
                 Tables\Columns\TextColumn::make('project.name')->label('Project')->limit(20),
-                Tables\Columns\TextColumn::make('type')->badge()->color(fn(string $s) => match ($s) {
+                Tables\Columns\TextColumn::make('type')->badge()->color(fn(string $state) => match ($state) {
                     'interim' => 'info', 'final' => 'success', 'retention_release' => 'warning', 'advance' => 'primary', default => 'gray'
-                })->formatStateUsing(fn(string $s) => PaymentCertificate::$types[$s] ?? $s),
-                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $s) => match ($s) {
+                })->formatStateUsing(fn(string $state) => PaymentCertificate::$types[$state] ?? $state),
+                Tables\Columns\TextColumn::make('status')->badge()->color(fn(string $state) => match ($state) {
                     'draft' => 'gray', 'submitted' => 'info', 'certified' => 'success', 'paid' => 'primary', 'rejected' => 'danger', default => 'gray'
                 }),
                 Tables\Columns\TextColumn::make('period_from')->date('M d')->label('From'),

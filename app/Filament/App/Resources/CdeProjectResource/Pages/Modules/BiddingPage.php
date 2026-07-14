@@ -145,7 +145,7 @@ class BiddingPage extends BaseModulePage implements HasTable
                 Tables\Columns\TextColumn::make('stage.name')->label('Stage')->badge()
                     ->color(fn ($record) => $record->stage?->color ?? 'gray'),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn (string $s) => match ($s) {
+                    ->color(fn (string $state) => match ($state) {
                         'identified' => 'gray', 'preparing' => 'info', 'submitted' => 'warning',
                         'shortlisted' => 'primary', 'awarded' => 'success', 'lost' => 'danger',
                         'withdrawn' => 'gray', default => 'gray'
