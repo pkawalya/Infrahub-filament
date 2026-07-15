@@ -312,11 +312,12 @@ class RfiSubmittalPage extends BaseModulePage implements HasTable, HasForms
                         default => 'gray',
                     }),
 
-                Tables\Columns\TextColumn::make('workflowInstance.currentStep.name')
+                Tables\Columns\TextColumn::make('workflow_step_name')
                     ->label('Workflow Step')
                     ->placeholder('None')
                     ->badge()
                     ->color('info')
+                    ->state(fn ($record) => $record->workflowInstance?->currentStep()?->name)
                     ->toggleable(),
 
                 Tables\Columns\TextColumn::make('assignee.name')->toggleable()

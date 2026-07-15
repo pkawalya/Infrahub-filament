@@ -211,11 +211,12 @@ class SafetyIncidentResource extends Resource
                     ->color(fn(string $state) => UIStandards::priorityColor($state)),
                 Tables\Columns\TextColumn::make('status')->badge()
                     ->color(fn(string $state) => UIStandards::statusColor($state)),
-                Tables\Columns\TextColumn::make('workflowInstance.currentStep.name')
+                Tables\Columns\TextColumn::make('workflow_step_name')
                     ->label('Workflow Step')
                     ->placeholder('None')
                     ->badge()
-                    ->color('info'),
+                    ->color('info')
+                    ->state(fn ($record) => $record->workflowInstance?->currentStep()?->name),
                 Tables\Columns\TextColumn::make('project.name')->label('Project')->limit(UIStandards::LIMIT_PROJECT),
                 Tables\Columns\TextColumn::make('incident_date')->dateTime(UIStandards::DATETIME_FORMAT)->sortable(),
             ])
@@ -226,7 +227,7 @@ class SafetyIncidentResource extends Resource
                     ->options(['low' => 'Low', 'medium' => 'Medium', 'high' => 'High', 'critical' => 'Critical']),
             ])
             ->actions([
-                Tables\Actions\Action::make('workflow_approve')
+                Actions\Action::make('workflow_approve')
                     ->label(fn($record) => $record->workflowInstance?->currentStep()?->name ?? 'Approve Step')
                     ->icon('heroicon-o-shield-check')
                     ->color('success')
