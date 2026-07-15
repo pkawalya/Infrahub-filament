@@ -187,7 +187,7 @@ class EquipmentPage extends BaseModulePage implements HasTable
                 Tables\Columns\TextColumn::make('end_date')->date('M d')->placeholder('Ongoing'),
                 Tables\Columns\TextColumn::make('daily_rate')->formatStateUsing(CurrencyHelper::formatter())->placeholder('—'),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $st) => match ($st) { 'active' => 'success', 'completed' => 'info', default => 'gray'}),
+                    ->color(fn(string $state) => match ($state) { 'active' => 'success', 'completed' => 'info', default => 'gray'}),
             ])
             ->defaultSort('start_date', 'desc')
             ->recordActions([

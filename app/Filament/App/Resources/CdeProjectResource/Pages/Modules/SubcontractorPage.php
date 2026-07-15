@@ -141,7 +141,7 @@ class SubcontractorPage extends BaseModulePage implements HasTable
                     ->formatStateUsing(fn(int $state) => $state . '%')
                     ->color(fn(int $state) => $state >= 80 ? 'success' : ($state >= 40 ? 'info' : 'warning')),
                 Tables\Columns\TextColumn::make('status')->badge()
-                    ->color(fn(string $st) => match ($st) {
+                    ->color(fn(string $state) => match ($state) {
                         'draft' => 'gray', 'awarded' => 'info', 'in_progress' => 'warning',
                         'completed' => 'success', 'terminated' => 'danger', default => 'gray',
                     }),
