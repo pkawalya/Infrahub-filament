@@ -211,9 +211,21 @@ class ProjectDocument extends Model
         return true;
     }
 
-    /**
-     * Check if document can be edited by user.
-     */
+    public function canBeModifiedBy(?User $user = null): bool
+    {
+        $user = $user ?? auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin() || $user->isCompanyAdmin()) {
+            return true;
+        }
+
+        return (int) $this->created_by === (int) $user->id;
+    }
+
     public function canEdit(?int $userId = null): bool
     {
         $userId = $userId ?? auth()->id();
@@ -222,14 +234,12 @@ class ProjectDocument extends Model
             return true;
         }
 
-        // Check if user is the one who locked it
         if ($this->locked_by === $userId) {
             return true;
         }
 
-        // Super admins can always edit
         $user = User::find($userId);
-        if ($user && method_exists($user, 'hasRole') && $user->hasRole('super_admin')) {
+        if ($user && $user->isSuperAdmin()) {
             return true;
         }
 

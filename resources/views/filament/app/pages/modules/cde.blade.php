@@ -723,28 +723,50 @@
         @if($subfolders->isNotEmpty())
             <div class="cde-grid" :class="viewMode === 'list' ? 'list-mode' : ''">
                 @foreach($subfolders as $sf)
-                    <button wire:click="navigateToFolder({{ $sf->id }})" class="cde-item">
-                        <div class="cde-ficon cde-ficon-yellow">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path
-                                    d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15zM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z" />
-                            </svg>
-                        </div>
-                        <div class="cde-item-info">
-                            <div class="cde-item-name" title="{{ $sf->name }}">{{ $sf->name }}</div>
-                            <div class="cde-item-meta">
-                                @if($sf->suitability_code)
-                                    <span class="cde-item-badge">{{ $sf->suitability_code }}</span>
-                                @endif
-                                <span>{{ $sf->documents()->count() }} items</span>
+                    @php $canModify = $sf->canBeModifiedBy(); @endphp
+                    <div x-data="{ showActions: false }" class="cde-item"
+                         @mouseenter="showActions = true" @mouseleave="showActions = false"
+                         style="cursor:default;position:relative;">
+                        <button wire:click="navigateToFolder({{ $sf->id }})"
+                                style="display:flex;align-items:center;gap:12px;flex:1;background:none;border:none;padding:0;text-align:left;cursor:pointer;">
+                            <div class="cde-ficon cde-ficon-yellow">
+                                <svg viewBox="0 0 24 24" fill="currentColor">
+                                    <path
+                                        d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15zM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z" />
+                                </svg>
                             </div>
-                        </div>
-                        {{-- Arrow indicator --}}
+                            <div class="cde-item-info">
+                                <div class="cde-item-name" title="{{ $sf->name }}">{{ $sf->name }}</div>
+                                <div class="cde-item-meta">
+                                    @if($sf->suitability_code)
+                                        <span class="cde-item-badge">{{ $sf->suitability_code }}</span>
+                                    @endif
+                                    <span>{{ $sf->documents()->count() }} items</span>
+                                </div>
+                            </div>
+                        </button>
+
+                        @if($canModify)
+                            <div x-show="showActions" x-cloak
+                                 style="display:flex;gap:4px;flex-shrink:0;margin-left:8px;">
+                                <button x-data
+                                        @click="() => { const name = prompt('New folder name:', '{{ $sf->name }}'); if (name && name.trim()) { $wire.renameFolder({{ $sf->id }}, name.trim()); } }"
+                                        style="background:none;border:1px solid var(--cde-border);border-radius:5px;padding:4px 8px;cursor:pointer;color:var(--cde-accent);font-size:11px;font-weight:600;">
+                                    Rename
+                                </button>
+                                <button wire:click="deleteFolder({{ $sf->id }})"
+                                        wire:confirm="Delete &quot;{{ $sf->name }}&quot;? This cannot be undone."
+                                        style="background:none;border:1px solid #fecaca;border-radius:5px;padding:4px 8px;cursor:pointer;color:#ef4444;font-size:11px;font-weight:600;">
+                                    Delete
+                                </button>
+                            </div>
+                        @endif
+
                         <svg style="width:16px;height:16px;color:var(--cde-subtle);flex-shrink:0;" fill="none" viewBox="0 0 24 24"
                             stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                         </svg>
-                    </button>
+                    </div>
                 @endforeach
             </div>
         @endif

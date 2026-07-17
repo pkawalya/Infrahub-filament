@@ -90,6 +90,7 @@ class DocumentController extends BaseApiController
     {
         $this->authorizeProject($request, $project);
         $this->authorizeDocument($project, $document);
+        $this->authorizeCreatorOrAdmin($request, $document);
 
         $data = $request->validate([
             'title' => 'sometimes|string|max:255',
@@ -112,6 +113,7 @@ class DocumentController extends BaseApiController
     {
         $this->authorizeProject($request, $project);
         $this->authorizeDocument($project, $document);
+        $this->authorizeCreatorOrAdmin($request, $document);
 
         $document->delete();
 
@@ -236,6 +238,19 @@ class DocumentController extends BaseApiController
     {
         if ($document->cde_project_id !== $project->id) {
             abort(404, 'Document not found in this project.');
+        }
+    }
+
+    private function authorizeCreatorOrAdmin(Request $request, CdeDocument $document): void
+    {
+        $user = $request->user();
+
+        if ($user->isSuperAdmin() || $user->isCompanyAdmin()) {
+            return;
+        }
+
+        if ((int) $document->uploaded_by !== (int) $user->id) {
+            abort(403, 'Only the document creator or a company admin can modify this document.');
         }
     }
 }

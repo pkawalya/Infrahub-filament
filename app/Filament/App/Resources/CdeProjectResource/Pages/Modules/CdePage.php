@@ -187,6 +187,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                         'parent_id' => $this->currentFolderId,
                         'name' => $data['name'],
                         'suitability_code' => $data['suitability_code'] ?? null,
+                        'created_by' => auth()->id(),
                     ]);
 
                     Notification::make()->title('Folder created')->success()->send();
@@ -363,6 +364,41 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 })
                 ->hidden(),
         ];
+    }
+
+    public function renameFolder(int $folderId, string $name): void
+    {
+        $folder = CdeFolder::findOrFail($folderId);
+
+        if (!$folder->canBeModifiedBy()) {
+            Notification::make()->title('You do not have permission to rename this folder.')->danger()->send();
+            return;
+        }
+
+        $folder->update(['name' => $name]);
+        $this->updateFolderPath();
+        Notification::make()->title('Folder renamed')->success()->send();
+    }
+
+    public function deleteFolder(int $folderId): void
+    {
+        $folder = CdeFolder::findOrFail($folderId);
+
+        if (!$folder->canBeModifiedBy()) {
+            Notification::make()->title('You do not have permission to delete this folder.')->danger()->send();
+            return;
+        }
+
+        if ($folder->documents()->exists() || $folder->children()->exists()) {
+            Notification::make()->title('Cannot delete folder')
+                ->body('This folder contains documents or subfolders. Please move or delete them first.')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        $folder->delete();
+        Notification::make()->title('Folder deleted')->success()->send();
     }
 
     // ── Folder navigation ─────────────────────────────────────────────
@@ -1058,6 +1094,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                     \Filament\Actions\Action::make('editMeta')
                         ->label('Edit')
                         ->icon('heroicon-o-pencil')
+                        ->visible(fn(CdeDocument $record) => $record->canBeModifiedBy())
                         ->schema([
                             Forms\Components\TextInput::make('title')->required(),
                             Forms\Components\TextInput::make('document_number')->required(),
@@ -1180,6 +1217,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                         ->icon('heroicon-o-trash')
                         ->color('danger')
                         ->requiresConfirmation()
+                        ->visible(fn(CdeDocument $record) => $record->canBeModifiedBy())
                         ->action(function (CdeDocument $record): void {
                             if ($record->file_path && Storage::disk('public')->exists($record->file_path)) {
                                 Storage::disk('public')->delete($record->file_path);

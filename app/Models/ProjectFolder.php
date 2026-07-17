@@ -81,6 +81,21 @@ class ProjectFolder extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function canBeModifiedBy(?User $user = null): bool
+    {
+        $user = $user ?? auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin() || $user->isCompanyAdmin()) {
+            return true;
+        }
+
+        return (int) $this->created_by === (int) $user->id;
+    }
+
     /**
      * Get the breadcrumb path for this folder.
      */

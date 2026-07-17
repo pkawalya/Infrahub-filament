@@ -148,6 +148,7 @@ class FoldersRelationManager extends RelationManager
                 ViewAction::make()
                     ->closeModalByClickingAway(false),
                 EditAction::make()
+                    ->visible(fn(ProjectFolder $record) => $record->canBeModifiedBy())
                     ->closeModalByClickingAway(false)
                     ->mutateFormDataUsing(function (array $data, ProjectFolder $record): array {
                         // Prevent moving folder to its own descendant
@@ -165,6 +166,7 @@ class FoldersRelationManager extends RelationManager
                         'folder' => $record->id,
                     ])),
                 DeleteAction::make()
+                    ->visible(fn(ProjectFolder $record) => $record->canBeModifiedBy())
                     ->before(function (ProjectFolder $record) {
                         if ($record->hasChildren()) {
                             Notification::make()

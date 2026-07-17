@@ -343,6 +343,7 @@ class ProjectDocuments extends Page implements HasForms, HasTable
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->requiresConfirmation()
+                    ->visible(fn(ProjectDocument $record) => $record->canBeModifiedBy())
                     ->action(function (ProjectDocument $record): void {
                         $record->logHistory('deleted', 'Document deleted');
                         $record->delete();

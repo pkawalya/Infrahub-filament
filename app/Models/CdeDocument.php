@@ -62,6 +62,21 @@ class CdeDocument extends Model
         return $this->shares()->where('is_active', true);
     }
 
+    public function canBeModifiedBy(?User $user = null): bool
+    {
+        $user = $user ?? auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin() || $user->isCompanyAdmin()) {
+            return true;
+        }
+
+        return (int) $this->uploaded_by === (int) $user->id;
+    }
+
     public function formattedSize(): string
     {
         if (!$this->file_size)
