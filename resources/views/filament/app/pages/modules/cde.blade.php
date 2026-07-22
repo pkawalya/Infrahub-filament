@@ -883,6 +883,9 @@
                                             @if($rfi->submitter) By: {{ $rfi->submitter->name }} @endif
                                             @if($rfi->assignee) · To: {{ $rfi->assignee->name }} @endif
                                             @if($rfi->due_date) · Due: {{ $rfi->due_date->format('M d') }} @endif
+                                            @if($rfi->document)
+                                                · <span style="color:var(--cde-accent);font-weight:600;">{{ $rfi->document->document_number }}</span>
+                                            @endif
                                         </div>
                                     </div>
                                     <span
@@ -1122,6 +1125,10 @@
                                         style="border-bottom:1px solid #f1f5f9;{{ $isOverdue ? 'background:rgba(239,68,68,0.02);' : '' }}">
                                         <td style="padding:8px 10px;font-weight:600;color:#334155;">
                                             {{ $sub->title }}
+                                            @if($sub->document)
+                                                <div style="font-size:10px;font-weight:500;color:var(--cde-accent);margin-top:1px;">
+                                                    {{ $sub->document->document_number }} — {{ $sub->document->title }}</div>
+                                            @endif
                                             @if($sub->description)
                                                 <div style="font-size:10px;font-weight:400;color:#94a3b8;margin-top:1px;">
                                                     {{ \Illuminate\Support\Str::limit($sub->description, 60) }}</div>

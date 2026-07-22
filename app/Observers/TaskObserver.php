@@ -2,10 +2,10 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\Task;
 use App\Models\User;
 use App\Services\ModuleNotificationService;
-use Illuminate\Support\Facades\Log;
 
 class TaskObserver
 {
@@ -33,6 +33,15 @@ class TaskObserver
 
     public function updated(Task $task): void
     {
+        if ($task->isDirty('status')) {
+            CdeActivityLog::record(
+                $task,
+                'status_changed',
+                "Task '{$task->title}' status changed to '{$task->status}'",
+                ['from' => $task->getOriginal('status'), 'to' => $task->status],
+            );
+        }
+
         // Notify on status change to completed
         if ($task->isDirty('status') && $task->status === 'completed') {
             $creator = $task->creator ?? User::find($task->created_by);

@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\Invoice;
 use App\Services\ModuleNotificationService;
 
@@ -15,6 +16,13 @@ class InvoiceObserver
     {
         if (!$invoice->isDirty('status'))
             return;
+
+        CdeActivityLog::record(
+            $invoice,
+            'status_changed',
+            "Invoice '{$invoice->invoice_number}' status changed to '{$invoice->status}'",
+            ['from' => $invoice->getOriginal('status'), 'to' => $invoice->status],
+        );
 
         $vars = [
             'invoice_number' => $invoice->invoice_number ?? '',

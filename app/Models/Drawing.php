@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\CdeActivityLog;
 use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\HasHashedRouteKey;
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Drawing extends Model
 {
-    use SoftDeletes, BelongsToCompany, HasHashedRouteKey;
+    use SoftDeletes, BelongsToCompany, HasHashedRouteKey, LogsActivity;
 
     protected $fillable = [
         'company_id',
@@ -73,6 +75,51 @@ class Drawing extends Model
         'as_built' => 'As-Built',
         'superseded' => 'Superseded',
     ];
+
+    public static array $validTransitions = [
+        'wip' => ['for_review'],
+        'for_review' => ['approved', 'wip'],
+        'approved' => ['ifc', 'for_review'],
+        'ifc' => ['as_built', 'superseded'],
+        'as_built' => ['superseded'],
+        'superseded' => [],
+    ];
+
+    public function canTransitionTo(string $newStatus): bool
+    {
+        if ($this->status === $newStatus) {
+            return true;
+        }
+
+        $allowed = static::$validTransitions[$this->status] ?? [];
+
+        return in_array($newStatus, $allowed, true);
+    }
+
+    public function transitionTo(string $newStatus): bool
+    {
+        if (!$this->canTransitionTo($newStatus)) {
+            $allowed = static::$validTransitions[$this->status] ?? [];
+            throw new \InvalidArgumentException(
+                "Cannot transition drawing '{$this->drawing_number}' from '{$this->status}' to '{$newStatus}'. " .
+                "Allowed transitions: " . implode(', ', $allowed)
+            );
+        }
+
+        $fromStatus = $this->status;
+        $result = $this->update(['status' => $newStatus]);
+
+        if ($result) {
+            CdeActivityLog::record(
+                $this,
+                'status_changed',
+                "Drawing '{$this->drawing_number}' status changed from '{$fromStatus}' to '{$newStatus}'",
+                ['from' => $fromStatus, 'to' => $newStatus],
+            );
+        }
+
+        return $result;
+    }
 
     public static array $suitabilityCodes = [
         'S0' => 'S0 - Work in Progress',

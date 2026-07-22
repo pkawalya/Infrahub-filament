@@ -2,6 +2,7 @@
 
 namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
+use App\Filament\App\Concerns\ExportsTableCsv;
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
 use App\Models\ProjectSuggestion;
 use Filament\Actions;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 
 class SuggestionBoxPage extends BaseModulePage implements HasTable
 {
-    use InteractsWithTable;
+    use InteractsWithTable, ExportsTableCsv;
 
     protected static string $moduleCode = 'suggestion_box';
     protected static ?string $title = 'Suggestion Box';
@@ -318,6 +319,18 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
                     ] : []
                 )
             )
+            ->toolbarActions([
+                $this->exportCsvAction('suggestions', fn() => ProjectSuggestion::query()->where('cde_project_id', $pid)->with(['author', 'responder']), [
+                    'priority' => 'Priority',
+                    'author_display' => 'From',
+                    'category' => 'Category',
+                    'content' => 'Suggestion',
+                    'upvotes' => 'Upvotes',
+                    'status' => 'Status',
+                    'admin_response' => 'Response',
+                    'created_at' => 'Submitted',
+                ]),
+            ])
             ->emptyStateHeading('No suggestions yet')
             ->emptyStateDescription('Be the first to share a suggestion! Click "Submit Suggestion" above to get started.')
             ->emptyStateIcon('heroicon-o-light-bulb');

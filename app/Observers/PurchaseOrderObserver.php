@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\PurchaseOrder;
 use App\Models\User;
 use App\Services\ModuleNotificationService;
@@ -16,6 +17,13 @@ class PurchaseOrderObserver
     {
         if (!$po->isDirty('status'))
             return;
+
+        CdeActivityLog::record(
+            $po,
+            'status_changed',
+            "Purchase order '{$po->po_number}' status changed to '{$po->status}'",
+            ['from' => $po->getOriginal('status'), 'to' => $po->status],
+        );
 
         $vars = [
             'po_number' => $po->po_number ?? '',

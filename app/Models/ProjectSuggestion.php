@@ -2,11 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCompany;
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ProjectSuggestion extends Model
 {
+    use BelongsToCompany, SoftDeletes, LogsActivity;
     protected $fillable = [
         'company_id',
         'cde_project_id',

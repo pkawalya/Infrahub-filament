@@ -147,8 +147,37 @@ Route::prefix('v1')
             Route::post('equipment/fuel-logs', [EquipmentController::class, 'storeFuelLog']);
         });
 
-        // ─ Safety Incidents ───────────────────────────────
-        Route::middleware('module:safety.view')->group(function () {
+            // ─ NCRs ───────────────────────────────────────────
+            Route::middleware('module:quality.view')->group(function () {
+                Route::get('ncrs', [\App\Http\Controllers\Api\NcrController::class, 'index']);
+                Route::get('ncrs/{ncr}', [\App\Http\Controllers\Api\NcrController::class, 'show']);
+            });
+            Route::middleware('module:quality.create')->post('ncrs', [\App\Http\Controllers\Api\NcrController::class, 'store']);
+            Route::middleware('module:quality.update')->group(function () {
+                Route::put('ncrs/{ncr}', [\App\Http\Controllers\Api\NcrController::class, 'update']);
+                Route::post('ncrs/{ncr}/investigate', [\App\Http\Controllers\Api\NcrController::class, 'investigate']);
+                Route::post('ncrs/{ncr}/corrective-action', [\App\Http\Controllers\Api\NcrController::class, 'proposeCorrectiveAction']);
+                Route::post('ncrs/{ncr}/verify', [\App\Http\Controllers\Api\NcrController::class, 'verify']);
+                Route::post('ncrs/{ncr}/close', [\App\Http\Controllers\Api\NcrController::class, 'closeNcr']);
+            });
+            Route::middleware('module:quality.delete')->delete('ncrs/{ncr}', [\App\Http\Controllers\Api\NcrController::class, 'destroy']);
+
+            // ─ Document Submissions ───────────────────────────
+            Route::middleware('module:documents.view')->group(function () {
+                Route::get('document-submissions', [\App\Http\Controllers\Api\DocumentSubmissionController::class, 'index']);
+                Route::get('document-submissions/{submission}', [\App\Http\Controllers\Api\DocumentSubmissionController::class, 'show']);
+            });
+            Route::middleware('module:documents.create')->post('document-submissions', [\App\Http\Controllers\Api\DocumentSubmissionController::class, 'store']);
+            Route::middleware('module:documents.update')->group(function () {
+                Route::put('document-submissions/{submission}', [\App\Http\Controllers\Api\DocumentSubmissionController::class, 'update']);
+                Route::post('document-submissions/{submission}/submit', [\App\Http\Controllers\Api\DocumentSubmissionController::class, 'submit']);
+                Route::post('document-submissions/{submission}/approve', [\App\Http\Controllers\Api\DocumentSubmissionController::class, 'approve']);
+                Route::post('document-submissions/{submission}/reject', [\App\Http\Controllers\Api\DocumentSubmissionController::class, 'reject']);
+            });
+            Route::middleware('module:documents.delete')->delete('document-submissions/{submission}', [\App\Http\Controllers\Api\DocumentSubmissionController::class, 'destroy']);
+
+            // ─ Safety Incidents ───────────────────────────────
+            Route::middleware('module:safety.view')->group(function () {
             Route::get('safety-incidents', [SafetyController::class, 'index']);
             Route::get('safety-incidents/{incident}', [SafetyController::class, 'show']);
         });

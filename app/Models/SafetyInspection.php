@@ -3,15 +3,18 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToCompany;
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class SafetyInspection extends Model
 {
-    use BelongsToCompany;
+    use BelongsToCompany, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'company_id',
         'cde_project_id',
+        'cde_document_id',
         'inspection_template_id',
         'inspection_number',
         'title',
@@ -49,5 +52,10 @@ class SafetyInspection extends Model
     public function template()
     {
         return $this->belongsTo(InspectionTemplate::class, 'inspection_template_id');
+    }
+
+    public function document()
+    {
+        return $this->belongsTo(CdeDocument::class, 'cde_document_id');
     }
 }

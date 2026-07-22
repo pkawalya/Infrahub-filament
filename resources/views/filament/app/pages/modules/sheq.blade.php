@@ -774,6 +774,21 @@
                 <span class="badge badge-info">{{ $socialCount }}</span>
             @endif
         </button>
+
+        {{-- NCR --}}
+        <button wire:click="$set('activeTab', 'ncrs')"
+            class="sheq-tab {{ $this->activeTab === 'ncrs' ? 'active' : '' }}">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="tab-icon">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+            </svg>
+            NCRs
+            @php $ncrCount = \App\Models\Ncr::where('cde_project_id', $this->record->id)->whereIn('status', ['open', 'investigating', 'corrective_action'])->count(); @endphp
+            @if($ncrCount > 0)
+                <span class="badge badge-danger">{{ $ncrCount }}</span>
+            @endif
+        </button>
     </div>
 
     @if($this->activeTab === 'incidents')
@@ -873,6 +888,32 @@
             <div class="sheq-snag-stat" style="background:rgba(139,92,246,0.05);border:1px solid rgba(139,92,246,0.1);">
                 <div class="stat-num" style="color:#8b5cf6;">{{ $grievances }}</div>
                 <div class="stat-label" style="color:#8b5cf6;">Open Grievances</div>
+            </div>
+        </div>
+
+        {{ $this->table }}
+
+    @elseif($this->activeTab === 'ncrs')
+        {{-- NCR summary strip --}}
+        @php
+            $ncrStats = \App\Models\Ncr::where('cde_project_id', $this->record->id);
+            $totalNcrs = (clone $ncrStats)->count();
+            $openNcrs = (clone $ncrStats)->whereIn('status', ['open', 'investigating', 'corrective_action'])->count();
+            $closedNcrs = (clone $ncrStats)->where('status', 'closed')->count();
+        @endphp
+
+        <div class="sheq-snag-summary">
+            <div class="sheq-snag-stat default">
+                <div class="stat-num">{{ $totalNcrs }}</div>
+                <div class="stat-label sheq-muted">Total NCRs</div>
+            </div>
+            <div class="sheq-snag-stat" style="background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.1);">
+                <div class="stat-num" style="color:#ef4444;">{{ $openNcrs }}</div>
+                <div class="stat-label" style="color:#ef4444;">Open</div>
+            </div>
+            <div class="sheq-snag-stat" style="background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.1);">
+                <div class="stat-num" style="color:#10b981;">{{ $closedNcrs }}</div>
+                <div class="stat-label" style="color:#10b981;">Closed</div>
             </div>
         </div>
 

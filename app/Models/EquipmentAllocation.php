@@ -3,12 +3,13 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToCompany;
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class EquipmentAllocation extends Model
 {
-    use BelongsToCompany, SoftDeletes;
+    use BelongsToCompany, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'company_id',
@@ -27,6 +28,13 @@ class EquipmentAllocation extends Model
         'start_date' => 'date',
         'end_date' => 'date',
         'daily_rate' => 'decimal:2',
+    ];
+
+    public static array $statuses = [
+        'active' => 'Active',
+        'returned' => 'Returned',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
     ];
 
     public function asset()

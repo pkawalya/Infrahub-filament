@@ -15,6 +15,7 @@ class Rfi extends Model
     protected $fillable = [
         'company_id',
         'cde_project_id',
+        'cde_document_id',
         'rfi_number',
         'subject',
         'question',
@@ -68,5 +69,10 @@ class Rfi extends Model
     public function assignee()
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function document()
+    {
+        return $this->belongsTo(CdeDocument::class, 'cde_document_id');
     }
 }

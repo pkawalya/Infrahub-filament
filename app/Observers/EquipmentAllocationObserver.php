@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\EquipmentAllocation;
 use App\Models\User;
 use App\Services\ModuleNotificationService;
@@ -34,6 +35,13 @@ class EquipmentAllocationObserver
     {
         if (!$alloc->isDirty('status'))
             return;
+
+        CdeActivityLog::record(
+            $alloc,
+            'status_changed',
+            "Equipment allocation #{$alloc->id} status changed to '{$alloc->status}'",
+            ['from' => $alloc->getOriginal('status'), 'to' => $alloc->status],
+        );
 
         if ($alloc->status === 'returned' || $alloc->status === 'completed') {
             $this->notifications->notifyCompanyAdmins(

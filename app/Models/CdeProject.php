@@ -293,6 +293,10 @@ class CdeProject extends Model
     {
         return $this->hasMany(Submittal::class);
     }
+    public function documentSubmissions()
+    {
+        return $this->hasMany(DocumentSubmission::class);
+    }
     public function transmittals()
     {
         return $this->hasMany(Transmittal::class);
@@ -304,6 +308,10 @@ class CdeProject extends Model
     public function snagItems()
     {
         return $this->hasMany(SnagItem::class);
+    }
+    public function ncrs()
+    {
+        return $this->hasMany(Ncr::class);
     }
     public function activityLogs()
     {

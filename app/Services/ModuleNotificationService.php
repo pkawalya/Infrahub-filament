@@ -176,6 +176,12 @@ class ModuleNotificationService
             str_contains($slug, 'attendance') || str_contains($slug, 'crew') => 'heroicon-o-user-group',
             str_contains($slug, 'rfi') => 'heroicon-o-question-mark-circle',
             str_contains($slug, 'submittal') => 'heroicon-o-paper-airplane',
+            str_contains($slug, 'ncr') => 'heroicon-o-clipboard-document-check',
+            str_contains($slug, 'social-record') => 'heroicon-o-user',
+            str_contains($slug, 'safety-inspection') => 'heroicon-o-shield-check',
+            str_contains($slug, 'tender') => 'heroicon-o-document-text',
+            str_contains($slug, 'contract') => 'heroicon-o-document-signature',
+            str_contains($slug, 'project-suggestion') => 'heroicon-o-light-bulb',
             str_contains($slug, 'overdue') || str_contains($slug, 'alert') => 'heroicon-o-exclamation-triangle',
             // ── Inventory ──
             str_contains($slug, 'purchase-order') || str_contains($slug, 'po-') => 'heroicon-o-shopping-cart',
@@ -199,7 +205,9 @@ class ModuleNotificationService
             str_contains($slug, 'approved') || str_contains($slug, 'completed') => 'success',
             str_contains($slug, 'rejected') || str_contains($slug, 'overdue') || str_contains($slug, 'alert') || str_contains($slug, 'low-stock') => 'danger',
             str_contains($slug, 'submitted') || str_contains($slug, 'review') || str_contains($slug, 'pending') => 'warning',
-            str_contains($slug, 'assigned') || str_contains($slug, 'created') || str_contains($slug, 'issued') || str_contains($slug, 'received') => 'info',
+            str_contains($slug, 'assigned') || str_contains($slug, 'created') || str_contains($slug, 'issued') || str_contains($slug, 'received') || str_contains($slug, 'suggestion') => 'info',
+            str_contains($slug, 'awarded') || str_contains($slug, 'award') => 'success',
+            str_contains($slug, 'lost') => 'danger',
             default => 'primary',
         };
     }

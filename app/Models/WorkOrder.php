@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\CdeActivityLog;
 use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\HasHashedRouteKey;
 use App\Models\Concerns\LogsActivity;
@@ -79,6 +80,51 @@ class WorkOrder extends Model
         'completed' => 'Completed',
         'cancelled' => 'Cancelled',
     ];
+
+    public static array $validTransitions = [
+        'pending' => ['approved'],
+        'approved' => ['in_progress', 'on_hold', 'cancelled'],
+        'in_progress' => ['on_hold', 'completed'],
+        'on_hold' => ['in_progress', 'cancelled'],
+        'completed' => [],
+        'cancelled' => [],
+    ];
+
+    public function canTransitionTo(string $newStatus): bool
+    {
+        if ($this->status === $newStatus) {
+            return true;
+        }
+
+        $allowed = static::$validTransitions[$this->status] ?? [];
+
+        return in_array($newStatus, $allowed, true);
+    }
+
+    public function transitionTo(string $newStatus): bool
+    {
+        if (!$this->canTransitionTo($newStatus)) {
+            $allowed = static::$validTransitions[$this->status] ?? [];
+            throw new \InvalidArgumentException(
+                "Cannot transition work order '{$this->wo_number}' from '{$this->status}' to '{$newStatus}'. " .
+                "Allowed transitions: " . implode(', ', $allowed)
+            );
+        }
+
+        $fromStatus = $this->status;
+        $result = $this->update(['status' => $newStatus]);
+
+        if ($result) {
+            CdeActivityLog::record(
+                $this,
+                'status_changed',
+                "Work order '{$this->wo_number}' status changed from '{$fromStatus}' to '{$newStatus}'",
+                ['from' => $fromStatus, 'to' => $newStatus],
+            );
+        }
+
+        return $result;
+    }
 
     public static array $priorities = [
         'low' => 'Low',

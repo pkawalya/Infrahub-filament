@@ -109,6 +109,13 @@ Schedule::command('infrahub:deadline-reminders')
     ->onOneServer()
     ->appendOutputTo(storage_path('logs/deadline-reminders.log'));
 
+// ── SHEQ overdue item escalation (daily 8 AM) ──
+Schedule::command('sheq:escalate-overdue')
+    ->dailyAt('08:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/sheq-escalation.log'));
+
 // ── Activity log pruning: keep 180 days of audit history (1st of month 5 AM) ──
 Schedule::command('activitylog:clean --days=180')
     ->monthlyOn(1, '05:00')

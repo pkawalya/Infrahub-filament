@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\Rfi;
 use App\Models\User;
 use App\Services\ModuleNotificationService;
@@ -45,6 +46,13 @@ class RfiObserver
         ];
 
         $url = url("/app/rfis/{$rfi->id}");
+
+        CdeActivityLog::record(
+            $rfi,
+            'status_changed',
+            "RFI '{$rfi->rfi_number}' status changed to '{$rfi->status}'",
+            ['from' => $rfi->getOriginal('status'), 'to' => $rfi->status],
+        );
 
         match ($rfi->status) {
             'answered' => $this->notifyRaiser($rfi, 'rfi-answered', $vars, $url),

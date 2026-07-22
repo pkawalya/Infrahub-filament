@@ -6,6 +6,7 @@ use App\Filament\App\Resources\DrawingResource\Pages;
 use App\Models\Drawing;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
@@ -115,6 +116,73 @@ class DrawingResource extends Resource
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
                 Actions\RestoreAction::make(),
+
+                // ── ISO 19650 Status Transitions ──
+                Actions\Action::make('submitForReview')
+                    ->label('Submit for Review')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('warning')
+                    ->action(function (Drawing $record) {
+                        $record->transitionTo('for_review');
+                        Notification::make()->title('Drawing submitted for review')->success()->send();
+                    })
+                    ->hidden(fn (Drawing $record) => !$record->canTransitionTo('for_review')),
+
+                Actions\Action::make('approve')
+                    ->label('Approve')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function (Drawing $record) {
+                        $record->transitionTo('approved');
+                        Notification::make()->title('Drawing approved')->success()->send();
+                    })
+                    ->hidden(fn (Drawing $record) => !$record->canTransitionTo('approved')),
+
+                Actions\Action::make('issueForConstruction')
+                    ->label('Issue for Construction')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->action(function (Drawing $record) {
+                        $record->transitionTo('ifc');
+                        Notification::make()->title('Drawing issued for construction')->success()->send();
+                    })
+                    ->hidden(fn (Drawing $record) => !$record->canTransitionTo('ifc')),
+
+                Actions\Action::make('markAsBuilt')
+                    ->label('Mark As-Built')
+                    ->icon('heroicon-o-wrench')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    ->action(function (Drawing $record) {
+                        $record->transitionTo('as_built');
+                        Notification::make()->title('Drawing marked as as-built')->success()->send();
+                    })
+                    ->hidden(fn (Drawing $record) => !$record->canTransitionTo('as_built')),
+
+                Actions\Action::make('supersede')
+                    ->label('Supersede')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function (Drawing $record) {
+                        $record->transitionTo('superseded');
+                        Notification::make()->title('Drawing superseded')->warning()->send();
+                    })
+                    ->hidden(fn (Drawing $record) => !$record->canTransitionTo('superseded')),
+
+                Actions\Action::make('sendBackToWip')
+                    ->label('Send Back to WIP')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('gray')
+                    ->requiresConfirmation()
+                    ->action(function (Drawing $record) {
+                        $record->transitionTo('wip');
+                        Notification::make()->title('Drawing returned to WIP')->warning()->send();
+                    })
+                    ->hidden(fn (Drawing $record) => !$record->canTransitionTo('wip')),
+
                 Actions\Action::make('newRevision')
                     ->icon('heroicon-o-arrow-path')->color('warning')->label('New Revision')
                     ->form([

@@ -80,6 +80,11 @@ class ModulePermissions
                 'description' => 'Safety incidents, inspections, compliance',
                 'permissions' => ['safety.view', 'safety.create', 'safety.update', 'safety.delete'],
             ],
+            'quality' => [
+                'label' => 'Quality (NCR)',
+                'description' => 'Non-conformance reports, CAPA, quality inspections',
+                'permissions' => ['quality.view', 'quality.create', 'quality.update', 'quality.delete'],
+            ],
             'assets' => [
                 'label' => 'Assets',
                 'description' => 'Company asset tracking and maintenance',

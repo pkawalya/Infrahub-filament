@@ -224,12 +224,20 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                             ->options(fn() => User::where('company_id', $this->record->company_id)->pluck('name', 'id'))
                             ->searchable()->nullable(),
                         Forms\Components\DatePicker::make('due_date')->label('Due Date')->nullable(),
+                        Forms\Components\Select::make('cde_document_id')->label('Related Document')
+                            ->options(fn() => CdeDocument::where('cde_project_id', $this->record->id)
+                                ->orderBy('document_number')
+                                ->get()
+                                ->mapWithKeys(fn($doc) => [$doc->id => "{$doc->document_number} — {$doc->title}"])
+                                ->toArray())
+                            ->searchable()->nullable()->placeholder('Select a document (optional)'),
                     ])->columns(2),
                 ])
                 ->action(function (array $data): void {
                     Rfi::create([
                         'company_id' => $this->record->company_id,
                         'cde_project_id' => $this->record->id,
+                        'cde_document_id' => $data['cde_document_id'] ?? null,
                         'rfi_number' => $data['rfi_number'],
                         'subject' => $data['subject'],
                         'question' => $data['question'],
@@ -328,6 +336,13 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                             ->label('Description / Requirements')
                             ->rows(3)
                             ->columnSpanFull(),
+                        Forms\Components\Select::make('cde_document_id')->label('Related Document')
+                            ->options(fn() => CdeDocument::where('cde_project_id', $this->record->id)
+                                ->orderBy('document_number')
+                                ->get()
+                                ->mapWithKeys(fn($doc) => [$doc->id => "{$doc->document_number} — {$doc->title}"])
+                                ->toArray())
+                            ->searchable()->nullable()->placeholder('Select a document (optional)'),
                     ])->columns(2),
                 ])
                 ->action(function (array $data): void {
@@ -592,7 +607,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
     public function getRfis(): \Illuminate\Database\Eloquent\Collection
     {
         return Rfi::where('cde_project_id', $this->record->id)
-            ->with(['submitter:id,name', 'assignee:id,name'])
+            ->with(['submitter:id,name', 'assignee:id,name', 'document:id,document_number,title'])
             ->orderByDesc('created_at')
             ->limit(30)
             ->get();
@@ -715,7 +730,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
     public function getSubmissions(?string $stage = null): \Illuminate\Database\Eloquent\Collection
     {
         $q = DocumentSubmission::where('cde_project_id', $this->record->id)
-            ->with(['submitter:id,name', 'reviewer:id,name'])
+            ->with(['submitter:id,name', 'reviewer:id,name', 'document:id,document_number,title'])
             ->orderByRaw("FIELD(status, 'rejected','overdue','pending','submitted','approved','waived')")
             ->orderBy('due_date');
 
@@ -766,6 +781,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
         DocumentSubmission::create([
             'company_id' => $this->record->company_id,
             'cde_project_id' => $this->record->id,
+            'cde_document_id' => $data['cde_document_id'] ?? null,
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'discipline' => $data['discipline'] ?? null,

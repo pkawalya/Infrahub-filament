@@ -8,6 +8,7 @@ use App\Models\Contract;
 use App\Support\CurrencyHelper;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
@@ -99,20 +100,82 @@ class ChangeOrderResource extends Resource
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
                 Actions\RestoreAction::make(),
+
+                // ── ISO 19650 Status Transitions ──
+                Actions\Action::make('submit')
+                    ->label('Submit')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('info')
+                    ->action(function (ChangeOrder $record) {
+                        $record->transitionTo('submitted');
+                        Notification::make()->title('Change order submitted')->success()->send();
+                    })
+                    ->hidden(fn (ChangeOrder $record) => !$record->canTransitionTo('submitted')),
+
                 Actions\Action::make('approve')
-                    ->icon('heroicon-o-check-circle')->color('success')
-                    ->visible(fn(ChangeOrder $r) => in_array($r->status, ['submitted', 'under_review']))
-                    ->form([
-                        Forms\Components\TextInput::make('approved_cost')->numeric()->prefix(fn() => CurrencyHelper::prefix()),
+                    ->label('Approve')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->form(fn (ChangeOrder $record) => [
+                        Forms\Components\TextInput::make('approved_cost')
+                            ->numeric()
+                            ->prefix(fn() => CurrencyHelper::prefix())
+                            ->default($record->amount),
                         Forms\Components\Textarea::make('approval_notes')->rows(2),
                     ])
                     ->action(function (ChangeOrder $record, array $data): void {
+                        $record->transitionTo('approved');
                         $record->update([
-                            'status'      => 'approved',
                             'approved_by' => auth()->id(),
                             'approved_at' => now(),
                         ]);
-                    }),
+                        Notification::make()->title('Change order approved')->success()->send();
+                    })
+                    ->hidden(fn (ChangeOrder $record) => !$record->canTransitionTo('approved')),
+
+                Actions\Action::make('reject')
+                    ->label('Reject')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function (ChangeOrder $record) {
+                        $record->transitionTo('rejected');
+                        Notification::make()->title('Change order rejected')->danger()->send();
+                    })
+                    ->hidden(fn (ChangeOrder $record) => !$record->canTransitionTo('rejected')),
+
+                Actions\Action::make('implement')
+                    ->label('Implement')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function (ChangeOrder $record) {
+                        $record->transitionTo('implemented');
+                        Notification::make()->title('Change order implemented')->success()->send();
+                    })
+                    ->hidden(fn (ChangeOrder $record) => !$record->canTransitionTo('implemented')),
+
+                Actions\Action::make('sendBackForReview')
+                    ->label('Send Back for Review')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->action(function (ChangeOrder $record) {
+                        $record->transitionTo('under_review');
+                        Notification::make()->title('Change order returned to review')->warning()->send();
+                    })
+                    ->hidden(fn (ChangeOrder $record) => !$record->canTransitionTo('under_review')),
+
+                Actions\Action::make('revise')
+                    ->label('Revise')
+                    ->icon('heroicon-o-pencil-square')
+                    ->color('gray')
+                    ->action(function (ChangeOrder $record) {
+                        $record->transitionTo('draft');
+                        Notification::make()->title('Change order returned to draft')->info()->send();
+                    })
+                    ->hidden(fn (ChangeOrder $record) => !$record->canTransitionTo('draft')),
+
                 Actions\DeleteAction::make(),
                 Actions\ForceDeleteAction::make(),
             ])

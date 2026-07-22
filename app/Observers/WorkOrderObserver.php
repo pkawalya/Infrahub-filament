@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\WorkOrder;
 use App\Models\User;
 use App\Services\ModuleNotificationService;
@@ -35,6 +36,13 @@ class WorkOrderObserver
     {
         if (!$wo->isDirty('status'))
             return;
+
+        CdeActivityLog::record(
+            $wo,
+            'status_changed',
+            "Work order '{$wo->wo_number}' status changed to '{$wo->status}'",
+            ['from' => $wo->getOriginal('status'), 'to' => $wo->status],
+        );
 
         $vars = [
             'wo_number' => $wo->wo_number ?? '',

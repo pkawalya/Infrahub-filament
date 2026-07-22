@@ -95,6 +95,20 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\SnagItem::observe(\App\Observers\SnagItemObserver::class);
         \App\Models\EquipmentAllocation::observe(\App\Observers\EquipmentAllocationObserver::class);
 
+        // ── New workflow observers ──
+        \App\Models\Ncr::observe(\App\Observers\NcrObserver::class);
+        \App\Models\CdeDocument::observe(\App\Observers\DocumentObserver::class);
+        \App\Models\DocumentSubmission::observe(\App\Observers\DocumentSubmissionObserver::class);
+
+        // ── SHEQ observers ──
+        \App\Models\SocialRecord::observe(\App\Observers\SocialRecordObserver::class);
+        \App\Models\SafetyInspection::observe(\App\Observers\SafetyInspectionObserver::class);
+
+        // ── Bidding / Contract observers ──
+        \App\Models\Tender::observe(\App\Observers\TenderObserver::class);
+        \App\Models\Contract::observe(\App\Observers\ContractObserver::class);
+        \App\Models\ProjectSuggestion::observe(\App\Observers\ProjectSuggestionObserver::class);
+
         // ── Flush mail cache when SMTP settings are changed ──
         // Ensures admin mail config changes take effect immediately.
         Setting::saved(function (Setting $setting) {

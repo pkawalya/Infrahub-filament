@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\CdeActivityLog;
 use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,7 @@ class SnagItem extends Model
     protected $fillable = [
         'company_id',
         'cde_project_id',
+        'cde_document_id',
         'snag_number',
         'title',
         'description',
@@ -120,6 +122,50 @@ class SnagItem extends Model
         'other' => 'Other',
     ];
 
+    public static array $validTransitions = [
+        'open' => ['in_progress'],
+        'in_progress' => ['resolved', 'open'],
+        'resolved' => ['verified', 'in_progress'],
+        'verified' => ['closed', 'resolved'],
+        'closed' => [],
+    ];
+
+    public function canTransitionTo(string $newStatus, bool $checkGuards = false): bool
+    {
+        if ($this->status === $newStatus) {
+            return true;
+        }
+
+        $allowed = static::$validTransitions[$this->status] ?? [];
+
+        return in_array($newStatus, $allowed, true);
+    }
+
+    public function transitionTo(string $newStatus): bool
+    {
+        if (!$this->canTransitionTo($newStatus)) {
+            $allowed = static::$validTransitions[$this->status] ?? [];
+            throw new \InvalidArgumentException(
+                "Cannot transition snag '{$this->snag_number}' from '{$this->status}' to '{$newStatus}'. " .
+                "Allowed transitions: " . implode(', ', $allowed)
+            );
+        }
+
+        $fromStatus = $this->status;
+        $result = $this->update(['status' => $newStatus]);
+
+        if ($result) {
+            CdeActivityLog::record(
+                $this,
+                'status_changed',
+                "Snag '{$this->snag_number}' status changed from '{$fromStatus}' to '{$newStatus}'",
+                ['from' => $fromStatus, 'to' => $newStatus],
+            );
+        }
+
+        return $result;
+    }
+
     public static array $roadSides = [
         'lhs' => 'Left Hand Side',
         'rhs' => 'Right Hand Side',
@@ -148,5 +194,10 @@ class SnagItem extends Model
     public function verifier()
     {
         return $this->belongsTo(User::class, 'verified_by');
+    }
+
+    public function document()
+    {
+        return $this->belongsTo(CdeDocument::class, 'cde_document_id');
     }
 }

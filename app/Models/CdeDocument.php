@@ -22,6 +22,8 @@ class CdeDocument extends Model
         'type',
         'status',
         'revision',
+        'previous_version_id',
+        'version_notes',
         'file_path',
         'file_size',
         'file_type',
@@ -53,6 +55,14 @@ class CdeDocument extends Model
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
+    public function previousVersion()
+    {
+        return $this->belongsTo(CdeDocument::class, 'previous_version_id');
+    }
+    public function nextVersions()
+    {
+        return $this->hasMany(CdeDocument::class, 'previous_version_id');
+    }
     public function shares()
     {
         return $this->hasMany(DocumentShare::class, 'cde_document_id');
@@ -60,6 +70,67 @@ class CdeDocument extends Model
     public function activeShares()
     {
         return $this->shares()->where('is_active', true);
+    }
+    public function rfis()
+    {
+        return $this->hasMany(Rfi::class, 'cde_document_id');
+    }
+    public function submittals()
+    {
+        return $this->hasMany(Submittal::class, 'cde_document_id');
+    }
+    public function documentSubmissions()
+    {
+        return $this->hasMany(DocumentSubmission::class, 'cde_document_id');
+    }
+    public function safetyIncidents()
+    {
+        return $this->hasMany(SafetyIncident::class, 'cde_document_id');
+    }
+    public function safetyInspections()
+    {
+        return $this->hasMany(SafetyInspection::class, 'cde_document_id');
+    }
+    public function snagItems()
+    {
+        return $this->hasMany(SnagItem::class, 'cde_document_id');
+    }
+    public function ncrs()
+    {
+        return $this->hasMany(Ncr::class, 'cde_document_id');
+    }
+
+    public static array $validTransitions = [
+        'wip' => ['draft', 'under_review'],
+        'draft' => ['under_review'],
+        'under_review' => ['approved', 'revision'],
+        'revision' => ['under_review'],
+        'approved' => ['published', 'archived'],
+        'published' => ['archived'],
+        'archived' => [],
+    ];
+
+    public function canTransitionTo(string $newStatus): bool
+    {
+        if ($this->status === $newStatus) {
+            return true;
+        }
+
+        $allowed = static::$validTransitions[$this->status] ?? [];
+
+        return in_array($newStatus, $allowed, true);
+    }
+
+    public function transitionTo(string $newStatus): bool
+    {
+        if (!$this->canTransitionTo($newStatus)) {
+            throw new \InvalidArgumentException(
+                "Cannot transition document '{$this->document_number}' from '{$this->status}' to '{$newStatus}'. " .
+                "Allowed transitions: " . implode(', ', static::$validTransitions[$this->status] ?? [])
+            );
+        }
+
+        return $this->update(['status' => $newStatus]);
     }
 
     public function canBeModifiedBy(?User $user = null): bool

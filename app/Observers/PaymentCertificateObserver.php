@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\PaymentCertificate;
 use App\Models\User;
 use App\Services\ModuleNotificationService;
@@ -16,6 +17,13 @@ class PaymentCertificateObserver
     {
         if (!$cert->isDirty('status'))
             return;
+
+        CdeActivityLog::record(
+            $cert,
+            'status_changed',
+            "Payment certificate '{$cert->certificate_number}' status changed to '{$cert->status}'",
+            ['from' => $cert->getOriginal('status'), 'to' => $cert->status],
+        );
 
         $vars = [
             'cert_number' => $cert->certificate_number,

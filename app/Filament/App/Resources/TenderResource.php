@@ -12,6 +12,7 @@ use App\Support\CurrencyHelper;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Infolists;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Components\Section;
@@ -306,6 +307,69 @@ class TenderResource extends Resource
                     }),
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
+
+                // ── ISO 19650 / ISO 9001 Status Transitions ──
+                Actions\Action::make('beginPreparation')
+                    ->label('Begin Preparation')
+                    ->icon('heroicon-o-play')
+                    ->color('info')
+                    ->action(function (Tender $record) {
+                        $record->transitionTo('preparing');
+                        Notification::make()->title('Tender moved to preparation')->success()->send();
+                    })
+                    ->hidden(fn (Tender $record) => !$record->canTransitionTo('preparing')),
+
+                Actions\Action::make('submitBid')
+                    ->label('Submit Bid')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('primary')
+                    ->action(function (Tender $record) {
+                        $record->transitionTo('submitted');
+                        Notification::make()->title('Tender submitted')->success()->send();
+                    })
+                    ->hidden(fn (Tender $record) => !$record->canTransitionTo('submitted')),
+
+                Actions\Action::make('markShortlisted')
+                    ->label('Mark Shortlisted')
+                    ->icon('heroicon-o-user-group')
+                    ->color('warning')
+                    ->action(function (Tender $record) {
+                        $record->transitionTo('shortlisted');
+                        Notification::make()->title('Tender shortlisted')->warning()->send();
+                    })
+                    ->hidden(fn (Tender $record) => !$record->canTransitionTo('shortlisted')),
+
+                Actions\Action::make('award')
+                    ->label('Award')
+                    ->icon('heroicon-o-trophy')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function (Tender $record) {
+                        $record->transitionTo('awarded');
+                        Notification::make()->title('Tender awarded!')->success()->send();
+                    })
+                    ->hidden(fn (Tender $record) => !$record->canTransitionTo('awarded')),
+
+                Actions\Action::make('lose')
+                    ->label('Mark Lost')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function (Tender $record) {
+                        $record->transitionTo('lost');
+                        Notification::make()->title('Tender marked as lost')->danger()->send();
+                    })
+                    ->hidden(fn (Tender $record) => !$record->canTransitionTo('lost')),
+
+                Actions\Action::make('revise')
+                    ->label('Revise')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('gray')
+                    ->action(function (Tender $record) {
+                        $record->transitionTo('identified');
+                        Notification::make()->title('Tender returned to identification')->info()->send();
+                    })
+                    ->hidden(fn (Tender $record) => !$record->canTransitionTo('identified')),
             ])
             ->bulkActions([
                 Actions\DeleteBulkAction::make(),

@@ -16,6 +16,7 @@ class SafetyIncident extends Model
     protected $fillable = [
         'company_id',
         'cde_project_id',
+        'cde_document_id',
         'incident_number',
         'title',
         'description',
@@ -120,5 +121,10 @@ class SafetyIncident extends Model
     public function ptwReceiver()
     {
         return $this->belongsTo(User::class, 'ptw_receiver_id');
+    }
+
+    public function document()
+    {
+        return $this->belongsTo(CdeDocument::class, 'cde_document_id');
     }
 }

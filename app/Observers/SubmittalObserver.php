@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\Submittal;
 use App\Models\User;
 use App\Services\ModuleNotificationService;
@@ -46,6 +47,14 @@ class SubmittalObserver
         ];
 
         $url = url("/app/submittals/{$submittal->id}");
+
+        // Log the status change
+        CdeActivityLog::record(
+            $submittal,
+            'status_changed',
+            "Submittal '{$submittal->submittal_number}' status changed to '{$submittal->status}'",
+            ['from' => $submittal->getOriginal('status'), 'to' => $submittal->status],
+        );
 
         // Notify the submitter of the review outcome
         $submitter = User::find($submittal->submitted_by);

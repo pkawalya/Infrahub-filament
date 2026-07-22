@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\Drawing;
 use App\Models\User;
 use App\Services\ModuleNotificationService;
@@ -16,6 +17,13 @@ class DrawingObserver
     {
         if (!$drawing->isDirty('status'))
             return;
+
+        CdeActivityLog::record(
+            $drawing,
+            'status_changed',
+            "Drawing '{$drawing->drawing_number}' status changed to '{$drawing->status}'",
+            ['from' => $drawing->getOriginal('status'), 'to' => $drawing->status],
+        );
 
         $vars = [
             'drawing_number' => $drawing->drawing_number,

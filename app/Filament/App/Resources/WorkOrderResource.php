@@ -7,6 +7,7 @@ use App\Filament\Concerns\UIStandards;
 use App\Models\WorkOrder;
 use Filament\Actions;
 use Filament\Infolists;
+use Filament\Notifications\Notification;
 use Filament\Schemas;
 use Filament\Forms;
 use Filament\Schemas\Schema;
@@ -267,6 +268,61 @@ class WorkOrderResource extends Resource
             ])
             ->actions([
                 Actions\ViewAction::make(),
+
+                // ── ISO 9001 / ISO 19650 Status Transitions ──
+                Actions\Action::make('approve')
+                    ->label('Approve')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->action(function (WorkOrder $record) {
+                        $record->transitionTo('approved');
+                        Notification::make()->title('Work order approved')->success()->send();
+                    })
+                    ->hidden(fn (WorkOrder $record) => !$record->canTransitionTo('approved')),
+
+                Actions\Action::make('start')
+                    ->label('Start Work')
+                    ->icon('heroicon-o-play')
+                    ->color('primary')
+                    ->action(function (WorkOrder $record) {
+                        $record->transitionTo('in_progress');
+                        Notification::make()->title('Work order started')->success()->send();
+                    })
+                    ->hidden(fn (WorkOrder $record) => !$record->canTransitionTo('in_progress')),
+
+                Actions\Action::make('complete')
+                    ->label('Complete')
+                    ->icon('heroicon-o-check-badge')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function (WorkOrder $record) {
+                        $record->transitionTo('completed');
+                        Notification::make()->title('Work order completed')->success()->send();
+                    })
+                    ->hidden(fn (WorkOrder $record) => !$record->canTransitionTo('completed')),
+
+                Actions\Action::make('hold')
+                    ->label('Place on Hold')
+                    ->icon('heroicon-o-pause-circle')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->action(function (WorkOrder $record) {
+                        $record->transitionTo('on_hold');
+                        Notification::make()->title('Work order placed on hold')->warning()->send();
+                    })
+                    ->hidden(fn (WorkOrder $record) => !$record->canTransitionTo('on_hold')),
+
+                Actions\Action::make('cancel')
+                    ->label('Cancel')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function (WorkOrder $record) {
+                        $record->transitionTo('cancelled');
+                        Notification::make()->title('Work order cancelled')->danger()->send();
+                    })
+                    ->hidden(fn (WorkOrder $record) => !$record->canTransitionTo('cancelled')),
+
                 Actions\EditAction::make(),
             ])
             ->bulkActions([

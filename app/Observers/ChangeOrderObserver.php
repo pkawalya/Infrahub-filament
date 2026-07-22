@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\ChangeOrder;
 use App\Models\User;
 use App\Services\ModuleNotificationService;
@@ -37,6 +38,13 @@ class ChangeOrderObserver
     public function updated(ChangeOrder $co): void
     {
         if ($co->isDirty('status')) {
+            CdeActivityLog::record(
+                $co,
+                'status_changed',
+                "Change order '{$co->co_number}' status changed to '{$co->status}'",
+                ['from' => $co->getOriginal('status'), 'to' => $co->status],
+            );
+
             $slug = match ($co->status) {
                 'approved' => 'change-order-approved',
                 'rejected' => 'change-order-rejected',

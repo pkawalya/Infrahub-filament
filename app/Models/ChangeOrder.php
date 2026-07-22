@@ -2,14 +2,16 @@
 
 namespace App\Models;
 
+use App\Models\CdeActivityLog;
 use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\HasHashedRouteKey;
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ChangeOrder extends Model
 {
-    use SoftDeletes, BelongsToCompany, HasHashedRouteKey;
+    use SoftDeletes, BelongsToCompany, HasHashedRouteKey, LogsActivity;
 
     protected $fillable = [
         'company_id',
@@ -45,6 +47,51 @@ class ChangeOrder extends Model
         'rejected' => 'Rejected',
         'implemented' => 'Implemented',
     ];
+
+    public static array $validTransitions = [
+        'draft' => ['submitted'],
+        'submitted' => ['under_review', 'draft'],
+        'under_review' => ['approved', 'rejected'],
+        'approved' => ['implemented', 'under_review'],
+        'rejected' => ['draft'],
+        'implemented' => [],
+    ];
+
+    public function canTransitionTo(string $newStatus): bool
+    {
+        if ($this->status === $newStatus) {
+            return true;
+        }
+
+        $allowed = static::$validTransitions[$this->status] ?? [];
+
+        return in_array($newStatus, $allowed, true);
+    }
+
+    public function transitionTo(string $newStatus): bool
+    {
+        if (!$this->canTransitionTo($newStatus)) {
+            $allowed = static::$validTransitions[$this->status] ?? [];
+            throw new \InvalidArgumentException(
+                "Cannot transition change order '{$this->co_number}' from '{$this->status}' to '{$newStatus}'. " .
+                "Allowed transitions: " . implode(', ', $allowed)
+            );
+        }
+
+        $fromStatus = $this->status;
+        $result = $this->update(['status' => $newStatus]);
+
+        if ($result) {
+            CdeActivityLog::record(
+                $this,
+                'status_changed',
+                "Change order '{$this->co_number}' status changed from '{$fromStatus}' to '{$newStatus}'",
+                ['from' => $fromStatus, 'to' => $newStatus],
+            );
+        }
+
+        return $result;
+    }
 
     public static array $priorities = [
         'low' => 'Low',

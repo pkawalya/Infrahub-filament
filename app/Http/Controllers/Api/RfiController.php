@@ -14,7 +14,7 @@ class RfiController extends BaseApiController
     {
         $this->authorizeProject($request, $project);
 
-        $query = $project->rfis()->with(['raisedBy:id,name', 'assignee:id,name']);
+        $query = $project->rfis()->with(['raisedBy:id,name', 'assignee:id,name', 'document:id,document_number,title']);
 
         if ($request->filled('status'))
             $query->where('status', $request->status);
@@ -48,6 +48,7 @@ class RfiController extends BaseApiController
             'due_date' => 'nullable|date',
             'cost_impact' => 'nullable|string|in:yes,no,unknown',
             'schedule_impact' => 'nullable|string|in:yes,no,unknown',
+            'cde_document_id' => 'nullable|exists:cde_documents,id',
         ]);
 
         $count = $project->rfis()->count();
@@ -69,7 +70,7 @@ class RfiController extends BaseApiController
         $this->authorizeProject($request, $project);
         $this->authorizeRfi($project, $rfi);
 
-        return $this->success($rfi->load(['raisedBy:id,name', 'assignee:id,name']));
+        return $this->success($rfi->load(['raisedBy:id,name', 'assignee:id,name', 'document:id,document_number,title']));
     }
 
     public function update(Request $request, CdeProject $project, Rfi $rfi): JsonResponse
@@ -85,6 +86,7 @@ class RfiController extends BaseApiController
             'due_date' => 'nullable|date',
             'cost_impact' => 'nullable|string|in:yes,no,unknown',
             'schedule_impact' => 'nullable|string|in:yes,no,unknown',
+            'cde_document_id' => 'nullable|exists:cde_documents,id',
         ]);
 
         $rfi->update($data);

@@ -3,15 +3,18 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToCompany;
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DocumentSubmission extends Model
 {
-    use BelongsToCompany;
+    use BelongsToCompany, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'company_id',
         'cde_project_id',
+        'cde_document_id',
         'title',
         'description',
         'discipline',
@@ -80,6 +83,11 @@ class DocumentSubmission extends Model
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function document()
+    {
+        return $this->belongsTo(CdeDocument::class, 'cde_document_id');
     }
 
     public function isOverdue(): bool

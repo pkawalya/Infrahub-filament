@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\MaterialRequisition;
 use App\Models\User;
 use App\Services\ModuleNotificationService;
@@ -16,6 +17,13 @@ class MaterialRequisitionObserver
     {
         if (!$mr->isDirty('status'))
             return;
+
+        CdeActivityLog::record(
+            $mr,
+            'status_changed',
+            "Requisition '{$mr->requisition_number}' status changed to '{$mr->status}'",
+            ['from' => $mr->getOriginal('status'), 'to' => $mr->status],
+        );
 
         $vars = [
             'requisition_number' => $mr->requisition_number ?? '',

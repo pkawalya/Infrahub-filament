@@ -14,7 +14,7 @@ class SubmittalController extends BaseApiController
     {
         $this->authorizeProject($request, $project);
 
-        $query = $project->submittals()->with(['submitter:id,name', 'reviewer:id,name']);
+        $query = $project->submittals()->with(['submitter:id,name', 'reviewer:id,name', 'document:id,document_number,title']);
 
         if ($request->filled('status'))
             $query->where('status', $request->status);
@@ -43,6 +43,7 @@ class SubmittalController extends BaseApiController
             'type' => 'required|string|in:' . implode(',', array_keys(Submittal::$types)),
             'reviewer_id' => 'nullable|exists:users,id',
             'due_date' => 'nullable|date',
+            'cde_document_id' => 'nullable|exists:cde_documents,id',
         ]);
 
         $count = $project->submittals()->count();
@@ -64,7 +65,7 @@ class SubmittalController extends BaseApiController
         $this->authorizeProject($request, $project);
         $this->authorizeSubmittal($project, $submittal);
 
-        return $this->success($submittal->load(['submitter:id,name', 'reviewer:id,name']));
+        return $this->success($submittal->load(['submitter:id,name', 'reviewer:id,name', 'document:id,document_number,title']));
     }
 
     public function update(Request $request, CdeProject $project, Submittal $submittal): JsonResponse
@@ -78,6 +79,7 @@ class SubmittalController extends BaseApiController
             'type' => 'sometimes|string|in:' . implode(',', array_keys(Submittal::$types)),
             'reviewer_id' => 'nullable|exists:users,id',
             'due_date' => 'nullable|date',
+            'cde_document_id' => 'nullable|exists:cde_documents,id',
         ]);
 
         $submittal->update($data);

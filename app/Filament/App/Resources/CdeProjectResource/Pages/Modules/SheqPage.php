@@ -8,6 +8,8 @@ use App\Models\SafetyIncident;
 use App\Models\SafetyInspection;
 use App\Models\SnagItem;
 use App\Models\SocialRecord;
+use App\Models\CdeDocument;
+use App\Models\Ncr;
 use App\Models\User;
 use App\Services\AiAssistantService;
 use Filament\Actions\Action;
@@ -46,6 +48,14 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
     private function teamOptions(): array
     {
         return User::where('company_id', $this->cid())->where('is_active', true)->pluck('name', 'id')->toArray();
+    }
+    private function documentOptions(): array
+    {
+        return CdeDocument::where('cde_project_id', $this->pid())
+            ->orderBy('document_number')
+            ->get()
+            ->mapWithKeys(fn($doc) => [$doc->id => "{$doc->document_number} — {$doc->title}"])
+            ->toArray();
     }
 
     public static array $types = [
@@ -279,6 +289,8 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                     ->options(fn() => $this->teamOptions())->searchable()->default(auth()->id()),
                 Forms\Components\Select::make('investigated_by')->label('Investigator')
                     ->options(fn() => $this->teamOptions())->searchable()->nullable(),
+                Forms\Components\Select::make('cde_document_id')->label('Related Document')
+                    ->options(fn() => $this->documentOptions())->searchable()->nullable()->placeholder('Select a document (optional)'),
             ])->columns(2),
             Section::make('Description')->schema([
                 Forms\Components\RichEditor::make('description')->label('Incident Description')
@@ -324,6 +336,8 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                             ->helperText('Must be an existing system user. Contact admin to add new users.'),
                         Forms\Components\TextInput::make('location')->maxLength(255),
                         Forms\Components\Textarea::make('notes')->rows(2)->columnSpanFull(),
+                        Forms\Components\Select::make('cde_document_id')->label('Related Document')
+                            ->options(fn() => $this->documentOptions())->searchable()->nullable()->placeholder('Select a document (optional)'),
                     ])->columns(2),
                 ])
                 ->action(function (array $data): void {
@@ -352,6 +366,8 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                         Forms\Components\DatePicker::make('due_date')->label('Due Date'),
                         Forms\Components\RichEditor::make('description')->label('Description')
                             ->toolbarButtons(['bold', 'italic', 'bulletList'])->columnSpanFull(),
+                        Forms\Components\Select::make('cde_document_id')->label('Related Document')
+                            ->options(fn() => $this->documentOptions())->searchable()->nullable()->placeholder('Select a document (optional)'),
                     ])->columns(2),
                 ])
                 ->action(function (array $data): void {
@@ -392,6 +408,35 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                     SocialRecord::create($data);
                     Notification::make()->title('Social record logged')->success()->send();
                 }),
+
+            Action::make('reportNcr')
+                ->label('Report NCR')->icon('heroicon-o-document-text')->color('danger')
+                ->modalWidth('4xl')
+                ->schema([
+                    Section::make('Non-Conformance Report')->schema([
+                        Forms\Components\TextInput::make('ncr_number')->label('NCR #')
+                            ->default(fn() => 'NCR-' . str_pad((string) (Ncr::where('cde_project_id', $this->pid())->count() + 1), 4, '0', STR_PAD_LEFT))
+                            ->required()->maxLength(50),
+                        Forms\Components\TextInput::make('title')->required()->maxLength(255)->columnSpanFull(),
+                        Forms\Components\Select::make('type')->options(Ncr::$types)->required()->searchable(),
+                        Forms\Components\Select::make('severity')->options(Ncr::$severities)->required()->default('minor'),
+                        Forms\Components\Select::make('assigned_to')->label('Assign To')
+                            ->options(fn() => $this->teamOptions())->searchable()->nullable(),
+                        Forms\Components\DatePicker::make('due_date')->label('Due Date'),
+                        Forms\Components\RichEditor::make('description')->label('Description')
+                            ->toolbarButtons(['bold', 'italic', 'bulletList'])->columnSpanFull(),
+                        Forms\Components\Select::make('cde_document_id')->label('Related Document')
+                            ->options(fn() => $this->documentOptions())->searchable()->nullable()->placeholder('Select a document (optional)'),
+                    ])->columns(2),
+                ])
+                ->action(function (array $data): void {
+                    $data['company_id'] = $this->cid();
+                    $data['cde_project_id'] = $this->pid();
+                    $data['reported_by'] = auth()->id();
+                    $data['status'] = 'open';
+                    Ncr::create($data);
+                    Notification::make()->title('NCR reported')->success()->send();
+                }),
         ];
     }
 
@@ -399,21 +444,26 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
     {
         if ($this->activeTab === 'inspections') {
             return $this->inspectionTable($table->query(
-                SafetyInspection::query()->where('cde_project_id', $this->pid())->with(['inspector', 'template'])
+                SafetyInspection::query()->where('cde_project_id', $this->pid())->with(['inspector', 'template', 'document'])
             ));
         }
         if ($this->activeTab === 'snags') {
             return $this->snagTable($table->query(
-                SnagItem::query()->where('cde_project_id', $this->pid())->with(['reporter', 'assignee'])
+                SnagItem::query()->where('cde_project_id', $this->pid())->with(['reporter', 'assignee', 'document'])
             ));
         }
         if ($this->activeTab === 'social') {
             return $this->socialTable($table->query(
-                SocialRecord::query()->where('cde_project_id', $this->pid())->with(['reporter', 'assignee'])
+                SocialRecord::query()->where('cde_project_id', $this->pid())->with(['reporter', 'assignee', 'document'])
+            ));
+        }
+        if ($this->activeTab === 'ncrs') {
+            return $this->ncrTable($table->query(
+                Ncr::query()->where('cde_project_id', $this->pid())->with(['reporter', 'assignee', 'document'])
             ));
         }
         return $this->incidentTable($table->query(
-            SafetyIncident::query()->where('cde_project_id', $this->pid())->with(['reporter', 'investigator'])
+                SafetyIncident::query()->where('cde_project_id', $this->pid())->with(['reporter', 'investigator', 'document'])
         ));
     }
 
@@ -434,6 +484,8 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('location')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('reporter.name')->label('Reported By')->toggleable(),
                 Tables\Columns\TextColumn::make('investigator.name')->label('Investigator')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('document.document_number')->label('Document')->placeholder('—')->toggleable()
+                    ->formatStateUsing(fn(SafetyIncident $r) => $r->document ? "{$r->document->document_number} — {$r->document->title}" : '—'),
             ])
             ->defaultSort('incident_date', 'desc')
             ->filters([
@@ -644,6 +696,8 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('scheduled_date')->dateTime('M d, Y')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('inspector.name')->label('Inspector')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('location')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('document.document_number')->label('Document')->placeholder('—')->toggleable()
+                    ->formatStateUsing(fn(SafetyInspection $r) => $r->document ? "{$r->document->document_number} — {$r->document->title}" : '—'),
             ])
             ->defaultSort('scheduled_date', 'desc')
             ->filters([
@@ -731,6 +785,8 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                     ->color(fn(SnagItem $r) => $r->due_date?->isPast() && !in_array($r->status, ['resolved', 'verified', 'closed']) ? 'danger' : null)
                     ->placeholder('—'),
                 Tables\Columns\TextColumn::make('trade')->label('Trade')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('document.document_number')->label('Document')->placeholder('—')->toggleable()
+                    ->formatStateUsing(fn(SnagItem $r) => $r->document ? "{$r->document->document_number} — {$r->document->title}" : '—'),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -837,6 +893,8 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
                 Tables\Columns\TextColumn::make('record_date')->date('M d, Y')->sortable()->toggleable(),
                 Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('—')->toggleable(),
                 Tables\Columns\TextColumn::make('reporter.name')->label('Reported By')->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('document.document_number')->label('Document')->placeholder('—')->toggleable()
+                    ->formatStateUsing(fn(SocialRecord $r) => $r->document ? "{$r->document->document_number} — {$r->document->title}" : '—'),
             ])
             ->defaultSort('record_date', 'desc')
             ->filters([
@@ -947,6 +1005,215 @@ class SheqPage extends BaseModulePage implements HasTable, HasForms
             ->emptyStateHeading('No Social Records')
             ->emptyStateDescription('Use "Log Social Record" above to track community and social matters.')
             ->emptyStateIcon('heroicon-o-user-group')
+            ->striped()->paginated([10, 25, 50]);
+    }
+
+    private function ncrTable(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('ncr_number')->label('#')->searchable()->sortable()->weight('bold')->copyable()->toggleable(),
+                Tables\Columns\TextColumn::make('title')->searchable()->limit(40)->tooltip(fn(Ncr $r) => $r->title)->toggleable(),
+                Tables\Columns\TextColumn::make('type')->badge()->color('info')->toggleable()
+                    ->formatStateUsing(fn($state) => Ncr::$types[$state] ?? $state),
+                Tables\Columns\TextColumn::make('severity')->badge()->toggleable()
+                    ->color(fn(string $state) => match ($state) { 'critical' => 'danger', 'major' => 'warning', 'minor' => 'info', default => 'gray'})->sortable(),
+                Tables\Columns\TextColumn::make('status')->badge()->toggleable()
+                    ->color(fn(string $state) => match ($state) {
+                        'open' => 'danger',
+                        'investigating' => 'warning',
+                        'corrective_action' => 'info',
+                        'verified' => 'success',
+                        'closed' => 'gray',
+                        default => 'gray'
+                    })->sortable(),
+                Tables\Columns\TextColumn::make('document.document_number')->label('Document')->placeholder('—')->toggleable()
+                    ->formatStateUsing(fn(Ncr $r) => $r->document ? "{$r->document->document_number} — {$r->document->title}" : '—'),
+                Tables\Columns\TextColumn::make('due_date')->date('M d, Y')->sortable()->toggleable(),
+                Tables\Columns\TextColumn::make('assignee.name')->label('Assigned To')->placeholder('—')->toggleable(),
+                Tables\Columns\TextColumn::make('reporter.name')->label('Reported By')->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->filters([
+                Tables\Filters\SelectFilter::make('type')->options(Ncr::$types)->multiple(),
+                Tables\Filters\SelectFilter::make('severity')->options(Ncr::$severities)->multiple(),
+                Tables\Filters\SelectFilter::make('status')->options(Ncr::$statuses)->multiple(),
+                Tables\Filters\Filter::make('open_only')->label('Active Only')
+                    ->query(fn($q) => $q->whereIn('status', ['open', 'investigating', 'corrective_action']))->toggle(),
+            ])
+            ->recordActions([
+                \Filament\Actions\ActionGroup::make([
+                    \Filament\Actions\Action::make('viewNcrDetail')
+                        ->label('View')->icon('heroicon-o-eye')->color('gray')->modalWidth('3xl')
+                        ->modalHeading(fn(Ncr $r) => $r->ncr_number . ' — ' . $r->title)
+                        ->schema(fn(Ncr $r) => [
+                            Forms\Components\Placeholder::make('type_display')->label('Type')
+                                ->content(Ncr::$types[$r->type] ?? $r->type),
+                            Forms\Components\Placeholder::make('severity_display')->label('Severity')
+                                ->content(Ncr::$severities[$r->severity] ?? $r->severity),
+                            Forms\Components\Placeholder::make('status_display')->label('Status')
+                                ->content(Ncr::$statuses[$r->status] ?? $r->status),
+                            Forms\Components\Placeholder::make('due_display')->label('Due Date')
+                                ->content($r->due_date?->format('M d, Y') ?? '—'),
+                            Forms\Components\Placeholder::make('reported_by')->label('Reported By')
+                                ->content($r->reporter?->name ?? '—'),
+                            Forms\Components\Placeholder::make('assigned_to')->label('Assigned To')
+                                ->content($r->assignee?->name ?? '—'),
+                            Forms\Components\Placeholder::make('desc')->label('Description')
+                                ->content(fn() => new \Illuminate\Support\HtmlString($r->description ?: '<em>No description</em>'))
+                                ->columnSpanFull(),
+                            Forms\Components\Placeholder::make('root_cause_display')->label('Root Cause')
+                                ->content($r->root_cause ?: '— Not yet determined')->columnSpanFull(),
+                            Forms\Components\Placeholder::make('corrective_display')->label('Corrective Action')
+                                ->content($r->corrective_action ?: '— Not yet proposed')->columnSpanFull(),
+                            Forms\Components\Placeholder::make('preventive_display')->label('Preventive Action')
+                                ->content($r->preventive_action ?: '— None recorded')->columnSpanFull(),
+                            Forms\Components\Placeholder::make('verification_notes_display')->label('Verification Notes')
+                                ->content($r->verification_notes ?: '— Not yet verified')->columnSpanFull(),
+                            Forms\Components\Placeholder::make('closure_notes_display')->label('Closure Notes')
+                                ->content($r->closure_notes ?: '— Not yet closed')->columnSpanFull(),
+                            Forms\Components\Placeholder::make('verified_at_display')->label('Verified At')
+                                ->content($r->verified_at?->format('M d, Y H:i') ?? '—'),
+                            Forms\Components\Placeholder::make('closed_at_display')->label('Closed At')
+                                ->content($r->closed_at?->format('M d, Y H:i') ?? '—'),
+                        ])
+                        ->modalSubmitAction(false)->modalCancelActionLabel('Close'),
+
+                    \Filament\Actions\Action::make('investigateNcr')
+                        ->label('Investigate')->icon('heroicon-o-magnifying-glass')->color('warning')
+                        ->visible(fn(Ncr $r) => $r->status === 'open')
+                        ->schema([
+                            Forms\Components\Textarea::make('root_cause')->label('Root Cause')->rows(3)->required(),
+                            Forms\Components\Select::make('assigned_to')->label('Assign Investigator')
+                                ->options(fn() => $this->teamOptions())->searchable()->nullable(),
+                        ])
+                        ->action(function (array $data, Ncr $record): void {
+                            $record->update(array_merge($data, ['status' => 'investigating']));
+                            Notification::make()->title('NCR investigation started')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('proposeCorrectiveAction')
+                        ->label('Propose CAPA')->icon('heroicon-o-wrench')->color('info')
+                        ->visible(fn(Ncr $r) => $r->status === 'investigating')
+                        ->schema([
+                            Forms\Components\Textarea::make('corrective_action')->label('Corrective Action')->rows(3)->required(),
+                            Forms\Components\Textarea::make('preventive_action')->label('Preventive Action')->rows(3),
+                        ])
+                        ->fillForm(fn(Ncr $r) => ['corrective_action' => $r->corrective_action, 'preventive_action' => $r->preventive_action])
+                        ->action(function (array $data, Ncr $record): void {
+                            $record->update(array_merge($data, ['status' => 'corrective_action']));
+                            Notification::make()->title('Corrective action proposed')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('verifyNcr')
+                        ->label('Verify')->icon('heroicon-o-check-badge')->color('success')
+                        ->visible(fn(Ncr $r) => $r->status === 'corrective_action')
+                        ->schema([
+                            Forms\Components\Textarea::make('verification_notes')->label('Verification Notes')->rows(3)->required(),
+                        ])
+                        ->action(function (array $data, Ncr $record): void {
+                            $record->update(array_merge($data, ['status' => 'verified', 'verified_by' => auth()->id(), 'verified_at' => now()]));
+                            Notification::make()->title('NCR verified')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('closeNcr')
+                        ->label('Close')->icon('heroicon-o-lock-closed')->color('gray')
+                        ->visible(fn(Ncr $r) => $r->status === 'verified')
+                        ->schema([
+                            Forms\Components\Textarea::make('closure_notes')->label('Closure Notes')->rows(3)->required(),
+                        ])
+                        ->action(function (array $data, Ncr $record): void {
+                            $record->update(array_merge($data, ['status' => 'closed', 'closed_at' => now()]));
+                            if ($record->document) {
+                                try {
+                                    $record->document->transitionTo('approved');
+                                } catch (\InvalidArgumentException $e) {
+                                    // Document status transition not allowed; skip silently
+                                }
+                            }
+                            Notification::make()->title('NCR closed')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('reopenNcr')
+                        ->label('Reopen')->icon('heroicon-o-arrow-uturn-left')->color('danger')
+                        ->visible(fn(Ncr $r) => in_array($r->status, ['verified', 'closed']))
+                        ->requiresConfirmation()
+                        ->action(function (Ncr $record): void {
+                            $record->transitionTo($record->status === 'closed' ? 'corrective_action' : 'corrective_action');
+                            $record->update(['verified_at' => null, 'closed_at' => null]);
+                            Notification::make()->title('NCR reopened')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('editNcr')
+                        ->label('Edit')->icon('heroicon-o-pencil')->modalWidth('3xl')
+                        ->visible(fn(Ncr $r) => !in_array($r->status, ['closed']))
+                        ->schema([
+                            Section::make('NCR Details')->schema([
+                                Forms\Components\TextInput::make('ncr_number')->label('#')->required(),
+                                Forms\Components\TextInput::make('title')->required()->columnSpanFull(),
+                                Forms\Components\Select::make('type')->options(Ncr::$types)->required()->searchable(),
+                                Forms\Components\Select::make('severity')->options(Ncr::$severities)->required(),
+                                Forms\Components\Select::make('status')->options(Ncr::$statuses)->required(),
+                                Forms\Components\Select::make('assigned_to')->label('Assign To')
+                                    ->options(fn() => $this->teamOptions())->searchable()->nullable(),
+                                Forms\Components\DatePicker::make('due_date'),
+                                Forms\Components\Select::make('cde_document_id')->label('Related Document')
+                                    ->options(fn() => $this->documentOptions())->searchable()->nullable(),
+                                Forms\Components\RichEditor::make('description')
+                                    ->toolbarButtons(['bold', 'italic', 'bulletList'])->columnSpanFull(),
+                                Forms\Components\Textarea::make('root_cause')->label('Root Cause')->rows(2)->columnSpanFull(),
+                                Forms\Components\Textarea::make('corrective_action')->label('Corrective Action')->rows(2)->columnSpanFull(),
+                                Forms\Components\Textarea::make('preventive_action')->label('Preventive Action')->rows(2)->columnSpanFull(),
+                                Forms\Components\Textarea::make('verification_notes')->label('Verification Notes')->rows(2)->columnSpanFull(),
+                                Forms\Components\Textarea::make('closure_notes')->label('Closure Notes')->rows(2)->columnSpanFull(),
+                            ])->columns(2),
+                        ])
+                        ->fillForm(fn(Ncr $r) => $r->toArray())
+                        ->action(function (array $data, Ncr $record): void {
+                            $record->update($data);
+                            Notification::make()->title('NCR updated')->success()->send();
+                        }),
+
+                    \Filament\Actions\Action::make('deleteNcr')
+                        ->label('Delete')->icon('heroicon-o-trash')->color('danger')->requiresConfirmation()
+                        ->action(fn(Ncr $r) => $r->delete()),
+                ]),
+            ])
+            ->toolbarActions([
+                $this->exportCsvAction('ncrs', fn() => Ncr::query()->where('cde_project_id', $this->pid())->with(['reporter', 'assignee', 'document']), [
+                    'ncr_number' => 'NCR #',
+                    'title' => 'Title',
+                    'type' => 'Type',
+                    'severity' => 'Severity',
+                    'status' => 'Status',
+                    'document.document_number' => 'Document',
+                    'due_date' => 'Due Date',
+                    'reporter.name' => 'Reported By',
+                    'assignee.name' => 'Assigned To',
+                    'verified_at' => 'Verified At',
+                    'closed_at' => 'Closed At',
+                    'created_at' => 'Created At',
+                ]),
+                \Filament\Actions\BulkActionGroup::make([
+                    \Filament\Actions\BulkAction::make('bulkCloseNcr')->label('Close')->icon('heroicon-o-lock-closed')->color('gray')
+                        ->requiresConfirmation()
+                        ->action(function ($records): void {
+                            foreach ($records as $r) {
+                                if ($r->status === 'verified') {
+                                    $r->update(['status' => 'closed', 'closed_at' => now()]);
+                                    if ($r->document) {
+                                        try { $r->document->transitionTo('approved'); } catch (\InvalidArgumentException $e) {}
+                                    }
+                                }
+                            }
+                            Notification::make()->title('Selected NCRs closed')->success()->send();
+                        })->deselectRecordsAfterCompletion(),
+                    \Filament\Actions\DeleteBulkAction::make(),
+                ]),
+            ])
+            ->emptyStateHeading('No NCRs')
+            ->emptyStateDescription('Use "Report NCR" above to log non-conformances.')
+            ->emptyStateIcon('heroicon-o-document-text')
             ->striped()->paginated([10, 25, 50]);
     }
 }

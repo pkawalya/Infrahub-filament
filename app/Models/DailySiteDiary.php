@@ -4,12 +4,13 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\HasHashedRouteKey;
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class DailySiteDiary extends Model
 {
-    use BelongsToCompany, HasHashedRouteKey, SoftDeletes;
+    use BelongsToCompany, HasHashedRouteKey, SoftDeletes, LogsActivity;
 
     protected $fillable = [
         'company_id',

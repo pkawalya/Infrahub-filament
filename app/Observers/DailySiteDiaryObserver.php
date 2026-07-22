@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\DailySiteDiary;
 use App\Services\ModuleNotificationService;
 
@@ -13,6 +14,15 @@ class DailySiteDiaryObserver
 
     public function updated(DailySiteDiary $diary): void
     {
+        if ($diary->isDirty('status')) {
+            CdeActivityLog::record(
+                $diary,
+                'status_changed',
+                "Site diary for {$diary->diary_date?->format('M d, Y')} status changed to '{$diary->status}'",
+                ['from' => $diary->getOriginal('status'), 'to' => $diary->status],
+            );
+        }
+
         // Notify when diary is submitted for approval
         if ($diary->isDirty('status') && $diary->status === 'submitted') {
             $this->notifications->notifyCompanyAdmins('site-diary-submitted', $diary->company_id, [

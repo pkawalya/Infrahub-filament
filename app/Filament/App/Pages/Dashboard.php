@@ -5,6 +5,7 @@ namespace App\Filament\App\Pages;
 use App\Filament\App\Widgets\ContractorOverviewWidget;
 use App\Filament\App\Widgets\ProjectTimelineWidget;
 use App\Filament\App\Widgets\TenantDashboardOverview;
+use App\Filament\App\Widgets\WorkflowBottlenecksWidget;
 use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
@@ -16,6 +17,7 @@ class Dashboard extends BaseDashboard
     {
         return [
             TenantDashboardOverview::class,
+            WorkflowBottlenecksWidget::class,
             ContractorOverviewWidget::class,
             ProjectTimelineWidget::class,
         ];

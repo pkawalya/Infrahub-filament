@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use App\Models\CdeActivityLog;
 use App\Models\SafetyIncident;
 use App\Services\ModuleNotificationService;
 
@@ -32,6 +33,12 @@ class SafetyIncidentObserver
             $this->notifications->notifyCompanyAdmins($slug, $incident->company_id, $vars, $url);
         }
 
+        CdeActivityLog::record(
+            $incident,
+            'created',
+            "Safety incident '{$incident->incident_number}' reported (severity: {$incident->severity})",
+        );
+
         // Always notify project team
         if ($incident->cde_project_id) {
             $this->notifications->notifyProjectTeam(
@@ -42,5 +49,19 @@ class SafetyIncidentObserver
                 auth()->id()
             );
         }
+    }
+
+    public function updated(SafetyIncident $incident): void
+    {
+        if (!$incident->isDirty('status')) {
+            return;
+        }
+
+        CdeActivityLog::record(
+            $incident,
+            'status_changed',
+            "Safety incident '{$incident->incident_number}' status changed to '{$incident->status}'",
+            ['from' => $incident->getOriginal('status'), 'to' => $incident->status],
+        );
     }
 }

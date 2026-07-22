@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\CdeActivityLog;
 use App\Models\Concerns\BelongsToCompany;
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PurchaseOrder extends Model
 {
-    use SoftDeletes, BelongsToCompany;
+    use SoftDeletes, BelongsToCompany, LogsActivity;
 
     protected $fillable = [
         'company_id',
@@ -62,6 +64,53 @@ class PurchaseOrder extends Model
         'received' => 'Received',
         'cancelled' => 'Cancelled',
     ];
+
+    public static array $validTransitions = [
+        'draft' => ['submitted'],
+        'submitted' => ['approved', 'rejected'],
+        'approved' => ['ordered', 'cancelled'],
+        'rejected' => ['draft'],
+        'ordered' => ['partially_received', 'received', 'cancelled'],
+        'partially_received' => ['received'],
+        'received' => [],
+        'cancelled' => [],
+    ];
+
+    public function canTransitionTo(string $newStatus): bool
+    {
+        if ($this->status === $newStatus) {
+            return true;
+        }
+
+        $allowed = static::$validTransitions[$this->status] ?? [];
+
+        return in_array($newStatus, $allowed, true);
+    }
+
+    public function transitionTo(string $newStatus): bool
+    {
+        if (!$this->canTransitionTo($newStatus)) {
+            $allowed = static::$validTransitions[$this->status] ?? [];
+            throw new \InvalidArgumentException(
+                "Cannot transition PO '{$this->po_number}' from '{$this->status}' to '{$newStatus}'. " .
+                "Allowed transitions: " . implode(', ', $allowed)
+            );
+        }
+
+        $fromStatus = $this->status;
+        $result = $this->update(['status' => $newStatus]);
+
+        if ($result) {
+            CdeActivityLog::record(
+                $this,
+                'status_changed',
+                "Purchase order '{$this->po_number}' status changed from '{$fromStatus}' to '{$newStatus}'",
+                ['from' => $fromStatus, 'to' => $newStatus],
+            );
+        }
+
+        return $result;
+    }
 
     public function cdeProject()
     {

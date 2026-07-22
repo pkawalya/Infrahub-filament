@@ -8,6 +8,7 @@ use App\Models\Invoice;
 use App\Support\CurrencyHelper;
 use Filament\Actions;
 use Filament\Infolists;
+use Filament\Notifications\Notification;
 use Filament\Schemas;
 use Filament\Forms;
 use Filament\Schemas\Schema;
@@ -162,6 +163,50 @@ class InvoiceResource extends Resource
             ->actions([
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
+
+                // ── ISO 9001 / ISO 19650 Status Transitions ──
+                Actions\Action::make('send')
+                    ->label('Send Invoice')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('warning')
+                    ->action(function (Invoice $record) {
+                        $record->transitionTo('sent');
+                        Notification::make()->title('Invoice sent to client')->success()->send();
+                    })
+                    ->hidden(fn (Invoice $record) => !$record->canTransitionTo('sent')),
+
+                Actions\Action::make('markPaid')
+                    ->label('Mark Paid')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->action(function (Invoice $record) {
+                        $record->transitionTo('paid');
+                        Notification::make()->title('Invoice marked as paid')->success()->send();
+                    })
+                    ->hidden(fn (Invoice $record) => !$record->canTransitionTo('paid')),
+
+                Actions\Action::make('markPartiallyPaid')
+                    ->label('Partially Paid')
+                    ->icon('heroicon-o-adjustments-horizontal')
+                    ->color('info')
+                    ->action(function (Invoice $record) {
+                        $record->transitionTo('partially_paid');
+                        Notification::make()->title('Invoice marked as partially paid')->info()->send();
+                    })
+                    ->hidden(fn (Invoice $record) => !$record->canTransitionTo('partially_paid')),
+
+                Actions\Action::make('cancel')
+                    ->label('Cancel Invoice')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->action(function (Invoice $record) {
+                        $record->transitionTo('cancelled');
+                        Notification::make()->title('Invoice cancelled')->danger()->send();
+                    })
+                    ->hidden(fn (Invoice $record) => !$record->canTransitionTo('cancelled')),
+
                 Actions\Action::make('print')
                     ->icon('heroicon-o-printer')->color('gray')
                     ->url(fn(Invoice $record) => route('print.invoice', $record), shouldOpenInNewTab: true),

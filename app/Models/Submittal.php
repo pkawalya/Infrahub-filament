@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\CdeActivityLog;
 use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,7 @@ class Submittal extends Model
     protected $fillable = [
         'company_id',
         'cde_project_id',
+        'cde_document_id',
         'submittal_number',
         'title',
         'description',
@@ -41,6 +43,51 @@ class Submittal extends Model
         'rejected' => 'Rejected',
     ];
 
+    public static array $validTransitions = [
+        'pending' => ['under_review'],
+        'under_review' => ['approved', 'approved_as_noted', 'revise_resubmit', 'rejected'],
+        'approved' => [],
+        'approved_as_noted' => [],
+        'revise_resubmit' => ['under_review'],
+        'rejected' => ['under_review'],
+    ];
+
+    public function canTransitionTo(string $newStatus): bool
+    {
+        if ($this->status === $newStatus) {
+            return true;
+        }
+
+        $allowed = static::$validTransitions[$this->status] ?? [];
+
+        return in_array($newStatus, $allowed, true);
+    }
+
+    public function transitionTo(string $newStatus): bool
+    {
+        if (!$this->canTransitionTo($newStatus)) {
+            $allowed = static::$validTransitions[$this->status] ?? [];
+            throw new \InvalidArgumentException(
+                "Cannot transition submittal '{$this->submittal_number}' from '{$this->status}' to '{$newStatus}'. " .
+                "Allowed transitions: " . implode(', ', $allowed)
+            );
+        }
+
+        $fromStatus = $this->status;
+        $result = $this->update(['status' => $newStatus]);
+
+        if ($result) {
+            CdeActivityLog::record(
+                $this,
+                'status_changed',
+                "Submittal '{$this->submittal_number}' status changed from '{$fromStatus}' to '{$newStatus}'",
+                ['from' => $fromStatus, 'to' => $newStatus],
+            );
+        }
+
+        return $result;
+    }
+
     public static array $types = [
         'shop_drawing' => 'Shop Drawing',
         'product_data' => 'Product Data',
@@ -65,5 +112,10 @@ class Submittal extends Model
     public function reviewer()
     {
         return $this->belongsTo(User::class, 'reviewer_id');
+    }
+
+    public function document()
+    {
+        return $this->belongsTo(CdeDocument::class, 'cde_document_id');
     }
 }

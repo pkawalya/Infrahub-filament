@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\CdeActivityLog;
 use App\Models\Concerns\BelongsToCompany;
 use App\Models\Concerns\HasHashedRouteKey;
+use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Tender extends Model
 {
-    use SoftDeletes, BelongsToCompany, HasHashedRouteKey;
+    use SoftDeletes, BelongsToCompany, HasHashedRouteKey, LogsActivity;
 
     protected $fillable = [
         'company_id',
@@ -53,13 +55,59 @@ class Tender extends Model
 
     public static array $statuses = [
         'identified' => 'Identified',
-        'preparing'  => 'Preparing',
-        'submitted'  => 'Submitted',
+        'preparing' => 'Preparing',
+        'submitted' => 'Submitted',
         'shortlisted' => 'Shortlisted',
-        'awarded'    => 'Awarded',
-        'lost'       => 'Lost',
-        'withdrawn'  => 'Withdrawn',
+        'awarded' => 'Awarded',
+        'lost' => 'Lost',
+        'withdrawn' => 'Withdrawn',
     ];
+
+    public static array $validTransitions = [
+        'identified' => ['preparing'],
+        'preparing' => ['submitted', 'identified'],
+        'submitted' => ['shortlisted', 'awarded', 'lost'],
+        'shortlisted' => ['awarded', 'lost'],
+        'awarded' => [],
+        'lost' => [],
+        'withdrawn' => [],
+    ];
+
+    public function canTransitionTo(string $newStatus): bool
+    {
+        if ($this->status === $newStatus) {
+            return true;
+        }
+
+        $allowed = static::$validTransitions[$this->status] ?? [];
+
+        return in_array($newStatus, $allowed, true);
+    }
+
+    public function transitionTo(string $newStatus): bool
+    {
+        if (!$this->canTransitionTo($newStatus)) {
+            $allowed = static::$validTransitions[$this->status] ?? [];
+            throw new \InvalidArgumentException(
+                "Cannot transition tender '{$this->reference}' from '{$this->status}' to '{$newStatus}'. " .
+                "Allowed transitions: " . implode(', ', $allowed)
+            );
+        }
+
+        $fromStatus = $this->status;
+        $result = $this->update(['status' => $newStatus]);
+
+        if ($result) {
+            CdeActivityLog::record(
+                $this,
+                'status_changed',
+                "Tender '{$this->reference}' status changed from '{$fromStatus}' to '{$newStatus}'",
+                ['from' => $fromStatus, 'to' => $newStatus],
+            );
+        }
+
+        return $result;
+    }
 
     public static array $categories = [
         'construction'  => 'Construction',
