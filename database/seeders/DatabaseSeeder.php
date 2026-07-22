@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             TestCompanySeeder::class,
             TenderWorkflowSeeder::class,
             RolesAndPermissionsSeeder::class,
+            WorkflowDemoSeeder::class,
         ]);
     }
 }
