@@ -119,6 +119,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         // Livewire components
+        Livewire::component('app.filament.app.widgets.workflow-bottlenecks-widget', \App\Filament\App\Widgets\WorkflowBottlenecksWidget::class);
+
         if (class_exists(\App\Filament\Resources\TicketResource\Pages\EditCommentModal::class)) {
             Livewire::component('edit-comment-modal', \App\Filament\Resources\TicketResource\Pages\EditCommentModal::class);
         }
