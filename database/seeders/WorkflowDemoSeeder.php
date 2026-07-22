@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\CdeFolder;
 use App\Models\CdeProject;
 use App\Models\ChangeOrder;
 use App\Models\Client;
@@ -48,8 +47,11 @@ class WorkflowDemoSeeder extends Seeder
             ]);
         }
 
+        $projectIds = $projects->pluck('id')->toArray();
+        $project1 = $projects->first();
+
         // ═══════════════════════════════════════════════════════════
-        // 1. NCRs — ISO 9001 CAPA Workflow
+        // 1. NCRs — ISO 9001 CAPA Workflow  (10 records)
         // ═══════════════════════════════════════════════════════════
         $this->command->info('Seeding NCRs ...');
 
@@ -87,22 +89,54 @@ class WorkflowDemoSeeder extends Seeder
              'assigned_to' => $tech->id, 'verified_by' => $manager->id,
              'verified_at' => now()->subDays(3), 'closed_at' => now()->subDay(),
              'due_date' => now()->subDays(5)],
+            ['ncr_number' => 'NCR-2026-006', 'title' => 'Cable tray installation wrong elevation',
+             'type' => 'product', 'severity' => 'major', 'status' => 'open',
+             'description' => 'Cable trays in electrical room installed 150mm lower than IFC drawing.',
+             'assigned_to' => $tech->id, 'due_date' => now()->addDays(10)],
+            ['ncr_number' => 'NCR-2026-007', 'title' => 'Fire damper missing in ductwork',
+             'type' => 'product', 'severity' => 'critical', 'status' => 'investigating',
+             'description' => 'Fire damper not installed at duct penetration through fire-rated wall D12.',
+             'root_cause' => 'Damper omitted from shop drawing submittal.',
+             'assigned_to' => $tech->id, 'due_date' => now()->addDays(5)],
+            ['ncr_number' => 'NCR-2026-008', 'title' => 'Bolt torque not achieved on flange connections',
+             'type' => 'process', 'severity' => 'major', 'status' => 'corrective_action',
+             'description' => 'Torque audit found 6 of 20 flanges below spec on pipe rack PR4.',
+             'root_cause' => 'Technician used manual wrench instead of torque wrench.',
+             'corrective_action' => 'All flanges retorqued with calibrated torque wrench and re-signed off.',
+             'assigned_to' => $tech->id, 'due_date' => now()->addDays(2)],
+            ['ncr_number' => 'NCR-2026-009', 'title' => 'Paint adhesion failure on steel structure',
+             'type' => 'product', 'severity' => 'minor', 'status' => 'verified',
+             'description' => 'Paint blistering observed on exposed steel columns in yard area.',
+             'root_cause' => 'Surface not properly blasted before priming.',
+             'corrective_action' => 'Blasted, reprimed, and recoated per spec.',
+             'verification_notes' => 'Adhesion test passed — cross-hatch rating 5B.',
+             'assigned_to' => $tech->id, 'verified_by' => $manager->id,
+             'verified_at' => now()->subDay(), 'due_date' => now()->subDays(2)],
+            ['ncr_number' => 'NCR-2026-010', 'title' => 'Asphalt thickness below spec on access road',
+             'type' => 'product', 'severity' => 'major', 'status' => 'closed',
+             'description' => 'Core samples show 38mm asphalt at Section 4 vs 50mm spec.',
+             'root_cause' => 'Paving machine screed not adjusted after paver stop.',
+             'corrective_action' => 'Milled and re-laid to 50mm over 120m section.',
+             'verification_notes' => 'New cores confirm 48-52mm thickness. Density tests passed.',
+             'closure_notes' => 'Section accepted. Warranty extended by 12 months.',
+             'assigned_to' => $tech->id, 'verified_by' => $manager->id,
+             'verified_at' => now()->subDays(5), 'closed_at' => now()->subDays(2),
+             'due_date' => now()->subDays(7)],
         ];
 
-        $project1 = $projects->first();
         foreach ($ncrs as $data) {
             Ncr::firstOrCreate(
                 ['ncr_number' => $data['ncr_number'], 'company_id' => $cid],
                 array_merge($data, [
                     'company_id' => $cid,
-                    'cde_project_id' => $projects[rand(0, $projects->count() - 1)]->id,
+                    'cde_project_id' => $projectIds[array_rand($projectIds)],
                     'reported_by' => $admin->id,
                 ])
             );
         }
 
         // ═══════════════════════════════════════════════════════════
-        // 2. Drawings — ISO 19650 Status Transitions
+        // 2. Drawings — ISO 19650 Status Transitions  (12 records)
         // ═══════════════════════════════════════════════════════════
         $this->command->info('Seeding drawings ...');
 
@@ -119,6 +153,18 @@ class WorkflowDemoSeeder extends Seeder
              'discipline' => 'electrical', 'current_revision' => 'B', 'status' => 'as_built'],
             ['drawing_number' => 'KJE-002-S-001', 'title' => 'Site Grading & Drainage Plan',
              'discipline' => 'civil', 'current_revision' => 'A', 'status' => 'superseded'],
+            ['drawing_number' => 'TST-SOLAR-E-001', 'title' => 'PV Array Layout - Solar Farm',
+             'discipline' => 'electrical', 'current_revision' => 'A', 'status' => 'for_review'],
+            ['drawing_number' => 'TST-SOLAR-C-001', 'title' => 'Foundation Detail - Inverter Station',
+             'discipline' => 'structural', 'current_revision' => 'B', 'status' => 'approved'],
+            ['drawing_number' => 'TST-BUILD-A-001', 'title' => 'Floor Plan - Ground Floor',
+             'discipline' => 'architectural', 'current_revision' => 'C', 'status' => 'ifc'],
+            ['drawing_number' => 'TST-BUILD-M-001', 'title' => 'HVAC Ducting Layout',
+             'discipline' => 'mechanical', 'current_revision' => 'A', 'status' => 'wip'],
+            ['drawing_number' => 'TST-WATER-S-001', 'title' => 'Treatment Plant P&ID',
+             'discipline' => 'civil', 'current_revision' => 'A', 'status' => 'for_review'],
+            ['drawing_number' => 'TST-FIBER-E-001', 'title' => 'Fiber Backbone Route Plan',
+             'discipline' => 'electrical', 'current_revision' => 'A', 'status' => 'wip'],
         ];
 
         foreach ($drawings as $data) {
@@ -126,7 +172,7 @@ class WorkflowDemoSeeder extends Seeder
                 ['drawing_number' => $data['drawing_number'], 'company_id' => $cid],
                 array_merge($data, [
                     'company_id' => $cid,
-                    'cde_project_id' => $project1->id,
+                    'cde_project_id' => $projectIds[array_rand($projectIds)],
                     'drawn_by' => $tech->id,
                     'drawn_date' => now()->subDays(rand(10, 60)),
                 ])
@@ -134,16 +180,21 @@ class WorkflowDemoSeeder extends Seeder
         }
 
         // ═══════════════════════════════════════════════════════════
-        // 3. Invoices — ISO 9001 Status Transitions
+        // 3. Invoices — ISO 9001 Status Transitions  (10 records)
         // ═══════════════════════════════════════════════════════════
         $this->command->info('Seeding invoices ...');
 
         $invoices = [
-            ['invoice_number' => 'INV-2026-001', 'status' => 'paid', 'total_amount' => 4500000],
-            ['invoice_number' => 'INV-2026-002', 'status' => 'sent', 'total_amount' => 2200000],
-            ['invoice_number' => 'INV-2026-003', 'status' => 'draft', 'total_amount' => 3800000],
+            ['invoice_number' => 'INV-2026-001', 'status' => 'paid', 'total_amount' => 4500000, 'amount_paid' => 4500000],
+            ['invoice_number' => 'INV-2026-002', 'status' => 'sent', 'total_amount' => 2200000, 'amount_paid' => 0],
+            ['invoice_number' => 'INV-2026-003', 'status' => 'draft', 'total_amount' => 3800000, 'amount_paid' => 0],
             ['invoice_number' => 'INV-2026-004', 'status' => 'partially_paid', 'total_amount' => 6100000, 'amount_paid' => 3000000],
-            ['invoice_number' => 'INV-2026-005', 'status' => 'overdue', 'total_amount' => 1800000],
+            ['invoice_number' => 'INV-2026-005', 'status' => 'overdue', 'total_amount' => 1800000, 'amount_paid' => 0],
+            ['invoice_number' => 'INV-2026-006', 'status' => 'paid', 'total_amount' => 8900000, 'amount_paid' => 8900000],
+            ['invoice_number' => 'INV-2026-007', 'status' => 'sent', 'total_amount' => 12500000, 'amount_paid' => 0],
+            ['invoice_number' => 'INV-2026-008', 'status' => 'draft', 'total_amount' => 3200000, 'amount_paid' => 0],
+            ['invoice_number' => 'INV-2026-009', 'status' => 'partially_paid', 'total_amount' => 7500000, 'amount_paid' => 4000000],
+            ['invoice_number' => 'INV-2026-010', 'status' => 'overdue', 'total_amount' => 5600000, 'amount_paid' => 0],
         ];
 
         foreach ($invoices as $data) {
@@ -158,7 +209,7 @@ class WorkflowDemoSeeder extends Seeder
         }
 
         // ═══════════════════════════════════════════════════════════
-        // 4. Work Orders — ISO 9001 Status Transitions
+        // 4. Work Orders — ISO 9001 Status Transitions  (12 records)
         // ═══════════════════════════════════════════════════════════
         $this->command->info('Seeding work orders ...');
 
@@ -169,6 +220,12 @@ class WorkflowDemoSeeder extends Seeder
             ['wo_number' => 'WO-TST-004', 'title' => 'Drainage works - Access road', 'status' => 'approved', 'priority' => 'medium'],
             ['wo_number' => 'WO-TST-005', 'title' => 'Safety signage installation', 'status' => 'pending', 'priority' => 'low'],
             ['wo_number' => 'WO-TST-006', 'title' => 'Crane maintenance & certification', 'status' => 'cancelled', 'priority' => 'critical'],
+            ['wo_number' => 'WO-TST-007', 'title' => 'Transformer oil testing & filtration', 'status' => 'in_progress', 'priority' => 'high'],
+            ['wo_number' => 'WO-TST-008', 'title' => 'Control panel wiring - MCC room', 'status' => 'approved', 'priority' => 'medium'],
+            ['wo_number' => 'WO-TST-009', 'title' => 'Road marking & signage', 'status' => 'pending', 'priority' => 'low'],
+            ['wo_number' => 'WO-TST-010', 'title' => 'Generator load bank testing', 'status' => 'on_hold', 'priority' => 'high'],
+            ['wo_number' => 'WO-TST-011', 'title' => 'Fire suppression system commissioning', 'status' => 'pending', 'priority' => 'critical'],
+            ['wo_number' => 'WO-TST-012', 'title' => 'Site dewatering - Excavation Zone B', 'status' => 'completed', 'priority' => 'high'],
         ];
 
         foreach ($workOrders as $data) {
@@ -176,7 +233,7 @@ class WorkflowDemoSeeder extends Seeder
                 ['wo_number' => $data['wo_number'], 'company_id' => $cid],
                 array_merge($data, [
                     'company_id' => $cid,
-                    'cde_project_id' => $project1->id,
+                    'cde_project_id' => $projectIds[array_rand($projectIds)],
                     'description' => $data['title'],
                     'assigned_to' => $tech->id,
                     'due_date' => now()->addDays(rand(5, 30)),
@@ -186,7 +243,7 @@ class WorkflowDemoSeeder extends Seeder
         }
 
         // ═══════════════════════════════════════════════════════════
-        // 5. Tenders — ISO 9001 Status Transitions
+        // 5. Tenders — ISO 9001 Status Transitions  (10 records)
         // ═══════════════════════════════════════════════════════════
         $this->command->info('Seeding tenders ...');
 
@@ -207,6 +264,16 @@ class WorkflowDemoSeeder extends Seeder
             ['reference' => 'TND-TST-006', 'title' => 'Tororo Industrial Park Access Road',
              'status' => 'lost', 'client_name' => 'Uganda Development Corp', 'win_probability' => 30,
              'bid_amount' => 18000000],
+            ['reference' => 'TND-TST-007', 'title' => 'Mbarara Regional Hospital Solar Backup',
+             'status' => 'submitted', 'client_name' => 'Ministry of Health', 'win_probability' => 55,
+             'bid_amount' => 12000000],
+            ['reference' => 'TND-TST-008', 'title' => 'Kampala Street Lighting Upgrade Lot 2',
+             'status' => 'preparing', 'client_name' => 'KCCA', 'win_probability' => null],
+            ['reference' => 'TND-TST-009', 'title' => 'Busia Border Post One-Stop Facility',
+             'status' => 'identified', 'client_name' => 'Uganda Revenue Authority', 'win_probability' => null],
+            ['reference' => 'TND-TST-010', 'title' => 'Lira - Kitgum Road Periodic Maintenance',
+             'status' => 'awarded', 'client_name' => 'UNRA', 'win_probability' => 100,
+             'bid_amount' => 72000000],
         ];
 
         foreach ($tenders as $data) {
@@ -221,7 +288,7 @@ class WorkflowDemoSeeder extends Seeder
         }
 
         // ═══════════════════════════════════════════════════════════
-        // 6. Contracts + ChangeOrders — ISO 19650 Transitions
+        // 6. Contracts + ChangeOrders — ISO 19650  (8 change orders)
         // ═══════════════════════════════════════════════════════════
         $this->command->info('Seeding contracts & change orders ...');
 
@@ -250,17 +317,46 @@ class WorkflowDemoSeeder extends Seeder
             ]
         );
 
+        $contract2 = Contract::firstOrCreate(
+            ['contract_number' => 'CTR-TST-002', 'company_id' => $cid],
+            [
+                'company_id' => $cid,
+                'vendor_id' => $vendor->id,
+                'title' => 'Solar Farm EPC - Soroti',
+                'type' => 'fixed_price',
+                'status' => 'active',
+                'start_date' => now()->subMonths(3),
+                'end_date' => now()->addMonths(9),
+                'original_value' => 45000000,
+                'created_by' => $admin->id,
+            ]
+        );
+
         $changeOrders = [
             ['co_number' => 'CO-TST-001', 'title' => 'Additional earthworks due to soil conditions',
-             'status' => 'implemented', 'amount' => 2200000, 'time_extension_days' => 14],
+             'status' => 'implemented', 'amount' => 2200000, 'time_extension_days' => 14,
+             'contract_id' => $contract->id],
             ['co_number' => 'CO-TST-002', 'title' => 'Redesign of drainage culvert at CH 5+200',
-             'status' => 'approved', 'amount' => 980000, 'time_extension_days' => 7],
+             'status' => 'approved', 'amount' => 980000, 'time_extension_days' => 7,
+             'contract_id' => $contract->id],
             ['co_number' => 'CO-TST-003', 'title' => 'Extra layer of asphalt on approach ramps',
-             'status' => 'under_review', 'amount' => 1450000],
+             'status' => 'under_review', 'amount' => 1450000,
+             'contract_id' => $contract->id],
             ['co_number' => 'CO-TST-004', 'title' => 'Pedestrian bridge railing upgrade',
-             'status' => 'draft', 'amount' => 450000],
+             'status' => 'draft', 'amount' => 450000,
+             'contract_id' => $contract->id],
             ['co_number' => 'CO-TST-005', 'title' => 'Relocation of water main at Section 2',
-             'status' => 'rejected', 'amount' => 3100000],
+             'status' => 'rejected', 'amount' => 3100000,
+             'contract_id' => $contract->id],
+            ['co_number' => 'CO-TST-006', 'title' => 'Additional solar panel mounting structures',
+             'status' => 'under_review', 'amount' => 1850000,
+             'contract_id' => $contract2->id],
+            ['co_number' => 'CO-TST-007', 'title' => 'Inverter upgrade to higher capacity',
+             'status' => 'draft', 'amount' => 720000,
+             'contract_id' => $contract2->id],
+            ['co_number' => 'CO-TST-008', 'title' => 'Extended underground cable route',
+             'status' => 'approved', 'amount' => 1340000, 'time_extension_days' => 5,
+             'contract_id' => $contract2->id],
         ];
 
         foreach ($changeOrders as $data) {
@@ -268,7 +364,6 @@ class WorkflowDemoSeeder extends Seeder
                 ['co_number' => $data['co_number'], 'company_id' => $cid],
                 array_merge($data, [
                     'company_id' => $cid,
-                    'contract_id' => $contract->id,
                     'requested_by' => $admin->id,
                     'approved_by' => in_array($data['status'], ['approved', 'implemented']) ? $manager->id : null,
                     'approved_at' => in_array($data['status'], ['approved', 'implemented']) ? now()->subDays(rand(1, 10)) : null,
