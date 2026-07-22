@@ -230,7 +230,8 @@ class BiddingPage extends BaseModulePage implements HasTable
             Forms\Components\TextInput::make('win_probability')->numeric()->minValue(0)->maxValue(100)->suffix('%'),
             Forms\Components\DatePicker::make('submission_deadline'),
             Forms\Components\Select::make('assigned_to')
-                ->relationship('assignee', 'name', fn ($q) => $q->where('company_id', $cid)->where('is_active', true))
+                ->label('Lead Estimator')
+                ->options(\App\Models\User::where('company_id', $cid)->where('is_active', true)->pluck('name', 'id'))
                 ->searchable()->preload(),
             Forms\Components\Textarea::make('strategy_notes')->rows(2)->columnSpanFull(),
         ];
