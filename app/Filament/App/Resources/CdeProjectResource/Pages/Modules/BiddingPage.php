@@ -196,9 +196,9 @@ class BiddingPage extends BaseModulePage implements HasTable
             ->defaultSort('total_score', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('tender_id')->label('Tender')
-                    ->relationship('tender', 'title', fn ($q) => $q->where('company_id', $cid)),
+                    ->options(\App\Models\Tender::where('company_id', $cid)->pluck('title', 'id')),
                 Tables\Filters\SelectFilter::make('bid_stage_id')->label('Stage')
-                    ->relationship('stage', 'name', fn ($q) => $q->where('company_id', $cid)),
+                    ->options(\App\Models\BidStage::where('company_id', $cid)->pluck('name', 'id')),
             ])
             ->recordActions([
                 Actions\EditAction::make()
