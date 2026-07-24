@@ -127,6 +127,56 @@ class DailySiteDiaryResource extends Resource
                         ->placeholder('Activities planned for the next working day...'),
                 ]),
 
+            Section::make('✅ Tasks Completed Today')
+                ->icon('heroicon-o-check-circle')
+                ->schema([
+                    Forms\Components\Repeater::make('tasks')
+                        ->label('Tasks')
+                        ->relationship('tasks')
+                        ->schema([
+                            Forms\Components\Select::make('task_id')
+                                ->label('Task')
+                                ->options(fn() => \App\Models\Task::where('company_id', auth()->user()?->company_id)->pluck('title', 'id'))
+                                ->searchable()
+                                ->preload()
+                                ->required(),
+                            Forms\Components\TextInput::make('progress_today')
+                                ->label('Progress Today (%)')
+                                ->numeric()
+                                ->minValue(0)
+                                ->maxValue(100)
+                                ->default(0)
+                                ->suffix('%'),
+                            Forms\Components\TextInput::make('cumulative_progress')
+                                ->label('Cumulative Progress (%)')
+                                ->numeric()
+                                ->minValue(0)
+                                ->maxValue(100)
+                                ->suffix('%'),
+                            Forms\Components\TextInput::make('hours_worked')
+                                ->label('Hours Worked')
+                                ->numeric()
+                                ->step(0.25)
+                                ->default(0),
+                            Forms\Components\TextInput::make('workers_assigned')
+                                ->label('Workers')
+                                ->numeric()
+                                ->default(0),
+                            Forms\Components\Select::make('status_update')
+                                ->label('Status')
+                                ->options(\App\Models\DailySiteLogTask::$statusOptions)
+                                ->default('in_progress'),
+                            Forms\Components\Textarea::make('remarks')
+                                ->label('Remarks')
+                                ->rows(2),
+                        ])
+                        ->columns(4)
+                        ->collapsible()
+                        ->addActionLabel('Add Task')
+                        ->defaultItems(0)
+                        ->maxItems(20),
+                ]),
+
             // ── Environmental Monitoring (Energy Projects) ──
             Section::make('🌡️ Environmental Monitoring')
                 ->icon('heroicon-o-beaker')
@@ -279,6 +329,11 @@ class DailySiteDiaryResource extends Resource
                 Tables\Columns\TextColumn::make('weather')
                     ->label('Weather')
                     ->formatStateUsing(fn(?string $state) => Company::options('weather_types')[$state] ?? $state ?? '—'),
+                Tables\Columns\TextColumn::make('tasks_count')
+                    ->label('Tasks')
+                    ->counts('tasks')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success'),
                 Tables\Columns\TextColumn::make('total_workforce')
                     ->label('Workers')
                     ->state(fn(DailySiteDiary $r) => $r->total_workforce)

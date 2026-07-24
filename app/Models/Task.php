@@ -221,6 +221,13 @@ class Task extends Model
             ->withPivot('dependency_type', 'lag_days');
     }
 
+    public function dailySiteDiaries()
+    {
+        return $this->belongsToMany(DailySiteDiary::class, 'daily_site_diary_task')
+            ->withPivot('progress_today', 'cumulative_progress', 'hours_worked', 'workers_assigned', 'status_update', 'remarks')
+            ->withTimestamps();
+    }
+
     // ─── WBS Helpers ──────────────────────────────────────────────
 
     /**

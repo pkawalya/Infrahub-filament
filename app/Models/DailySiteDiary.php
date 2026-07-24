@@ -109,6 +109,13 @@ class DailySiteDiary extends Model
         return $this->belongsTo(CdeProject::class, 'cde_project_id');
     }
 
+    public function tasks()
+    {
+        return $this->belongsToMany(Task::class, 'daily_site_diary_task')
+            ->withPivot('progress_today', 'cumulative_progress', 'hours_worked', 'workers_assigned', 'status_update', 'remarks')
+            ->withTimestamps();
+    }
+
     public function preparer()
     {
         return $this->belongsTo(User::class, 'prepared_by');
