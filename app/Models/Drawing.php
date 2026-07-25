@@ -76,6 +76,16 @@ class Drawing extends Model
         'superseded' => 'Superseded',
     ];
 
+    public static function workflowLabel(): string
+    {
+        return 'ISO 19650 — Drawing Lifecycle';
+    }
+
+    public static function statusFlow(): array
+    {
+        return ['wip', 'for_review', 'approved', 'ifc', 'as_built', 'superseded'];
+    }
+
     public static array $validTransitions = [
         'wip' => ['for_review'],
         'for_review' => ['approved', 'wip'],

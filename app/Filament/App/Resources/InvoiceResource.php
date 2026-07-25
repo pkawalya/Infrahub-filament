@@ -56,6 +56,39 @@ class InvoiceResource extends Resource
                     ->placeholder(UIStandards::PLACEHOLDER_DATE),
             ])->columns(2),
 
+            Schemas\Components\Section::make('Workflow Status')
+                ->description(Invoice::workflowLabel())
+                ->icon('heroicon-o-arrow-path')
+                ->schema([
+                    Infolists\Components\TextEntry::make('status')
+                        ->label('Current Status')
+                        ->badge()
+                        ->color(fn(string $state): string => UIStandards::statusColor($state)),
+                    Infolists\Components\TextEntry::make('allowed_transitions')
+                        ->label('Allowed Next Steps')
+                        ->state(function (Invoice $record): string {
+                            $allowed = Invoice::$validTransitions[$record->status] ?? [];
+                            if (empty($allowed)) return '— (terminal state)';
+                            return implode(' → ', array_map(fn($s) => Invoice::$statuses[$s] ?? $s, $allowed));
+                        })
+                        ->badge()
+                        ->color('info'),
+                    Infolists\Components\TextEntry::make('workflow_path')
+                        ->label('Full Lifecycle')
+                        ->state(function (Invoice $record): string {
+                            $all = Invoice::statusFlow();
+                            return implode(' → ', array_map(function ($s) use ($record) {
+                                $label = Invoice::$statuses[$s] ?? $s;
+                                if ($s === $record->status) {
+                                    return "<span class=\"font-semibold text-primary-600 underline\">{$label} (current)</span>";
+                                }
+                                return e($label);
+                            }, $all));
+                        })
+                        ->html()
+                        ->columnSpanFull(),
+                ])->columns(2),
+
             Schemas\Components\Section::make('Amounts')->schema([
                 Infolists\Components\TextEntry::make('subtotal')
                     ->formatStateUsing(CurrencyHelper::formatter()),

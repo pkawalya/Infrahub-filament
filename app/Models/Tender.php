@@ -63,6 +63,16 @@ class Tender extends Model
         'withdrawn' => 'Withdrawn',
     ];
 
+    public static function workflowLabel(): string
+    {
+        return 'ISO 9001 — Tender/Bid Lifecycle';
+    }
+
+    public static function statusFlow(): array
+    {
+        return ['identified', 'preparing', 'submitted', 'shortlisted', 'awarded', 'lost', 'withdrawn'];
+    }
+
     public static array $validTransitions = [
         'identified' => ['preparing'],
         'preparing' => ['submitted', 'identified'],

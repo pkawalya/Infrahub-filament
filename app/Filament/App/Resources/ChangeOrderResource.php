@@ -7,6 +7,7 @@ use App\Models\ChangeOrder;
 use App\Models\Contract;
 use App\Support\CurrencyHelper;
 use Filament\Actions;
+use Filament\Infolists;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -72,6 +73,62 @@ class ChangeOrderResource extends Resource
             ])->columns(3)->collapsed(),
 
             Forms\Components\Hidden::make('company_id')->default(fn() => auth()->user()?->company_id),
+        ]);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->schema([
+            Section::make('Change Order Details')->schema([
+                Infolists\Components\TextEntry::make('co_number')->label('CO #')->icon('heroicon-o-hashtag')->copyable(),
+                Infolists\Components\TextEntry::make('title')->icon('heroicon-o-document-text'),
+                Infolists\Components\TextEntry::make('contract.title')->label('Contract'),
+                Infolists\Components\TextEntry::make('amount')->formatStateUsing(\App\Support\CurrencyHelper::formatter()),
+                Infolists\Components\TextEntry::make('time_extension_days')->suffix(' days')->placeholder('—'),
+            ])->columns(2),
+
+            Section::make('Workflow Status')
+                ->description(ChangeOrder::workflowLabel())
+                ->icon('heroicon-o-arrow-path')
+                ->schema([
+                    Infolists\Components\TextEntry::make('status')
+                        ->label('Current Status')
+                        ->badge()
+                        ->color(fn(string $state): string => match ($state) {
+                            'draft' => 'gray', 'submitted' => 'info', 'under_review' => 'warning',
+                            'approved' => 'success', 'rejected' => 'danger', 'implemented' => 'primary', default => 'gray',
+                        })
+                        ->formatStateUsing(fn(string $state) => ChangeOrder::$statuses[$state] ?? $state),
+                    Infolists\Components\TextEntry::make('allowed_transitions')
+                        ->label('Allowed Next Steps')
+                        ->state(function (ChangeOrder $record): string {
+                            $allowed = ChangeOrder::$validTransitions[$record->status] ?? [];
+                            if (empty($allowed)) return '— (terminal state)';
+                            return implode(' → ', array_map(fn($s) => ChangeOrder::$statuses[$s] ?? $s, $allowed));
+                        })
+                        ->badge()
+                        ->color('info'),
+                    Infolists\Components\TextEntry::make('workflow_path')
+                        ->label('Full Lifecycle')
+                        ->state(function (ChangeOrder $record): string {
+                            $all = ChangeOrder::statusFlow();
+                            return implode(' → ', array_map(function ($s) use ($record) {
+                                $label = ChangeOrder::$statuses[$s] ?? $s;
+                                if ($s === $record->status) {
+                                    return "<span class=\"font-semibold text-primary-600 underline\">{$label} (current)</span>";
+                                }
+                                return e($label);
+                            }, $all));
+                        })
+                        ->html()
+                        ->columnSpanFull(),
+                ])->columns(2),
+
+            Section::make('People & Approval')->schema([
+                Infolists\Components\TextEntry::make('requester.name')->label('Requested By')->placeholder('—'),
+                Infolists\Components\TextEntry::make('approver.name')->label('Approved By')->placeholder('—'),
+                Infolists\Components\TextEntry::make('approved_at')->dateTime('M d, Y H:i')->placeholder('—'),
+            ])->columns(3)->collapsed(),
         ]);
     }
 

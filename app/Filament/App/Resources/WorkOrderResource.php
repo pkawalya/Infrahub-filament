@@ -10,6 +10,7 @@ use Filament\Infolists;
 use Filament\Notifications\Notification;
 use Filament\Schemas;
 use Filament\Forms;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -63,7 +64,40 @@ class WorkOrderResource extends Resource
                     ->placeholder('Unassigned'),
             ])->columns(['default' => 1, 'md' => 2]),
 
-            Schemas\Components\Section::make('Schedule')->schema([
+            Section::make('Workflow Status')
+                ->description(WorkOrder::workflowLabel())
+                ->icon('heroicon-o-arrow-path')
+                ->schema([
+                    Infolists\Components\TextEntry::make('status')
+                        ->label('Current Status')
+                        ->badge()
+                        ->color(fn(string $state): string => UIStandards::statusColor($state)),
+                    Infolists\Components\TextEntry::make('allowed_transitions')
+                        ->label('Allowed Next Steps')
+                        ->state(function (WorkOrder $record): string {
+                            $allowed = WorkOrder::$validTransitions[$record->status] ?? [];
+                            if (empty($allowed)) return '— (terminal state)';
+                            return implode(' → ', array_map(fn($s) => WorkOrder::$statuses[$s] ?? $s, $allowed));
+                        })
+                        ->badge()
+                        ->color('info'),
+                    Infolists\Components\TextEntry::make('workflow_path')
+                        ->label('Full Lifecycle')
+                        ->state(function (WorkOrder $record): string {
+                            $all = WorkOrder::statusFlow();
+                            return implode(' → ', array_map(function ($s) use ($record) {
+                                $label = WorkOrder::$statuses[$s] ?? $s;
+                                if ($s === $record->status) {
+                                    return "<span class=\"font-semibold text-primary-600 dark:text-primary-400 underline decoration-primary-500/50\">{$label} (current)</span>";
+                                }
+                                return e($label);
+                            }, $all));
+                        })
+                        ->html()
+                        ->columnSpanFull(),
+                ])->columns(2),
+
+            Section::make('Schedule')->schema([
                 Infolists\Components\TextEntry::make('due_date')
                     ->date(UIStandards::DATE_FORMAT)
                     ->icon('heroicon-o-calendar')

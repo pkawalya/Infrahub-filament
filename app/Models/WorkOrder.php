@@ -81,6 +81,16 @@ class WorkOrder extends Model
         'cancelled' => 'Cancelled',
     ];
 
+    public static function workflowLabel(): string
+    {
+        return 'ISO 9001 / ISO 19650 — Work Order Lifecycle';
+    }
+
+    public static function statusFlow(): array
+    {
+        return ['pending', 'approved', 'in_progress', 'on_hold', 'completed', 'cancelled'];
+    }
+
     public static array $validTransitions = [
         'pending' => ['approved'],
         'approved' => ['in_progress', 'on_hold', 'cancelled'],

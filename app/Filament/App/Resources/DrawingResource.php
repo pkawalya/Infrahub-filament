@@ -5,6 +5,7 @@ namespace App\Filament\App\Resources;
 use App\Filament\App\Resources\DrawingResource\Pages;
 use App\Models\Drawing;
 use Filament\Actions;
+use Filament\Infolists;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -80,6 +81,73 @@ class DrawingResource extends Resource
             ])->collapsed(),
 
             Forms\Components\Hidden::make('company_id')->default(fn() => auth()->user()?->company_id),
+        ]);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->schema([
+            Section::make('Drawing Information')->schema([
+                Infolists\Components\TextEntry::make('drawing_number')->label('Drawing #')->icon('heroicon-o-hashtag')->copyable(),
+                Infolists\Components\TextEntry::make('title')->icon('heroicon-o-document-text'),
+                Infolists\Components\TextEntry::make('project.name')->label('Project'),
+                Infolists\Components\TextEntry::make('discipline')->badge(),
+                Infolists\Components\TextEntry::make('current_revision')->badge()->color('warning'),
+                Infolists\Components\TextEntry::make('sheet_size')->placeholder('—'),
+            ])->columns(2),
+
+            Section::make('Workflow Status')
+                ->description(Drawing::workflowLabel())
+                ->icon('heroicon-o-arrow-path')
+                ->schema([
+                    Infolists\Components\TextEntry::make('status')
+                        ->label('Current Status')
+                        ->badge()
+                        ->color(fn(string $state): string => match ($state) {
+                            'wip' => 'gray', 'for_review' => 'warning', 'approved' => 'success',
+                            'ifc' => 'primary', 'as_built' => 'info', 'superseded' => 'danger', default => 'gray',
+                        })
+                        ->formatStateUsing(fn(string $state) => Drawing::$statuses[$state] ?? $state),
+                    Infolists\Components\TextEntry::make('allowed_transitions')
+                        ->label('Allowed Next Steps')
+                        ->state(function (Drawing $record): string {
+                            $allowed = Drawing::$validTransitions[$record->status] ?? [];
+                            if (empty($allowed)) return '— (terminal state)';
+                            return implode(' → ', array_map(fn($s) => Drawing::$statuses[$s] ?? $s, $allowed));
+                        })
+                        ->badge()
+                        ->color('info'),
+                    Infolists\Components\TextEntry::make('workflow_path')
+                        ->label('Full Lifecycle')
+                        ->state(function (Drawing $record): string {
+                            $all = Drawing::statusFlow();
+                            return implode(' → ', array_map(function ($s) use ($record) {
+                                $label = Drawing::$statuses[$s] ?? $s;
+                                if ($s === $record->status) {
+                                    return "<span class=\"font-semibold text-primary-600 underline\">{$label} (current)</span>";
+                                }
+                                return e($label);
+                            }, $all));
+                        })
+                        ->html()
+                        ->columnSpanFull(),
+                ])->columns(2),
+
+            Section::make('ISO 19650 Metadata')->schema([
+                Infolists\Components\TextEntry::make('suitability_code')->badge()->color('info')->placeholder('—'),
+                Infolists\Components\TextEntry::make('originator')->placeholder('—'),
+                Infolists\Components\TextEntry::make('zone')->placeholder('—'),
+                Infolists\Components\TextEntry::make('level')->placeholder('—'),
+            ])->columns(4)->collapsed(),
+
+            Section::make('Responsibility & Dates')->schema([
+                Infolists\Components\TextEntry::make('drawnByUser.name')->label('Drawn By')->placeholder('—'),
+                Infolists\Components\TextEntry::make('drawn_date')->date('M d, Y')->placeholder('—'),
+                Infolists\Components\TextEntry::make('checkedByUser.name')->label('Checked By')->placeholder('—'),
+                Infolists\Components\TextEntry::make('checked_date')->date('M d, Y')->placeholder('—'),
+                Infolists\Components\TextEntry::make('approvedByUser.name')->label('Approved By')->placeholder('—'),
+                Infolists\Components\TextEntry::make('approved_date')->date('M d, Y')->placeholder('—'),
+            ])->columns(3)->collapsed(),
         ]);
     }
 

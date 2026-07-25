@@ -48,6 +48,16 @@ class ChangeOrder extends Model
         'implemented' => 'Implemented',
     ];
 
+    public static function workflowLabel(): string
+    {
+        return 'ISO 19650 — Change Order Lifecycle';
+    }
+
+    public static function statusFlow(): array
+    {
+        return ['draft', 'submitted', 'under_review', 'approved', 'implemented', 'rejected'];
+    }
+
     public static array $validTransitions = [
         'draft' => ['submitted'],
         'submitted' => ['under_review', 'draft'],

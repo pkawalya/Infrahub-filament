@@ -55,6 +55,16 @@ class Invoice extends Model
         'cancelled' => 'Cancelled',
     ];
 
+    public static function workflowLabel(): string
+    {
+        return 'ISO 9001 — Invoice Lifecycle';
+    }
+
+    public static function statusFlow(): array
+    {
+        return ['draft', 'sent', 'partially_paid', 'paid', 'overdue', 'cancelled'];
+    }
+
     public static array $validTransitions = [
         'draft' => ['sent'],
         'sent' => ['partially_paid', 'paid', 'overdue', 'cancelled'],

@@ -36,25 +36,32 @@ class UIStandards
     {
         return match ($status) {
             // ── Lifecycle start ──
-            'draft', 'new' => 'gray',
+            'draft', 'new', 'wip', 'identified' => 'gray',
 
             // ── Awaiting action ──
             'pending', 'submitted', 'under_review',
-            'awaiting_approval', 'on_hold' => 'warning',
+            'awaiting_approval', 'on_hold', 'for_review',
+            'sent', 'shortlisted', 'partially_paid' => 'warning',
 
             // ── In progress ──
             'active', 'in_progress', 'open',
-            'assigned', 'in_review' => 'info',
+            'assigned', 'in_review', 'preparing' => 'info',
 
             // ── Positive outcomes ──
             'approved', 'completed', 'resolved',
-            'done', 'closed', 'paid' => 'success',
+            'done', 'closed', 'paid', 'as_built',
+            'implemented', 'awarded' => 'success',
 
             // ── Negative outcomes ──
             'rejected', 'cancelled', 'failed',
-            'overdue', 'expired', 'void' => 'danger',
+            'overdue', 'expired', 'void',
+            'lost', 'superseded' => 'danger',
+
+            // ── Special ──
+            'ifc' => 'primary',
 
             // ── Fallback ──
+            'withdrawn' => 'gray',
             default => 'gray',
         };
     }

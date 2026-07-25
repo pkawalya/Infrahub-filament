@@ -154,6 +154,67 @@ class TenderResource extends Resource
         ]);
     }
 
+    public static function infolist(Schema $schema): Schema
+    {
+        return $schema->schema([
+            Section::make('Tender Information')->schema([
+                Infolists\Components\TextEntry::make('reference')->label('Ref #')->icon('heroicon-o-hashtag')->copyable(),
+                Infolists\Components\TextEntry::make('title')->icon('heroicon-o-document-text'),
+                Infolists\Components\TextEntry::make('client_name')->label('Client'),
+                Infolists\Components\TextEntry::make('stage.name')->label('Stage')->badge(),
+                Infolists\Components\TextEntry::make('category')->badge()->color('info'),
+                Infolists\Components\TextEntry::make('estimated_value')->formatStateUsing(\App\Support\CurrencyHelper::formatter(0)),
+                Infolists\Components\TextEntry::make('bid_amount')->formatStateUsing(\App\Support\CurrencyHelper::formatter(0)),
+                Infolists\Components\TextEntry::make('submission_deadline')->date('M d, Y'),
+                Infolists\Components\TextEntry::make('win_probability')->suffix('%')->placeholder('—'),
+            ])->columns(2),
+
+            Section::make('Workflow Status')
+                ->description(Tender::workflowLabel())
+                ->icon('heroicon-o-arrow-path')
+                ->schema([
+                    Infolists\Components\TextEntry::make('status')
+                        ->label('Current Status')
+                        ->badge()
+                        ->color(fn(string $state): string => match ($state) {
+                            'identified' => 'gray', 'preparing' => 'info', 'submitted' => 'primary',
+                            'shortlisted' => 'warning', 'awarded' => 'success',
+                            'lost' => 'danger', 'withdrawn' => 'gray', default => 'gray',
+                        })
+                        ->formatStateUsing(fn(string $state) => Tender::$statuses[$state] ?? $state),
+                    Infolists\Components\TextEntry::make('allowed_transitions')
+                        ->label('Allowed Next Steps')
+                        ->state(function (Tender $record): string {
+                            $allowed = Tender::$validTransitions[$record->status] ?? [];
+                            if (empty($allowed)) return '— (terminal state)';
+                            return implode(' → ', array_map(fn($s) => Tender::$statuses[$s] ?? $s, $allowed));
+                        })
+                        ->badge()
+                        ->color('info'),
+                    Infolists\Components\TextEntry::make('workflow_path')
+                        ->label('Full Lifecycle')
+                        ->state(function (Tender $record): string {
+                            $all = Tender::statusFlow();
+                            return implode(' → ', array_map(function ($s) use ($record) {
+                                $label = Tender::$statuses[$s] ?? $s;
+                                if ($s === $record->status) {
+                                    return "<span class=\"font-semibold text-primary-600 underline\">{$label} (current)</span>";
+                                }
+                                return e($label);
+                            }, $all));
+                        })
+                        ->html()
+                        ->columnSpanFull(),
+                ])->columns(2),
+
+            Section::make('Strategy & Notes')->schema([
+                Infolists\Components\TextEntry::make('competitors')->placeholder('None listed'),
+                Infolists\Components\TextEntry::make('strategy_notes')->placeholder('No strategy notes'),
+                Infolists\Components\TextEntry::make('loss_reason')->placeholder('—'),
+            ])->columns(2)->collapsed(),
+        ]);
+    }
+
     public static function table(Table $table): Table
     {
         return $table
