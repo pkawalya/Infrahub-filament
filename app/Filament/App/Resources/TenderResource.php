@@ -418,8 +418,12 @@ class TenderResource extends Resource
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->action(function (Tender $record) {
+                    ->form([
+                        Forms\Components\Textarea::make('loss_reason')->label('Reason for Loss')->required(),
+                    ])
+                    ->action(function (Tender $record, array $data) {
                         $record->transitionTo('lost');
+                        $record->update(['loss_reason' => $data['loss_reason'] ?? null]);
                         Notification::make()->title('Tender marked as lost')->danger()->send();
                     })
                     ->hidden(fn (Tender $record) => !$record->canTransitionTo('lost')),
@@ -428,7 +432,11 @@ class TenderResource extends Resource
                     ->label('Revise')
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('gray')
-                    ->action(function (Tender $record) {
+                    ->requiresConfirmation()
+                    ->form([
+                        Forms\Components\Textarea::make('reason')->label('Reason for Revision')->required(),
+                    ])
+                    ->action(function (Tender $record, array $data) {
                         $record->transitionTo('identified');
                         Notification::make()->title('Tender returned to identification')->info()->send();
                     })

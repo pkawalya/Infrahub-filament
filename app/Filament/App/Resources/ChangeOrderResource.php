@@ -197,7 +197,10 @@ class ChangeOrderResource extends Resource
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->action(function (ChangeOrder $record) {
+                    ->form([
+                        Forms\Components\Textarea::make('reason')->label('Rejection Reason')->required(),
+                    ])
+                    ->action(function (ChangeOrder $record, array $data) {
                         $record->transitionTo('rejected');
                         Notification::make()->title('Change order rejected')->danger()->send();
                     })
@@ -208,7 +211,10 @@ class ChangeOrderResource extends Resource
                     ->icon('heroicon-o-check-badge')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->action(function (ChangeOrder $record) {
+                    ->form([
+                        Forms\Components\Textarea::make('implementation_notes')->label('Implementation Notes'),
+                    ])
+                    ->action(function (ChangeOrder $record, array $data) {
                         $record->transitionTo('implemented');
                         Notification::make()->title('Change order implemented')->success()->send();
                     })
@@ -219,7 +225,10 @@ class ChangeOrderResource extends Resource
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->action(function (ChangeOrder $record) {
+                    ->form([
+                        Forms\Components\Textarea::make('reason')->label('Reason')->required(),
+                    ])
+                    ->action(function (ChangeOrder $record, array $data) {
                         $record->transitionTo('under_review');
                         Notification::make()->title('Change order returned to review')->warning()->send();
                     })
@@ -229,7 +238,11 @@ class ChangeOrderResource extends Resource
                     ->label('Revise')
                     ->icon('heroicon-o-pencil-square')
                     ->color('gray')
-                    ->action(function (ChangeOrder $record) {
+                    ->requiresConfirmation()
+                    ->form([
+                        Forms\Components\Textarea::make('reason')->label('Reason for Revision')->required(),
+                    ])
+                    ->action(function (ChangeOrder $record, array $data) {
                         $record->transitionTo('draft');
                         Notification::make()->title('Change order returned to draft')->info()->send();
                     })

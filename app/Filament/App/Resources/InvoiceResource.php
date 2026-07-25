@@ -236,7 +236,10 @@ class InvoiceResource extends Resource
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->action(function (Invoice $record) {
+                    ->form([
+                        Forms\Components\Textarea::make('reason')->label('Cancellation Reason')->required(),
+                    ])
+                    ->action(function (Invoice $record, array $data) {
                         $record->transitionTo('cancelled');
                         Notification::make()->title('Invoice cancelled')->danger()->send();
                     })

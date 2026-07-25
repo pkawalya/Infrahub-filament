@@ -236,7 +236,10 @@ class DrawingResource extends Resource
                     ->icon('heroicon-o-arrow-path')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->action(function (Drawing $record) {
+                    ->form([
+                        Forms\Components\Textarea::make('reason')->label('Reason for Superseding')->required(),
+                    ])
+                    ->action(function (Drawing $record, array $data) {
                         $record->transitionTo('superseded');
                         Notification::make()->title('Drawing superseded')->warning()->send();
                     })
@@ -247,7 +250,10 @@ class DrawingResource extends Resource
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('gray')
                     ->requiresConfirmation()
-                    ->action(function (Drawing $record) {
+                    ->form([
+                        Forms\Components\Textarea::make('reason')->label('Reason for Returning')->required(),
+                    ])
+                    ->action(function (Drawing $record, array $data) {
                         $record->transitionTo('wip');
                         Notification::make()->title('Drawing returned to WIP')->warning()->send();
                     })

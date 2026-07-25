@@ -3,6 +3,7 @@
 namespace App\Filament\App\Resources\TenderResource\Pages;
 
 use App\Filament\App\Resources\TenderResource;
+use App\Models\Tender;
 use App\Models\TenderStage;
 use App\Services\AiAssistantService;
 use App\Services\StageWorkflowService;
@@ -20,6 +21,87 @@ class ViewTender extends ViewRecord
         $service = app(StageWorkflowService::class);
 
         return [
+            // ── ISO Status Transitions ──
+            Actions\Action::make('beginPreparation')
+                ->label('Begin Preparation')
+                ->icon('heroicon-o-play')
+                ->color('info')
+                ->visible(fn() => $this->record->canTransitionTo('preparing'))
+                ->action(function () {
+                    $this->record->transitionTo('preparing');
+                    Notification::make()->title('Tender moved to preparation')->success()->send();
+                }),
+
+            Actions\Action::make('submitBid')
+                ->label('Submit Bid')
+                ->icon('heroicon-o-paper-airplane')
+                ->color('primary')
+                ->visible(fn() => $this->record->canTransitionTo('submitted'))
+                ->form([
+                    Forms\Components\DatePicker::make('submitted_at')->label('Submission Date')->default(now()),
+                    Forms\Components\TextInput::make('bid_amount')
+                        ->label('Final Bid Amount')
+                        ->numeric()
+                        ->default(fn() => $this->record->bid_amount),
+                ])
+                ->action(function (array $data) {
+                    $this->record->transitionTo('submitted');
+                    $this->record->update([
+                        'submitted_at' => $data['submitted_at'] ?? now(),
+                        'bid_amount' => $data['bid_amount'] ?? $this->record->bid_amount,
+                    ]);
+                    Notification::make()->title('Tender submitted')->success()->send();
+                }),
+
+            Actions\Action::make('markShortlisted')
+                ->label('Mark Shortlisted')
+                ->icon('heroicon-o-user-group')
+                ->color('warning')
+                ->visible(fn() => $this->record->canTransitionTo('shortlisted'))
+                ->action(function () {
+                    $this->record->transitionTo('shortlisted');
+                    Notification::make()->title('Tender shortlisted')->warning()->send();
+                }),
+
+            Actions\Action::make('award')
+                ->label('Award')
+                ->icon('heroicon-o-trophy')
+                ->color('success')
+                ->requiresConfirmation()
+                ->visible(fn() => $this->record->canTransitionTo('awarded'))
+                ->action(function () {
+                    $this->record->transitionTo('awarded');
+                    Notification::make()->title('Tender awarded!')->success()->send();
+                }),
+
+            Actions\Action::make('lose')
+                ->label('Mark Lost')
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->requiresConfirmation()
+                ->visible(fn() => $this->record->canTransitionTo('lost'))
+                ->form([
+                    Forms\Components\Textarea::make('loss_reason')->label('Reason for Loss')->required(),
+                ])
+                ->action(function (array $data) {
+                    $this->record->transitionTo('lost');
+                    $this->record->update(['loss_reason' => $data['loss_reason'] ?? null]);
+                    Notification::make()->title('Tender marked as lost')->danger()->send();
+                }),
+
+            Actions\Action::make('revise')
+                ->label('Revise')
+                ->icon('heroicon-o-arrow-uturn-left')
+                ->color('gray')
+                ->visible(fn() => $this->record->canTransitionTo('identified'))
+                ->form([
+                    Forms\Components\Textarea::make('reason')->label('Reason for Revision')->required(),
+                ])
+                ->action(function (array $data) {
+                    $this->record->transitionTo('identified');
+                    Notification::make()->title('Tender returned to identification')->info()->send();
+                }),
+
             // ── 🤖 AI Analyse Tender ──────────────────────────
             Actions\Action::make('ai_analyse')
                 ->label('AI Analyse')
@@ -59,7 +141,6 @@ class ViewTender extends ViewRecord
 
                     $html = '<div class="space-y-4 text-sm">';
 
-                    // Bid recommendation
                     $rec = $result['bid_recommendation'] ?? 'N/A';
                     $recColor = $rec === 'Bid' ? 'green' : ($rec === 'No-Bid' ? 'red' : 'amber');
                     $html .= "<div class='p-4 rounded-xl bg-{$recColor}-50 dark:bg-{$recColor}-950/30 border border-{$recColor}-200 dark:border-{$recColor}-800'>";
@@ -163,4 +244,3 @@ class ViewTender extends ViewRecord
         ];
     }
 }
-

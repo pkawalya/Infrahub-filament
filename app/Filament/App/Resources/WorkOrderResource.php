@@ -342,7 +342,10 @@ class WorkOrderResource extends Resource
                     ->icon('heroicon-o-pause-circle')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->action(function (WorkOrder $record) {
+                    ->form([
+                        Forms\Components\Textarea::make('reason')->label('Reason for Hold')->required(),
+                    ])
+                    ->action(function (WorkOrder $record, array $data) {
                         $record->transitionTo('on_hold');
                         Notification::make()->title('Work order placed on hold')->warning()->send();
                     })
@@ -353,7 +356,10 @@ class WorkOrderResource extends Resource
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->action(function (WorkOrder $record) {
+                    ->form([
+                        Forms\Components\Textarea::make('reason')->label('Cancellation Reason')->required(),
+                    ])
+                    ->action(function (WorkOrder $record, array $data) {
                         $record->transitionTo('cancelled');
                         Notification::make()->title('Work order cancelled')->danger()->send();
                     })
