@@ -134,7 +134,9 @@ class InvoiceResource extends Resource
                     ->relationship('workOrder', 'wo_number', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload(),
                 Forms\Components\Select::make('status')
-                    ->options(Invoice::$statuses)->default('draft')->required(),
+                    ->options(Invoice::$statuses)->default('draft')
+                    ->disabled()->dehydrated(true)
+                    ->helperText('Status changes only through workflow actions.'),
                 Forms\Components\DatePicker::make('issue_date')->default(now()),
                 Forms\Components\DatePicker::make('due_date'),
             ])->columns(2),

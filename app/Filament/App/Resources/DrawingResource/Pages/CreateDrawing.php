@@ -5,4 +5,10 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateDrawing extends CreateRecord
 {
     protected static string $resource = DrawingResource::class;
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $data['status'] ??= 'wip';
+        return $data;
+    }
 }

@@ -14,6 +14,7 @@ class CreateTender extends CreateRecord
     {
         $data['company_id'] = auth()->user()->company_id;
         $data['created_by'] = auth()->id();
+        $data['status'] ??= 'identified';
 
         // Auto-assign default stage if none selected
         if (empty($data['tender_stage_id'])) {

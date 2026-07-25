@@ -48,7 +48,9 @@ class ChangeOrderResource extends Resource
                 Forms\Components\Select::make('contract_id')->label('Contract')
                     ->relationship('contract', 'title', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()->preload()->required(),
-                Forms\Components\Select::make('status')->options(ChangeOrder::$statuses)->default('draft')->required(),
+                Forms\Components\Select::make('status')->options(ChangeOrder::$statuses)->default('draft')
+                    ->disabled()->dehydrated(true)
+                    ->helperText('Status changes only through workflow actions.'),
             ])->columns(3),
 
             Section::make('Description')->schema([

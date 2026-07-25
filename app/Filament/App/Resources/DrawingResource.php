@@ -44,7 +44,9 @@ class DrawingResource extends Resource
                 Forms\Components\Select::make('discipline')->options(Drawing::$disciplines)->default('architectural')->required(),
                 Forms\Components\Select::make('drawing_type')->options(Drawing::$drawingTypes)->default('plan')->required(),
                 Forms\Components\TextInput::make('current_revision')->default('A')->maxLength(10),
-                Forms\Components\Select::make('status')->options(Drawing::$statuses)->default('wip')->required(),
+                Forms\Components\Select::make('status')->options(Drawing::$statuses)->default('wip')
+                    ->disabled()->dehydrated(true)
+                    ->helperText('Status changes only through workflow actions.'),
                 Forms\Components\TextInput::make('scale')->placeholder('1:100')->maxLength(20),
                 Forms\Components\Select::make('sheet_size')->options([
                     'A0' => 'A0',

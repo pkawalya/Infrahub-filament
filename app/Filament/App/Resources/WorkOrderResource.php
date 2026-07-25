@@ -155,7 +155,9 @@ class WorkOrderResource extends Resource
                 Forms\Components\Select::make('status')
                     ->options(WorkOrder::$statuses)
                     ->default('pending')
-                    ->required(),
+                    ->disabled()
+                    ->dehydrated(true)
+                    ->helperText('Status changes only through workflow actions.'),
                 Forms\Components\Select::make('client_id')
                     ->relationship('client', 'name', fn($q) => $q?->where('company_id', auth()->user()?->company_id))
                     ->searchable()

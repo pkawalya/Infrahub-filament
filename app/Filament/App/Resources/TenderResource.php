@@ -74,7 +74,9 @@ class TenderResource extends Resource
                     Forms\Components\Select::make('status')
                         ->options(Tender::$statuses)
                         ->default('identified')
-                        ->required(),
+                        ->disabled()
+                        ->dehydrated(true)
+                        ->helperText('Status changes only through workflow actions.'),
                     Forms\Components\Select::make('tender_stage_id')
                         ->label('Stage')
                         ->relationship('stage', 'name', function ($query) {
