@@ -17,6 +17,7 @@ class ProjectSuggestion extends Model
         'author_id',
         'is_anonymous',
         'category',
+        'priority',
         'content',
         'status',
         'admin_response',
@@ -91,6 +92,14 @@ class ProjectSuggestion extends Model
         }
 
         return $this->author?->name ?? 'Unknown';
+    }
+
+    /**
+     * Get project name or 'Company-Wide'.
+     */
+    public function getProjectDisplayAttribute(): string
+    {
+        return $this->project?->name ?? 'Company-Wide';
     }
 
     /**

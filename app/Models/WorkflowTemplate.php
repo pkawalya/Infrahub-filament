@@ -26,10 +26,14 @@ class WorkflowTemplate extends Model
     {
         static::saving(function ($template) {
             if ($template->is_active) {
-                static::where('company_id', $template->company_id)
-                    ->where('module_type', $template->module_type)
-                    ->where('id', '!=', $template->id)
-                    ->update(['is_active' => false]);
+                $query = static::where('company_id', $template->company_id)
+                    ->where('module_type', $template->module_type);
+
+                if ($template->exists && $template->id) {
+                    $query->where('id', '!=', $template->id);
+                }
+
+                $query->update(['is_active' => false]);
             }
         });
     }

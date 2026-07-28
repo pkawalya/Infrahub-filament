@@ -8,6 +8,9 @@ class ViewPaymentCertificate extends ViewRecord
     protected static string $resource = PaymentCertificateResource::class;
     protected function getHeaderActions(): array
     {
-        return [Actions\EditAction::make()];
+        return [
+            ...\App\Filament\App\Support\WorkflowUiHelper::getApprovalHeaderActions(),
+            Actions\EditAction::make(),
+        ];
     }
 }

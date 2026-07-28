@@ -57,8 +57,8 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
                 SUM(upvotes) as total_votes,
                 SUM(CASE WHEN priority = 'urgent' THEN 1 ELSE 0 END) as urgent_count,
                 SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as this_week
-            FROM project_suggestions WHERE cde_project_id = ?
-        ", [now()->startOfWeek(), $pid]);
+            FROM project_suggestions WHERE (cde_project_id = ? OR (cde_project_id IS NULL AND company_id = ?))
+        ", [now()->startOfWeek(), $pid, $cid]);
 
         $total = (int) $stats->total;
         $new = (int) $stats->new_count;
@@ -181,8 +181,8 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
         return $table
             ->query(
                 ProjectSuggestion::query()
-                    ->where('cde_project_id', $pid)
-                    ->with(['author', 'responder'])
+                    ->where(fn($q) => $q->where('cde_project_id', $pid)->orWhere(fn($sq) => $sq->whereNull('cde_project_id')->where('company_id', $cid)))
+                    ->with(['author', 'responder', 'project'])
             )
             ->columns([
                 Tables\Columns\TextColumn::make('priority')
@@ -197,6 +197,11 @@ class SuggestionBoxPage extends BaseModulePage implements HasTable
                     ->tooltip(fn($record) => ucfirst($record->priority ?? 'normal') . ' priority')
                     ->alignCenter()
                     ->grow(false),
+
+                Tables\Columns\TextColumn::make('project_display')
+                    ->label('Scope')
+                    ->badge()
+                    ->color(fn($record) => $record->cde_project_id ? 'info' : 'warning'),
 
                 Tables\Columns\TextColumn::make('author_display')
                     ->label('From')

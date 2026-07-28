@@ -107,11 +107,11 @@
                         </div>
 
                         {{-- Project (optional) --}}
-                        @if(count($this->projects) > 1)
+                        @if(count($this->projects) > 0)
                             <div class="form-field">
                                 <label for="sb-project">Project <span class="optional">(optional)</span></label>
                                 <select wire:model="projectId" id="sb-project">
-                                    <option value="">General / Company-wide</option>
+                                    <option value="">🏢 General / Company-wide</option>
                                     @foreach($this->projects as $id => $name)
                                         <option value="{{ $id }}">{{ $name }}</option>
                                     @endforeach

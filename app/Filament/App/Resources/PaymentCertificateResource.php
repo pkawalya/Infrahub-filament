@@ -124,6 +124,7 @@ class PaymentCertificateResource extends Resource
                 Tables\Filters\SelectFilter::make('type')->options(PaymentCertificate::$types),
             ])
             ->actions([
+                ...\App\Filament\App\Support\WorkflowUiHelper::getApprovalTableActions(),
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
                 Actions\Action::make('certify')

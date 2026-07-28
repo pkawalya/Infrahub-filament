@@ -38,42 +38,55 @@ class FloatingSuggestionBox extends Component
             return;
         }
 
-        $this->validate([
-            'content'  => ['required', 'string', 'min:10', 'max:2000'],
-            'category' => ['required', 'in:' . implode(',', array_keys(ProjectSuggestion::$categories))],
-            'priority' => ['required', 'in:' . implode(',', array_keys(ProjectSuggestion::$priorities))],
-        ]);
-
         $user = auth()->user();
-
-        // Determine company & project context
         $companyId = $user?->company_id;
 
-        // If no project selected, use the first active project or null
-        $projectId = $this->projectId;
-        if (!$projectId) {
-            $projectId = CdeProject::where('company_id', $companyId)
-                ->where('status', 'active')
-                ->value('id');
+        if (!$companyId) {
+            \Filament\Notifications\Notification::make()
+                ->danger()
+                ->title('Company account required')
+                ->body('Your user account must belong to a company to submit suggestions.')
+                ->send();
+            return;
         }
 
-        // Create the suggestion — ALWAYS anonymous, author_id is never stored
-        ProjectSuggestion::create([
-            'company_id' => $companyId,
-            'cde_project_id' => $projectId,
-            'author_id' => null,  // Anonymous — never store who submitted
-            'is_anonymous' => true,
-            'category' => $this->category,
-            'priority' => $this->priority,
-            'content' => $this->content,
-            'status' => 'new',
-            'upvotes' => 0,
+        $this->validate([
+            'content'   => ['required', 'string', 'min:10', 'max:2000'],
+            'category'  => ['required', 'in:' . implode(',', array_keys(ProjectSuggestion::$categories))],
+            'priority'  => ['required', 'in:' . implode(',', array_keys(ProjectSuggestion::$priorities))],
+            'projectId' => ['nullable', 'integer', 'exists:cde_projects,id'],
         ]);
 
-        // Reset the form
-        $this->content = '';
-        $this->category = 'general';
-        $this->priority = 'normal';
+        $projectId = $this->projectId;
+
+        // If project ID is provided, verify it belongs to current user's company account
+        if ($projectId) {
+            $valid = CdeProject::where('id', $projectId)
+                ->where('company_id', $companyId)
+                ->exists();
+
+            if (!$valid) {
+                $projectId = null;
+            }
+        }
+
+        // Create the suggestion under the company account (project is optional)
+        ProjectSuggestion::create([
+            'company_id'     => $companyId,
+            'cde_project_id' => $projectId,
+            'author_id'      => null,  // Anonymous — identity is never stored
+            'is_anonymous'   => true,
+            'category'       => $this->category,
+            'priority'       => $this->priority,
+            'content'        => $this->content,
+            'status'         => 'new',
+            'upvotes'        => 0,
+        ]);
+
+        // Reset the form state
+        $this->content   = '';
+        $this->category  = 'general';
+        $this->priority  = 'normal';
         $this->projectId = null;
         $this->submitted = true;
     }
@@ -81,8 +94,9 @@ class FloatingSuggestionBox extends Component
     public function getProjectsProperty(): array
     {
         $user = auth()->user();
-        if (!$user)
+        if (!$user || !$user->company_id) {
             return [];
+        }
 
         return CdeProject::where('company_id', $user->company_id)
             ->where('status', 'active')

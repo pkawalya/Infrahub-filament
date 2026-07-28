@@ -7,10 +7,10 @@ use App\Models\User;
 use App\Models\WorkflowTemplate;
 use App\Models\WorkflowStep;
 use App\Models\WorkflowInstance;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Artisan;
 
-uses(RefreshDatabase::class);
+uses(DatabaseTransactions::class);
 
 beforeEach(function () {
     Artisan::call('db:seed', ['--class' => 'RolesAndPermissionsSeeder']);

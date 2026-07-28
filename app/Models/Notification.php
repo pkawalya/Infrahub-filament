@@ -9,6 +9,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Notification extends Model
 {
     protected $fillable = [
+        'id',
+        'notifiable_type',
+        'notifiable_id',
         'user_id',
         'type',
         'title', 

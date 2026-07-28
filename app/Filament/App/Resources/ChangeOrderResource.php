@@ -156,6 +156,7 @@ class ChangeOrderResource extends Resource
                 Tables\Filters\SelectFilter::make('status')->options(ChangeOrder::$statuses),
             ])
             ->actions([
+                ...\App\Filament\App\Support\WorkflowUiHelper::getApprovalTableActions(),
                 Actions\ViewAction::make(),
                 Actions\EditAction::make(),
                 Actions\RestoreAction::make(),

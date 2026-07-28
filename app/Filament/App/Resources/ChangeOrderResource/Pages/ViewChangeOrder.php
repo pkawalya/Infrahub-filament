@@ -13,6 +13,7 @@ class ViewChangeOrder extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            ...\App\Filament\App\Support\WorkflowUiHelper::getApprovalHeaderActions(),
             Actions\Action::make('submit')
                 ->label('Submit')
                 ->icon('heroicon-o-paper-airplane')

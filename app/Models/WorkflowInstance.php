@@ -2,18 +2,28 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToCompany;
 use Illuminate\Database\Eloquent\Model;
 
 class WorkflowInstance extends Model
 {
+    use BelongsToCompany;
+
     protected $table = 'workflow_instances';
 
     protected $fillable = [
+        'company_id',
         'workflow_template_id',
         'approvable_type',
         'approvable_id',
         'current_step_sequence',
         'status',
+        'audit_log',
+    ];
+
+    protected $casts = [
+        'audit_log' => 'array',
+        'current_step_sequence' => 'integer',
     ];
 
     public function template()
@@ -38,13 +48,8 @@ class WorkflowInstance extends Model
             ->first();
     }
 
-    public function canUserApprove(\App\Models\User $user): bool
+    public function canUserApprove(?User $user = null): bool
     {
-        $step = $this->currentStep();
-        if (!$step) {
-            return false;
-        }
-
-        return $step->canApprove($user);
+        return app(\App\Services\WorkflowExecutionService::class)->canUserApprove($this, $user);
     }
 }

@@ -65,8 +65,16 @@ class CdeActivityLog extends Model
             'action' => $action,
             'description' => $description,
             'changes' => $changes,
-            'user_id' => auth()->id(),
+            'user_id' => auth()->id() ?? $model->user_id ?? $model->created_by ?? null,
             'ip_address' => request()->ip(),
         ]);
+    }
+
+    /**
+     * Alias for record.
+     */
+    public static function log(string $action, Model $model, ?array $changes = null): static
+    {
+        return static::record($model, $action, $action, $changes);
     }
 }

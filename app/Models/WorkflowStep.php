@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class WorkflowStep extends Model
 {
@@ -14,23 +15,32 @@ class WorkflowStep extends Model
         'name',
         'approver_type',
         'approver_id',
+        'approver_role',
+        'assigned_user_id',
+        'approval_status',
+        'rejection_status',
     ];
 
-    public function template()
+    public function template(): BelongsTo
     {
         return $this->belongsTo(WorkflowTemplate::class, 'workflow_template_id');
     }
 
-    public function canApprove(\App\Models\User $user): bool
+    public function assignedUser(): BelongsTo
     {
-        if ($this->approver_type === 'user') {
-            return $user->id === (int) $this->approver_id;
+        return $this->belongsTo(User::class, 'assigned_user_id');
+    }
+
+    public function canApprove(User $user): bool
+    {
+        if ($this->assigned_user_id) {
+            return $user->id === $this->assigned_user_id;
         }
 
-        if ($this->approver_type === 'role') {
-            return $user->hasRole($this->approver_id);
+        if ($this->approver_role) {
+            return $user->hasRole($this->approver_role) || $user->user_type === $this->approver_role;
         }
 
-        return false;
+        return $user->isSuperAdmin() || $user->canManageCompany();
     }
 }
