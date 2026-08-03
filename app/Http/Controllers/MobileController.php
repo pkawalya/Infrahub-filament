@@ -48,7 +48,7 @@ class MobileController extends Controller
 
     public function notifications()
     {
-        return view('mobile.profile', ['active' => 'notifications']);
+        return view('mobile.notifications', ['active' => 'notifications']);
     }
 
     public function diaries()

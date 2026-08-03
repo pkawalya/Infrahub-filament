@@ -374,6 +374,19 @@
             };
 
             try {
+                const storedNotifs = localStorage.getItem('m_notifications_data');
+                if (storedNotifs) {
+                    const items = JSON.parse(storedNotifs);
+                    const unread = items.filter(n => !n.read).length;
+                    const badge = document.getElementById('notif-count');
+                    if (badge) {
+                        badge.textContent = unread;
+                        badge.style.display = unread > 0 ? 'flex' : 'none';
+                    }
+                }
+            } catch (e) { }
+
+            try {
                 const cached = localStorage.getItem('m_projects');
                 if (cached) populateProjects(JSON.parse(cached));
                 
