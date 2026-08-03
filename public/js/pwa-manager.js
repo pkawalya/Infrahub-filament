@@ -212,6 +212,62 @@ class PwaManager {
             });
         }
     }
+
+    showShareModal() {
+        const modal = document.getElementById('pwa-share-modal');
+        const qrImg = document.getElementById('pwa-share-qr-img');
+        if (!modal) return;
+
+        const shareUrl = window.location.origin + '/mobile';
+        if (qrImg) {
+            qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(shareUrl)}&margin=1`;
+        }
+
+        modal.style.display = 'flex';
+        void modal.offsetWidth;
+        modal.classList.add('active');
+    }
+
+    hideShareModal() {
+        const modal = document.getElementById('pwa-share-modal');
+        if (!modal) return;
+        modal.classList.remove('active');
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, 300);
+    }
+
+    async shareNative() {
+        const shareUrl = window.location.origin + '/mobile';
+        const shareData = {
+            title: 'InfraHub Enterprise App',
+            text: 'Install InfraHub Field App for offline site diaries, equipment tracking & task management:',
+            url: shareUrl
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (e) {
+                this.copyLink();
+            }
+        } else {
+            this.copyLink();
+        }
+    }
+
+    copyLink() {
+        const shareUrl = window.location.origin + '/mobile';
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            if (window.MobileUI && window.MobileUI.toast) {
+                window.MobileUI.toast('App install link copied to clipboard! 📋');
+            } else {
+                alert('App install link copied to clipboard:\n' + shareUrl);
+            }
+        }).catch(() => {
+            prompt('Copy app install link:', shareUrl);
+        });
+    }
 }
 
 // Global instance helper

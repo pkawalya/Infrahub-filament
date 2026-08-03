@@ -56,6 +56,19 @@
         </div>
     </div>
 
+    {{-- Share App Card --}}
+    <div class="m-card" style="margin-top:1.25rem;background:linear-gradient(135deg, rgba(99,102,241,0.15), rgba(15,23,42,0.6));border:1px solid rgba(99,102,241,0.3);display:flex;align-items:center;justify-content:space-between;gap:0.75rem;">
+        <div>
+            <div class="m-card-title" style="font-size:0.88rem;color:#ffffff;display:flex;align-items:center;gap:0.35rem;">
+                📱 Share App with Staff
+            </div>
+            <div class="m-card-subtitle" style="margin-top:0.15rem;">Scan QR code or send via AirDrop/Bluetooth</div>
+        </div>
+        <button type="button" class="m-btn m-btn-primary" style="width:auto;padding:0.45rem 0.85rem;font-size:0.78rem;white-space:nowrap;" onclick="window.pwaManager ? window.pwaManager.showShareModal() : null">
+            📲 Share / QR
+        </button>
+    </div>
+
     <button class="m-btn m-btn-outline" style="margin-top:1.5rem;color:var(--danger);border-color:rgba(239,68,68,0.3);"
         onclick="doLogout()">
         Sign Out of InfraHub

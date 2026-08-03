@@ -7,7 +7,7 @@
         transform: translateX(-50%);
         z-index: 99999;
         width: calc(100% - 2rem);
-        max-width: 380px;
+        max-width: 420px;
         padding: 0.5rem 0.75rem;
         border-radius: 9999px;
         background: rgba(15, 23, 42, 0.94);
@@ -102,6 +102,24 @@
         transform: translateY(-1px) scale(1.02);
         background: linear-gradient(135deg, #4f46e5, #7c3aed);
     }
+    .pwa-btn-share {
+        padding: 0.35rem 0.6rem;
+        border-radius: 9999px;
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(99, 102, 241, 0.4);
+        color: #c7d2fe;
+        font-weight: 700;
+        font-size: 0.72rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        transition: background 0.15s ease;
+    }
+    .pwa-btn-share:hover {
+        background: rgba(51, 65, 85, 0.9);
+        color: #ffffff;
+    }
     .pwa-btn-close {
         background: transparent;
         border: none;
@@ -131,7 +149,7 @@
         line-height: 1.35;
     }
 
-    /* ── Fullscreen PWA Installation Overlay Animation ── */
+    /* ── Fullscreen PWA Installation & Share Overlay ── */
     .pwa-install-overlay {
         position: fixed;
         inset: 0;
@@ -279,6 +297,10 @@
                 <span id="pwa-btn-label">Install</span>
             </button>
 
+            <button type="button" onclick="window.pwaManager ? window.pwaManager.showShareModal() : null" class="pwa-btn-share" title="Share via QR Code / AirDrop">
+                <span>📲 QR</span>
+            </button>
+
             <button onclick="window.pwaManager ? window.pwaManager.dismiss() : null" type="button" class="pwa-btn-close" aria-label="Close">✕</button>
         </div>
     </div>
@@ -307,6 +329,44 @@
 
         <div id="pwa-anim-success" class="pwa-anim-success" style="display:none;">
             <span>✓ Field App Installed & Ready</span>
+        </div>
+    </div>
+</div>
+
+{{-- PWA Share & Quick Install Modal (Zero-Link Camera QR Code & AirDrop) --}}
+<div id="pwa-share-modal" class="pwa-install-overlay" style="display:none;">
+    <div class="pwa-install-card" style="max-width:380px;padding:1.75rem 1.5rem;">
+        <div style="display:flex;align-items:center;justify-space-between;width:100%;margin-bottom:1rem;">
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg, #6366f1, #8b5cf6);display:flex;align-items:center;justify-content:center;">
+                    <img src="/images/icons/icon-192x192.png" style="width:20px;height:20px;object-fit:contain;">
+                </div>
+                <h4 style="margin:0;font-size:0.95rem;font-weight:800;color:#fff;">Share InfraHub App</h4>
+            </div>
+            <button type="button" onclick="window.pwaManager ? window.pwaManager.hideShareModal() : null" style="background:none;border:none;color:#94a3b8;font-size:1.1rem;cursor:pointer;padding:0.2rem;">✕</button>
+        </div>
+
+        {{-- QR Code Container --}}
+        <div style="background:#ffffff;padding:0.85rem;border-radius:18px;box-shadow:0 10px 25px rgba(0,0,0,0.5);margin-bottom:1rem;position:relative;display:inline-block;">
+            <img id="pwa-share-qr-img" src="" alt="Scan to Install PWA" style="width:200px;height:200px;display:block;border-radius:12px;">
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:38px;height:38px;background:#0f172a;border-radius:10px;padding:3px;box-shadow:0 4px 12px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;">
+                <img src="/images/icons/icon-192x192.png" style="width:100%;height:100%;object-fit:contain;border-radius:6px;">
+            </div>
+        </div>
+
+        <p style="font-size:0.75rem;color:#94a3b8;margin:0 0 1.25rem;line-height:1.4;">
+            Point phone camera at this QR code to open & install <strong>InfraHub Field App</strong> instantly without typing a link.
+        </p>
+
+        {{-- Action Buttons --}}
+        <div style="display:flex;flex-direction:column;gap:0.5rem;width:100%;">
+            <button type="button" onclick="window.pwaManager ? window.pwaManager.shareNative() : null" class="pwa-btn-install" style="justify-content:center;padding:0.6rem 1rem;font-size:0.8rem;width:100%;">
+                <span>📤 Share via AirDrop / Nearby / WhatsApp</span>
+            </button>
+            
+            <button type="button" onclick="window.pwaManager ? window.pwaManager.copyLink() : null" style="background:rgba(30,41,59,0.9);border:1px solid rgba(99,102,241,0.3);color:#e2e8f0;padding:0.55rem 1rem;border-radius:9999px;font-size:0.78rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:0.4rem;transition:all 0.15s ease;">
+                <span>📋 Copy Install Link</span>
+            </button>
         </div>
     </div>
 </div>
