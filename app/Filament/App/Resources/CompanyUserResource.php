@@ -67,8 +67,8 @@ class CompanyUserResource extends Resource
                 Forms\Components\TextInput::make('email')
                     ->email()
                     ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->helperText('If the email is already registered, the user will be added to your company.'),
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->dehydrateStateUsing(fn($state) => !empty($state) ? Hash::make($state) : null)

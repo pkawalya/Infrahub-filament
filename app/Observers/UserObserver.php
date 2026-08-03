@@ -15,6 +15,10 @@ class UserObserver
      */
     public function created(User $user): void
     {
+        if ($user->company_id) {
+            $user->attachToCompany($user->company_id);
+        }
+
         // Only send if the user was created by an admin (not self-registration)
         // Self-registered users go through email verification instead.
         if (!auth()->check()) {

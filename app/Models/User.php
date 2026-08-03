@@ -77,6 +77,45 @@ class User extends Authenticatable implements FilamentUser, HasEmailAuthenticati
     }
 
     /**
+     * All companies this user belongs to via pivot table.
+     */
+    public function companies(): BelongsToMany
+    {
+        return $this->belongsToMany(Company::class, 'company_user')
+            ->withPivot(['user_type', 'job_title', 'department', 'phone', 'is_active'])
+            ->withTimestamps();
+    }
+
+    public function belongsToCompany(int|Company $company): bool
+    {
+        $companyId = $company instanceof Company ? $company->id : $company;
+        if ($this->company_id === $companyId) {
+            return true;
+        }
+        return $this->companies()->where('companies.id', $companyId)->exists();
+    }
+
+    public function attachToCompany(int|Company $company, array $attributes = []): void
+    {
+        $companyId = $company instanceof Company ? $company->id : $company;
+        
+        // If user has no primary company, set it
+        if (!$this->company_id) {
+            $this->update(['company_id' => $companyId]);
+        }
+
+        $this->companies()->syncWithoutDetaching([
+            $companyId => array_merge([
+                'user_type' => $this->user_type ?? 'member',
+                'job_title' => $this->job_title,
+                'department' => $this->department,
+                'phone' => $this->phone,
+                'is_active' => $this->is_active ?? true,
+            ], $attributes),
+        ]);
+    }
+
+    /**
      * All CDE projects this user is a member of (across any company).
      * Enables: $user->cdeProjects, eager-loading, and cross-company project queries.
      */

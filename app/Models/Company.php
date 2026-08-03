@@ -193,6 +193,12 @@ class Company extends Model
     {
         return $this->hasMany(User::class);
     }
+    public function allUsers()
+    {
+        return $this->belongsToMany(User::class, 'company_user')
+            ->withPivot(['user_type', 'job_title', 'department', 'phone', 'is_active'])
+            ->withTimestamps();
+    }
     public function moduleAccess()
     {
         return $this->hasMany(CompanyModuleAccess::class);
@@ -361,7 +367,7 @@ class Company extends Model
     public function getCachedUserCount(): int
     {
         return (int) Cache::remember("company:{$this->id}:user_count", 60,
-            fn() => $this->users()->count()
+            fn() => $this->allUsers()->count()
         );
     }
 
