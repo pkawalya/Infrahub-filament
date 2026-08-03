@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
     <meta name="theme-color" content="#020617">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="manifest" href="/manifest.json?v=3">
-    <link rel="icon" href="/favicon.png?v=3" type="image/png">
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
+    <link rel="manifest" href="/manifest.json?v=4">
+    <link rel="icon" href="/favicon.png?v=4" type="image/png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=4">
     <title>Login — InfraHub</title>
     <link rel="stylesheet" href="/css/mobile.css?v={{ filemtime(public_path('css/mobile.css')) }}">
 </head>

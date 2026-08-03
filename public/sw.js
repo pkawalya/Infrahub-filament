@@ -1,27 +1,33 @@
-const CACHE_NAME = 'infrahub-pwa-v3';
-const STATIC_ASSETS = [
-    '/',
-    '/launch',
+const CACHE_NAME = 'infrahub-pwa-v4';
+const CORE_SHELL_ASSETS = [
     '/mobile',
-    '/app',
+    '/mobile/login',
     '/offline.html',
-    '/manifest.json?v=3',
-    '/images/icons/icon-192x192.png?v=3',
-    '/images/icons/icon-512x512.png?v=3',
-    '/apple-touch-icon.png?v=3',
-    '/favicon.png?v=3'
+    '/manifest.json?v=4',
+    '/css/mobile.css',
+    '/js/mobile-api.js',
+    '/js/mobile-ui.js',
+    '/js/mobile-actions.js',
+    '/js/pwa-manager.js',
+    '/logo/infrahub-icon.png',
+    '/images/icons/icon-192x192.png?v=4',
+    '/images/icons/icon-512x512.png?v=4',
+    '/apple-touch-icon.png?v=4',
+    '/favicon.png?v=4'
 ];
 
-// Install Event - Pre-cache critical core shell
+// Install Event - Pre-cache minimal essential shell asynchronously
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(STATIC_ASSETS);
+            return cache.addAll(CORE_SHELL_ASSETS).catch((err) => {
+                console.warn('[SW] Core shell partial pre-cache warning:', err);
+            });
         }).then(() => self.skipWaiting())
     );
 });
 
-// Activate Event - Instantly purge all stale caches (v1, v2)
+// Activate Event - Instantly purge all stale caches (v1, v2, v3)
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => {
@@ -32,73 +38,73 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch Event - Network First for manifest & HTML, Stale-While-Revalidate for static
+// Helper to safely cache 200 OK basic responses
+function safeCachePut(request, response) {
+    if (response && response.status === 200 && (response.type === 'basic' || response.type === 'cors')) {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
+    }
+}
+
+// Fetch Event - Fast Cache-First with Timeout Fallback for Instant UI Loads
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Ignore non-GET requests or browser extension requests
-    if (request.method !== 'GET' || !url.protocol.startsWith('http')) {
+    // Skip non-GET & API endpoints
+    if (request.method !== 'GET' || !url.protocol.startsWith('http') || url.pathname.startsWith('/api/')) {
         return;
     }
 
-    // API calls: Network only
-    if (url.pathname.startsWith('/api/')) {
-        return;
-    }
-
-    // Network-First for Manifest and Launch routes to ensure icon freshness
-    if (url.pathname.includes('manifest.json') || url.pathname === '/launch') {
-        event.respondWith(
-            fetch(request).then((networkResponse) => {
-                const resClone = networkResponse.clone();
-                caches.open(CACHE_NAME).then((cache) => cache.put(request, resClone));
-                return networkResponse;
-            }).catch(() => caches.match(request))
-        );
-        return;
-    }
-
-    // Navigation requests (HTML pages)
+    // HTML Navigation Requests (App opening & page switches)
     if (request.mode === 'navigate') {
         event.respondWith(
-            fetch(request)
-                .then((networkResponse) => {
-                    const resClone = networkResponse.clone();
-                    caches.open(CACHE_NAME).then((cache) => cache.put(request, resClone));
-                    return networkResponse;
-                })
-                .catch(async () => {
-                    const cachedResponse = await caches.match(request);
-                    if (cachedResponse) {
-                        return cachedResponse;
+            new Promise((resolve) => {
+                let fetchedFromNetwork = false;
+
+                // Race network fetch with a 450ms timeout fallback to cached UI
+                const timeoutId = setTimeout(async () => {
+                    if (!fetchedFromNetwork) {
+                        const cached = await caches.match(request);
+                        if (cached) {
+                            console.log('[SW] Serving instant cache fallback for navigation:', url.pathname);
+                            resolve(cached);
+                        }
                     }
-                    return caches.match('/offline.html');
-                })
+                }, 450);
+
+                fetch(request)
+                    .then((networkResponse) => {
+                        fetchedFromNetwork = true;
+                        clearTimeout(timeoutId);
+
+                        if (networkResponse && networkResponse.status === 200) {
+                            safeCachePut(request, networkResponse);
+                            resolve(networkResponse);
+                        } else {
+                            // If 302 redirect or non-200, return network response directly
+                            resolve(networkResponse);
+                        }
+                    })
+                    .catch(async () => {
+                        clearTimeout(timeoutId);
+                        const cached = await caches.match(request) || await caches.match('/mobile') || await caches.match('/offline.html');
+                        resolve(cached);
+                    });
+            })
         );
         return;
     }
 
-    // Static Assets
+    // Static Assets (CSS, JS, Fonts, Images): Cache First -> Background Network Revalidate
     event.respondWith(
         caches.match(request).then((cachedResponse) => {
-            if (cachedResponse) {
-                fetch(request).then((networkResponse) => {
-                    if (networkResponse && networkResponse.status === 200) {
-                        caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse));
-                    }
-                }).catch(() => {});
-                return cachedResponse;
-            }
-
-            return fetch(request).then((networkResponse) => {
-                if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-                    return networkResponse;
-                }
-                const resClone = networkResponse.clone();
-                caches.open(CACHE_NAME).then((cache) => cache.put(request, resClone));
+            const fetchPromise = fetch(request).then((networkResponse) => {
+                safeCachePut(request, networkResponse);
                 return networkResponse;
-            });
+            }).catch(() => {});
+
+            return cachedResponse || fetchPromise;
         })
     );
 });
