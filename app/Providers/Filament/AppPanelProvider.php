@@ -139,12 +139,12 @@ class AppPanelProvider extends PanelProvider
             ->renderHook(
                 \Filament\View\PanelsRenderHook::HEAD_END,
                 fn() => new \Illuminate\Support\HtmlString('
-                    <link rel="manifest" href="/manifest.json">
+                    <link rel="manifest" href="/manifest.json?v=3">
                     <meta name="theme-color" content="#6366f1">
                     <meta name="apple-mobile-web-app-capable" content="yes">
                     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
                     <meta name="apple-mobile-web-app-title" content="InfraHub">
-                    <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
+                    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
                     <link rel="stylesheet" href="/css/offline.css">
                 '),
             )

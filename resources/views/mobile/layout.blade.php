@@ -8,9 +8,9 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="manifest" href="/manifest.json">
-    <link rel="icon" href="/favicon.png" type="image/png">
-    <link rel="apple-touch-icon" href="/images/icons/icon-180x180.png">
+    <link rel="manifest" href="/manifest.json?v=3">
+    <link rel="icon" href="/favicon.png?v=3" type="image/png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=3">
     <title>@yield('title', 'InfraHub Enterprise')</title>
     <link rel="preload" href="/css/mobile.css?v={{ filemtime(public_path('css/mobile.css')) }}" as="style">
     <link rel="stylesheet" href="/css/mobile.css?v={{ filemtime(public_path('css/mobile.css')) }}">

@@ -1,11 +1,15 @@
-const CACHE_NAME = 'infrahub-pwa-v2';
+const CACHE_NAME = 'infrahub-pwa-v3';
 const STATIC_ASSETS = [
     '/',
-    '/admin',
+    '/launch',
+    '/mobile',
+    '/app',
     '/offline.html',
-    '/manifest.json',
-    '/images/icons/icon-192x192.png',
-    '/images/icons/icon-512x512.png'
+    '/manifest.json?v=3',
+    '/images/icons/icon-192x192.png?v=3',
+    '/images/icons/icon-512x512.png?v=3',
+    '/apple-touch-icon.png?v=3',
+    '/favicon.png?v=3'
 ];
 
 // Install Event - Pre-cache critical core shell
@@ -17,7 +21,7 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate Event - Clean up stale caches
+// Activate Event - Instantly purge all stale caches (v1, v2)
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => {
@@ -28,7 +32,7 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Fetch Event - Stale-While-Revalidate for static, Network-First for Navigation
+// Fetch Event - Network First for manifest & HTML, Stale-While-Revalidate for static
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
@@ -38,8 +42,20 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // API calls: Network only (handled by client IndexedDB outbox on failure)
+    // API calls: Network only
     if (url.pathname.startsWith('/api/')) {
+        return;
+    }
+
+    // Network-First for Manifest and Launch routes to ensure icon freshness
+    if (url.pathname.includes('manifest.json') || url.pathname === '/launch') {
+        event.respondWith(
+            fetch(request).then((networkResponse) => {
+                const resClone = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(request, resClone));
+                return networkResponse;
+            }).catch(() => caches.match(request))
+        );
         return;
     }
 
@@ -48,13 +64,11 @@ self.addEventListener('fetch', (event) => {
         event.respondWith(
             fetch(request)
                 .then((networkResponse) => {
-                    // Update dynamic cache with fresh HTML
                     const resClone = networkResponse.clone();
                     caches.open(CACHE_NAME).then((cache) => cache.put(request, resClone));
                     return networkResponse;
                 })
                 .catch(async () => {
-                    // Fallback to cache or offline page
                     const cachedResponse = await caches.match(request);
                     if (cachedResponse) {
                         return cachedResponse;
@@ -65,11 +79,10 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Static Assets (JS, CSS, Images, Fonts) -> Cache First, fallback to Network
+    // Static Assets
     event.respondWith(
         caches.match(request).then((cachedResponse) => {
             if (cachedResponse) {
-                // Fetch in background to update cache
                 fetch(request).then((networkResponse) => {
                     if (networkResponse && networkResponse.status === 200) {
                         caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse));
