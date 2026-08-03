@@ -9,7 +9,26 @@ use App\Livewire\ExternalDashboard;
 use App\Livewire\ExternalLogin;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
+// ── PWA Launch Router (Device Aware: Mobile -> /mobile, Computer -> /app) ──
+Route::get('/launch', function (\Illuminate\Http\Request $request) {
+    $userAgent = $request->header('User-Agent', '');
+    $isMobile = (bool) preg_match('/(android|bb\d+|meego).+mobile|avail-site|ios|iphone|ipad|ipod|windows phone|iemobile|opera mini|mobile/i', $userAgent);
+
+    if ($isMobile) {
+        return redirect('/mobile');
+    }
+
+    return redirect('/app');
+})->name('pwa.launch');
+
+Route::get('/', function (\Illuminate\Http\Request $request) {
+    $userAgent = $request->header('User-Agent', '');
+    $isMobile = (bool) preg_match('/(android|bb\d+|meego).+mobile|avail-site|ios|iphone|ipad|ipod|windows phone|iemobile|opera mini|mobile/i', $userAgent);
+
+    if ($request->has('mobile') || ($isMobile && !$request->has('desktop') && !$request->has('welcome'))) {
+        return redirect('/mobile');
+    }
+
     return view('welcome');
 });
 

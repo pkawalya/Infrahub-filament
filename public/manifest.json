@@ -2,16 +2,52 @@
   "name": "InfraHub Enterprise Ecosystem",
   "short_name": "InfraHub",
   "description": "Enterprise Construction & Procurement Management Platform",
-  "start_url": "/admin",
+  "start_url": "/launch",
   "scope": "/",
   "display": "standalone",
-  "orientation": "any",
-  "background_color": "#090d16",
-  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "background_color": "#030712",
+  "theme_color": "#030712",
   "icons": [
+    {
+      "src": "/images/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
     {
       "src": "/images/icons/icon-192x192.png",
       "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icons/icon-384x384.png",
+      "sizes": "384x384",
       "type": "image/png",
       "purpose": "any maskable"
     },
@@ -24,17 +60,17 @@
   ],
   "shortcuts": [
     {
-      "name": "Daily Site Diary",
-      "short_name": "Site Diary",
-      "description": "Log site progress and workers",
-      "url": "/admin/daily-site-diaries/create",
+      "name": "Mobile Field Suite",
+      "short_name": "Field Ops",
+      "description": "Open Mobile Field Dashboard",
+      "url": "/mobile",
       "icons": [{ "src": "/images/icons/icon-192x192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Crew Attendance",
-      "short_name": "Attendance",
-      "description": "Clock-in workers offline",
-      "url": "/admin/crew-attendances/create",
+      "name": "Enterprise Console",
+      "short_name": "Desktop Admin",
+      "description": "Open Desktop Admin Workspace",
+      "url": "/app",
       "icons": [{ "src": "/images/icons/icon-192x192.png", "sizes": "192x192" }]
     }
   ]
