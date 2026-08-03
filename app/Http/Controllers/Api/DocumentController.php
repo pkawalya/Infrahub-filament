@@ -42,6 +42,41 @@ class DocumentController extends BaseApiController
     }
 
     /**
+     * GET /api/v1/documents or /api/v1/drawings
+     * Mobile / global list of company documents.
+     */
+    public function allDocuments(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $query = CdeDocument::where('company_id', $user->company_id)
+            ->with(['project:id,name,code', 'folder:id,name', 'uploadedBy:id,name']);
+
+        if ($request->filled('project_id')) {
+            $query->where('cde_project_id', $request->project_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('discipline')) {
+            $query->where('discipline', $request->discipline);
+        }
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', "%{$request->search}%")
+                    ->orWhere('document_number', 'like', "%{$request->search}%");
+            });
+        }
+
+        $docs = $query->orderBy($request->sort ?? 'created_at', $request->direction ?? 'desc')
+            ->paginate($request->per_page ?? 30);
+
+        return $this->paginated($docs);
+    }
+
+    /**
      * POST /api/v1/projects/{project}/documents
      */
     public function store(Request $request, CdeProject $project): JsonResponse

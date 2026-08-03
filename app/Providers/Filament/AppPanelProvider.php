@@ -171,6 +171,10 @@ class AppPanelProvider extends PanelProvider
             )
             ->renderHook(
                 \Filament\View\PanelsRenderHook::BODY_END,
+                fn() => view('components.pwa-install-prompt'),
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::BODY_END,
                 fn() => auth()->check() ? \Illuminate\Support\Facades\Blade::render('@livewire(\'floating-suggestion-box\')') : '',
             )
             ->viteTheme('resources/css/filament/app/theme.css');

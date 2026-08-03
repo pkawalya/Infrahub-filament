@@ -35,6 +35,36 @@ class RfiController extends BaseApiController
         );
     }
 
+    public function allRfis(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $query = Rfi::where('company_id', $user->company_id)
+            ->with(['project:id,name,code', 'raisedBy:id,name', 'assignee:id,name', 'document:id,document_number,title']);
+
+        if ($request->filled('project_id')) {
+            $query->where('cde_project_id', $request->project_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('priority')) {
+            $query->where('priority', $request->priority);
+        }
+        if ($request->boolean('overdue')) {
+            $query->whereIn('status', ['open', 'under_review'])->where('due_date', '<', now());
+        }
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('subject', 'like', "%{$request->search}%")
+                    ->orWhere('rfi_number', 'like', "%{$request->search}%");
+            });
+        }
+
+        return $this->paginated(
+            $query->orderBy('created_at', 'desc')->paginate($request->per_page ?? 30)
+        );
+    }
+
     public function store(Request $request, CdeProject $project): JsonResponse
     {
         $this->authorizeProject($request, $project);

@@ -15,14 +15,14 @@
     <div class="m-login-container">
         <div class="m-login-card">
             <div class="m-login-brand">
-                <div class="logo">IH</div>
-                <h1>InfraHub</h1>
+                <img src="/logo/infrahub-logo-dark.png" alt="InfraHub" style="height:48px;object-fit:contain;margin:0 auto 1.25rem;display:block;">
                 <p>Sign in to your mobile workspace</p>
             </div>
 
             <div id="login-error" class="m-login-error" style="display:none"></div>
 
             <form id="login-form" onsubmit="return doLogin(event)">
+                @csrf
                 <div class="m-form-group">
                     <label class="m-label" for="email">Email</label>
                     <input type="email" id="email" class="m-input" placeholder="you@company.com" required autofocus
@@ -67,10 +67,19 @@
             btn.disabled = true;
             text.textContent = 'Signing in...';
 
+            const csrfMeta = document.querySelector('meta[name="csrf-token"]')?.content;
+            const headers = { 
+                'Accept': 'application/json', 
+                'Content-Type': 'application/json' 
+            };
+            if (csrfMeta) {
+                headers['X-CSRF-TOKEN'] = csrfMeta;
+            }
+
             try {
                 const resp = await fetch('/api/v1/auth/login', {
                     method: 'POST',
-                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    headers: headers,
                     body: JSON.stringify({
                         email: document.getElementById('email').value,
                         password: document.getElementById('password').value,

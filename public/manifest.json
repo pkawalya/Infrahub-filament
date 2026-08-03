@@ -1,115 +1,41 @@
 {
-    "name": "InfraHub",
-    "short_name": "InfraHub",
-    "version": "1.0.0",
-    "description": "InfraHub v1.0 — Construction Management Platform — Projects, Documents, Tasks, Equipment, Safety",
-    "start_url": "/mobile",
-    "scope": "/",
-    "display": "standalone",
-    "orientation": "portrait-primary",
-    "background_color": "#0f172a",
-    "theme_color": "#6366f1",
-    "categories": [
-        "business",
-        "productivity",
-        "utilities"
-    ],
-    "lang": "en",
-    "icons": [
-        {
-            "src": "/images/icons/icon-72x72.png",
-            "sizes": "72x72",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/images/icons/icon-96x96.png",
-            "sizes": "96x96",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/images/icons/icon-128x128.png",
-            "sizes": "128x128",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/images/icons/icon-144x144.png",
-            "sizes": "144x144",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/images/icons/icon-152x152.png",
-            "sizes": "152x152",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/images/icons/icon-192x192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/images/icons/icon-384x384.png",
-            "sizes": "384x384",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
-        {
-            "src": "/images/icons/icon-512x512.png",
-            "sizes": "512x512",
-            "type": "image/png",
-            "purpose": "any maskable"
-        }
-    ],
-    "screenshots": [],
-    "shortcuts": [
-        {
-            "name": "Dashboard",
-            "short_name": "Dashboard",
-            "url": "/app",
-            "icons": [
-                {
-                    "src": "/images/icons/icon-96x96.png",
-                    "sizes": "96x96"
-                }
-            ]
-        },
-        {
-            "name": "Projects",
-            "short_name": "Projects",
-            "url": "/app/cde-projects",
-            "icons": [
-                {
-                    "src": "/images/icons/icon-96x96.png",
-                    "sizes": "96x96"
-                }
-            ]
-        },
-        {
-            "name": "Site Diary",
-            "short_name": "Diary",
-            "url": "/app/daily-site-diaries",
-            "icons": [
-                {
-                    "src": "/images/icons/icon-96x96.png",
-                    "sizes": "96x96"
-                }
-            ]
-        },
-        {
-            "name": "Offline Forms",
-            "short_name": "Offline",
-            "url": "/app/offline-forms",
-            "icons": [
-                {
-                    "src": "/images/icons/icon-96x96.png",
-                    "sizes": "96x96"
-                }
-            ]
-        }
-    ]
+  "name": "InfraHub Enterprise Ecosystem",
+  "short_name": "InfraHub",
+  "description": "Enterprise Construction & Procurement Management Platform",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#090d16",
+  "theme_color": "#0f172a",
+  "icons": [
+    {
+      "src": "/images/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Daily Site Diary",
+      "short_name": "Site Diary",
+      "description": "Log site progress and workers",
+      "url": "/admin/daily-site-diaries/create",
+      "icons": [{ "src": "/images/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Crew Attendance",
+      "short_name": "Attendance",
+      "description": "Clock-in workers offline",
+      "url": "/admin/crew-attendances/create",
+      "icons": [{ "src": "/images/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ]
 }

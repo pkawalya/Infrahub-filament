@@ -1,26 +1,24 @@
-@extends('mobile.layout')
-@section('title', 'Projects — InfraHub')
+@extends('mobile.layout', ['active' => 'projects'])
+@section('title', 'Projects — InfraHub Mobile')
 
 @section('content')
-    <div class="m-page-title">Projects</div>
-    <div class="m-page-subtitle">Your company projects</div>
+    <div class="m-page-title">Projects Directory</div>
+    <div class="m-page-subtitle">Company capital works & active sites</div>
 
     {{-- Search --}}
-    <div class="m-form-group" style="margin-bottom:1rem;">
-        <input type="search" class="m-input" id="project-search" placeholder="🔍 Search projects..."
-            oninput="filterProjects()">
+    <div class="m-search-box">
+        <svg class="m-search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+        <input type="search" class="m-search-input" id="project-search" placeholder="Search by name, code, or client..." oninput="filterProjects()">
     </div>
 
-    {{-- Filter pills --}}
-    <div style="display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:1rem;" id="status-filters">
-        <button class="m-pill active" onclick="setFilter('all')" data-filter="all"
-            style="cursor:pointer;border:none;">All</button>
-        <button class="m-pill planning" onclick="setFilter('active')" data-filter="active"
-            style="cursor:pointer;border:none;">Active</button>
-        <button class="m-pill on_hold" onclick="setFilter('on_hold')" data-filter="on_hold"
-            style="cursor:pointer;border:none;">On Hold</button>
-        <button class="m-pill completed" onclick="setFilter('completed')" data-filter="completed"
-            style="cursor:pointer;border:none;">Completed</button>
+    {{-- Filter tabs --}}
+    <div class="m-category-tabs" id="status-filters">
+        <button type="button" class="m-category-tab active" onclick="setFilter('all', this)" data-filter="all">All Projects</button>
+        <button type="button" class="m-category-tab" onclick="setFilter('active', this)" data-filter="active">Active Sites</button>
+        <button type="button" class="m-category-tab" onclick="setFilter('on_hold', this)" data-filter="on_hold">On Hold</button>
+        <button type="button" class="m-category-tab" onclick="setFilter('completed', this)" data-filter="completed">Completed</button>
     </div>
 
     <div id="project-list">
@@ -42,10 +40,10 @@
         let currentFilter = 'all';
 
         document.addEventListener('DOMContentLoaded', async () => {
-            if (!API.isLoggedIn()) { window.location.href = '/mobile/login'; return; }
+            if (!MobileAPI.isLoggedIn()) { window.location.href = '/mobile/login'; return; }
 
             try {
-                const data = await API.get('/projects?per_page=100');
+                const data = await MobileAPI.get('/projects?per_page=100');
                 if (data?.data) {
                     allProjects = data.data;
                     localStorage.setItem('m_projects', JSON.stringify(allProjects));
@@ -58,11 +56,10 @@
             renderProjects();
         });
 
-        function setFilter(f) {
+        function setFilter(f, btn) {
             currentFilter = f;
-            document.querySelectorAll('#status-filters button').forEach(b => {
-                b.style.outline = b.dataset.filter === f ? '2px solid var(--accent)' : 'none';
-            });
+            document.querySelectorAll('#status-filters button').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
             renderProjects();
         }
 
@@ -87,11 +84,11 @@
                         <div class="m-card-title">${esc(p.name)}</div>
                         <div class="m-card-subtitle">${esc(p.code || '')}${p.client?.name ? ' · ' + esc(p.client.name) : ''}</div>
                     </div>
-                    <span class="m-pill ${p.status}">${esc(p.status)}</span>
+                    <span class="m-pill ${p.status}"><span class="m-pill-dot"></span><span class="m-pill-text">${esc(p.status)}</span></span>
                 </div>
-                ${p.manager?.name ? `<div class="m-card-footer">👤 ${esc(p.manager.name)}</div>` : ''}
+                ${p.manager?.name ? `<div class="m-card-footer">Project Manager: ${esc(p.manager.name)}</div>` : ''}
             </a>
-        `).join('') || `<div class="m-empty"><div class="m-empty-icon">📁</div><div class="m-empty-title">No projects found</div></div>`;
+        `).join('') || `<div class="m-empty"><div class="m-empty-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg></div><div class="m-empty-title">No projects found</div></div>`;
         }
 
         function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }

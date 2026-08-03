@@ -60,6 +60,16 @@ Route::prefix('v1')
         Route::middleware('module:projects.update')->put('projects/{project}', [ProjectController::class, 'update']);
         Route::middleware('module:projects.delete')->delete('projects/{project}', [ProjectController::class, 'destroy']);
 
+        // ─ Global / Mobile Endpoints ────────────────────────
+        Route::middleware('module:documents.view')->group(function () {
+            Route::get('documents', [DocumentController::class, 'allDocuments']);
+            Route::get('drawings', [DocumentController::class, 'allDocuments']);
+            Route::get('rfis', [RfiController::class, 'allRfis']);
+        });
+        Route::middleware('module:tasks.view')->group(function () {
+            Route::get('tasks', [TaskController::class, 'allTasks']);
+        });
+
         // ─ Documents (scoped to project) ──────────────────
         Route::prefix('projects/{project}')->group(function () {
             Route::middleware('module:documents.view')->group(function () {
@@ -187,6 +197,7 @@ Route::prefix('v1')
         // ─ Offline Sync (field workers) ───────────────────
         Route::prefix('offline-sync')->group(function () {
             Route::get('workers', [OfflineSyncController::class, 'workers']);
+            Route::post('batch', [OfflineSyncController::class, 'syncBatch']);
             Route::post('generic', [OfflineSyncController::class, 'syncGeneric']);
             Route::post('site-diaries', [OfflineSyncController::class, 'syncSiteDiary']);
             Route::post('attendance', [OfflineSyncController::class, 'syncAttendance']);

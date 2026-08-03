@@ -31,6 +31,34 @@ class TaskController extends BaseApiController
         );
     }
 
+    public function allTasks(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $query = Task::where('company_id', $user->company_id)
+            ->with(['project:id,name,code', 'assignee:id,name']);
+
+        if ($request->filled('project_id')) {
+            $query->where('cde_project_id', $request->project_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        if ($request->filled('priority')) {
+            $query->where('priority', $request->priority);
+        }
+        if ($request->filled('assigned_to')) {
+            $query->where('assigned_to', $request->assigned_to);
+        }
+        if ($request->filled('search')) {
+            $query->where('title', 'like', "%{$request->search}%");
+        }
+
+        return $this->paginated(
+            $query->orderBy($request->sort ?? 'created_at', $request->direction ?? 'desc')
+                ->paginate($request->per_page ?? 30)
+        );
+    }
+
     public function store(Request $request, CdeProject $project): JsonResponse
     {
         $this->authorizeProject($request, $project);

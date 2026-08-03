@@ -401,4 +401,96 @@ class OfflineSyncController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Sync a batch of queued offline records from field workers.
+     * Accepts: { batch: [ { client_uuid: "...", resource: "site-diaries", action: "create", record_id: null, data: {...} } ] }
+     */
+    public function syncBatch(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Unauthenticated'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'batch' => 'required|array|min:1|max:100',
+            'batch.*.client_uuid' => 'required|string',
+            'batch.*.resource' => 'required|string|max:50',
+            'batch.*.action' => 'nullable|string|in:create,update',
+            'batch.*.record_id' => 'nullable|integer',
+            'batch.*.data' => 'required|array',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Batch validation failed',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $items = $request->input('batch');
+        $results = [];
+
+        foreach ($items as $item) {
+            $clientUuid = $item['client_uuid'];
+            $resource = $item['resource'];
+            $action = $item['action'] ?? 'create';
+            $recordId = $item['record_id'] ?? null;
+            $data = $item['data'] ?? [];
+
+            // Dispatch per resource type or generic
+            try {
+                if ($resource === 'site-diaries' && $action === 'create') {
+                    $subReq = Request::create('/api/v1/offline-sync/site-diaries', 'POST', $data);
+                    $subReq->setUserResolver(fn () => $user);
+                    $res = $this->syncSiteDiary($subReq);
+                } elseif ($resource === 'attendance' && $action === 'create') {
+                    $subReq = Request::create('/api/v1/offline-sync/attendance', 'POST', $data);
+                    $subReq->setUserResolver(fn () => $user);
+                    $res = $this->syncAttendance($subReq);
+                } elseif ($resource === 'safety-incidents' && $action === 'create') {
+                    $subReq = Request::create('/api/v1/offline-sync/safety-incidents', 'POST', $data);
+                    $subReq->setUserResolver(fn () => $user);
+                    $res = $this->syncSafetyIncident($subReq);
+                } else {
+                    $subReq = Request::create('/api/v1/offline-sync/generic', 'POST', [
+                        'resource' => $resource,
+                        'action' => $action,
+                        'record_id' => $recordId,
+                        'data' => $data,
+                    ]);
+                    $subReq->setUserResolver(fn () => $user);
+                    $res = $this->syncGeneric($subReq);
+                }
+
+                $resData = json_decode($res->getContent(), true);
+                $results[] = [
+                    'client_uuid' => $clientUuid,
+                    'status' => $res->getStatusCode() >= 200 && $res->getStatusCode() < 300 ? 'synced' : 'error',
+                    'http_status' => $res->getStatusCode(),
+                    'server_id' => $resData['id'] ?? null,
+                    'message' => $resData['message'] ?? 'Processed',
+                ];
+            } catch (\Throwable $e) {
+                Log::error("Batch sync item failed: {$resource}", [
+                    'client_uuid' => $clientUuid,
+                    'error' => $e->getMessage(),
+                ]);
+                $results[] = [
+                    'client_uuid' => $clientUuid,
+                    'status' => 'error',
+                    'http_status' => 500,
+                    'message' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'processed' => count($results),
+            'results' => $results,
+        ]);
+    }
 }

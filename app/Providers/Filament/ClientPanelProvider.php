@@ -70,7 +70,37 @@ class ClientPanelProvider extends PanelProvider
                 fn() => new \Illuminate\Support\HtmlString('
                     <link rel="manifest" href="/manifest.json">
                     <meta name="theme-color" content="#6366f1">
+                    <meta name="apple-mobile-web-app-capable" content="yes">
+                    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+                    <meta name="apple-mobile-web-app-title" content="InfraHub">
+                    <link rel="apple-touch-icon" href="/images/icons/icon-192x192.png">
+                    <link rel="stylesheet" href="/css/offline.css">
                 '),
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::BODY_END,
+                fn() => new \Illuminate\Support\HtmlString('
+                    <script src="/js/offline-db.js"></script>
+                    <script src="/js/offline-ui.js"></script>
+                    <script>
+                        if ("serviceWorker" in navigator) {
+                            window.addEventListener("load", () => {
+                                navigator.serviceWorker.register("/sw.js")
+                                    .then(reg => {
+                                        console.log("SW registered:", reg.scope);
+                                        if ("sync" in reg) {
+                                            reg.sync.register("infrahub-sync").catch(() => {});
+                                        }
+                                    })
+                                    .catch(err => console.warn("SW registration failed:", err));
+                            });
+                        }
+                    </script>
+                '),
+            )
+            ->renderHook(
+                \Filament\View\PanelsRenderHook::BODY_END,
+                fn() => view('components.pwa-install-prompt'),
             );
     }
 }

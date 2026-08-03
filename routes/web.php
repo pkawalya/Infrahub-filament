@@ -112,4 +112,24 @@ Route::prefix('mobile')->group(function () {
     Route::get('/forms', [MobileController::class, 'forms'])->name('mobile.forms');
     Route::get('/profile', [MobileController::class, 'profile'])->name('mobile.profile');
     Route::get('/notifications', [MobileController::class, 'notifications'])->name('mobile.notifications');
+
+    // Enterprise Field Modules
+    Route::get('/diaries', [MobileController::class, 'diaries'])->name('mobile.diaries');
+    Route::get('/attendance', [MobileController::class, 'attendance'])->name('mobile.attendance');
+    Route::get('/safety', [MobileController::class, 'safety'])->name('mobile.safety');
+    Route::get('/equipment', [MobileController::class, 'equipment'])->name('mobile.equipment');
+    Route::get('/drawings', [MobileController::class, 'drawings'])->name('mobile.drawings');
+    Route::get('/financials', [MobileController::class, 'financials'])->name('mobile.financials');
+    Route::get('/subcontractors', [MobileController::class, 'subcontractors'])->name('mobile.subcontractors');
+    Route::get('/tenders', [MobileController::class, 'tenders'])->name('mobile.tenders');
+    Route::get('/rfis', [MobileController::class, 'rfis'])->name('mobile.rfis');
+    Route::get('/materials', [MobileController::class, 'materials'])->name('mobile.materials');
+    Route::get('/change-orders', [MobileController::class, 'changeOrders'])->name('mobile.change-orders');
+    Route::get('/work-orders', [MobileController::class, 'workOrders'])->name('mobile.work-orders');
+    Route::get('/quality', [MobileController::class, 'quality'])->name('mobile.quality');
+    Route::get('/approvals', [MobileController::class, 'approvals'])->name('mobile.approvals');
+    Route::get('/boq', [MobileController::class, 'boq'])->name('mobile.boq');
+    Route::get('/planning', [MobileController::class, 'planning'])->name('mobile.planning');
+    Route::get('/suggestions', [MobileController::class, 'suggestions'])->name('mobile.suggestions');
+    Route::get('/reporting', [MobileController::class, 'reporting'])->name('mobile.reporting');
 });
