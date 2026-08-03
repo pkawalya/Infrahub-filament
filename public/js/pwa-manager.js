@@ -52,6 +52,7 @@ class PwaManager {
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             this.deferredPrompt = e;
+            window.deferredInstallPrompt = e;
             this.showBanner();
         });
 
@@ -174,20 +175,30 @@ class PwaManager {
 
     async triggerInstall() {
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const promptEvent = this.deferredPrompt || window.deferredInstallPrompt;
 
-        if (this.deferredPrompt) {
-            const promptEvent = this.deferredPrompt;
+        if (promptEvent) {
             this.deferredPrompt = null;
+            window.deferredInstallPrompt = null;
             
-            this.showInstallAnimation(() => {
-                this.hideBanner();
-            });
-
-            promptEvent.prompt();
-            const { outcome } = await promptEvent.userChoice;
-            if (outcome !== 'accepted') {
-                // If user cancelled, dismiss banner silently
-                this.hideBanner();
+            try {
+                // Show native browser PWA installation dialog
+                await promptEvent.prompt();
+                const choice = await promptEvent.userChoice;
+                
+                if (choice && choice.outcome === 'accepted') {
+                    // Show installation animation after user accepts
+                    this.showInstallAnimation(() => {
+                        this.hideBanner();
+                    });
+                } else {
+                    this.dismiss();
+                }
+            } catch (err) {
+                console.warn('Native PWA prompt error:', err);
+                this.showInstallAnimation(() => {
+                    this.hideBanner();
+                });
             }
         } else if (isIOS) {
             if (this.iosInstructionsEl) {
@@ -195,7 +206,7 @@ class PwaManager {
                 this.iosInstructionsEl.style.display = currentDisplay === 'none' ? 'block' : 'none';
             }
         } else {
-            // Trigger animation demo for desktop/unsupported browser tabs
+            // Fallback for browsers without beforeinstallprompt event (e.g. desktop/local dev)
             this.showInstallAnimation(() => {
                 this.hideBanner();
             });
