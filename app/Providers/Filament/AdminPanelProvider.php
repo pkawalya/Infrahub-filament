@@ -47,6 +47,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->font('Inter')
             ->darkMode(true)
+            ->favicon(asset('favicon.png'))
             ->brandName('InfraHub Admin')
             ->brandLogo(asset('logo/infrahub-logo-light.png'))
             ->darkModeBrandLogo(asset('logo/infrahub-logo-dark.png'))

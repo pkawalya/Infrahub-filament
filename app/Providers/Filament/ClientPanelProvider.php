@@ -40,6 +40,7 @@ class ClientPanelProvider extends PanelProvider
                 'primary' => Color::Indigo,
                 'success' => Color::Emerald,
             ])
+            ->favicon(asset('favicon.png'))
             ->brandName('InfraHub — Client Portal')
             ->maxContentWidth(Width::Full)
             ->discoverResources(in: app_path('Filament/Client/Resources'), for: 'App\\Filament\\Client\\Resources')

@@ -135,7 +135,7 @@
     <div class="pwa-toast-body">
         <div class="pwa-toast-info">
             <div class="pwa-toast-icon">
-                <img src="/logo/infrahub-logo-dark.png" alt="InfraHub" onerror="this.src='/favicon.ico';">
+                <img src="/images/icons/icon-192x192.png" alt="InfraHub" onerror="this.src='/favicon.ico';">
             </div>
             <div class="pwa-toast-text-group">
                 <h5 class="pwa-toast-title" id="pwa-prompt-heading">Install Field App</h5>

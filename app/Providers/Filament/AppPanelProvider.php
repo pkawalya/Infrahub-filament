@@ -54,6 +54,7 @@ class AppPanelProvider extends PanelProvider
             ])
             ->font('Inter')
             ->darkMode(true)
+            ->favicon(asset('favicon.png'))
             ->brandName('InfraHub')
             ->brandLogo(asset('logo/infrahub-logo-light.png'))
             ->darkModeBrandLogo(asset('logo/infrahub-logo-dark.png'))
