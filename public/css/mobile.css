@@ -1112,3 +1112,70 @@ a.m-card:hover {
         grid-template-columns: repeat(4, 1fr);
     }
 }
+
+/* ── Native Mobile Transitions & Tactile Interaction Engine ──── */
+html, body {
+    overscroll-behavior-y: contain;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.m-card, .m-action, .m-btn, .m-nav-item, .m-section-link, .m-header-icon {
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s, opacity 0.15s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.m-card:active, .m-action:active, .m-btn:active, .m-header-icon:active {
+    transform: scale(0.96) !important;
+    opacity: 0.88;
+}
+
+/* Route Progress Bar */
+.m-route-progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #6366f1, #34d399);
+    z-index: 99999;
+    transition: width 0.2s ease-out, opacity 0.2s ease-in-out;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.8);
+    pointer-events: none;
+}
+
+/* Slide Transition Animations */
+.m-slide-in-right {
+    animation: mSlideInRight 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.m-slide-out-left {
+    animation: mSlideOutLeft 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.m-slide-in-left {
+    animation: mSlideInLeft 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.m-slide-out-right {
+    animation: mSlideOutRight 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes mSlideInRight {
+    from { transform: translateX(100%); opacity: 0.4; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes mSlideOutLeft {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(-30%); opacity: 0; }
+}
+
+@keyframes mSlideInLeft {
+    from { transform: translateX(-30%); opacity: 0.4; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes mSlideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}

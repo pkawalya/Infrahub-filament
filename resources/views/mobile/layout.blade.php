@@ -100,8 +100,8 @@
         </div>
     </div>
 
-    {{-- Main Content --}}
-    <main class="m-content">
+    {{-- Main Content Container for Native View Transitions --}}
+    <main class="m-content" id="mobile-view-container">
         @yield('content')
     </main>
 
@@ -405,6 +405,7 @@
         }
     </script>
 
+    <script src="/js/mobile-router.js"></script>
     <x-pwa-install-prompt />
     @stack('scripts')
 </body>
