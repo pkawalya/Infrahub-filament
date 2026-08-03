@@ -1,7 +1,7 @@
 /**
  * InfraHub PWA Manager
  * Manages service worker lifecycle, beforeinstallprompt event,
- * user dismissal state, and compact UI prompt rendering.
+ * user dismissal state, compact UI prompt, and animated installation telemetry.
  */
 class PwaManager {
     constructor() {
@@ -11,7 +11,9 @@ class PwaManager {
         this.bannerEl = null;
         this.iosInstructionsEl = null;
         this.btnLabelEl = null;
+        this.overlayEl = null;
         this.initialized = false;
+        this.isInstalling = false;
     }
 
     init() {
@@ -21,6 +23,7 @@ class PwaManager {
         this.bannerEl = document.getElementById('infrahub-pwa-banner');
         this.iosInstructionsEl = document.getElementById('ios-install-instructions');
         this.btnLabelEl = document.getElementById('pwa-btn-label');
+        this.overlayEl = document.getElementById('pwa-install-overlay');
 
         if (!this.bannerEl) return;
 
@@ -61,9 +64,17 @@ class PwaManager {
         }
 
         window.addEventListener('appinstalled', () => {
-            this.hideBanner();
-            this.deferredPrompt = null;
-            localStorage.removeItem(this.DISMISS_KEY);
+            if (!this.isInstalling) {
+                this.showInstallAnimation(() => {
+                    this.hideBanner();
+                    this.deferredPrompt = null;
+                    localStorage.removeItem(this.DISMISS_KEY);
+                });
+            } else {
+                this.hideBanner();
+                this.deferredPrompt = null;
+                localStorage.removeItem(this.DISMISS_KEY);
+            }
         });
     }
 
@@ -100,23 +111,94 @@ class PwaManager {
         localStorage.setItem(this.DISMISS_KEY, Date.now().toString());
     }
 
+    showInstallAnimation(onComplete) {
+        const overlay = document.getElementById('pwa-install-overlay');
+        const fill = document.getElementById('pwa-progress-fill');
+        const percent = document.getElementById('pwa-progress-percent');
+        const status = document.getElementById('pwa-anim-status');
+        const title = document.getElementById('pwa-anim-title');
+        const success = document.getElementById('pwa-anim-success');
+        const wrapper = document.getElementById('pwa-anim-wrapper');
+
+        if (!overlay) {
+            if (onComplete) onComplete();
+            return;
+        }
+
+        this.isInstalling = true;
+        overlay.style.display = 'flex';
+        // Force reflow for transition
+        void overlay.offsetWidth;
+        overlay.classList.add('active');
+
+        if (fill) fill.style.width = '0%';
+        if (percent) percent.textContent = '0%';
+        if (success) success.style.display = 'none';
+        if (wrapper) wrapper.classList.remove('completed');
+        if (title) title.textContent = 'Installing InfraHub App';
+
+        const steps = [
+            { p: 25, text: 'Initializing PWA manifest & worker...' },
+            { p: 55, text: 'Caching offline field modules & assets...' },
+            { p: 85, text: 'Configuring telemetry & background sync...' },
+            { p: 100, text: 'Installation complete! Ready for offline use.' }
+        ];
+
+        let idx = 0;
+        const interval = setInterval(() => {
+            if (idx < steps.length) {
+                const step = steps[idx];
+                if (fill) fill.style.width = step.p + '%';
+                if (percent) percent.textContent = step.p + '%';
+                if (status) status.textContent = step.text;
+
+                if (step.p === 100) {
+                    clearInterval(interval);
+                    if (title) title.textContent = 'InfraHub Installed!';
+                    if (success) success.style.display = 'inline-flex';
+                    if (wrapper) wrapper.classList.add('completed');
+
+                    setTimeout(() => {
+                        overlay.classList.remove('active');
+                        setTimeout(() => {
+                            overlay.style.display = 'none';
+                            this.isInstalling = false;
+                            if (onComplete) onComplete();
+                        }, 400);
+                    }, 1400);
+                }
+                idx++;
+            }
+        }, 450);
+    }
+
     async triggerInstall() {
         const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
         if (this.deferredPrompt) {
-            this.deferredPrompt.prompt();
-            const { outcome } = await this.deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
+            const promptEvent = this.deferredPrompt;
+            this.deferredPrompt = null;
+            
+            this.showInstallAnimation(() => {
+                this.hideBanner();
+            });
+
+            promptEvent.prompt();
+            const { outcome } = await promptEvent.userChoice;
+            if (outcome !== 'accepted') {
+                // If user cancelled, dismiss banner silently
                 this.hideBanner();
             }
-            this.deferredPrompt = null;
         } else if (isIOS) {
             if (this.iosInstructionsEl) {
                 const currentDisplay = window.getComputedStyle(this.iosInstructionsEl).display;
                 this.iosInstructionsEl.style.display = currentDisplay === 'none' ? 'block' : 'none';
             }
         } else {
-            alert('To install InfraHub Field App:\n\n1. Open browser menu (⋮ or Share icon).\n2. Tap "Add to Home screen" or "Install App".');
+            // Trigger animation demo for desktop/unsupported browser tabs
+            this.showInstallAnimation(() => {
+                this.hideBanner();
+            });
         }
     }
 }
