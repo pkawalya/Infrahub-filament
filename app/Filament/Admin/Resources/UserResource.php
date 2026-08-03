@@ -55,11 +55,19 @@ class UserResource extends Resource
                 Schemas\Components\Tabs\Tab::make('Organization')->schema([
                     Schemas\Components\Section::make('Company & Role')->schema([
                         Forms\Components\Select::make('company_id')
+                            ->label('Primary Company')
                             ->relationship('company', 'name')
                             ->searchable()
                             ->preload()
                             ->nullable()
-                            ->helperText('Leave empty for super admins'),
+                            ->helperText('Main company context (leave empty for super admins)'),
+                        Forms\Components\Select::make('companies')
+                            ->label('All Companies')
+                            ->relationship('companies', 'name')
+                            ->multiple()
+                            ->preload()
+                            ->searchable()
+                            ->helperText('Select all companies this user belongs to'),
                         Forms\Components\Select::make('roles')
                             ->relationship('roles', 'name')
                             ->multiple()
@@ -129,9 +137,12 @@ class UserResource extends Resource
 
                 Schemas\Components\Tabs\Tab::make('Organization')->schema([
                     Schemas\Components\Section::make('Company & Role')->schema([
-                        Infolists\Components\TextEntry::make('company.name')
-                            ->label('Company')
+                        Infolists\Components\TextEntry::make('companies.name')
+                            ->label('Companies')
                             ->icon('heroicon-o-building-office')
+                            ->badge()
+                            ->color('info')
+                            ->separator(', ')
                             ->placeholder('— No Company —'),
                         Infolists\Components\TextEntry::make('roles.name')
                             ->label('Roles')
@@ -192,10 +203,12 @@ class UserResource extends Resource
                         default => 'gray',
                     })
                     ->sortable(),
-                Tables\Columns\TextColumn::make('company.name')
-                    ->label('Company')
+                Tables\Columns\TextColumn::make('companies.name')
+                    ->label('Companies')
+                    ->badge()
+                    ->color('info')
+                    ->separator(',')
                     ->searchable()
-                    ->sortable()
                     ->placeholder('— No Company —'),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->label('Roles')
