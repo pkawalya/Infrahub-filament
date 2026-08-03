@@ -491,8 +491,8 @@
         <!-- ── Sidebar ── -->
         <aside class="sidebar">
             <div class="sidebar-header">
-                <a href="/app">
-                    <div class="logo-icon">IH</div>
+                <a href="/app" style="display:flex;align-items:center;gap:0.6rem;">
+                    <img src="/logo/infrahub-icon.png?v=3" alt="InfraHub" style="width:32px;height:32px;object-fit:contain;border-radius:8px;">
                     <h1>User Manual</h1>
                 </a>
             </div>

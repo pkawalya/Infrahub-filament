@@ -9,8 +9,8 @@
                 <div class="m-page-title" id="greeting" style="margin:0;font-size:1.4rem;">Good day</div>
                 <div class="m-page-subtitle" id="user-name" style="margin:0.25rem 0 0 0;font-size:0.85rem;color:var(--text-muted);">Loading profile...</div>
             </div>
-            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#8b5cf6);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.1rem;color:white;box-shadow:0 4px 16px rgba(99,102,241,0.45);border:2px solid rgba(255,255,255,0.2);" id="user-avatar-initial">
-                IH
+            <div style="width:44px;height:44px;border-radius:12px;background:rgba(15,23,42,0.8);display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(99,102,241,0.45);border:1px solid rgba(99,102,241,0.3);overflow:hidden;padding:4px;" id="user-avatar-initial">
+                <img src="/logo/infrahub-icon.png?v=3" alt="InfraHub" style="width:100%;height:100%;object-fit:contain;border-radius:8px;">
             </div>
         </div>
     </div>
@@ -131,10 +131,6 @@
                 document.getElementById('greeting').textContent = greet;
                 const nameStr = user.name || user.email || 'Engineer';
                 document.getElementById('user-name').textContent = nameStr;
-
-                const initials = nameStr.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'IH';
-                const avatarEl = document.getElementById('user-avatar-initial');
-                if (avatarEl) avatarEl.textContent = initials;
             }
 
             // Load projects
