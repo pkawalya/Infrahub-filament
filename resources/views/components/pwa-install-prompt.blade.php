@@ -327,8 +327,14 @@
         </div>
         <div id="pwa-progress-percent" class="pwa-progress-percent">0%</div>
 
-        <div id="pwa-anim-success" class="pwa-anim-success" style="display:none;">
-            <span>✓ Field App Installed & Ready</span>
+        <div id="pwa-anim-success" class="pwa-anim-success" style="display:none;flex-direction:column;gap:0.75rem;align-items:center;width:100%;">
+            <span style="font-size:0.85rem;color:#34d399;font-weight:800;">✓ Field App Installed & Ready</span>
+            <button type="button" onclick="window.pwaManager ? window.pwaManager.launchApp() : window.location.href='/launch'" class="pwa-btn-install" style="padding:0.65rem 1.4rem;font-size:0.88rem;justify-content:center;box-shadow:0 0 20px rgba(99,102,241,0.6);width:100%;">
+                <svg style="width:18px;height:18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                <span>Open InfraHub App</span>
+            </button>
         </div>
     </div>
 </div>

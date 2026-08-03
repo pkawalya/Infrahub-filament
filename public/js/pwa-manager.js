@@ -156,21 +156,53 @@ class PwaManager {
                 if (step.p === 100) {
                     clearInterval(interval);
                     if (title) title.textContent = 'InfraHub Installed!';
-                    if (success) success.style.display = 'inline-flex';
+                    if (success) success.style.display = 'flex';
                     if (wrapper) wrapper.classList.add('completed');
 
+                    this.markAsInstalled();
+
+                    // Keep modal open so user can click "Open InfraHub App", or auto-hide after 8 seconds
                     setTimeout(() => {
-                        overlay.classList.remove('active');
-                        setTimeout(() => {
-                            overlay.style.display = 'none';
-                            this.isInstalling = false;
-                            if (onComplete) onComplete();
-                        }, 400);
-                    }, 1400);
+                        this.hideOverlay();
+                        if (onComplete) onComplete();
+                    }, 8000);
                 }
                 idx++;
             }
         }, 450);
+    }
+
+    launchApp() {
+        this.hideOverlay();
+        window.location.href = '/launch';
+    }
+
+    hideOverlay() {
+        const overlay = document.getElementById('pwa-install-overlay');
+        if (!overlay) return;
+        overlay.classList.remove('active');
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            this.isInstalling = false;
+        }, 400);
+    }
+
+    markAsInstalled() {
+        const btn = document.getElementById('pwa-install-btn');
+        const btnLabel = document.getElementById('pwa-btn-label');
+        if (btn) {
+            btn.setAttribute('onclick', "window.pwaManager ? window.pwaManager.launchApp() : window.location.href='/launch'");
+            btn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+            btn.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.5)';
+        }
+        if (btnLabel) {
+            btnLabel.textContent = 'Open App';
+        }
+        const heading = document.getElementById('pwa-prompt-heading');
+        const text = document.getElementById('pwa-prompt-text');
+        if (heading) heading.textContent = 'InfraHub Ready';
+        if (text) text.textContent = 'App installed on home screen';
+        if (this.bannerEl) this.bannerEl.style.display = 'block';
     }
 
     async triggerInstall() {
