@@ -1421,7 +1421,7 @@
 
     <!-- Trusted By Organizations Across Africa (Infinite Marquee Scroller) -->
     <section class="trusted-section">
-        <div class="trusted-heading">TRUSTED BY LEADING INFRASTRUCTURE AUTHORITIES & ORGANIZATIONS</div>
+        <div class="trusted-heading">SYSTEM NEEDED BY LEADING INFRASTRUCTURE AUTHORITIES AND ORGANIZATIONS</div>
         
         <div class="marquee-wrapper">
             <div class="marquee-track">
@@ -1438,8 +1438,14 @@
                 <div class="trusted-logo-card" title="Kampala Capital City Authority (KCCA)">
                     <img src="{{ asset('images/logos/kcca.png') }}" alt="Kampala Capital City Authority" class="trusted-logo-img">
                 </div>
+                <div class="trusted-logo-card" title="Kenya National Highways Authority (KeNHA)">
+                    <img src="{{ asset('images/logos/kenha.png') }}" alt="Kenya National Highways Authority" class="trusted-logo-img">
+                </div>
                 <div class="trusted-logo-card" title="Rwanda Utilities Regulatory Authority (RURA)">
                     <img src="{{ asset('images/logos/rura.png') }}" alt="Rwanda Utilities Regulatory Authority" class="trusted-logo-img">
+                </div>
+                <div class="trusted-logo-card" title="National Construction Authority (NCA Kenya)">
+                    <img src="{{ asset('images/logos/nca.png') }}" alt="National Construction Authority" class="trusted-logo-img">
                 </div>
                 <div class="trusted-logo-card" title="Ministry of Works & Transport (MoWT)">
                     <img src="{{ asset('images/logos/mowt.png') }}" alt="Ministry of Works & Transport" class="trusted-logo-img">
@@ -1461,8 +1467,14 @@
                 <div class="trusted-logo-card" title="Kampala Capital City Authority (KCCA)">
                     <img src="{{ asset('images/logos/kcca.png') }}" alt="Kampala Capital City Authority" class="trusted-logo-img">
                 </div>
+                <div class="trusted-logo-card" title="Kenya National Highways Authority (KeNHA)">
+                    <img src="{{ asset('images/logos/kenha.png') }}" alt="Kenya National Highways Authority" class="trusted-logo-img">
+                </div>
                 <div class="trusted-logo-card" title="Rwanda Utilities Regulatory Authority (RURA)">
                     <img src="{{ asset('images/logos/rura.png') }}" alt="Rwanda Utilities Regulatory Authority" class="trusted-logo-img">
+                </div>
+                <div class="trusted-logo-card" title="National Construction Authority (NCA Kenya)">
+                    <img src="{{ asset('images/logos/nca.png') }}" alt="National Construction Authority" class="trusted-logo-img">
                 </div>
                 <div class="trusted-logo-card" title="Ministry of Works & Transport (MoWT)">
                     <img src="{{ asset('images/logos/mowt.png') }}" alt="Ministry of Works & Transport" class="trusted-logo-img">
