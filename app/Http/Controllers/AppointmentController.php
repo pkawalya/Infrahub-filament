@@ -27,6 +27,20 @@ class AppointmentController extends Controller
         ]);
 
         try {
+            // Persist appointment to database for Admin Panel access
+            \App\Models\Appointment::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
+                'phone' => $validated['phone'] ?? null,
+                'company' => $validated['company'] ?? null,
+                'company_size' => $validated['team_size'] ?? null,
+                'preferred_date' => $validated['preferred_date'],
+                'preferred_time' => $validated['preferred_time'],
+                'timezone' => 'EAT',
+                'message' => $validated['message'] ?? null,
+                'status' => 'pending',
+            ]);
+
             Mail::html($this->buildHtmlEmail($validated), function ($message) use ($validated) {
                 $message->to('info@infrahub.click')
                     ->cc('appcellon@gmail.com')
@@ -34,12 +48,12 @@ class AppointmentController extends Controller
                     ->subject('New Call Request — ' . $validated['name']);
             });
 
-            Log::info('Schedule call request submitted', [
+            Log::info('Schedule call request submitted and saved to DB', [
                 'name' => $validated['name'],
                 'email' => $validated['email'],
             ]);
         } catch (\Throwable $e) {
-            Log::error('Failed to send schedule-call email: ' . $e->getMessage());
+            Log::error('Failed to process schedule-call submission: ' . $e->getMessage());
         }
 
         return back()->with('success', 'Your call has been scheduled! We\'ll send a confirmation to your email shortly.');
