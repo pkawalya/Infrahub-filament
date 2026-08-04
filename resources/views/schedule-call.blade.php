@@ -53,10 +53,24 @@
                     </div>
                 </div>
 
-                <!-- Direct Contact Box -->
-                <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: 18px; padding: 28px; display: flex; flex-direction: column; gap: 12px;">
-                    <h4 style="font-size: 15px; font-weight: 700; color: var(--text-main);">Need immediate assistance?</h4>
-                    <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px;">
+                <!-- Direct Contact Box & Global Offices -->
+                <div style="background: var(--bg-subtle); border: 1px solid var(--border-subtle); border-radius: 18px; padding: 28px; display: flex; flex-direction: column; gap: 16px;">
+                    <span style="font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: var(--orange-500);">A JOADAH TECHNOLOGIES PLATFORM</span>
+                    <h4 style="font-size: 16px; font-weight: 800; color: var(--text-main); margin-top: -6px;">Global Offices & Contact</h4>
+
+                    <div style="display: flex; flex-direction: column; gap: 12px; font-size: 13.5px; line-height: 1.5;">
+                        <div>
+                            <strong style="color: #f97316; display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Africa HQ — Entebbe</strong>
+                            <span style="color: var(--text-main);">Plot 48 Church Road, Entebbe, Uganda</span>
+                        </div>
+
+                        <div>
+                            <strong style="color: #38bdf8; display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Regional Office — USA</strong>
+                            <span style="color: var(--text-main);">1007 N Orange Street, 4th Floor, Suite 1382, Wilmington, DE 19801</span>
+                        </div>
+
+                        <div style="height: 1px; background: var(--border-subtle); margin: 4px 0;"></div>
+
                         <a href="mailto:info@infrahub.click" style="color: var(--orange-500); text-decoration: none; font-weight: 600; display: flex; align-items: center; gap: 8px;">
                             ✉️ info@infrahub.click
                         </a>

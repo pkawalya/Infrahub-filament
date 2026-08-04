@@ -1582,6 +1582,56 @@
 
 
 
+    <!-- Our Global Offices Section -->
+    <section class="container" style="padding-top: 40px; padding-bottom: 90px;">
+        <div style="text-align: center; max-width: 680px; margin: 0 auto 48px;">
+            <span style="font-size: 12px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: #f97316; display: block; margin-bottom: 8px;">A JOADAH TECHNOLOGIES PLATFORM</span>
+            <h2 style="font-size: 32px; font-weight: 800; color: var(--text-main); margin-bottom: 12px;">Our Global Offices</h2>
+            <p style="font-size: 16px; color: var(--text-muted); line-height: 1.6;">Two continents. One common data environment for infrastructure delivery.</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 32px;">
+            <!-- Headquarters Card -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-top: 4px solid #f97316; border-radius: 20px; padding: 36px; box-shadow: var(--shadow-md);">
+                <div style="display: inline-block; background: #f97316; color: #ffffff; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;">
+                    HEADQUARTERS
+                </div>
+                <h3 style="font-size: 26px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">Entebbe</h3>
+                <div style="font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: #f97316; text-transform: uppercase; margin-bottom: 20px;">
+                    UGANDA &middot; AFRICA HQ
+                </div>
+                <div style="height: 1px; background: var(--border-subtle); margin-bottom: 20px;"></div>
+                <div style="display: flex; gap: 12px; align-items: flex-start; font-size: 15px; color: var(--text-main); line-height: 1.6;">
+                    <span style="font-size: 20px; color: #f97316;">📍</span>
+                    <div>
+                        <strong>Plot 48 Church Road</strong><br>
+                        Entebbe, Uganda
+                    </div>
+                </div>
+            </div>
+
+            <!-- Regional Office Card -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-top: 4px solid #1e293b; border-radius: 20px; padding: 36px; box-shadow: var(--shadow-md);">
+                <div style="display: inline-block; background: #e2e8f0; color: #0f172a; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; padding: 6px 14px; border-radius: 20px; margin-bottom: 20px;">
+                    REGIONAL OFFICE
+                </div>
+                <h3 style="font-size: 26px; font-weight: 800; color: var(--text-main); margin-bottom: 4px;">Wilmington</h3>
+                <div style="font-size: 12px; font-weight: 700; letter-spacing: 1.2px; color: #f97316; text-transform: uppercase; margin-bottom: 20px;">
+                    UNITED STATES
+                </div>
+                <div style="height: 1px; background: var(--border-subtle); margin-bottom: 20px;"></div>
+                <div style="display: flex; gap: 12px; align-items: flex-start; font-size: 15px; color: var(--text-main); line-height: 1.6;">
+                    <span style="font-size: 20px; color: #1e293b;">📍</span>
+                    <div>
+                        <strong>1007 N Orange Street</strong><br>
+                        4th Floor, Suite 1382<br>
+                        Wilmington, Delaware 19801
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Production Call to Action Banner -->
     <section class="cta-section">
         <div class="cta-ambient"></div>
@@ -1601,12 +1651,13 @@
     <!-- Footer -->
     <footer>
         <div class="container">
-            <div class="footer-grid">
+            <div class="footer-grid" style="grid-template-columns: 1.5fr 1fr 1fr 1.2fr;">
                 <div class="footer-brand">
                     <a href="/" class="brand-logo">
                         <img src="{{ asset('logo/infrahub-logo-dark.png') }}" alt="InfraHub" style="height: 44px; object-fit: contain;">
                     </a>
-                    <p>The unified construction project management platform engineered for Africa's leading infrastructure projects.</p>
+                    <span style="display: block; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: #f97316; margin-top: 6px;">A JOADAH TECHNOLOGIES PLATFORM</span>
+                    <p style="margin-top: 10px;">The unified construction project management platform engineered for Africa's leading infrastructure projects.</p>
                 </div>
 
                 <div class="footer-col">
@@ -1621,21 +1672,25 @@
                     <h4>Resources</h4>
                     <a href="/docs">Documentation</a>
                     <a href="/schedule-call">Schedule a Call</a>
-                    <a href="/get-started">Get Started</a>
-                    <a href="/mobile">Mobile App</a>
+                    <a href="/about">About & Global Offices</a>
+                    <a href="/health">System Status</a>
                 </div>
 
                 <div class="footer-col">
-                    <h4>Company</h4>
-                    <a href="#about">About Us</a>
-                    <a href="#pricing">Pricing</a>
-                    <a href="/health">System Status</a>
-                    <a href="/login">Login</a>
+                    <h4>Global Offices</h4>
+                    <div style="font-size: 13px; line-height: 1.5; margin-bottom: 14px;">
+                        <strong style="color: #f97316; display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Africa HQ — Entebbe</strong>
+                        Plot 48 Church Road, Entebbe, Uganda
+                    </div>
+                    <div style="font-size: 13px; line-height: 1.5;">
+                        <strong style="color: #38bdf8; display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 1px;">Regional Office — USA</strong>
+                        1007 N Orange Street, 4th Floor, Suite 1382, Wilmington, DE 19801
+                    </div>
                 </div>
             </div>
 
             <div class="footer-bottom">
-                <div>&copy; {{ date('Y') }} InfraHub Platform. All rights reserved.</div>
+                <div>&copy; {{ date('Y') }} InfraHub Platform &middot; A Joadah Technologies Platform. All rights reserved.</div>
                 <div style="display: flex; gap: 16px;">
                     <a href="/docs" style="color: #64748b; text-decoration: none;">Privacy Policy</a>
                     <a href="/docs" style="color: #64748b; text-decoration: none;">Terms of Service</a>
