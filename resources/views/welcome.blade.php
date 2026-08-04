@@ -934,30 +934,35 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--logo-card-bg);
-            border: 1px solid var(--logo-card-border);
-            padding: 12px 28px;
+            background: #ffffff;
+            border: 1px solid var(--border-subtle);
+            padding: 14px 32px;
             border-radius: 16px;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: var(--shadow-sm);
-            filter: var(--trusted-filter);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             cursor: pointer;
             flex-shrink: 0;
-            height: 58px;
+            height: 72px;
+        }
+
+        [data-theme="dark"] .trusted-logo-card {
+            background: #ffffff;
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
         }
 
         .trusted-logo-card:hover {
-            filter: grayscale(0) opacity(1);
-            transform: translateY(-4px) scale(1.03);
+            transform: translateY(-4px) scale(1.04);
             border-color: var(--orange-500);
-            box-shadow: 0 12px 28px rgba(249, 115, 22, 0.16);
+            box-shadow: 0 12px 28px rgba(249, 115, 22, 0.25);
         }
 
         .trusted-logo-img {
-            height: 38px;
+            height: 48px;
             width: auto;
-            max-width: 190px;
+            max-width: 210px;
             object-fit: contain;
+            display: block;
         }
 
 
@@ -1416,7 +1421,7 @@
 
     <!-- Trusted By Organizations Across Africa (Infinite Marquee Scroller) -->
     <section class="trusted-section">
-        <div class="trusted-heading">TRUSTED BY ORGANIZATIONS ACROSS AFRICA</div>
+        <div class="trusted-heading">TRUSTED BY LEADING INFRASTRUCTURE AUTHORITIES & ORGANIZATIONS</div>
         
         <div class="marquee-wrapper">
             <div class="marquee-track">
@@ -1433,14 +1438,8 @@
                 <div class="trusted-logo-card" title="Kampala Capital City Authority (KCCA)">
                     <img src="{{ asset('images/logos/kcca.png') }}" alt="Kampala Capital City Authority" class="trusted-logo-img">
                 </div>
-                <div class="trusted-logo-card" title="Kenya National Highways Authority (KeNHA)">
-                    <img src="{{ asset('images/logos/kenha.png') }}" alt="Kenya National Highways Authority" class="trusted-logo-img">
-                </div>
                 <div class="trusted-logo-card" title="Rwanda Utilities Regulatory Authority (RURA)">
                     <img src="{{ asset('images/logos/rura.png') }}" alt="Rwanda Utilities Regulatory Authority" class="trusted-logo-img">
-                </div>
-                <div class="trusted-logo-card" title="National Construction Authority (NCA Kenya)">
-                    <img src="{{ asset('images/logos/nca.png') }}" alt="National Construction Authority" class="trusted-logo-img">
                 </div>
                 <div class="trusted-logo-card" title="Ministry of Works & Transport (MoWT)">
                     <img src="{{ asset('images/logos/mowt.png') }}" alt="Ministry of Works & Transport" class="trusted-logo-img">
@@ -1462,14 +1461,8 @@
                 <div class="trusted-logo-card" title="Kampala Capital City Authority (KCCA)">
                     <img src="{{ asset('images/logos/kcca.png') }}" alt="Kampala Capital City Authority" class="trusted-logo-img">
                 </div>
-                <div class="trusted-logo-card" title="Kenya National Highways Authority (KeNHA)">
-                    <img src="{{ asset('images/logos/kenha.png') }}" alt="Kenya National Highways Authority" class="trusted-logo-img">
-                </div>
                 <div class="trusted-logo-card" title="Rwanda Utilities Regulatory Authority (RURA)">
                     <img src="{{ asset('images/logos/rura.png') }}" alt="Rwanda Utilities Regulatory Authority" class="trusted-logo-img">
-                </div>
-                <div class="trusted-logo-card" title="National Construction Authority (NCA Kenya)">
-                    <img src="{{ asset('images/logos/nca.png') }}" alt="National Construction Authority" class="trusted-logo-img">
                 </div>
                 <div class="trusted-logo-card" title="Ministry of Works & Transport (MoWT)">
                     <img src="{{ asset('images/logos/mowt.png') }}" alt="Ministry of Works & Transport" class="trusted-logo-img">
@@ -1479,6 +1472,7 @@
                 </div>
             </div>
         </div>
+    </section>
     <!-- Built for Infrastructure Excellence (Deep Navy Feature Banner) -->
     <section class="feature-banner-section">
         <div class="banner-ambient"></div>
