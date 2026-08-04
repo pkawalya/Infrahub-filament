@@ -78,6 +78,9 @@ Route::get('/login', function () {
 })->name('login');
 
 Route::get('/docs', function () {
+    if (!Illuminate\Support\Facades\Auth::check()) {
+        return view('docs-access-gate');
+    }
     $groupedSections = App\Support\UserManualHelper::getGroupedSections();
     return view('user-manual', ['groupedSections' => $groupedSections]);
 })->name('docs');
