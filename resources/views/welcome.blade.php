@@ -1146,6 +1146,103 @@
             line-height: 1.65;
         }
 
+        /* ─── Platform Metrics Counter Section ─── */
+        .metrics-section {
+            padding: 72px 0;
+            background: var(--bg-body);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 24px;
+            text-align: center;
+        }
+
+        .metric-card {
+            padding: 28px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 18px;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--orange-500);
+        }
+
+        .metric-value {
+            font-size: 42px;
+            font-weight: 900;
+            letter-spacing: -1.5px;
+            color: var(--orange-500);
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .metric-desc {
+            font-size: 12.5px;
+            color: var(--text-muted);
+        }
+
+        /* ─── Production CTA Banner Section ─── */
+        .cta-section {
+            padding: 96px 0;
+            background: linear-gradient(135deg, #0a1128, #040814);
+            color: #ffffff;
+            position: relative;
+            overflow: hidden;
+            border-top: 1px solid #1e293b;
+        }
+
+        .cta-ambient {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(249, 115, 22, 0.15), transparent 70%);
+            pointer-events: none;
+        }
+
+        .cta-box {
+            text-align: center;
+            max-width: 780px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .cta-box h2 {
+            font-size: 42px;
+            font-weight: 800;
+            letter-spacing: -1.5px;
+            line-height: 1.15;
+            margin-bottom: 18px;
+            color: #ffffff;
+        }
+
+        .cta-box p {
+            font-size: 17px;
+            line-height: 1.65;
+            color: #94a3b8;
+            margin-bottom: 36px;
+        }
+
+        .cta-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
         /* ─── Footer ─── */
         footer {
             background: #040814;
@@ -1382,9 +1479,147 @@
                 </div>
             </div>
         </div>
+    <!-- Built for Infrastructure Excellence (Deep Navy Feature Banner) -->
+    <section class="feature-banner-section">
+        <div class="banner-ambient"></div>
+        <div class="container">
+            <div class="banner-grid">
+                <div class="banner-intro">
+                    <span class="section-tag" style="color: #f97316;">Core Capabilities</span>
+                    <h2>Built for Infrastructure Excellence.</h2>
+                    <p>Engineered to handle complex civil works, road networks, housing developments, and public utilities across East Africa.</p>
+                </div>
+
+                <div class="features-cards-flex">
+                    <div class="feature-item-card">
+                        <div class="f-icon-box f-icon-orange">🏗️</div>
+                        <div class="f-card-title">ISO 19650 CDE</div>
+                        <div class="f-card-desc">BIM container routing, strict document metadata & audit logs.</div>
+                    </div>
+
+                    <div class="feature-item-card">
+                        <div class="f-icon-box f-icon-blue">📊</div>
+                        <div class="f-card-title">BOQ & Variations</div>
+                        <div class="f-card-desc">Instant Excel paste import, variations tracker & IPC billing.</div>
+                    </div>
+
+                    <div class="feature-item-card">
+                        <div class="f-icon-box f-icon-green">📅</div>
+                        <div class="f-card-title">WBS & MS Project</div>
+                        <div class="f-card-desc">Dynamic Gantt charts, XML import/export & EVM tracking.</div>
+                    </div>
+
+                    <div class="feature-item-card">
+                        <div class="f-icon-box f-icon-orange">👷</div>
+                        <div class="f-card-title">AI SHEQ Safety</div>
+                        <div class="f-card-desc">Instant risk pulse, safety incident logs & daily site diaries.</div>
+                    </div>
+
+                    <div class="feature-item-card">
+                        <div class="f-icon-box f-icon-blue">🚚</div>
+                        <div class="f-card-title">Fleet Telematics</div>
+                        <div class="f-card-desc">Equipment hour logs, fuel expenditure & operator rosters.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </section>
 
+    <!-- Enterprise Platform Modules Grid -->
+    <section class="modules-section" id="modules">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Enterprise Modules</span>
+                <h2 class="section-title">Everything You Need to Control Projects</h2>
+                <p class="section-subtitle">Connect site crews, quantity surveyors, project managers, and executive leaders in real time.</p>
+            </div>
 
+            <div class="modules-grid">
+                <div class="mod-card">
+                    <div class="mod-icon">📊</div>
+                    <h3>Operations & Dashboard</h3>
+                    <p>Real-time executive oversight, active project counts, work order tracking, and revenue MTD analytics in a single unified view.</p>
+                </div>
+
+                <div class="mod-card">
+                    <div class="mod-icon">📅</div>
+                    <h3>WBS Schedule & Gantt</h3>
+                    <p>Manage project timelines with interactive Gantt charts, dependency links, milestone tracking, and seamless MS Project XML file import.</p>
+                </div>
+
+                <div class="mod-card">
+                    <div class="mod-icon">📑</div>
+                    <h3>ISO 19650 CDE Gateway</h3>
+                    <p>Compliant Common Data Environment for drawing revisions, transmittals, digital approvals, and structured document security.</p>
+                </div>
+
+                <div class="mod-card">
+                    <div class="mod-icon">📩</div>
+                    <h3>RFIs & Site Communications</h3>
+                    <p>Standardize Requests for Information, field queries, submittals, and site diary logs with automated email notifications and audit histories.</p>
+                </div>
+
+                <div class="mod-card">
+                    <div class="mod-icon">🛡️</div>
+                    <h3>AI SHEQ Safety & Risk Pulse</h3>
+                    <p>Track safety incidents, environmental compliance, hazard reports, and AI-assisted safety analysis to minimize site risk.</p>
+                </div>
+
+                <div class="mod-card">
+                    <div class="mod-icon">💰</div>
+                    <h3>BOQ & Valuation Invoicing</h3>
+                    <p>Copy-paste Bill of Quantities straight from Excel, track variation orders, and generate interim payment certificates (IPC) automatically.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Platform Impact Metrics -->
+    <section class="metrics-section">
+        <div class="container">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">$1.2B+</div>
+                    <div class="metric-label">Infrastructure Portfolio</div>
+                    <div class="metric-desc">Tracked across regional road & civil projects</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">250+</div>
+                    <div class="metric-label">Active Project Sites</div>
+                    <div class="metric-desc">Connected field teams & contractor crews</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">99.9%</div>
+                    <div class="metric-label">Platform Uptime SLA</div>
+                    <div class="metric-desc">High-availability cloud infrastructure</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">ISO 19650</div>
+                    <div class="metric-label">Certified CDE Compliance</div>
+                    <div class="metric-desc">International BIM & document standards</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Production Call to Action Banner -->
+    <section class="cta-section">
+        <div class="cta-ambient"></div>
+        <div class="container">
+            <div class="cta-box">
+                <h2>Ready to Standardize Your Infrastructure Projects?</h2>
+                <p>Join leading contractors, ministries, and infrastructure authorities delivering projects on time and within budget with InfraHub.</p>
+                <div class="cta-actions">
+                    <a href="/schedule-call" class="btn-demo" style="padding: 14px 32px; font-size: 16px;">
+                        Book a Demo Call <span>→</span>
+                    </a>
+                    <a href="/get-started" class="btn-watch" style="padding: 14px 28px; font-size: 16px;">
+                        Start Free Trial
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer>
