@@ -34,7 +34,7 @@
 <body class="bg-gray-50 text-gray-900 min-h-screen">
     <!-- Simple Navigation Header -->
     <nav class="bg-white border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-6">
+        <div class="w-full px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center gap-3">
                     @if(!empty($companyBranding['logo_url']))

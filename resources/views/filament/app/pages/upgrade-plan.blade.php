@@ -706,9 +706,8 @@
                             <div class="current-tag">CURRENT</div>
                         @endif
 
-                        <div class="plan-card-name">{{ $plan->name }}</div>
-                        <div class="plan-card-price">
-                            ${{ number_format($plan->monthly_price, 0) }}<small>/mo</small>
+                        <div class="plan-card-price" style="font-size: 22px;">
+                            Coming Soon
                         </div>
 
                         <ul>

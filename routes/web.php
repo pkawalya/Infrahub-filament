@@ -80,7 +80,29 @@ Route::get('/login', function () {
 Route::get('/docs', function () {
     $groupedSections = App\Support\UserManualHelper::getGroupedSections();
     return view('user-manual', ['groupedSections' => $groupedSections]);
-})->middleware(['auth'])->name('docs');
+})->name('docs');
+
+// Landing Page Pages (Navbar items based on User Manual)
+Route::get('/products', function () {
+    $groupedSections = App\Support\UserManualHelper::getGroupedSections();
+    return view('pages.products', ['groupedSections' => $groupedSections]);
+})->name('products');
+
+Route::get('/solutions', function () {
+    return view('pages.solutions');
+})->name('solutions');
+
+Route::get('/academy', function () {
+    return view('pages.academy');
+})->name('academy');
+
+Route::get('/pricing', function () {
+    return view('pages.pricing');
+})->name('pricing');
+
+Route::get('/about', function () {
+    return view('pages.about');
+})->name('about');
 
 // Company Onboarding
 Route::get('/get-started', [OnboardingController::class, 'show'])->name('onboarding');

@@ -597,7 +597,7 @@
 
     <div class="container">
         <div class="onboard-header">
-            <a href="/"><img src="{{ asset('logo/infrahub-logo-new.png') }}" alt="InfraHub"></a>
+            <a href="/"><img id="header-brand-logo" src="{{ asset('logo/infrahub-logo-dark.png') }}" alt="InfraHub" style="height: 40px; object-fit: contain;"></a>
             <div style="display:flex;align-items:center;gap:12px;">
                 <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">
                     <span class="icon-moon">🌙</span>
@@ -637,8 +637,8 @@
 
                 <!-- Pricing Hero -->
                 <div class="pricing-hero">
-                    <div class="price-tag">$50</div>
-                    <div class="price-unit">per active project / month</div>
+                    <div class="price-tag" style="font-size: 38px;">Coming Soon</div>
+                    <div class="price-unit">Flexible pricing launching soon</div>
                     <div class="price-includes">
                         <span class="price-tag-item">✓ Unlimited users</span>
                         <span class="price-tag-item">✓ All modules</span>
@@ -653,16 +653,9 @@
                             onclick="selectPlan({{ $plan->id }}, this)">
                             <div class="plan-name">{{ $plan->name }}</div>
                             <div class="plan-price-row">
-                                <div class="plan-price">
-                                    ${{ number_format($plan->per_project_price ?? $plan->monthly_price, 0) }}
+                                <div class="plan-price" style="font-size: 22px;">
+                                    Coming Soon
                                 </div>
-                                <span class="plan-price-note">
-                                    @if($plan->per_project_price)
-                                        / project / mo
-                                    @else
-                                        / month flat
-                                    @endif
-                                </span>
                             </div>
                             @if($plan->description)
                                 <div class="plan-desc">{{ $plan->description }}</div>
@@ -849,15 +842,25 @@
     </div>
 
     <script>
+        function applyLogoForTheme(theme) {
+            const logoImg = document.getElementById('header-brand-logo');
+            if (logoImg) {
+                logoImg.src = theme === 'dark' ? "{{ asset('logo/infrahub-logo-dark.png') }}" : "{{ asset('logo/infrahub-logo-new.png') }}";
+            }
+        }
         function toggleTheme() {
             const html = document.documentElement;
             const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', next);
             localStorage.setItem('infrahub-theme', next);
+            applyLogoForTheme(next);
         }
         (function () {
             const saved = localStorage.getItem('infrahub-theme');
-            if (saved) document.documentElement.setAttribute('data-theme', saved);
+            if (saved) {
+                document.documentElement.setAttribute('data-theme', saved);
+                applyLogoForTheme(saved);
+            }
         })();
 
         let currentStep = 1;

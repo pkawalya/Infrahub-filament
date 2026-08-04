@@ -535,26 +535,27 @@
     <div class="bg-glow bg-glow-1"></div>
     <div class="bg-glow bg-glow-2"></div>
 
+    <!-- Nav -->
+    <nav style="padding: 20px 40px; width: 100%; box-sizing: border-box;">
+        <a href="/" class="logo">
+            <img id="header-brand-logo" src="{{ asset('logo/infrahub-logo-dark.png') }}" alt="InfraHub"
+                style="height: 44px; object-fit: contain;">
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">← Back to Home</a>
+            <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle theme">
+                <span class="icon-moon">🌙</span>
+                <span class="icon-sun">☀️</span>
+            </button>
+            @auth
+                <a href="{{ url('/app') }}" class="btn btn-primary">Dashboard</a>
+            @else
+                <a href="{{ url('/app/login') }}" class="nav-link">Log in</a>
+            @endauth
+        </div>
+    </nav>
+
     <div class="container">
-        <!-- Nav -->
-        <nav>
-            <a href="/" class="logo">
-                <img src="{{ asset('logo/infrahub-logo-new.png') }}" alt="InfraHub"
-                    style="height: 44px; border-radius: 12px;">
-            </a>
-            <div class="nav-links">
-                <a href="/" class="nav-link">← Back to Home</a>
-                <button class="theme-toggle" onclick="toggleTheme()" title="Toggle light/dark mode" aria-label="Toggle theme">
-                    <span class="icon-moon">🌙</span>
-                    <span class="icon-sun">☀️</span>
-                </button>
-                @auth
-                    <a href="{{ url('/app') }}" class="btn btn-primary">Dashboard</a>
-                @else
-                    <a href="{{ url('/app/login') }}" class="nav-link">Log in</a>
-                @endauth
-            </div>
-        </nav>
 
         <!-- Page Content -->
         <div class="page-content">
@@ -732,7 +733,7 @@
         <!-- Footer -->
         <footer>
             <a href="/" class="logo" style="text-decoration:none;">
-                <img src="{{ asset('logo/infrahub-logo-new.png') }}" alt="InfraHub"
+                <img src="{{ asset('logo/infrahub-logo-dark.png') }}" alt="InfraHub"
                     style="height: 32px; border-radius: 8px;">
             </a>
             <small>© {{ date('Y') }} InfraHub. All rights reserved.</small>
@@ -740,19 +741,28 @@
     </div>
 
     <script>
+        function applyLogoForTheme(theme) {
+            const logoImg = document.getElementById('header-brand-logo');
+            if (logoImg) {
+                logoImg.src = theme === 'dark' ? "{{ asset('logo/infrahub-logo-dark.png') }}" : "{{ asset('logo/infrahub-logo-new.png') }}";
+            }
+        }
         function toggleTheme() {
             const html = document.documentElement;
             const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', next);
             localStorage.setItem('infrahub-theme', next);
+            applyLogoForTheme(next);
         }
 
         (function () {
             const saved = localStorage.getItem('infrahub-theme');
             if (saved) {
                 document.documentElement.setAttribute('data-theme', saved);
+                applyLogoForTheme(saved);
             } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
                 document.documentElement.setAttribute('data-theme', 'light');
+                applyLogoForTheme('light');
             }
         })();
     </script>

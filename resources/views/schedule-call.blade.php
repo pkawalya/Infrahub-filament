@@ -171,7 +171,8 @@
             justify-content: space-between;
             align-items: center;
             width: 100%;
-            max-width: 1200px;
+            max-width: 100%;
+            padding: 0 40px;
             margin: 0 auto;
         }
 
@@ -750,8 +751,8 @@
     <nav>
         <div class="inner">
             <a href="/" class="logo">
-                <img src="{{ asset('logo/infrahub-logo-new.png') }}" alt="InfraHub"
-                    style="height: 44px; border-radius: 12px;">
+                <img id="header-brand-logo" src="{{ asset('logo/infrahub-logo-dark.png') }}" alt="InfraHub"
+                    style="height: 44px; object-fit: contain;">
             </a>
             <div class="nav-links">
                 <a href="/" class="nav-link">Home</a>
@@ -946,6 +947,13 @@
     </footer>
 
     <script>
+        function applyLogoForTheme(theme) {
+            const logoImg = document.getElementById('header-brand-logo');
+            if (logoImg) {
+                logoImg.src = theme === 'dark' ? "{{ asset('logo/infrahub-logo-dark.png') }}" : "{{ asset('logo/infrahub-logo-new.png') }}";
+            }
+        }
+
         // Theme toggle
         function toggleTheme() {
             const html = document.documentElement;
@@ -953,12 +961,16 @@
             const next = current === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', next);
             localStorage.setItem('infrahub-theme', next);
+            applyLogoForTheme(next);
         }
 
         // Restore saved theme
         (function () {
             const saved = localStorage.getItem('infrahub-theme');
-            if (saved) document.documentElement.setAttribute('data-theme', saved);
+            if (saved) {
+                document.documentElement.setAttribute('data-theme', saved);
+                applyLogoForTheme(saved);
+            }
         })();
 
         // Submit button loading state
