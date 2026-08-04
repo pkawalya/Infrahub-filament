@@ -1581,9 +1581,6 @@
                     <a href="/schedule-call" class="btn-demo" style="padding: 14px 32px; font-size: 16px;">
                         Book a Demo Call <span>→</span>
                     </a>
-                    <a href="/get-started" class="btn-watch" style="padding: 14px 28px; font-size: 16px;">
-                        Start Free Trial
-                    </a>
                 </div>
             </div>
         </div>
