@@ -11,24 +11,7 @@
 
     <!-- Company Stats & Story -->
     <section class="container" style="padding-bottom: 60px;">
-        <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); margin-bottom: 50px;">
-            <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 28px; text-align: center;">
-                <div style="font-size: 42px; font-weight: 900; color: var(--orange-500);">18+</div>
-                <div style="font-size: 14px; font-weight: 700; margin-top: 6px;">Integrated Enterprise Modules</div>
-            </div>
-            <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 28px; text-align: center;">
-                <div style="font-size: 42px; font-weight: 900; color: #3b82f6;">ISO 19650</div>
-                <div style="font-size: 14px; font-weight: 700; margin-top: 6px;">Compliant CDE Architecture</div>
-            </div>
-            <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 28px; text-align: center;">
-                <div style="font-size: 42px; font-weight: 900; color: #10b981;">99.9%</div>
-                <div style="font-size: 14px; font-weight: 700; margin-top: 6px;">Uptime Reliability</div>
-            </div>
-            <div style="background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: 16px; padding: 28px; text-align: center;">
-                <div style="font-size: 42px; font-weight: 900; color: #8b5cf6;">AI Pulse</div>
-                <div style="font-size: 14px; font-weight: 700; margin-top: 6px;">Automated Risk Analytics</div>
-            </div>
-        </div>
+
 
         <div class="feature-card" style="padding: 40px; background: var(--bg-card);">
             <h2 style="font-size: 28px; font-weight: 800; margin-bottom: 16px;">Our Core Mission</h2>

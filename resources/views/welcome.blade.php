@@ -1568,33 +1568,7 @@
         </div>
     </section>
 
-    <!-- Platform Impact Metrics -->
-    <section class="metrics-section">
-        <div class="container">
-            <div class="metrics-grid">
-                <div class="metric-card">
-                    <div class="metric-value">$1.2B+</div>
-                    <div class="metric-label">Infrastructure Portfolio</div>
-                    <div class="metric-desc">Tracked across regional road & civil projects</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">250+</div>
-                    <div class="metric-label">Active Project Sites</div>
-                    <div class="metric-desc">Connected field teams & contractor crews</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">99.9%</div>
-                    <div class="metric-label">Platform Uptime SLA</div>
-                    <div class="metric-desc">High-availability cloud infrastructure</div>
-                </div>
-                <div class="metric-card">
-                    <div class="metric-value">ISO 19650</div>
-                    <div class="metric-label">Certified CDE Compliance</div>
-                    <div class="metric-desc">International BIM & document standards</div>
-                </div>
-            </div>
-        </div>
-    </section>
+
 
     <!-- Production Call to Action Banner -->
     <section class="cta-section">
