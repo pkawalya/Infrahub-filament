@@ -1,19 +1,18 @@
-const CACHE_NAME = 'infrahub-pwa-v4';
+const CACHE_NAME = 'infrahub-pwa-v5';
 const CORE_SHELL_ASSETS = [
     '/mobile',
-    '/mobile/login',
     '/offline.html',
-    '/manifest.json?v=4',
+    '/manifest.json?v=5',
     '/css/mobile.css',
     '/js/mobile-api.js',
     '/js/mobile-ui.js',
     '/js/mobile-actions.js',
     '/js/pwa-manager.js',
     '/logo/infrahub-icon.png',
-    '/images/icons/icon-192x192.png?v=4',
-    '/images/icons/icon-512x512.png?v=4',
-    '/apple-touch-icon.png?v=4',
-    '/favicon.png?v=4'
+    '/images/icons/icon-192x192.png?v=5',
+    '/images/icons/icon-512x512.png?v=5',
+    '/apple-touch-icon.png?v=5',
+    '/favicon.png?v=5'
 ];
 
 // Install Event - Pre-cache minimal essential shell asynchronously
@@ -27,7 +26,7 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate Event - Instantly purge all stale caches (v1, v2, v3)
+// Activate Event - Instantly purge all stale caches (v1, v2, v3, v4)
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys().then((keys) => {
@@ -38,8 +37,14 @@ self.addEventListener('activate', (event) => {
     );
 });
 
-// Helper to safely cache 200 OK basic responses
+// Helper to safely cache 200 OK basic responses (excluding dynamic HTML pages)
 function safeCachePut(request, response) {
+    const url = new URL(request.url);
+    // Do not cache dynamic HTML pages or panel routes
+    if (url.pathname.startsWith('/app') || url.pathname.startsWith('/admin') || url.pathname.startsWith('/client') || url.pathname.includes('/login')) {
+        return;
+    }
+
     if (response && response.status === 200 && (response.type === 'basic' || response.type === 'cors')) {
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {});
@@ -58,39 +63,26 @@ self.addEventListener('fetch', (event) => {
 
     // HTML Navigation Requests (App opening & page switches)
     if (request.mode === 'navigate') {
+        // Never serve cached HTML for Filament panels or login pages to avoid stale CSRF tokens (419 Page Expired)
+        if (url.pathname.startsWith('/app') || url.pathname.startsWith('/admin') || url.pathname.startsWith('/client') || url.pathname.includes('/login')) {
+            event.respondWith(
+                fetch(request).catch(async () => {
+                    const cached = await caches.match('/offline.html');
+                    return cached || fetch(request);
+                })
+            );
+            return;
+        }
+
         event.respondWith(
-            new Promise((resolve) => {
-                let fetchedFromNetwork = false;
-
-                // Race network fetch with a 450ms timeout fallback to cached UI
-                const timeoutId = setTimeout(async () => {
-                    if (!fetchedFromNetwork) {
-                        const cached = await caches.match(request);
-                        if (cached) {
-                            console.log('[SW] Serving instant cache fallback for navigation:', url.pathname);
-                            resolve(cached);
-                        }
-                    }
-                }, 450);
-
-                fetch(request)
-                    .then((networkResponse) => {
-                        fetchedFromNetwork = true;
-                        clearTimeout(timeoutId);
-
-                        if (networkResponse && networkResponse.status === 200) {
-                            safeCachePut(request, networkResponse);
-                            resolve(networkResponse);
-                        } else {
-                            // If 302 redirect or non-200, return network response directly
-                            resolve(networkResponse);
-                        }
-                    })
-                    .catch(async () => {
-                        clearTimeout(timeoutId);
-                        const cached = await caches.match(request) || await caches.match('/mobile') || await caches.match('/offline.html');
-                        resolve(cached);
-                    });
+            fetch(request).then((networkResponse) => {
+                if (networkResponse && networkResponse.status === 200) {
+                    safeCachePut(request, networkResponse);
+                }
+                return networkResponse;
+            }).catch(async () => {
+                const cached = await caches.match(request) || await caches.match('/mobile') || await caches.match('/offline.html');
+                return cached;
             })
         );
         return;
