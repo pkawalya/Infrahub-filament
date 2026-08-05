@@ -77,34 +77,7 @@ class WorkflowBottlenecksWidget extends StatsOverviewWidget
                 ->icon('heroicon-o-clipboard-document-check');
         }
 
-        // ── Average NCR time-to-close (days) ──
-        $avgCloseDays = Ncr::where('company_id', $companyId)
-            ->where('status', 'closed')
-            ->whereNotNull('closed_at')
-            ->whereNotNull('created_at')
-            ->get()
-            ->avg(fn(Ncr $ncr) => $ncr->created_at->diffInDays($ncr->closed_at));
 
-        if ($avgCloseDays !== null) {
-            $color = $avgCloseDays <= 7 ? 'success' : ($avgCloseDays <= 21 ? 'warning' : 'danger');
-            $stats[] = Stat::make('Avg NCR Close Time', round($avgCloseDays, 1) . ' days')
-                ->description($avgCloseDays <= 7 ? 'Healthy' : ($avgCloseDays <= 21 ? 'Needs attention' : 'Slow'))
-                ->color($color)
-                ->icon('heroicon-o-clock');
-        }
-
-        // ── NCRs by severity (open) ──
-        $criticalNcrs = Ncr::where('company_id', $companyId)
-            ->where('severity', 'critical')
-            ->whereIn('status', ['open', 'investigating', 'corrective_action'])
-            ->count();
-
-        if ($criticalNcrs > 0) {
-            $stats[] = Stat::make('Critical NCRs Open', $criticalNcrs)
-                ->description('Requires immediate attention')
-                ->color('danger')
-                ->icon('heroicon-o-exclamation-triangle');
-        }
 
         return $stats;
     }
