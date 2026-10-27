@@ -33,16 +33,31 @@ class CdeProjectResource extends Resource
     protected static ?SubNavigationPosition $subNavigationPosition = SubNavigationPosition::Start;
 
     /**
-     * Scope all project queries to the current user's company.
-     * Defense-in-depth alongside BelongsToCompany global scope.
+     * Scope project queries:
+     * - Super Admins: all projects.
+     * - Company Admins: all projects in their company.
+     * - Other Users (Contractors, Members, etc.): only projects they are assigned to
+     *   as a project member or designated project manager. Users assigned to multiple
+     *   projects will see all projects they belong to.
      */
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user && !$user->isSuperAdmin()) {
-            $query->where('cde_projects.company_id', $user->company_id);
+        if (!$user || $user->isSuperAdmin()) {
+            return $query;
+        }
+
+        // Always enforce company boundary
+        $query->where('cde_projects.company_id', $user->company_id);
+
+        // If not a company admin, restrict strictly to assigned projects
+        if (!$user->canManageCompany()) {
+            $query->where(function (Builder $q) use ($user) {
+                $q->whereHas('members', fn(Builder $m) => $m->where('users.id', $user->id))
+                    ->orWhere('cde_projects.manager_id', $user->id);
+            });
         }
 
         return $query;

@@ -47,6 +47,16 @@ class CreateCdeProject extends CreateRecord
             $modules = $company->getEnabledModules();
         }
 
+        // Automatically add creator to project members
+        if (auth()->check()) {
+            $this->record->members()->syncWithoutDetaching([
+                auth()->id() => [
+                    'role' => 'admin',
+                    'invited_by' => auth()->id(),
+                ],
+            ]);
+        }
+
         if (!empty($modules)) {
             $this->record->syncModules($modules, auth()->id());
 

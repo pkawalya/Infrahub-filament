@@ -20,7 +20,18 @@ class CdeProjectPolicy
 
     public function view(AuthUser $authUser, CdeProject $cdeProject): bool
     {
-        return $this->ownedByCompany($authUser, $cdeProject) && $authUser->can('view_cde::project');
+        if (!$this->ownedByCompany($authUser, $cdeProject) || !$authUser->can('view_cde::project')) {
+            return false;
+        }
+
+        // Company admins and super admins can view all company projects
+        if ($authUser->canManageCompany()) {
+            return true;
+        }
+
+        // User must be an assigned member or designated project manager
+        return $cdeProject->members()->where('users.id', $authUser->id)->exists()
+            || (int) $cdeProject->manager_id === (int) $authUser->id;
     }
 
     public function create(AuthUser $authUser): bool
@@ -30,7 +41,18 @@ class CdeProjectPolicy
 
     public function update(AuthUser $authUser, CdeProject $cdeProject): bool
     {
-        return $this->ownedByCompany($authUser, $cdeProject) && $authUser->can('update_cde::project');
+        if (!$this->ownedByCompany($authUser, $cdeProject) || !$authUser->can('update_cde::project')) {
+            return false;
+        }
+
+        // Company admins and super admins can update all company projects
+        if ($authUser->canManageCompany()) {
+            return true;
+        }
+
+        // User must be an assigned member or designated project manager
+        return $cdeProject->members()->where('users.id', $authUser->id)->exists()
+            || (int) $cdeProject->manager_id === (int) $authUser->id;
     }
 
     public function delete(AuthUser $authUser, CdeProject $cdeProject): bool
