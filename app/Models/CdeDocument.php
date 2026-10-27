@@ -28,6 +28,13 @@ class CdeDocument extends Model
         'file_size',
         'file_type',
         'uploaded_by',
+        'is_flagged',
+        'due_date',
+    ];
+
+    protected $casts = [
+        'is_flagged' => 'boolean',
+        'due_date' => 'date',
     ];
 
     /**
@@ -98,6 +105,14 @@ class CdeDocument extends Model
     public function ncrs()
     {
         return $this->hasMany(Ncr::class, 'cde_document_id');
+    }
+    public function comments()
+    {
+        return $this->hasMany(CdeDocumentComment::class, 'cde_document_id')->orderBy('created_at', 'desc');
+    }
+    public function versions()
+    {
+        return $this->hasMany(CdeDocumentVersion::class, 'cde_document_id')->orderBy('created_at', 'desc');
     }
 
     public static array $validTransitions = [

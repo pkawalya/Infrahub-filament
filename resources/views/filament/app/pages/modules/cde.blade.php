@@ -2,1235 +2,2660 @@
 
     @push('styles')
         <style>
-            /* ═══════════ CDE — Professional Document Management ═══════════ */
+            /* ═════════════════════════════════════════════════════════════════
+               ASITE CDE (Common Data Environment) Enterprise Styling
+               ═════════════════════════════════════════════════════════════════ */
             :root {
-                --cde-bg: #ffffff;
-                --cde-surface: #f8fafc;
-                --cde-border: #e5e7eb;
-                --cde-text: #111827;
-                --cde-muted: #6b7280;
-                --cde-subtle: #9ca3af;
-                --cde-accent: #4f46e5;
-                --cde-accent-light: #eef2ff;
-                --cde-hover: #f9fafb;
-                --cde-radius: 10px;
-                --cde-shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 1px 2px rgba(0, 0, 0, .04);
-                --cde-shadow-md: 0 4px 12px rgba(0, 0, 0, .07);
+                --asite-primary: #1a73e8;
+                --asite-primary-hover: #1557b0;
+                --asite-primary-light: #e8f0fe;
+                --asite-dark-top: #0a2540;
+                --asite-dark-tab: #14355a;
+                --asite-bg: #ffffff;
+                --asite-surface: #f8fafc;
+                --asite-border: #e2e8f0;
+                --asite-border-dark: #cbd5e1;
+                --asite-text: #1e293b;
+                --asite-text-muted: #64748b;
+                --asite-text-subtle: #94a3b8;
+                --asite-folder-active-bg: #fef08a;
+                --asite-folder-active-border: #d97706;
+                --asite-folder-active-text: #78350f;
+                --asite-hover: #f1f5f9;
+                --asite-radius: 6px;
             }
 
             .dark {
-                --cde-bg: #111827;
-                --cde-surface: rgba(30, 41, 59, 0.5);
-                --cde-border: rgba(255, 255, 255, 0.08);
-                --cde-text: #f1f5f9;
-                --cde-muted: #94a3b8;
-                --cde-subtle: #64748b;
-                --cde-accent: #818cf8;
-                --cde-accent-light: rgba(99, 102, 241, 0.1);
-                --cde-hover: rgba(255, 255, 255, 0.03);
-                --cde-shadow: 0 1px 3px rgba(0, 0, 0, .2);
-                --cde-shadow-md: 0 4px 12px rgba(0, 0, 0, .3);
+                --asite-primary: #38bdf8;
+                --asite-primary-hover: #0284c7;
+                --asite-primary-light: rgba(56, 189, 248, 0.12);
+                --asite-dark-top: #0b1329;
+                --asite-dark-tab: #132247;
+                --asite-bg: #0f172a;
+                --asite-surface: #1e293b;
+                --asite-border: #334155;
+                --asite-border-dark: #475569;
+                --asite-text: #f1f5f9;
+                --asite-text-muted: #94a3b8;
+                --asite-text-subtle: #64748b;
+                --asite-folder-active-bg: #854d0e;
+                --asite-folder-active-border: #facc15;
+                --asite-folder-active-text: #fef08a;
+                --asite-hover: #1e293b;
             }
 
-            /* ── Status Pipeline ─────────────────────── */
-            .cde-pipeline {
-                display: grid;
-                grid-template-columns: repeat(5, 1fr);
-                gap: 6px;
-                margin-bottom: 20px;
+            /* ── Asite Top Header Ribbon ───────────────────────────────────── */
+            .asite-topbar {
+                background: linear-gradient(180deg, #102a45 0%, #0d2238 100%);
+                color: #ffffff;
+                border-radius: 8px 8px 0 0;
+                padding: 0 16px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                height: 48px;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
             }
 
-            .cde-pipe-item {
-                text-align: center;
-                padding: 14px 8px 12px;
-                border-radius: var(--cde-radius);
-                transition: transform .15s, box-shadow .15s;
-                cursor: default;
-                border: 1px solid transparent;
+            .asite-topbar-left {
+                display: flex;
+                align-items: center;
+                gap: 16px;
             }
 
-            .cde-pipe-item:hover {
-                transform: translateY(-1px);
-                box-shadow: var(--cde-shadow-md);
-            }
-
-            .cde-pipe-count {
-                display: block;
-                font-size: 22px;
-                font-weight: 800;
-                line-height: 1;
-                letter-spacing: -0.03em;
-            }
-
-            .cde-pipe-label {
-                display: block;
-                font-size: 10px;
-                font-weight: 700;
-                text-transform: uppercase;
-                letter-spacing: 0.06em;
-                margin-top: 4px;
-                opacity: 0.75;
-            }
-
-            /* ── Command Bar ────────── */
-            .cde-cmdbar {
+            .asite-logo-badge {
                 display: flex;
                 align-items: center;
                 gap: 6px;
-                padding: 6px 12px;
-                background: var(--cde-bg);
-                border: 1px solid var(--cde-border);
-                border-radius: var(--cde-radius);
-                margin-bottom: 14px;
-                box-shadow: var(--cde-shadow);
+                font-weight: 800;
+                font-size: 15px;
+                letter-spacing: -0.02em;
+                color: #ffffff;
             }
 
-            .cde-cmdbar-sep {
-                width: 1px;
-                height: 22px;
-                background: var(--cde-border);
-                margin: 0 2px;
-            }
-
-            .cde-cmd-btn {
-                display: inline-flex;
+            .asite-logo-icon {
+                width: 26px;
+                height: 26px;
+                background: #1a73e8;
+                border-radius: 5px;
+                display: flex;
                 align-items: center;
                 justify-content: center;
-                width: 32px;
-                height: 32px;
-                background: none;
-                border: 1px solid transparent;
-                border-radius: 6px;
-                cursor: pointer;
-                transition: all .12s;
-                color: var(--cde-muted);
+                color: white;
+                font-weight: 900;
+                font-size: 13px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
             }
 
-            .cde-cmd-btn:hover {
-                background: var(--cde-hover);
-                border-color: var(--cde-border);
-            }
-
-            .cde-cmd-btn svg {
-                width: 16px;
-                height: 16px;
-            }
-
-            .cde-cmd-btn.active {
-                background: var(--cde-accent-light);
-                color: var(--cde-accent);
-                border-color: var(--cde-accent-light);
-            }
-
-            .cde-cmd-spacer {
-                flex: 1;
-            }
-
-            /* ── Breadcrumb ──────────────────── */
-            .cde-path {
+            .asite-project-selector {
+                background: rgba(255, 255, 255, 0.12);
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                color: #ffffff;
+                padding: 4px 12px;
+                border-radius: 5px;
+                font-size: 13px;
+                font-weight: 600;
                 display: flex;
                 align-items: center;
-                gap: 2px;
-                font-size: 13px;
-                overflow-x: auto;
+                gap: 8px;
             }
 
-            .cde-path-item {
-                color: var(--cde-accent);
-                font-weight: 500;
-                background: none;
-                border: none;
-                cursor: pointer;
+            .asite-mode-badge {
+                background: #0284c7;
+                color: #ffffff;
                 padding: 3px 8px;
-                border-radius: 5px;
-                transition: background .12s;
-                white-space: nowrap;
-            }
-
-            .cde-path-item:hover {
-                background: var(--cde-accent-light);
-            }
-
-            .cde-path-current {
-                color: var(--cde-text);
-                font-weight: 700;
-                padding: 3px 8px;
-                white-space: nowrap;
-            }
-
-            .cde-path-sep {
-                color: var(--cde-subtle);
+                border-radius: 4px;
                 font-size: 11px;
+                font-weight: 700;
+                letter-spacing: 0.05em;
+                display: flex;
+                align-items: center;
+                gap: 4px;
             }
 
-            /* ── Folder Grid ──────────────────── */
-            .cde-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-                gap: 10px;
-                margin-bottom: 18px;
-            }
-
-            .cde-grid.list-mode {
-                grid-template-columns: 1fr;
-                gap: 2px;
-            }
-
-            .cde-item {
+            .asite-topbar-right {
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                padding: 14px 16px;
-                background: var(--cde-bg);
-                border: 1px solid var(--cde-border);
-                border-radius: var(--cde-radius);
+                font-size: 13px;
+            }
+
+            .asite-top-icon-btn {
+                background: transparent;
+                border: none;
+                color: rgba(255, 255, 255, 0.8);
                 cursor: pointer;
-                transition: all .15s;
-                box-shadow: var(--cde-shadow);
-            }
-
-            .cde-item:hover {
-                border-color: var(--cde-accent);
-                box-shadow: var(--cde-shadow-md);
-                transform: translateY(-1px);
-            }
-
-            .cde-grid.list-mode .cde-item {
-                border-radius: 6px;
-                padding: 10px 14px;
-                box-shadow: none;
-                border-color: transparent;
-                border-bottom-color: var(--cde-border);
-            }
-
-            .cde-grid.list-mode .cde-item:hover {
-                background: var(--cde-hover);
-                transform: none;
-                box-shadow: none;
-                border-color: transparent;
-                border-bottom-color: var(--cde-border);
-            }
-
-            .cde-ficon {
-                width: 36px;
-                height: 36px;
+                padding: 6px;
+                border-radius: 50%;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                flex-shrink: 0;
+                transition: all 0.15s;
             }
 
-            .cde-ficon svg {
-                width: 30px;
-                height: 30px;
+            .asite-top-icon-btn:hover {
+                background: rgba(255, 255, 255, 0.15);
+                color: #ffffff;
             }
 
-            .cde-ficon-yellow {
-                color: #f59e0b;
-            }
-
-            .cde-item-info {
-                flex: 1;
-                min-width: 0;
-            }
-
-            .cde-item-name {
-                font-size: 13px;
-                font-weight: 600;
-                color: var(--cde-text);
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-            }
-
-            .cde-item-meta {
+            .asite-top-avatar {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                background: #475569;
+                color: white;
                 font-size: 11px;
-                color: var(--cde-muted);
-                margin-top: 2px;
+                font-weight: 700;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid rgba(255, 255, 255, 0.3);
+            }
+
+            /* ── Asite Main Sub-Navigation Bar ────────────────────────────── */
+            .asite-nav-bar {
+                background: #ffffff;
+                border-bottom: 1px solid var(--asite-border);
+                display: flex;
+                align-items: center;
+                padding: 0 16px;
+                overflow-x: auto;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            }
+
+            .dark .asite-nav-bar {
+                background: #111827;
+                border-bottom-color: var(--asite-border);
+            }
+
+            .asite-nav-tab {
+                padding: 12px 18px;
+                font-size: 13px;
+                font-weight: 500;
+                color: var(--asite-text-muted);
+                border: none;
+                background: transparent;
+                cursor: pointer;
+                border-bottom: 2px solid transparent;
+                white-space: nowrap;
+                transition: all 0.12s;
                 display: flex;
                 align-items: center;
                 gap: 6px;
             }
 
-            .cde-item-badge {
-                font-size: 9px;
+            .asite-nav-tab:hover {
+                color: var(--asite-text);
+                background: var(--asite-hover);
+            }
+
+            .asite-nav-tab.is-active {
+                color: var(--asite-primary);
+                border-bottom-color: var(--asite-primary);
                 font-weight: 700;
+            }
+
+            /* ── Explorer Container (3-Column Layout) ─────────────────────── */
+            .asite-explorer {
+                display: flex;
+                border: 1px solid var(--asite-border);
+                background: var(--asite-bg);
+                border-radius: 0 0 8px 8px;
+                min-height: 680px;
+                overflow: hidden;
+            }
+
+            /* ── Left Quick Task Strip (~72px) ────────────────────────────── */
+            .asite-strip {
+                width: 76px;
+                background: #f8fafc;
+                border-right: 1px solid var(--asite-border);
+                display: flex;
+                flex-direction: column;
+                align-items: stretch;
+                padding: 8px 4px;
+                gap: 6px;
+                flex-shrink: 0;
+            }
+
+            .dark .asite-strip {
+                background: #0f172a;
+            }
+
+            .asite-strip-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                padding: 8px 4px;
+                border-radius: 6px;
+                border: 1px solid transparent;
+                background: transparent;
+                cursor: pointer;
+                transition: all 0.15s;
+                color: var(--asite-text-muted);
+                text-decoration: none;
+            }
+
+            .asite-strip-item:hover {
+                background: var(--asite-hover);
+                color: var(--asite-text);
+            }
+
+            .asite-strip-item.is-active {
+                background: #1a73e8;
+                color: #ffffff !important;
+                border-color: #1a73e8;
+                box-shadow: 0 2px 4px rgba(26, 115, 232, 0.3);
+            }
+
+            .asite-strip-item.is-active .asite-strip-count {
+                color: #ffffff;
+            }
+
+            .asite-strip-item.is-active .asite-strip-label {
+                color: #ffffff;
+            }
+
+            .asite-strip-item.is-active svg {
+                color: #ffffff;
+            }
+
+            .asite-strip-count {
+                font-size: 14px;
+                font-weight: 800;
+                line-height: 1.1;
+                margin-bottom: 2px;
+                color: #1a73e8;
+            }
+
+            .asite-strip-count.count-danger {
+                color: #dc2626;
+            }
+
+            .asite-strip-count.count-warning {
+                color: #d97706;
+            }
+
+            .asite-strip-count.count-neutral {
+                color: var(--asite-text-muted);
+            }
+
+            .asite-strip-label {
+                font-size: 10px;
+                line-height: 1.15;
+                font-weight: 600;
+            }
+
+            /* ── Folder Tree Explorer Panel ───────────────────────────────── */
+            .asite-tree-panel {
+                width: 320px;
+                background: #ffffff;
+                border-right: 1px solid var(--asite-border);
+                display: flex;
+                flex-direction: column;
+                flex-shrink: 0;
+                transition: width 0.2s ease;
+            }
+
+            .dark .asite-tree-panel {
+                background: #111827;
+            }
+
+            .asite-tree-panel.is-collapsed {
+                width: 0;
+                padding: 0;
+                overflow: hidden;
+                border-right: none;
+            }
+
+            .asite-tree-search {
+                padding: 10px 12px;
+                border-bottom: 1px solid var(--asite-border);
+                background: var(--asite-surface);
+            }
+
+            .asite-search-input-wrap {
+                position: relative;
+                display: flex;
+                align-items: center;
+            }
+
+            .asite-search-input-wrap svg {
+                position: absolute;
+                left: 10px;
+                color: var(--asite-text-subtle);
+                pointer-events: none;
+            }
+
+            .asite-search-input {
+                width: 100%;
+                font-size: 12px;
+                padding: 7px 10px 7px 32px;
+                border-radius: 5px;
+                border: 1px solid var(--asite-border-dark);
+                background: var(--asite-bg);
+                color: var(--asite-text);
+                outline: none;
+                transition: border-color 0.15s;
+            }
+
+            .asite-search-input:focus {
+                border-color: var(--asite-primary);
+                box-shadow: 0 0 0 2px var(--asite-primary-light);
+            }
+
+            .asite-tree-toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 6px 12px;
+                border-bottom: 1px solid var(--asite-border);
+                font-size: 11px;
+                color: var(--asite-text-muted);
+                background: var(--asite-surface);
+            }
+
+            .asite-tree-btn {
+                background: transparent;
+                border: none;
+                color: var(--asite-primary);
+                font-size: 11px;
+                font-weight: 600;
+                cursor: pointer;
+                padding: 2px 6px;
+                border-radius: 3px;
+            }
+
+            .asite-tree-btn:hover {
+                background: var(--asite-primary-light);
+            }
+
+            .asite-tree-body {
+                flex: 1;
+                overflow-y: auto;
+                padding: 6px 0;
+                max-height: 720px;
+            }
+
+            /* Tree Row Styles */
+            .asite-folder-row-wrap {
+                width: 100%;
+            }
+
+            .asite-folder-row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 10px 6px 8px;
+                cursor: pointer;
+                font-size: 12px;
+                color: var(--asite-text);
+                border-left: 3px solid transparent;
+                transition: background 0.1s;
+                user-select: none;
+                position: relative;
+            }
+
+            .asite-folder-row:hover {
+                background: var(--asite-hover);
+            }
+
+            .asite-folder-row.is-selected {
+                background: var(--asite-folder-active-bg) !important;
+                border-left-color: var(--asite-folder-active-border) !important;
+                color: var(--asite-folder-active-text) !important;
+                font-weight: 700;
+            }
+
+            .asite-tree-chevron {
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                color: var(--asite-text-subtle);
+                width: 16px;
+                height: 16px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 3px;
+                padding: 0;
+            }
+
+            .asite-tree-chevron:hover {
+                color: var(--asite-text);
+                background: rgba(0, 0, 0, 0.05);
+            }
+
+            .asite-tree-spacer {
+                width: 16px;
+                display: inline-block;
+            }
+
+            .asite-folder-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                color: #f59e0b;
+                flex-shrink: 0;
+            }
+
+            .asite-folder-name {
+                flex: 1;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                font-size: 12px;
+            }
+
+            .asite-folder-count {
+                font-size: 10px;
+                padding: 1px 6px;
+                border-radius: 99px;
+                background: rgba(0, 0, 0, 0.06);
+                color: var(--asite-text-muted);
+                font-weight: 600;
+                margin-left: 4px;
+            }
+
+            .asite-folder-actions {
+                display: flex;
+                gap: 2px;
+                margin-left: 4px;
+            }
+
+            .asite-icon-btn {
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                color: var(--asite-text-subtle);
+                padding: 2px;
+                border-radius: 3px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .asite-icon-btn:hover {
+                color: var(--asite-primary);
+                background: var(--asite-primary-light);
+            }
+
+            .asite-icon-btn.asite-danger:hover {
+                color: #ef4444;
+                background: #fee2e2;
+            }
+
+            /* ── Splitter Handle ──────────────────────────────────────────── */
+            .asite-splitter {
+                width: 6px;
+                background: var(--asite-border);
+                cursor: col-resize;
+                position: relative;
+                flex-shrink: 0;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .asite-splitter:hover {
+                background: var(--asite-primary);
+            }
+
+            .asite-splitter-toggle {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 16px;
+                height: 28px;
+                background: var(--asite-bg);
+                border: 1px solid var(--asite-border);
+                border-radius: 3px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                color: var(--asite-text-muted);
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                font-size: 10px;
+            }
+
+            /* ── Right Content Area (Files View) ──────────────────────────── */
+            .asite-content-pane {
+                flex: 1;
+                background: #ffffff;
+                display: flex;
+                flex-direction: column;
+                min-width: 0;
+            }
+
+            .dark .asite-content-pane {
+                background: #0f172a;
+            }
+
+            /* Subtabs Bar (Files / Distribution / Comments) */
+            .asite-subtabs-bar {
+                display: flex;
+                align-items: center;
+                border-bottom: 2px solid var(--asite-border);
+                padding: 0 16px;
+                background: #ffffff;
+            }
+
+            .dark .asite-subtabs-bar {
+                background: #111827;
+            }
+
+            .asite-subtab-btn {
+                padding: 10px 18px;
+                font-size: 13px;
+                font-weight: 600;
+                color: var(--asite-text-muted);
+                background: transparent;
+                border: none;
+                border-bottom: 2px solid transparent;
+                margin-bottom: -2px;
+                cursor: pointer;
+                transition: all 0.12s;
+            }
+
+            .asite-subtab-btn:hover {
+                color: var(--asite-text);
+            }
+
+            .asite-subtab-btn.is-active {
+                color: #1a73e8;
+                border-bottom-color: #1a73e8;
+                font-weight: 700;
+            }
+
+            /* Action Toolbar */
+            .asite-toolbar {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 10px 16px;
+                border-bottom: 1px solid var(--asite-border);
+                background: var(--asite-surface);
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
+            .asite-toolbar-left {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                flex: 1;
+                min-width: 240px;
+            }
+
+            .asite-toolbar-right {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .asite-doc-search {
+                position: relative;
+                flex: 1;
+                max-width: 320px;
+            }
+
+            .asite-doc-search input {
+                width: 100%;
+                font-size: 12px;
+                padding: 6px 10px 6px 30px;
+                border-radius: 5px;
+                border: 1px solid var(--asite-border-dark);
+                background: var(--asite-bg);
+                color: var(--asite-text);
+                outline: none;
+            }
+
+            .asite-doc-search svg {
+                position: absolute;
+                left: 8px;
+                top: 50%;
+                transform: translateY(-50%);
+                color: var(--asite-text-subtle);
+            }
+
+            .asite-btn-secondary {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                border-radius: 5px;
+                border: 1px solid var(--asite-border-dark);
+                background: var(--asite-bg);
+                color: var(--asite-text);
+                cursor: pointer;
+                transition: all 0.12s;
+            }
+
+            .asite-btn-secondary:hover {
+                background: var(--asite-hover);
+                border-color: #94a3b8;
+            }
+
+            .asite-btn-primary {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                padding: 6px 14px;
+                font-size: 12px;
+                font-weight: 700;
+                border-radius: 5px;
+                border: 1px solid #1a73e8;
+                background: #1a73e8;
+                color: #ffffff;
+                cursor: pointer;
+                transition: all 0.12s;
+                box-shadow: 0 1px 2px rgba(26, 115, 232, 0.2);
+            }
+
+            .asite-btn-primary:hover {
+                background: #1557b0;
+                border-color: #1557b0;
+            }
+
+            /* Breadcrumb row */
+            .asite-breadcrumb-bar {
+                display: flex;
+                align-items: center;
+                padding: 8px 16px;
+                font-size: 12px;
+                color: var(--asite-text-muted);
+                border-bottom: 1px solid var(--asite-border);
+                background: #ffffff;
+                gap: 6px;
+            }
+
+            .dark .asite-breadcrumb-bar {
+                background: #111827;
+            }
+
+            .asite-breadcrumb-item {
+                color: #1a73e8;
+                cursor: pointer;
+                font-weight: 500;
+            }
+
+            .asite-breadcrumb-item:hover {
+                text-decoration: underline;
+            }
+
+            .asite-breadcrumb-current {
+                color: var(--asite-text);
+                font-weight: 700;
+            }
+
+            /* ── Asite Data Table ─────────────────────────────────────────── */
+            .asite-table-wrap {
+                flex: 1;
+                overflow-x: auto;
+                min-height: 420px;
+            }
+
+            .asite-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 12px;
+                text-align: left;
+            }
+
+            .asite-table th {
+                background: #f8fafc;
+                color: #475569;
+                font-size: 11px;
+                font-weight: 700;
+                text-transform: uppercase;
+                letter-spacing: 0.03em;
+                padding: 10px 12px;
+                border-bottom: 1px solid var(--asite-border);
+                white-space: nowrap;
+                user-select: none;
+            }
+
+            .dark .asite-table th {
+                background: #1e293b;
+                color: #94a3b8;
+            }
+
+            .asite-table th.sortable {
+                cursor: pointer;
+            }
+
+            .asite-table th.sortable:hover {
+                color: #1a73e8;
+            }
+
+            .asite-table td {
+                padding: 9px 12px;
+                border-bottom: 1px solid var(--asite-border);
+                color: var(--asite-text);
+                vertical-align: middle;
+            }
+
+            .asite-table tr:hover td {
+                background: #f8fafc;
+            }
+
+            .dark .asite-table tr:hover td {
+                background: #1e293b;
+            }
+
+            .asite-table tr.is-selected td {
+                background: #eff6ff !important;
+            }
+
+            .dark .asite-table tr.is-selected td {
+                background: #1e3a5f !important;
+            }
+
+            /* Doc Ref blue link */
+            .asite-doc-link {
+                color: #1a73e8;
+                font-weight: 700;
+                text-decoration: none;
+                cursor: pointer;
+                display: inline-block;
+                transition: color 0.12s;
+            }
+
+            .asite-doc-link:hover {
+                text-decoration: underline;
+                color: #1557b0;
+            }
+
+            .asite-doc-title {
+                color: var(--asite-text-muted);
+                font-size: 11px;
+                margin-top: 1px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 320px;
+            }
+
+            /* Flag button */
+            .asite-flag-btn {
+                background: transparent;
+                border: none;
+                cursor: pointer;
+                color: #cbd5e1;
+                padding: 2px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                transition: color 0.15s;
+            }
+
+            .asite-flag-btn:hover {
+                color: #f59e0b;
+            }
+
+            .asite-flag-btn.is-flagged {
+                color: #ea580c;
+            }
+
+            /* File Type Icon container */
+            .asite-ft-icon {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+            }
+
+            /* Badges */
+            .asite-badge {
+                display: inline-block;
                 padding: 2px 6px;
                 border-radius: 4px;
-                background: var(--cde-accent-light);
-                color: var(--cde-accent);
+                font-size: 10px;
+                font-weight: 700;
                 text-transform: uppercase;
                 letter-spacing: 0.03em;
             }
 
-            /* ── Documents Section ────────────── */
-            .cde-docs-wrap {
-                background: var(--cde-bg);
-                border: 1px solid var(--cde-border);
-                border-radius: var(--cde-radius);
-                overflow: hidden;
-                margin-bottom: 18px;
-                box-shadow: var(--cde-shadow);
+            .asite-badge-rev {
+                background: #e2e8f0;
+                color: #475569;
             }
 
-            .cde-docs-toolbar {
+            .asite-badge-status {
+                background: #dbeafe;
+                color: #1d4ed8;
+            }
+
+            .asite-badge-s4 {
+                background: #dcfce7;
+                color: #15803d;
+            }
+
+            .asite-badge-s3 {
+                background: #fef3c7;
+                color: #b45309;
+            }
+
+            .asite-badge-s2 {
+                background: #e0f2fe;
+                color: #0369a1;
+            }
+
+            .asite-badge-s0 {
+                background: #f1f5f9;
+                color: #64748b;
+            }
+
+            /* Footer Bar */
+            .asite-footer {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 16px;
+                border-top: 1px solid var(--asite-border);
+                background: var(--asite-surface);
+                font-size: 12px;
+                color: var(--asite-text-muted);
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .asite-footer-left {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                padding: 12px 18px;
-                border-bottom: 1px solid var(--cde-border);
-                font-size: 14px;
+            }
+
+            .asite-footer-right {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+            }
+
+            .asite-pagination {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .asite-page-btn {
+                width: 26px;
+                height: 26px;
+                border-radius: 4px;
+                border: 1px solid var(--asite-border-dark);
+                background: var(--asite-bg);
+                color: var(--asite-text);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                font-size: 11px;
                 font-weight: 600;
-                color: var(--cde-text);
             }
 
-            .cde-docs-toolbar svg {
-                width: 16px;
-                height: 16px;
-                color: var(--cde-muted);
+            .asite-page-btn:hover {
+                background: var(--asite-hover);
             }
 
-            .cde-docs-toolbar .count {
+            .asite-page-btn.is-active {
+                background: #1a73e8;
+                color: white;
+                border-color: #1a73e8;
+            }
+
+            /* ── Slide-over Drawer (Document Details & Comments) ──────────── */
+            .asite-drawer-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.45);
+                backdrop-filter: blur(2px);
+                z-index: 9999;
+                display: flex;
+                justify-content: flex-end;
+            }
+
+            .asite-drawer-panel {
+                width: 100%;
+                max-width: 520px;
+                background: var(--asite-bg);
+                height: 100%;
+                box-shadow: -4px 0 24px rgba(0, 0, 0, 0.2);
+                display: flex;
+                flex-direction: column;
+                animation: slideInRight 0.2s ease-out;
+            }
+
+            @keyframes slideInRight {
+                from { transform: translateX(100%); }
+                to { transform: translateX(0); }
+            }
+
+            .asite-drawer-header {
+                padding: 16px 20px;
+                border-bottom: 1px solid var(--asite-border);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: var(--asite-surface);
+            }
+
+            .asite-drawer-title {
+                font-size: 15px;
+                font-weight: 700;
+                color: var(--asite-text);
+            }
+
+            .asite-drawer-tabs {
+                display: flex;
+                border-bottom: 1px solid var(--asite-border);
+                background: var(--asite-surface);
+                padding: 0 16px;
+            }
+
+            .asite-drawer-tab-btn {
+                padding: 10px 14px;
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--asite-text-muted);
+                background: transparent;
+                border: none;
+                border-bottom: 2px solid transparent;
+                cursor: pointer;
+            }
+
+            .asite-drawer-tab-btn.is-active {
+                color: #1a73e8;
+                border-bottom-color: #1a73e8;
+                font-weight: 700;
+            }
+
+            .asite-drawer-body {
+                flex: 1;
+                overflow-y: auto;
+                padding: 20px;
+            }
+
+            .asite-meta-grid {
+                display: grid;
+                grid-template-columns: 120px 1fr;
+                gap: 12px 16px;
+                font-size: 12px;
+            }
+
+            .asite-meta-label {
+                color: var(--asite-text-muted);
+                font-weight: 600;
+            }
+
+            .asite-meta-val {
+                color: var(--asite-text);
+                font-weight: 500;
+            }
+
+            /* ── Comments & Collaboration ── */
+            .asite-comment-card {
+                padding: 14px 16px;
+                border-radius: 8px;
+                border: 1px solid var(--asite-border);
+                background: var(--asite-surface);
+                margin-bottom: 12px;
+                transition: box-shadow 0.15s ease, border-color 0.15s ease;
+            }
+
+            .asite-comment-card:hover {
+                box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+            }
+
+            .asite-comment-card.is-resolved {
+                border-color: rgba(34, 197, 94, 0.35);
+                background: rgba(34, 197, 94, 0.03);
+            }
+
+            .asite-avatar {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
                 font-size: 11px;
                 font-weight: 700;
-                background: var(--cde-accent-light);
-                color: var(--cde-accent);
+                color: #ffffff;
+                flex-shrink: 0;
+            }
+
+            .asite-comment-target {
+                display: inline-flex;
+                align-items: center;
+                gap: 5px;
+                font-size: 11px;
+                font-weight: 600;
                 padding: 2px 8px;
-                border-radius: 99px;
+                border-radius: 4px;
+                background: var(--asite-bg);
+                border: 1px solid var(--asite-border);
+                color: var(--asite-blue);
+                cursor: pointer;
+                text-decoration: none;
+                transition: background 0.12s;
             }
 
-            .cde-section-wrap {
-                margin-bottom: 14px;
+            .asite-comment-target:hover {
+                background: rgba(0, 102, 204, 0.08);
             }
 
-            /* ── Tabs ────────────────────────── */
-            .cde-tabs {
-                display: flex;
-                gap: 2px;
-                border-bottom: 2px solid var(--cde-border);
-                margin-bottom: 18px;
-                overflow-x: auto;
+            .asite-status-pill {
+                font-size: 10.5px;
+                font-weight: 600;
+                padding: 3px 10px;
+                border-radius: 12px;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                border: none;
+                cursor: pointer;
+                transition: transform 0.1s ease, opacity 0.15s ease;
             }
 
-            .cde-tab {
-                padding: 10px 22px;
-                font-size: 13px;
+            .asite-status-pill:hover {
+                transform: translateY(-1px);
+                opacity: 0.9;
+            }
+
+            .asite-status-open {
+                background: #fef3c7;
+                color: #92400e;
+            }
+
+            .dark .asite-status-open {
+                background: #78350f;
+                color: #fde68a;
+            }
+
+            .asite-status-resolved {
+                background: #dcfce7;
+                color: #166534;
+            }
+
+            .dark .asite-status-resolved {
+                background: #14532d;
+                color: #86efac;
+            }
+
+            .asite-comment-count-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
+                padding: 2px 7px;
+                border-radius: 10px;
+                background: #e0f2fe;
+                color: #0369a1;
+                font-size: 10.5px;
                 font-weight: 600;
                 border: none;
                 cursor: pointer;
-                border-radius: 8px 8px 0 0;
-                transition: all .15s;
-                display: inline-flex;
+                transition: background 0.12s ease;
+                text-decoration: none;
+                vertical-align: middle;
+            }
+
+            .asite-comment-count-badge:hover {
+                background: #bae6fd;
+            }
+
+            .dark .asite-comment-count-badge {
+                background: #0c4a6e;
+                color: #7dd3fc;
+            }
+
+            .asite-reply-connector {
+                margin-top: 12px;
+                padding-left: 18px;
+                border-left: 2px solid var(--asite-border);
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .asite-reply-card {
+                padding: 10px 12px;
+                border-radius: 6px;
+                background: var(--asite-bg);
+                border: 1px solid var(--asite-border);
+            }
+
+            /* ── Folder Summary & Guidelines Bar ── */
+            .asite-folder-summary {
+                display: flex;
                 align-items: center;
-                gap: 7px;
-                white-space: nowrap;
-                background: transparent;
-                color: var(--cde-muted);
-                position: relative;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 8px 16px;
+                background: var(--asite-surface);
+                border-bottom: 1px solid var(--asite-border);
+                font-size: 12px;
+                flex-wrap: wrap;
             }
 
-            .cde-tab:hover {
-                color: var(--cde-text);
-                background: var(--cde-hover);
+            .asite-folder-guidelines {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                flex: 1;
+                min-width: 240px;
             }
 
-            .cde-tab.active {
-                background: var(--cde-accent);
-                color: white;
-            }
-
-            .cde-tab svg {
-                width: 15px;
-                height: 15px;
-            }
-
-            .cde-tab-badge {
-                font-size: 10px;
-                padding: 1px 7px;
-                border-radius: 99px;
-                font-weight: 700;
-            }
-
-            /* ── Share Modal ────────────────── */
-            .cde-share-overlay {
+            /* ── Clean Modals (Folder Creation / Rename - No ISO) ── */
+            .asite-modal-backdrop {
                 position: fixed;
                 inset: 0;
-                background: rgba(0, 0, 0, .5);
+                background: rgba(15, 23, 42, 0.55);
                 backdrop-filter: blur(4px);
+                -webkit-backdrop-filter: blur(4px);
                 z-index: 99999;
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                padding: 20px;
+                padding: 16px;
             }
 
-            .cde-share-card {
-                background: var(--cde-bg);
+            .asite-modal-card {
+                background: var(--asite-surface);
                 width: 100%;
-                max-width: 560px;
-                border-radius: 14px;
-                box-shadow: 0 25px 60px -10px rgba(0, 0, 0, .3);
+                max-width: 480px;
+                border-radius: 12px;
+                border: 1px solid var(--asite-border);
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
                 overflow: hidden;
             }
 
-            .cde-share-header {
-                padding: 20px 24px;
-                border-bottom: 1px solid var(--cde-border);
+            .asite-modal-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                padding: 16px 20px;
+                border-bottom: 1px solid var(--asite-border);
+                background: var(--asite-surface);
             }
 
-            .cde-share-body {
-                padding: 20px 24px;
-                max-height: 60vh;
-                overflow-y: auto;
-            }
-
-            .cde-share-person {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 10px 0;
-                border-bottom: 1px solid var(--cde-border);
-            }
-
-            .cde-share-person:last-child {
-                border-bottom: none;
-            }
-
-            .cde-share-avatar {
-                width: 32px;
-                height: 32px;
-                border-radius: 50%;
-                background: linear-gradient(135deg, #818cf8, #6366f1);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
+            .asite-modal-title {
+                font-size: 14px;
                 font-weight: 700;
-                font-size: 12px;
-                flex-shrink: 0;
-            }
-
-            .cde-share-name {
-                font-size: 13px;
-                font-weight: 600;
-                color: var(--cde-text);
-            }
-
-            .cde-share-email {
-                font-size: 11px;
-                color: var(--cde-muted);
-            }
-
-            .cde-share-badge {
-                padding: 2px 8px;
-                border-radius: 99px;
-                font-size: 10px;
-                font-weight: 600;
-                text-transform: capitalize;
-            }
-
-            .cde-share-badge-view {
-                background: #dbeafe;
-                color: #2563eb;
-            }
-
-            .cde-share-badge-download {
-                background: #dcfce7;
-                color: #16a34a;
-            }
-
-            .cde-share-badge-edit {
-                background: #fef3c7;
-                color: #d97706;
-            }
-
-            .cde-share-revoke {
-                background: none;
-                border: none;
-                color: #ef4444;
-                cursor: pointer;
-                font-size: 11px;
-                font-weight: 600;
-                padding: 4px 6px;
-                border-radius: 4px;
-            }
-
-            .cde-share-revoke:hover {
-                background: #fee2e2;
-            }
-
-            .cde-link-row {
+                color: var(--asite-text);
                 display: flex;
                 align-items: center;
-                gap: 8px;
-                padding: 10px 0;
-                border-bottom: 1px solid var(--cde-border);
+                gap: 10px;
             }
 
-            .cde-link-token {
-                font-family: ui-monospace, monospace;
+            .asite-modal-body {
+                padding: 20px;
+                background: var(--asite-surface);
+            }
+
+            .asite-modal-footer {
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+                gap: 10px;
+                padding: 14px 20px;
+                border-top: 1px solid var(--asite-border);
+                background: var(--asite-bg);
+            }
+
+            .asite-form-label {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
                 font-size: 11px;
-                background: var(--cde-surface);
-                padding: 4px 8px;
-                border-radius: 4px;
-                flex: 1;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-                color: var(--cde-muted);
+                font-weight: 600;
+                color: var(--asite-text);
+                margin-bottom: 5px;
+            }
+
+            .asite-form-input {
+                width: 100%;
+                font-size: 12px;
+                padding: 8px 12px;
+                border-radius: 6px;
+                border: 1px solid var(--asite-border-dark);
+                background: var(--asite-bg);
+                color: var(--asite-text);
+                outline: none;
+                box-sizing: border-box;
+                transition: border-color 0.15s ease, box-shadow 0.15s ease;
+            }
+
+            .asite-form-input:focus {
+                border-color: var(--asite-blue);
+                box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15);
+            }
+
+            .asite-form-hint {
+                font-size: 11px;
+                color: var(--asite-text-muted);
+                margin-top: 5px;
+                line-height: 1.4;
             }
         </style>
     @endpush
 
-    @push('scripts')
-        <script>
-            document.addEventListen            er('livewire:init', () => {
-                Livewire.on('copy-to-clipboard', ({ text }) => {
-                    navigator.clipboard.writeText(text).catch(() => prompt('Copy this link:', text));
-                });
-            });
-        </script>
-    @endpush
-
-    {{-- ── ISO 19650 Status Pipeline ──────────────────────────────────── --}}
-    @php
-        $pipeline = $this->getStatusPipeline();
-    @endphp
-    <div class="cde-pipeline">
-        @foreach($pipeline as $stage)
-            <div class="cde-pipe-item" style="background: {{ $stage['bg'] }}; color: {{ $stage['color'] }};">
-                <span class="cde-pipe-count">{{ $stage['count'] }}</span>
-                <span class="cde-pipe-label">{{ $stage['label'] }}</span>
+    {{-- ══════════════════════════════════════════════════════════════════════
+         1. ASITE TOP CONTEXT HEADER BAR
+         ══════════════════════════════════════════════════════════════════════ --}}
+    <div class="asite-topbar">
+        <div class="asite-topbar-left">
+            <div class="asite-logo-badge">
+                <span class="asite-logo-icon">A</span>
+                <span>Asite</span>
             </div>
-        @endforeach
-    </div>
 
-    {{-- ── Document Health Alerts ──────────────────────────────────────── --}}
-    @php $docHealth = $this->getDocumentHealth(); @endphp
-    @if($docHealth['needs_revision'] > 0 || $docHealth['stale'] > 0)
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-            @if($docHealth['needs_revision'] > 0)
-                <div
-                    style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:12px;">
-                    <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                        stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                    </svg>
-                    <strong>{{ $docHealth['needs_revision'] }}</strong> doc{{ $docHealth['needs_revision'] > 1 ? 's' : '' }}
-                    need revision
-                </div>
-            @endif
-            @if($docHealth['review_backlog'] > 0)
-                <div
-                    style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:12px;">
-                    <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                        stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <strong>{{ $docHealth['review_backlog'] }}</strong> awaiting review
-                </div>
-            @endif
-            @if($docHealth['stale'] > 0)
-                <div
-                    style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:6px;background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;font-size:12px;">
-                    <svg style="width:14px;height:14px;flex-shrink:0;" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                        stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M12 9v3.75m0-10.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.249-8.25-3.286z" />
-                    </svg>
-                    <strong>{{ $docHealth['stale'] }}</strong> stale (30+ days)
-                </div>
-            @endif
+            <div class="asite-project-selector" title="Active CDE Project">
+                <svg viewBox="0 0 20 20" width="14" height="14" fill="#fbbf24">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                <span>Projects: {{ $this->record->name }}</span>
+                <svg viewBox="0 0 20 20" width="12" height="12" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+            </div>
+
+            <span class="asite-mode-badge">
+                CDE
+                <svg viewBox="0 0 20 20" width="10" height="10" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+            </span>
         </div>
-    @endif
 
-    {{-- ══ Tab Switcher════════════════════ --}}
-    @php $subStats = $this->getSubmissionStats();
-    $totalSubs = array_sum(array_column($subStats, 'total')); @endphp
-    <div class="cde-tabs">
-        <button wire:click="$set('activeDocTab', 'files')" class="cde-tab {{ $this->activeDocTab === 'files' ? 'active' : '' }}">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z"/></svg>
-            Files & Documents
+        <div class="asite-topbar-right">
+            <button type="button" class="asite-top-icon-btn" title="Search"><svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg></button>
+            <button type="button" class="asite-top-icon-btn" title="Video Meeting"><svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" /></svg></button>
+            <button type="button" class="asite-top-icon-btn" title="Notifications"><svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" /></svg></button>
+            <button type="button" class="asite-top-icon-btn" title="Help"><svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" /></svg></button>
+            <div class="asite-top-avatar" title="{{ auth()->user()?->name ?? 'User' }}">
+                {{ strtoupper(substr(auth()->user()?->name ?? 'PG', 0, 2)) }}
+            </div>
+        </div>
+    </div>
+
+    {{-- ══════════════════════════════════════════════════════════════════════
+         2. ASITE MODULE TABS NAVIGATION BAR
+         ══════════════════════════════════════════════════════════════════════ --}}
+    <div class="asite-nav-bar">
+        <a href="{{ route('filament.app.resources.cde-projects.view', ['record' => $this->record->id]) }}" class="asite-nav-tab">
+            Dashboard
+        </a>
+        <a href="{{ route('filament.app.resources.cde-projects.index') }}" class="asite-nav-tab">
+            Projects
+        </a>
+        <button type="button" class="asite-nav-tab is-active">
+            Files
         </button>
-        <button wire:click="$set('activeDocTab', 'submissions')" class="cde-tab {{ $this->activeDocTab === 'submissions' ? 'active' : '' }}">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75"/></svg>
-            Required Submissions
-            @if($totalSubs > 0)
-                <span class="cde-tab-badge" style="{{ $this->activeDocTab === 'submissions' ? 'background:rgba(255,255,255,0.2);color:white;' : 'background:rgba(99,102,241,0.12);color:#6366f1;' }}">{{ $totalSubs }}</span>
-            @endif
+        <a href="{{ route('filament.app.resources.cde-projects.module-rfi-submittals', ['record' => $this->record->id]) }}" class="asite-nav-tab">
+            Project Forms
+        </a>
+        <a href="{{ route('filament.app.resources.cde-projects.module-task-workflow', ['record' => $this->record->id]) }}" class="asite-nav-tab">
+            Workflows
+        </a>
+        <button type="button" wire:click="$set('activeDocTab', 'comments')" class="asite-nav-tab {{ $this->activeDocTab === 'comments' ? 'is-active' : '' }}">
+            aMessages
+        </button>
+        <button type="button" wire:click="setQuickFilter('incomplete')" class="asite-nav-tab">
+            Tasks
+        </button>
+        <a href="{{ route('filament.app.resources.cde-projects.module-reporting', ['record' => $this->record->id]) }}" class="asite-nav-tab">
+            Reports
+        </a>
+        <button type="button" wire:click="initializeAsiteStructure" class="asite-nav-tab" title="Initialize Standard ASITE Tree">
+            <span style="color:#f59e0b;font-weight:700;">★ ASITE Template</span>
         </button>
     </div>
 
-    @if($this->activeDocTab === 'files')
-        {{-- ══ Submission Tracking Matrix ════════════════════════════════════ --}}
-        @php $sm = $this->getSubmissionMatrix(); @endphp
-        @if($sm['total_docs'] > 0 && count($sm['matrix']) > 1)
-            <x-filament::section collapsible collapsed>
-                <x-slot name="heading">
-                    <span style="display:flex;align-items:center;gap:6px;">
-                        <svg style="width:16px;height:16px;" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-                            stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-                        </svg>
-                        Submission Tracker by Discipline
-                        <span
-                            style="background:{{ $sm['overall_completion'] >= 80 ? '#dcfce7' : ($sm['overall_completion'] >= 40 ? '#fef3c7' : '#fef2f2') }};color:{{ $sm['overall_completion'] >= 80 ? '#16a34a' : ($sm['overall_completion'] >= 40 ? '#d97706' : '#ef4444') }};font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;">
-                            {{ $sm['overall_completion'] }}% Complete
-                        </span>
-                    </span>
-                </x-slot>
-                <x-slot name="description">Track document submissions per discipline across status gates</x-slot>
+    {{-- ══════════════════════════════════════════════════════════════════════
+         3. ASITE 3-COLUMN EXPLORER
+         ══════════════════════════════════════════════════════════════════════ --}}
+    @php
+        $counts = $this->getQuickFilterCounts();
+        $folders = $this->getFolderTree();
+        $docs = $this->getDocuments();
+    @endphp
 
-                <div style="overflow-x:auto;">
-                    <table style="width:100%;font-size:12px;border-collapse:collapse;">
+    <div class="asite-explorer">
+
+        {{-- ── COLUMN 1: LEFT QUICK TASK STRIP (~76px) ────────────────── --}}
+        <div class="asite-strip">
+            {{-- All --}}
+            <button type="button"
+                    wire:click="setQuickFilter('all')"
+                    class="asite-strip-item {{ $this->quickFilter === 'all' ? 'is-active' : '' }}"
+                    title="All Documents in Folder">
+                <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                </svg>
+                <span class="asite-strip-label" style="margin-top:4px;">All</span>
+            </button>
+
+            {{-- Incomplete Tasks --}}
+            <button type="button"
+                    wire:click="setQuickFilter('incomplete')"
+                    class="asite-strip-item {{ $this->quickFilter === 'incomplete' ? 'is-active' : '' }}"
+                    title="Incomplete Tasks / WIP / Under Review">
+                <span class="asite-strip-count">{{ $counts['incomplete'] }}</span>
+                <span class="asite-strip-label">Incomplete Tasks</span>
+            </button>
+
+            {{-- Overdue Tasks --}}
+            <button type="button"
+                    wire:click="setQuickFilter('overdue')"
+                    class="asite-strip-item {{ $this->quickFilter === 'overdue' ? 'is-active' : '' }}"
+                    title="Overdue Tasks">
+                <span class="asite-strip-count count-danger">{{ $counts['overdue'] }}</span>
+                <span class="asite-strip-label">Overdue Tasks</span>
+            </button>
+
+            {{-- Due Today --}}
+            <button type="button"
+                    wire:click="setQuickFilter('due_today')"
+                    class="asite-strip-item {{ $this->quickFilter === 'due_today' ? 'is-active' : '' }}"
+                    title="Tasks Due Today">
+                <span class="asite-strip-count count-warning">{{ $counts['due_today'] }}</span>
+                <span class="asite-strip-label">Due Today</span>
+            </button>
+
+            {{-- Unread Comments --}}
+            <button type="button"
+                    wire:click="setQuickFilter('unread_comments')"
+                    class="asite-strip-item {{ $this->quickFilter === 'unread_comments' ? 'is-active' : '' }}"
+                    title="Unread Document Comments">
+                <span class="asite-strip-count count-neutral">{{ $counts['unread_comments'] }}</span>
+                <span class="asite-strip-label">Unread Comments</span>
+            </button>
+        </div>
+
+        {{-- ── COLUMN 2: CENTER FOLDER TREE PANEL (~320px) ────────────── --}}
+        <div class="asite-tree-panel {{ $this->isTreeCollapsed ? 'is-collapsed' : '' }}">
+            {{-- Search Folders Input --}}
+            <div class="asite-tree-search">
+                <div class="asite-search-input-wrap">
+                    <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                    </svg>
+                    <input type="text"
+                           wire:model.live.debounce.250ms="folderSearch"
+                           placeholder="Search Folders"
+                           class="asite-search-input" />
+                </div>
+            </div>
+
+            {{-- Tree Quick Actions Toolbar --}}
+            <div class="asite-tree-toolbar">
+                <span style="font-weight:700;">Folders</span>
+                <div style="display:flex;gap:4px;">
+                    <button type="button" wire:click="openNewFolderModal(null)" class="asite-tree-btn" title="Add Root Folder">+ New</button>
+                    <button type="button" wire:click="expandAllFolders" class="asite-tree-btn" title="Expand All">Expand</button>
+                    <button type="button" wire:click="collapseAllFolders" class="asite-tree-btn" title="Collapse All">Collapse</button>
+                </div>
+            </div>
+
+            {{-- Tree Hierarchy Body --}}
+            <div class="asite-tree-body">
+                {{-- Root Asite Folder Node --}}
+                <div class="asite-folder-row {{ $this->currentFolderId === null ? 'is-selected' : '' }}"
+                     style="padding-left: 6px;"
+                     wire:click="selectFolder(null)">
+                    <span class="asite-folder-icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="#f59e0b">
+                            <path d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15zM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z" />
+                        </svg>
+                    </span>
+                    <span class="asite-folder-name" style="font-weight:700;">Asite</span>
+                </div>
+
+                {{-- Project Root Level Node --}}
+                <div class="asite-folder-row"
+                     style="padding-left: 18px;"
+                     wire:click="selectFolder(null)">
+                    <span style="color:#f59e0b;margin-right:2px;">★</span>
+                    <span class="asite-folder-icon">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="#f59e0b">
+                            <path d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15zM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z" />
+                        </svg>
+                    </span>
+                    <span class="asite-folder-name" style="font-weight:600;">{{ $this->record->name }}</span>
+                    @php $totalRootDocs = $this->record->documents()->count(); @endphp
+                    @if($totalRootDocs > 0)
+                        <span class="asite-folder-count">{{ $totalRootDocs }}</span>
+                    @endif
+                </div>
+
+                {{-- Render Top-Level Folders & Recursive Children --}}
+                @forelse($folders as $folder)
+                    @include('filament.app.pages.modules.partials.asite-folder-node', [
+                        'node' => $folder,
+                        'depth' => 1,
+                        'expandedFolderIds' => $this->expandedFolderIds,
+                        'currentFolderId' => $this->currentFolderId
+                    ])
+                @empty
+                    <div style="padding: 20px 12px; text-align: center; color: var(--asite-text-muted); font-size: 11px;">
+                        No folders found.
+                        <div style="margin-top: 8px;">
+                            <button type="button" wire:click="initializeAsiteStructure" class="asite-btn-primary" style="font-size:11px;padding:4px 10px;">
+                                Setup ASITE Folders
+                            </button>
+                        </div>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        {{-- ── SPLITTER HANDLE ────────────────────────────────────────── --}}
+        <div class="asite-splitter" wire:click="toggleTreeCollapse" title="{{ $this->isTreeCollapsed ? 'Expand Folders' : 'Collapse Folders' }}">
+            <span class="asite-splitter-toggle">
+                {{ $this->isTreeCollapsed ? '▶' : '◀' }}
+            </span>
+        </div>
+
+        {{-- ── COLUMN 3: RIGHT FILES & DOCUMENTS AREA ──────────────────── --}}
+        <div class="asite-content-pane">
+
+            {{-- 1. Subtabs Header (Files | Distribution | Comments | Pipeline) --}}
+            <div class="asite-subtabs-bar">
+                <button type="button"
+                        wire:click="$set('activeDocTab', 'files')"
+                        class="asite-subtab-btn {{ $this->activeDocTab === 'files' ? 'is-active' : '' }}">
+                    Files
+                </button>
+                <button type="button"
+                        wire:click="$set('activeDocTab', 'distribution')"
+                        class="asite-subtab-btn {{ $this->activeDocTab === 'distribution' ? 'is-active' : '' }}">
+                    Distribution
+                    @php $trCount = $this->getTransmittals()->count(); @endphp
+                    @if($trCount > 0)
+                        <span class="asite-badge asite-badge-rev" style="margin-left:4px;">{{ $trCount }}</span>
+                    @endif
+                </button>
+                <button type="button"
+                        wire:click="$set('activeDocTab', 'comments')"
+                        class="asite-subtab-btn {{ $this->activeDocTab === 'comments' ? 'is-active' : '' }}">
+                    Comments
+                    @php
+                        $openCommTotal = \App\Models\CdeDocumentComment::where(function($q) {
+                            $q->whereHas('document', fn($d) => $d->where('cde_project_id', $this->record->id))
+                              ->orWhereHas('folder', fn($f) => $f->where('cde_project_id', $this->record->id));
+                        })->where('is_resolved', false)->whereNull('parent_id')->count();
+                    @endphp
+                    @if($openCommTotal > 0)
+                        <span class="asite-badge asite-badge-s3" style="margin-left:4px;" title="{{ $openCommTotal }} open discussion(s)">{{ $openCommTotal }}</span>
+                    @endif
+                </button>
+                <button type="button"
+                        wire:click="$set('activeDocTab', 'pipeline')"
+                        class="asite-subtab-btn {{ $this->activeDocTab === 'pipeline' ? 'is-active' : '' }}">
+                    ISO 19650 Pipeline
+                </button>
+            </div>
+
+            @if($this->activeDocTab === 'files')
+                {{-- 2. Action Toolbar --}}
+                <div class="asite-toolbar">
+                    <div class="asite-toolbar-left">
+                        {{-- Search Input --}}
+                        <div class="asite-doc-search">
+                            <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                            <input type="text"
+                                   wire:model.live.debounce.300ms="searchDoc"
+                                   placeholder="Search" />
+                        </div>
+
+                        {{-- Filters Dropdown --}}
+                        <div x-data="{ openFilters: false }" style="position:relative;">
+                            <button type="button"
+                                    @click="openFilters = !openFilters"
+                                    class="asite-btn-secondary">
+                                Filters
+                                <svg viewBox="0 0 20 20" width="12" height="12" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+
+                            <div x-show="openFilters"
+                                 @click.outside="openFilters = false"
+                                 x-cloak
+                                 style="position:absolute;left:0;top:100%;margin-top:4px;width:280px;background:var(--asite-bg);border:1px solid var(--asite-border);border-radius:6px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:14px;z-index:99;">
+                                <div style="font-weight:700;font-size:12px;margin-bottom:10px;">Filter Documents</div>
+
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:block;font-size:11px;font-weight:600;color:var(--asite-text-muted);margin-bottom:4px;">Discipline</label>
+                                    <select wire:model.live="filterDiscipline" style="width:100%;font-size:12px;padding:5px;border-radius:4px;border:1px solid var(--asite-border);">
+                                        <option value="">All Disciplines</option>
+                                        <option value="civil">Civil</option>
+                                        <option value="structural">Structural</option>
+                                        <option value="architecture">Architecture</option>
+                                        <option value="mechanical">Mechanical</option>
+                                        <option value="electrical">Electrical</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+
+                                <div style="margin-bottom:10px;">
+                                    <label style="display:block;font-size:11px;font-weight:600;color:var(--asite-text-muted);margin-bottom:4px;">Suitability / Status</label>
+                                    <select wire:model.live="filterStatus" style="width:100%;font-size:12px;padding:5px;border-radius:4px;border:1px solid var(--asite-border);">
+                                        <option value="">All Statuses</option>
+                                        <option value="S0">S0 - Work In Progress</option>
+                                        <option value="S1">S1 - For Coordination</option>
+                                        <option value="S2">S2 - For Information</option>
+                                        <option value="S3">S3 - For Review & Comment</option>
+                                        <option value="S4">S4 - For Stage Approval</option>
+                                        <option value="S7">S7 - For AIM Handover</option>
+                                    </select>
+                                </div>
+
+                                <div style="margin-bottom:12px;">
+                                    <label style="display:block;font-size:11px;font-weight:600;color:var(--asite-text-muted);margin-bottom:4px;">File Format</label>
+                                    <select wire:model.live="filterFileType" style="width:100%;font-size:12px;padding:5px;border-radius:4px;border:1px solid var(--asite-border);">
+                                        <option value="">All Formats</option>
+                                        <option value="pdf">PDF Documents</option>
+                                        <option value="docx">Word (.docx)</option>
+                                        <option value="xlsx">Excel (.xlsx)</option>
+                                        <option value="zip">ZIP / Archives</option>
+                                        <option value="dwg">CAD (.dwg)</option>
+                                    </select>
+                                </div>
+
+                                <div style="display:flex;justify-content:space-between;">
+                                    <button type="button"
+                                            wire:click="$set('filterDiscipline', ''); $set('filterStatus', ''); $set('filterFileType', '');"
+                                            style="font-size:11px;color:var(--asite-text-muted);background:none;border:none;cursor:pointer;">
+                                        Reset
+                                    </button>
+                                    <button type="button" @click="openFilters = false" class="asite-btn-primary" style="padding:4px 10px;font-size:11px;">
+                                        Apply
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="asite-toolbar-right">
+                        {{-- Upload Button (calls Filament upload document action) --}}
+                        <button type="button"
+                                wire:click="mountAction('uploadDocument')"
+                                class="asite-btn-primary">
+                            <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                            Upload
+                            <svg viewBox="0 0 20 20" width="11" height="11" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+
+                        {{-- Download Button (Batch / Folder download) --}}
+                        <button type="button"
+                                wire:click="batchDownload"
+                                class="asite-btn-secondary"
+                                title="Download Selected or Folder Documents">
+                            <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            Download
+                        </button>
+
+                        {{-- Column view toggle icon --}}
+                        <button type="button" class="asite-btn-secondary" style="padding:6px 8px;" title="View options">
+                            <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
+                            <svg viewBox="0 0 20 20" width="10" height="10" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+
+                        {{-- Drawer / Info icon --}}
+                        <button type="button"
+                                wire:click="$set('activeDocTab', 'pipeline')"
+                                class="asite-btn-secondary"
+                                style="padding:6px 8px;"
+                                title="Pipeline & Health">
+                            !
+                        </button>
+                    </div>
+                </div>
+
+                {{-- 3. Breadcrumb Path Bar --}}
+                <div class="asite-breadcrumb-bar">
+                    <span class="asite-breadcrumb-item" wire:click="selectFolder(null)">Root</span>
+                    @if($this->currentFolderId)
+                        @php
+                            $breadcrumbs = [];
+                            $curr = \App\Models\CdeFolder::find($this->currentFolderId);
+                            while ($curr) {
+                                array_unshift($breadcrumbs, $curr);
+                                $curr = $curr->parent;
+                            }
+                        @endphp
+                        @foreach($breadcrumbs as $bc)
+                            <span style="color:var(--asite-text-subtle);">›</span>
+                            @if($loop->last)
+                                <span class="asite-breadcrumb-current">{{ $bc->name }}</span>
+                            @else
+                                <span class="asite-breadcrumb-item" wire:click="selectFolder({{ $bc->id }})">{{ $bc->name }}</span>
+                            @endif
+                        @endforeach
+                    @endif
+                    <span style="flex:1;"></span>
+                </div>
+
+                {{-- Folder Comments & Purpose Guidelines Banner (Clean Design) --}}
+                @if($this->currentFolderId)
+                    @php
+                        $currFolder = $this->getCurrentFolder();
+                        $folderCommentTotal = $currFolder ? $currFolder->comments()->whereNull('parent_id')->count() : 0;
+                    @endphp
+                    @if($currFolder)
+                        <div class="asite-folder-summary">
+                            <div class="asite-folder-guidelines">
+                                <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:4px;background:#fef3c7;color:#d97706;flex-shrink:0;">
+                                    <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zm-5 0h-2v2h2V9z" clip-rule="evenodd" />
+                                    </svg>
+                                </span>
+                                <div>
+                                    @if(!empty($currFolder->description))
+                                        <span style="font-weight:600;color:var(--asite-text);">Folder Guidelines / Purpose:</span>
+                                        <span style="color:var(--asite-text-muted);margin-left:4px;">{{ $currFolder->description }}</span>
+                                    @else
+                                        <span style="color:var(--asite-text-muted);font-style:italic;">No guidelines or purpose notes added to this folder yet.</span>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                @if($folderCommentTotal > 0)
+                                    <button type="button"
+                                            wire:click="$set('activeDocTab', 'comments'); $set('commentSearch', '{{ addslashes($currFolder->name) }}')"
+                                            class="asite-comment-count-badge"
+                                            title="View discussions for this folder">
+                                        <svg viewBox="0 0 20 20" width="12" height="12" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zm-5 0h-2v2h2V9z" clip-rule="evenodd" />
+                                        </svg>
+                                        <span>{{ $folderCommentTotal }} discussion(s)</span>
+                                    </button>
+                                @endif
+
+                                <button type="button"
+                                        wire:click="openRenameFolderModal({{ $currFolder->id }})"
+                                        class="asite-btn-secondary"
+                                        style="padding:3px 8px;font-size:11px;"
+                                        title="Edit folder name and guidelines">
+                                    <svg viewBox="0 0 20 20" width="11" height="11" fill="currentColor">
+                                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                    </svg>
+                                    <span>Edit Guidelines</span>
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+                @endif
+
+                {{-- Batch Action Notification Bar (if items selected) --}}
+                @if(count($this->selectedDocIds) > 0)
+                    <div style="background:#eff6ff;border-bottom:1px solid #bfdbfe;padding:8px 16px;display:flex;align-items:center;gap:12px;font-size:12px;color:#1e40af;">
+                        <span style="font-weight:700;">{{ count($this->selectedDocIds) }} item(s) selected</span>
+                        <button type="button" wire:click="batchDownload" class="asite-btn-primary" style="padding:4px 10px;font-size:11px;">
+                            Download ZIP
+                        </button>
+                        <button type="button" wire:click="batchFlag" class="asite-btn-secondary" style="padding:4px 10px;font-size:11px;">
+                            Toggle Flag
+                        </button>
+                        <button type="button" wire:click="batchDelete" wire:confirm="Delete selected documents?" class="asite-btn-secondary" style="padding:4px 10px;font-size:11px;color:#dc2626;">
+                            Delete
+                        </button>
+                        <button type="button" wire:click="$set('selectedDocIds', []); $set('selectAll', false);" style="background:none;border:none;color:#64748b;cursor:pointer;font-size:11px;margin-left:auto;">
+                            Clear selection
+                        </button>
+                    </div>
+                @endif
+
+                {{-- 4. ASITE DOCUMENT DATA TABLE --}}
+                <div class="asite-table-wrap">
+                    <table class="asite-table">
                         <thead>
-                            <tr style="border-bottom:2px solid #e2e8f0;">
-                                <th
-                                    style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;">
-                                    Discipline</th>
-                                @foreach($sm['levels'] as $key => $level)
-                                    <th
-                                        style="text-align:center;padding:8px 6px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.03em;color:{{ $level['color'] }};min-width:45px;">
-                                        {{ $level['label'] }}</th>
-                                @endforeach
-                                <th
-                                    style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#64748b;min-width:100px;">
-                                    Progress</th>
+                            <tr>
+                                {{-- Checkbox --}}
+                                <th style="width: 36px; text-align: center;">
+                                    <input type="checkbox"
+                                           wire:click="toggleSelectAll"
+                                           {{ $this->selectAll ? 'checked' : '' }}
+                                           style="border-radius:3px;cursor:pointer;" />
+                                </th>
+
+                                {{-- P (Priority Flag) --}}
+                                <th style="width: 34px; text-align: center; cursor: pointer;" wire:click="setSort('flag')" title="Sort by Flag / Priority">
+                                    P
+                                </th>
+
+                                {{-- T (File Type Icon) --}}
+                                <th style="width: 38px; text-align: center;" title="File Format">
+                                    T
+                                </th>
+
+                                {{-- Doc Ref --}}
+                                <th class="sortable" wire:click="setSort('doc_ref')">
+                                    Doc Ref
+                                    @if($this->sortBy === 'doc_ref')
+                                        <span>{{ $this->sortDirection === 'asc' ? '▲' : '▼' }}</span>
+                                    @endif
+                                </th>
+
+                                {{-- Date --}}
+                                <th class="sortable" style="width: 140px;" wire:click="setSort('date')">
+                                    Date
+                                    @if($this->sortBy === 'date')
+                                        <span>{{ $this->sortDirection === 'asc' ? '▲' : '▼' }}</span>
+                                    @endif
+                                </th>
+
+                                {{-- My Tasks --}}
+                                <th style="width: 140px;">
+                                    My Tasks
+                                </th>
+
+                                {{-- Task Time --}}
+                                <th style="width: 120px;">
+                                    Task Time
+                                </th>
+
+                                {{-- Drawer trigger icon --}}
+                                <th style="width: 36px; text-align: center;">
+                                    <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor"><path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" /></svg>
+                                </th>
                             </tr>
                         </thead>
+
                         <tbody>
-                            @foreach($sm['matrix'] as $row)
-                                <tr style="border-bottom:1px solid #f1f5f9;">
-                                    <td style="padding:8px 10px;font-weight:600;color:#334155;white-space:nowrap;">
-                                        {{ $row['discipline'] }}
-                                        <span
-                                            style="font-size:10px;font-weight:400;color:#94a3b8;margin-left:4px;">{{ $row['total'] }}</span>
+                            @forelse($docs as $doc)
+                                @php
+                                    $isSelectedRow = in_array($doc->id, $this->selectedDocIds, true);
+                                    $suitabilityBadgeClass = match($doc->status) {
+                                        'S4', 'approved' => 'asite-badge-s4',
+                                        'S3', 'under_review' => 'asite-badge-s3',
+                                        'S1', 'S2' => 'asite-badge-s2',
+                                        default => 'asite-badge-s0',
+                                    };
+                                @endphp
+                                <tr class="{{ $isSelectedRow ? 'is-selected' : '' }}">
+                                    {{-- Checkbox --}}
+                                    <td style="text-align: center;">
+                                        <input type="checkbox"
+                                               wire:click="toggleSelectDoc({{ $doc->id }})"
+                                               {{ $isSelectedRow ? 'checked' : '' }}
+                                               style="border-radius:3px;cursor:pointer;" />
                                     </td>
-                                    @foreach(array_keys($sm['levels']) as $status)
-                                        <td style="text-align:center;padding:8px 6px;">
-                                            @if($row[$status] > 0)
-                                                <span
-                                                    style="display:inline-block;min-width:22px;padding:2px 6px;border-radius:4px;font-weight:700;font-size:11px;background:{{ $sm['levels'][$status]['color'] }}15;color:{{ $sm['levels'][$status]['color'] }};">
-                                                    {{ $row[$status] }}
-                                                </span>
+
+                                    {{-- Flag (P) --}}
+                                    <td style="text-align: center;">
+                                        <button type="button"
+                                                wire:click="toggleFlag({{ $doc->id }})"
+                                                class="asite-flag-btn {{ $doc->is_flagged ? 'is-flagged' : '' }}"
+                                                title="{{ $doc->is_flagged ? 'Flagged Priority (Click to unflag)' : 'Click to flag' }}">
+                                            @if($doc->is_flagged)
+                                                <svg viewBox="0 0 20 20" width="15" height="15" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" clip-rule="evenodd" />
+                                                </svg>
                                             @else
-                                                <span style="color:#e2e8f0;">—</span>
+                                                <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 6a3 3 0 013-3h10a1 1 0 01.8 1.6L14.25 8l2.55 3.4A1 1 0 0116 13H6a1 1 0 00-1 1v3a1 1 0 11-2 0V6z" />
+                                                </svg>
                                             @endif
-                                        </td>
-                                    @endforeach
-                                    <td style="padding:8px 10px;">
-                                        <div style="display:flex;align-items:center;gap:6px;">
-                                            <div style="flex:1;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;">
-                                                <div
-                                                    style="width:{{ $row['completion_pct'] }}%;height:100%;background:{{ $row['completion_pct'] >= 80 ? '#10b981' : ($row['completion_pct'] >= 40 ? '#d97706' : '#ef4444') }};border-radius:3px;transition:width .3s;">
-                                                </div>
+                                        </button>
+                                    </td>
+
+                                    {{-- File Type Icon (T) --}}
+                                    <td style="text-align: center;">
+                                        @include('filament.app.pages.modules.partials.asite-file-icon', ['type' => $doc->file_type])
+                                    </td>
+
+                                    {{-- Doc Ref (Bold Blue Link) --}}
+                                    <td>
+                                        <div>
+                                            <a wire:click="openDrawer({{ $doc->id }})" class="asite-doc-link" title="{{ $doc->title }}">
+                                                {{ $doc->document_number }}
+                                            </a>
+                                            <div class="asite-doc-title">
+                                                <span class="asite-badge asite-badge-rev">{{ $doc->revision }}</span>
+                                                <span class="asite-badge {{ $suitabilityBadgeClass }}" style="margin-left:2px;">{{ $doc->status }}</span>
+                                                @php $docCommentTotal = $doc->comments->count(); @endphp
+                                                @if($docCommentTotal > 0)
+                                                    <button type="button"
+                                                            wire:click="openDrawer({{ $doc->id }}, 'comments')"
+                                                            class="asite-comment-count-badge"
+                                                            style="margin-left:3px;"
+                                                            title="{{ $docCommentTotal }} discussion(s) - click to view">
+                                                        <svg viewBox="0 0 20 20" width="11" height="11" fill="currentColor">
+                                                            <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zm-5 0h-2v2h2V9z" clip-rule="evenodd" />
+                                                        </svg>
+                                                        <span>{{ $docCommentTotal }}</span>
+                                                    </button>
+                                                @endif
+                                                <span style="margin-left:4px;">{{ $doc->title }}</span>
                                             </div>
-                                            <span
-                                                style="font-size:10px;font-weight:700;color:{{ $row['completion_pct'] >= 80 ? '#10b981' : ($row['completion_pct'] >= 40 ? '#d97706' : '#ef4444') }};min-width:28px;text-align:right;">{{ $row['completion_pct'] }}%</span>
                                         </div>
+                                    </td>
+
+                                    {{-- Date --}}
+                                    <td style="color:var(--asite-text);font-weight:500;">
+                                        {{ $doc->created_at->format('d-M-Y') }}
+                                    </td>
+
+                                    {{-- My Tasks --}}
+                                    <td>
+                                        @if(in_array($doc->status, ['S3', 'under_review']))
+                                            <span style="color:#d97706;font-weight:600;">For Review</span>
+                                        @elseif(in_array($doc->status, ['S4', 'approved']))
+                                            <span style="color:#16a34a;font-weight:600;">Approved</span>
+                                        @elseif($doc->status === 'revision')
+                                            <span style="color:#dc2626;font-weight:600;">Revise</span>
+                                        @else
+                                            <span style="color:var(--asite-text-subtle);">—</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Task Time --}}
+                                    <td>
+                                        @if($doc->due_date)
+                                            @if($doc->due_date->isPast())
+                                                <span style="color:#dc2626;font-weight:600;">Overdue</span>
+                                            @elseif($doc->due_date->isToday())
+                                                <span style="color:#ea580c;font-weight:600;">Due Today</span>
+                                            @else
+                                                <span style="color:var(--asite-text-muted);">{{ $doc->due_date->diffForHumans(['parts' => 1]) }}</span>
+                                            @endif
+                                        @else
+                                            <span style="color:var(--asite-text-subtle);">—</span>
+                                        @endif
+                                    </td>
+
+                                    {{-- Drawer trigger button --}}
+                                    <td style="text-align: center;">
+                                        <button type="button"
+                                                wire:click="openDrawer({{ $doc->id }})"
+                                                class="asite-icon-btn"
+                                                title="View details & comments">
+                                            <svg viewBox="0 0 20 20" width="15" height="15" fill="currentColor">
+                                                <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                            </svg>
+                                        </button>
                                     </td>
                                 </tr>
-                            @endforeach
-                            {{-- Totals row --}}
-                            <tr style="border-top:2px solid #e2e8f0;background:#f8fafc;">
-                                <td style="padding:8px 10px;font-weight:700;color:#1e293b;">
-                                    Total <span
-                                        style="font-size:10px;font-weight:400;color:#94a3b8;">{{ $sm['total_docs'] }}</span>
-                                </td>
-                                @foreach(array_keys($sm['levels']) as $status)
-                                    <td style="text-align:center;padding:8px 6px;font-weight:700;font-size:12px;color:#334155;">
-                                        {{ $sm['totals'][$status] > 0 ? $sm['totals'][$status] : '—' }}
+                            @empty
+                                <tr>
+                                    <td colspan="8" style="padding: 40px; text-align: center; color: var(--asite-text-muted);">
+                                        <div style="font-size: 14px; font-weight: 600; margin-bottom: 6px;">No documents in this folder</div>
+                                        <div style="font-size: 12px; margin-bottom: 14px;">Upload documents or switch folders using the folder tree on the left.</div>
+                                        <button type="button" wire:click="mountAction('uploadDocument')" class="asite-btn-primary">
+                                            Upload Document
+                                        </button>
                                     </td>
-                                @endforeach
-                                <td style="padding:8px 10px;">
-                                    <div style="display:flex;align-items:center;gap:6px;">
-                                        <div style="flex:1;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;">
-                                            <div
-                                                style="width:{{ $sm['overall_completion'] }}%;height:100%;background:#6366f1;border-radius:3px;">
-                                            </div>
-                                        </div>
-                                        <span
-                                            style="font-size:10px;font-weight:700;color:#6366f1;min-width:28px;text-align:right;">{{ $sm['overall_completion'] }}%</span>
-                                    </div>
-                                </td>
-                            </tr>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
-            </x-filament::section>
-        @endif
-        <div x-data="{ viewMode: 'grid' }">
-        <div class="cde-cmdbar">
-            <div class="cde-cmd-spacer"></div>
-            <div class="cde-cmdbar-sep"></div>
-            {{-- View Toggle --}}
-            <button class="cde-cmd-btn" :class="viewMode === 'grid' ? 'active' : ''" @click="viewMode = 'grid'"
-                title="Grid view">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-                </svg>
-            </button>
-            <button class="cde-cmd-btn" :class="viewMode === 'list' ? 'active' : ''" @click="viewMode = 'list'"
-                title="List view">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M3.75 12h16.5m-16.5 5.25h16.5m-16.5-10.5h16.5" />
-                </svg>
-            </button>
 
-            {{-- ── Breadcrumb Path (inside command bar) ──────── --}}
-            <div class="cde-cmdbar-sep"></div>
-            <div class="cde-path" style="margin:0; padding:0;">
-                <button wire:click="navigateToFolder(null)" class="cde-path-item">
-                    <svg style="width:14px;height:14px;display:inline;vertical-align:-2px;margin-right:2px;" fill="none"
-                        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-                    </svg>
-                    Root
-                </button>
-                @if($this->currentFolderId)
-                    @php
-                        $breadcrumbFolders = [];
-                        $f = \App\Models\CdeFolder::find($this->currentFolderId);
-                        while ($f) {
-                            array_unshift($breadcrumbFolders, $f);
-                            $f = $f->parent;
-                        }
-                    @endphp
-                    @foreach($breadcrumbFolders as $bf)
-                        <span class="cde-path-sep">›</span>
-                        @if($loop->last)
-                            <span class="cde-path-current">{{ $bf->name }}</span>
-                        @else
-                            <button wire:click="navigateToFolder({{ $bf->id }})" class="cde-path-item">{{ $bf->name }}</button>
-                        @endif
-                    @endforeach
-                @endif
-            </div>
-        </div>
-        </div>
-
-        {{-- ── Subfolders Grid ──────────────────────────────────────────── --}}
-        @php $subfolders = $this->getSubfolders(); @endphp
-        @if($subfolders->isNotEmpty())
-            <div class="cde-grid" :class="viewMode === 'list' ? 'list-mode' : ''">
-                @foreach($subfolders as $sf)
-                    @php $canModify = $sf->canBeModifiedBy(); @endphp
-                    <div x-data="{ showActions: false }" class="cde-item"
-                         @mouseenter="showActions = true" @mouseleave="showActions = false"
-                         style="cursor:default;position:relative;">
-                        <button wire:click="navigateToFolder({{ $sf->id }})"
-                                style="display:flex;align-items:center;gap:12px;flex:1;background:none;border:none;padding:0;text-align:left;cursor:pointer;">
-                            <div class="cde-ficon cde-ficon-yellow">
-                                <svg viewBox="0 0 24 24" fill="currentColor">
-                                    <path
-                                        d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15zM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z" />
-                                </svg>
-                            </div>
-                            <div class="cde-item-info">
-                                <div class="cde-item-name" title="{{ $sf->name }}">{{ $sf->name }}</div>
-                                <div class="cde-item-meta">
-                                    @if($sf->suitability_code)
-                                        <span class="cde-item-badge">{{ $sf->suitability_code }}</span>
-                                    @endif
-                                    <span>{{ $sf->documents()->count() }} items</span>
-                                </div>
-                            </div>
-                        </button>
-
-                        @if($canModify)
-                            <div x-show="showActions" x-cloak
-                                 style="display:flex;gap:4px;flex-shrink:0;margin-left:8px;">
-                                <button x-data
-                                        @click="() => { const name = prompt('New folder name:', '{{ $sf->name }}'); if (name && name.trim()) { $wire.renameFolder({{ $sf->id }}, name.trim()); } }"
-                                        style="background:none;border:1px solid var(--cde-border);border-radius:5px;padding:4px 8px;cursor:pointer;color:var(--cde-accent);font-size:11px;font-weight:600;">
-                                    Rename
-                                </button>
-                                <button wire:click="deleteFolder({{ $sf->id }})"
-                                        wire:confirm="Delete &quot;{{ $sf->name }}&quot;? This cannot be undone."
-                                        style="background:none;border:1px solid #fecaca;border-radius:5px;padding:4px 8px;cursor:pointer;color:#ef4444;font-size:11px;font-weight:600;">
-                                    Delete
-                                </button>
-                            </div>
-                        @endif
-
-                        <svg style="width:16px;height:16px;color:var(--cde-subtle);flex-shrink:0;" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                        </svg>
+                {{-- 5. ASITE TABLE FOOTER & PAGINATION --}}
+                <div class="asite-footer">
+                    <div class="asite-footer-left">
+                        <span>Rows per Page</span>
+                        <select wire:model.live="perPage"
+                                style="font-size:12px;padding:3px 6px;border-radius:4px;border:1px solid var(--asite-border);background:var(--asite-bg);color:var(--asite-text);">
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                            <option value="250">250</option>
+                        </select>
                     </div>
-                @endforeach
-            </div>
-        @endif
 
-        {{-- ── Documents Table ─────────────────────────────────────────── --}}
-        <div class="cde-docs-wrap">
-            <div class="cde-docs-toolbar">
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                </svg>
-                Documents
-                @php $docCount = $this->record->documents()->where('cde_folder_id', $this->currentFolderId)->count(); @endphp
-                <span class="count">{{ $docCount }}</span>
-                <span style="flex:1;"></span>
-                <span style="font-size:11px;font-weight:400;color:var(--cde-muted);">{{ $this->folderPath }}</span>
-            </div>
-            {{ $this->table }}
-        </div>
+                    <div class="asite-footer-right">
+                        <span>
+                            Showing {{ $docs->firstItem() ?? 0 }} - {{ $docs->lastItem() ?? 0 }} of {{ $docs->total() }}
+                        </span>
 
-        {{-- ── Transmittals ───────────────────────────────────────────── --}}
-        @php $transmittals = $this->getTransmittals(); @endphp
-        @if($transmittals->isNotEmpty())
-            <div class="cde-section-wrap">
-                <x-filament::section icon="heroicon-o-paper-airplane" icon-color="success" collapsible collapsed>
-                    <x-slot name="heading">Transmittals</x-slot>
-                    <x-slot name="description">{{ $transmittals->count() }} packages</x-slot>
+                        {{-- Pagination arrows --}}
+                        <div class="asite-pagination">
+                            <button type="button"
+                                    wire:click="$set('currentPage', {{ max(1, $this->currentPage - 1) }})"
+                                    class="asite-page-btn"
+                                    {{ $this->currentPage <= 1 ? 'disabled style=opacity:0.4;cursor:default;' : '' }}>
+                                ‹
+                            </button>
 
-                    <div style="display: grid; gap: 8px;">
-                        @foreach($transmittals as $tr)
-                            @php
-                                $statusStyle = match ($tr->status) {
-                                    'sent' => 'background:rgba(59,130,246,0.1);color:#3b82f6;',
-                                    'acknowledged' => 'background:rgba(16,185,129,0.1);color:#10b981;',
-                                    default => 'background:rgba(107,114,128,0.1);color:#6b7280;',
-                                };
-                                $purposeLabel = \App\Models\Transmittal::$purposes[$tr->purpose] ?? $tr->purpose;
-                            @endphp
-                            <div
-                                style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:var(--cde-radius);background:var(--cde-surface);border:1px solid var(--cde-border);">
-                                <div
-                                    style="width:36px;height:36px;border-radius:8px;background:rgba(139,92,246,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                        stroke="#8b5cf6" style="width:18px;height:18px;">
-                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                            d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
-                                    </svg>
-                                </div>
-                                <div style="flex:1;min-width:0;">
-                                    <div style="font-weight:600;font-size:13px;color:var(--cde-text);">{{ $tr->transmittal_number }}
-                                        — {{ $tr->subject }}</div>
-                                    <div style="font-size:11px;color:var(--cde-muted);margin-top:2px;">
-                                        To: {{ $tr->to_organization }} · {{ $purposeLabel }} · {{ $tr->items->count() }} doc(s)
-                                        @if($tr->sender) · {{ $tr->sender->name }} @endif
-                                    </div>
-                                </div>
-                                <div style="text-align:right;flex-shrink:0;">
-                                    <span
-                                        style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;text-transform:uppercase;{{ $statusStyle }}">
-                                        {{ \App\Models\Transmittal::$statuses[$tr->status] ?? $tr->status }}
-                                    </span>
-                                    <div style="font-size:10px;color:var(--cde-subtle);margin-top:3px;">
-                                        {{ $tr->created_at->format('M d, Y') }}</div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </x-filament::section>
-            </div>
-        @endif
+                            <button type="button" class="asite-page-btn is-active">
+                                {{ $this->currentPage }}
+                            </button>
 
-        {{-- ── RFIs ───────────────────────────────────────────────────── --}}
-        @php $rfis = $this->getRfis(); @endphp
-        @if($rfis->isNotEmpty())
-            <div class="cde-section-wrap">
-                <x-filament::section icon="heroicon-o-question-mark-circle" icon-color="warning" collapsible collapsed>
-                    <x-slot name="heading">RFIs</x-slot>
-                    <x-slot name="description">{{ $rfis->whereNotIn('status', ['closed', 'void'])->count() }} open ·
-                        {{ $rfis->count() }} total</x-slot>
-
-                    <div style="display: grid; gap: 8px;">
-                        @foreach($rfis as $rfi)
-                            @php
-                                $rfiSt = match ($rfi->status) {
-                                    'open' => 'background:rgba(59,130,246,0.1);color:#3b82f6;',
-                                    'under_review' => 'background:rgba(245,158,11,0.1);color:#f59e0b;',
-                                    'answered' => 'background:rgba(16,185,129,0.1);color:#10b981;',
-                                    'closed' => 'background:rgba(107,114,128,0.1);color:#6b7280;',
-                                    default => 'background:rgba(107,114,128,0.1);color:#6b7280;',
-                                };
-                                $priSt = match ($rfi->priority) {
-                                    'urgent' => 'background:#fef2f2;color:#dc2626;',
-                                    'high' => 'background:#fff7ed;color:#ea580c;',
-                                    'medium' => 'background:#fffbeb;color:#d97706;',
-                                    default => 'background:#f0fdf4;color:#16a34a;',
-                                };
-                            @endphp
-                            <div x-data="{ open: false }"
-                                style="border-radius:var(--cde-radius);background:var(--cde-surface);border:1px solid var(--cde-border);overflow:hidden;">
-                                <div @click="open = !open"
-                                    style="display:flex;align-items:center;gap:14px;padding:12px 16px;cursor:pointer;">
-                                    <div
-                                        style="width:36px;height:36px;border-radius:8px;background:rgba(245,158,11,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                                            stroke="#d97706" style="width:18px;height:18px;">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-                                        </svg>
-                                    </div>
-                                    <div style="flex:1;min-width:0;">
-                                        <div style="font-weight:600;font-size:13px;color:var(--cde-text);">{{ $rfi->rfi_number }} —
-                                            {{ $rfi->subject }}</div>
-                                        <div style="font-size:11px;color:var(--cde-muted);margin-top:2px;">
-                                            @if($rfi->submitter) By: {{ $rfi->submitter->name }} @endif
-                                            @if($rfi->assignee) · To: {{ $rfi->assignee->name }} @endif
-                                            @if($rfi->due_date) · Due: {{ $rfi->due_date->format('M d') }} @endif
-                                            @if($rfi->document)
-                                                · <span style="color:var(--cde-accent);font-weight:600;">{{ $rfi->document->document_number }}</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                    <span
-                                        style="padding:2px 7px;border-radius:99px;font-size:9px;font-weight:700;text-transform:uppercase;{{ $priSt }}">{{ $rfi->priority }}</span>
-                                    <span
-                                        style="padding:2px 8px;border-radius:99px;font-size:10px;font-weight:600;text-transform:uppercase;{{ $rfiSt }}">{{ \App\Models\Rfi::$statuses[$rfi->status] ?? $rfi->status }}</span>
-                                    <svg :class="open && 'rotate-180'"
-                                        style="width:14px;height:14px;color:var(--cde-subtle);transition:transform .15s;flex-shrink:0;"
-                                        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
-                                    </svg>
-                                </div>
-                                <div x-show="open" x-collapse style="padding:0 16px 14px;border-top:1px solid var(--cde-border);">
-                                    <div style="margin-top:12px;">
-                                        <div
-                                            style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--cde-subtle);margin-bottom:4px;">
-                                            Question</div>
-                                        <div
-                                            style="font-size:13px;color:var(--cde-text);line-height:1.6;padding:8px 12px;background:var(--cde-bg);border-radius:6px;border:1px solid var(--cde-border);">
-                                            {{ $rfi->question }}</div>
-                                    </div>
-                                    @if($rfi->answer)
-                                        <div style="margin-top:10px;">
-                                            <div
-                                                style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#10b981;margin-bottom:4px;">
-                                                Answer</div>
-                                            <div
-                                                style="font-size:13px;color:var(--cde-text);line-height:1.6;padding:8px 12px;background:#f0fdf4;border-radius:6px;border:1px solid #bbf7d0;">
-                                                {{ $rfi->answer }}</div>
-                                            @if($rfi->answered_at)
-                                                <div style="font-size:10px;color:var(--cde-subtle);margin-top:3px;">Answered
-                                                    {{ $rfi->answered_at->diffForHumans() }}</div>
-                                            @endif
-                                        </div>
-                                    @endif
-                                    <div style="margin-top:12px;display:flex;gap:6px;">
-                                        @if(in_array($rfi->status, ['open', 'under_review']))
-                                            <div x-data="{ showForm: false }">
-                                                <button @click="showForm = !showForm"
-                                                    style="padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;background:#10b981;color:white;border:none;cursor:pointer;">✎
-                                                    Answer</button>
-                                                <div x-show="showForm" x-collapse style="margin-top:6px;">
-                                                    <form wire:submit.prevent="answerRfi({{ $rfi->id }}, $event.target.answer.value)">
-                                                        <textarea name="answer" rows="3" placeholder="Type your answer..."
-                                                            style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--cde-border);font-size:12px;resize:vertical;"></textarea>
-                                                        <button type="submit"
-                                                            style="margin-top:4px;padding:5px 14px;border-radius:5px;font-size:11px;font-weight:600;background:var(--cde-accent);color:white;border:none;cursor:pointer;">Submit</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        @endif
-                                        @if($rfi->status === 'answered')
-                                            <button wire:click="closeRfi({{ $rfi->id }})"
-                                                style="padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;background:#6b7280;color:white;border:none;cursor:pointer;">✓
-                                                Close</button>
-                                        @endif
-                                        @if($rfi->status === 'closed')
-                                            <button wire:click="reopenRfi({{ $rfi->id }})"
-                                                style="padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;background:#f59e0b;color:white;border:none;cursor:pointer;">↻
-                                                Reopen</button>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </x-filament::section>
-            </div>
-        @endif
-
-        {{-- ═══════════ SHARING PERMISSIONS MODAL ═══════════ --}}
-        @if($showShareModal && $sharingDocumentId)
-            @php $shareDoc = \App\Models\CdeDocument::find($sharingDocumentId); @endphp
-            @if($shareDoc)
-                <div class="cde-share-overlay" wire:click.self="$set('showShareModal', false)">
-                    <div class="cde-share-card" wire:click.stop>
-                        <div class="cde-share-header">
-                            <div>
-                                <h3 style="margin:0;font-size:16px;font-weight:700;color:var(--cde-text);">Sharing & Permissions
-                                </h3>
-                                <p style="margin:3px 0 0;font-size:12px;color:var(--cde-muted);">{{ $shareDoc->document_number }} —
-                                    {{ $shareDoc->title }}</p>
-                            </div>
-                            <button wire:click="$set('showShareModal', false)"
-                                style="background:none;border:none;cursor:pointer;color:var(--cde-subtle);padding:6px;">
-                                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
+                            <button type="button"
+                                    wire:click="$set('currentPage', {{ $this->currentPage + 1 }})"
+                                    class="asite-page-btn"
+                                    {{ $docs->hasMorePages() ? '' : 'disabled style=opacity:0.4;cursor:default;' }}>
+                                ›
                             </button>
                         </div>
-                        <div class="cde-share-body">
-                            <div style="display:flex;gap:6px;margin-bottom:16px;">
-                                <button wire:click="generateShareLink({{ $shareDoc->id }}, 'view', 7)"
-                                    style="flex:1;padding:8px;border-radius:6px;border:1px solid var(--cde-border);background:var(--cde-surface);cursor:pointer;font-size:12px;font-weight:600;color:var(--cde-muted);">👁
-                                    View Link</button>
-                                <button wire:click="generateShareLink({{ $shareDoc->id }}, 'download', 7)"
-                                    style="flex:1;padding:8px;border-radius:6px;border:none;background:var(--cde-accent);cursor:pointer;font-size:12px;font-weight:600;color:white;">🔗
-                                    Download Link</button>
+
+                        {{-- Customise dropdown --}}
+                        <button type="button" class="asite-btn-secondary" style="font-size:11px;padding:4px 8px;">
+                            Customise
+                            <svg viewBox="0 0 20 20" width="10" height="10" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+                </div>
+
+            @elseif($this->activeDocTab === 'distribution')
+                {{-- ── TAB 2: DISTRIBUTION / TRANSMITTALS ───────────────── --}}
+                <div style="padding: 16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                        <div>
+                            <h3 style="font-size:15px;font-weight:700;">Document Distribution & Transmittals</h3>
+                            <p style="font-size:12px;color:var(--asite-text-muted);">Formal document distribution packages sent to contractors, clients, and consultants.</p>
+                        </div>
+                        <button type="button" wire:click="mountAction('createTransmittal')" class="asite-btn-primary">
+                            + Create Transmittal
+                        </button>
+                    </div>
+
+                    @php $transmittals = $this->getTransmittals(); @endphp
+                    @if($transmittals->isNotEmpty())
+                        <div class="asite-table-wrap">
+                            <table class="asite-table">
+                                <thead>
+                                    <tr>
+                                        <th>Transmittal #</th>
+                                        <th>Subject</th>
+                                        <th>Recipient Organization</th>
+                                        <th>Purpose</th>
+                                        <th>Documents</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($transmittals as $tr)
+                                        <tr>
+                                            <td style="font-weight:700;color:#1a73e8;">{{ $tr->transmittal_number }}</td>
+                                            <td style="font-weight:600;">{{ $tr->subject }}</td>
+                                            <td>{{ $tr->to_organization }} @if($tr->to_contact) ({{ $tr->to_contact }}) @endif</td>
+                                            <td><span class="asite-badge asite-badge-rev">{{ $tr->purpose }}</span></td>
+                                            <td>{{ $tr->items->count() }} item(s)</td>
+                                            <td><span class="asite-badge asite-badge-status">{{ $tr->status }}</span></td>
+                                            <td>{{ $tr->created_at->format('d-M-Y') }}</td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div style="padding: 40px; text-align: center; color: var(--asite-text-muted); background: var(--asite-surface); border-radius: 8px;">
+                            No transmittals issued yet.
+                        </div>
+                    @endif
+                </div>
+
+            @elseif($this->activeDocTab === 'comments')
+                {{-- ── TAB 3: COMMENTS & DISCUSSIONS COLLABORATION HUB ─────── --}}
+                <div style="padding: 16px 20px;">
+                    @php
+                        $currFolder = $this->getCurrentFolder();
+                        $allComments = $this->getAllProjectComments();
+                        $projectDocs = \App\Models\CdeDocument::where('cde_project_id', $this->record->id)->orderBy('document_number')->get();
+                    @endphp
+
+                    {{-- Header & Controls Bar --}}
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px;flex-wrap:wrap;">
+                        <div>
+                            <div style="display:flex;align-items:center;gap:8px;">
+                                <h3 style="font-size:16px;font-weight:700;color:var(--asite-text);margin:0;">Discussions & Review Comments</h3>
+                                <span class="asite-badge asite-badge-rev">{{ $allComments->count() }} thread(s)</span>
                             </div>
-                            @php $shares = $this->getDocumentShares($shareDoc->id); @endphp
-                            @if($shares->isNotEmpty())
-                                <div
-                                    style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--cde-subtle);margin-bottom:6px;">
-                                    People with access</div>
-                                @foreach($shares as $share)
-                                    @if($share->shared_with)
-                                        <div class="cde-share-person">
-                                            <div class="cde-share-avatar">{{ strtoupper(substr($share->sharedWith->name ?? '?', 0, 1)) }}</div>
-                                            <div style="flex:1;min-width:0;">
-                                                <div class="cde-share-name">{{ $share->sharedWith->name ?? 'Unknown' }}</div>
-                                                <div class="cde-share-email">{{ $share->sharedWith->email ?? '' }}</div>
+                            <p style="font-size:12px;color:var(--asite-text-muted);margin:4px 0 0 0;">
+                                Unified collaboration threads across folders, drawings, and project deliverables.
+                            </p>
+                        </div>
+
+                        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                            {{-- Filter Pills: All / Open / Resolved --}}
+                            <div style="display:inline-flex;padding:2px;background:var(--asite-surface);border:1px solid var(--asite-border);border-radius:6px;gap:2px;">
+                                <button type="button"
+                                        wire:click="$set('commentFilterStatus', 'all')"
+                                        style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;border:none;cursor:pointer;background:{{ $this->commentFilterStatus === 'all' ? 'var(--asite-blue)' : 'transparent' }};color:{{ $this->commentFilterStatus === 'all' ? '#ffffff' : 'var(--asite-text)' }};">
+                                    All
+                                </button>
+                                <button type="button"
+                                        wire:click="$set('commentFilterStatus', 'open')"
+                                        style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;border:none;cursor:pointer;background:{{ $this->commentFilterStatus === 'open' ? '#d97706' : 'transparent' }};color:{{ $this->commentFilterStatus === 'open' ? '#ffffff' : 'var(--asite-text)' }};">
+                                    ● Open
+                                </button>
+                                <button type="button"
+                                        wire:click="$set('commentFilterStatus', 'resolved')"
+                                        style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;border:none;cursor:pointer;background:{{ $this->commentFilterStatus === 'resolved' ? '#16a34a' : 'transparent' }};color:{{ $this->commentFilterStatus === 'resolved' ? '#ffffff' : 'var(--asite-text)' }};">
+                                    ✓ Resolved
+                                </button>
+                            </div>
+
+                            {{-- Search input --}}
+                            <div class="asite-doc-search" style="width:200px;">
+                                <svg viewBox="0 0 20 20" width="13" height="13" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                                </svg>
+                                <input type="text"
+                                       wire:model.live.debounce.300ms="commentSearch"
+                                       placeholder="Search comments..."
+                                       style="width:100%;" />
+                            </div>
+
+                            {{-- + New Comment Button --}}
+                            <button type="button"
+                                    wire:click="$toggle('showNewCommentBox')"
+                                    class="asite-btn-primary"
+                                    style="padding:6px 12px;font-size:11.5px;">
+                                <svg viewBox="0 0 20 20" width="12" height="12" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                                </svg>
+                                <span>New Discussion</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- ── NEW COMMENT COMPOSER CARD ──────────────────────────── --}}
+                    @if($this->showNewCommentBox)
+                        <div style="background:var(--asite-surface);border:1px solid var(--asite-blue);border-radius:8px;padding:16px;margin-bottom:20px;box-shadow:0 8px 24px rgba(0,102,204,0.08);">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                                <div style="font-size:13px;font-weight:700;color:var(--asite-text);">
+                                    Create New Discussion / Comment Thread
+                                </div>
+                                <button type="button" wire:click="$set('showNewCommentBox', false)" class="asite-icon-btn" title="Close">
+                                    <svg viewBox="0 0 20 20" width="13" height="13" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px;">
+                                <div>
+                                    <label class="asite-form-label">
+                                        <span>Target Item (Folder or Document)</span>
+                                    </label>
+                                    <select wire:model="commentTargetDocId" class="asite-form-input">
+                                        <option value="">📁 Current Folder: {{ $currFolder ? $currFolder->name : 'Project Root' }}</option>
+                                        <optgroup label="Specific Project Document">
+                                            @foreach($projectDocs as $pdoc)
+                                                <option value="{{ $pdoc->id }}">📄 {{ $pdoc->document_number }} — {{ Str::limit($pdoc->title, 45) }}</option>
+                                            @endforeach
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="margin-bottom:12px;">
+                                <label class="asite-form-label">
+                                    <span>Comment / Instructions</span>
+                                </label>
+                                <textarea wire:model="newCommentText"
+                                          placeholder="Type discussion thread, comment, or action item for the team..."
+                                          rows="3"
+                                          class="asite-form-input"
+                                          autofocus></textarea>
+                            </div>
+
+                            <div style="display:flex;justify-content:flex-end;gap:8px;">
+                                <button type="button" wire:click="$set('showNewCommentBox', false)" class="asite-btn-secondary" style="font-size:11px;">
+                                    Cancel
+                                </button>
+                                <button type="button" wire:click="postProjectComment" class="asite-btn-primary" style="font-size:11px;">
+                                    Post Discussion
+                                </button>
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- ── COMMENTS THREAD LIST ──────────────────────────────── --}}
+                    @forelse($allComments as $comm)
+                        @php
+                            $uName = $comm->user?->name ?? 'Team Member';
+                            $parts = explode(' ', trim($uName));
+                            $initials = strtoupper(substr($parts[0] ?? 'T', 0, 1) . substr($parts[1] ?? '', 0, 1));
+                            if (strlen($initials) < 2 && strlen($parts[0]) >= 2) {
+                                $initials = strtoupper(substr($parts[0], 0, 2));
+                            }
+                            $colors = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2', '#4f46e5', '#db2777'];
+                            $avatarColor = $colors[abs(crc32($uName)) % count($colors)];
+                        @endphp
+                        <div class="asite-comment-card {{ $comm->is_resolved ? 'is-resolved' : '' }}">
+                            {{-- Thread Top Row: Avatar, Author, Target, Status, Delete --}}
+                            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:8px;">
+                                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                                    <div class="asite-avatar" style="background:{{ $avatarColor }};">
+                                        {{ $initials }}
+                                    </div>
+                                    <div>
+                                        <div style="font-size:12px;font-weight:700;color:var(--asite-text);">
+                                            {{ $uName }}
+                                        </div>
+                                        <div style="font-size:10.5px;color:var(--asite-text-muted);">
+                                            {{ $comm->created_at->diffForHumans() }}
+                                        </div>
+                                    </div>
+
+                                    {{-- Target Badge: Doc or Folder --}}
+                                    @if($comm->document)
+                                        <span class="asite-comment-target"
+                                              wire:click="openDrawer({{ $comm->cde_document_id }}, 'comments')"
+                                              title="Document: {{ $comm->document->title }} (Click to inspect)">
+                                            @include('filament.app.pages.modules.partials.asite-file-icon', ['type' => $comm->document->file_type])
+                                            <span style="font-weight:700;">{{ $comm->document->document_number }}</span>
+                                            <span style="color:var(--asite-text-muted);margin-left:2px;">{{ Str::limit($comm->document->title, 35) }}</span>
+                                        </span>
+                                    @elseif($comm->folder)
+                                        <span class="asite-comment-target"
+                                              wire:click="selectFolder({{ $comm->cde_folder_id }})"
+                                              title="Folder: {{ $comm->folder->name }} (Click to open folder)">
+                                            <svg viewBox="0 0 24 24" width="13" height="13" fill="#f59e0b">
+                                                <path d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15zM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z" />
+                                            </svg>
+                                            <span style="font-weight:700;">{{ $comm->folder->name }}</span>
+                                        </span>
+                                    @endif
+                                </div>
+
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    {{-- Status Pill --}}
+                                    <button type="button"
+                                            wire:click="toggleCommentResolved({{ $comm->id }})"
+                                            class="asite-status-pill {{ $comm->is_resolved ? 'asite-status-resolved' : 'asite-status-open' }}"
+                                            title="Click to toggle status">
+                                        {{ $comm->is_resolved ? '✓ Resolved' : '● Action Required' }}
+                                    </button>
+
+                                    {{-- Delete Comment --}}
+                                    <button type="button"
+                                            wire:click="deleteComment({{ $comm->id }})"
+                                            wire:confirm="Delete this comment thread?"
+                                            class="asite-icon-btn asite-danger"
+                                            title="Delete thread">
+                                        <svg viewBox="0 0 20 20" width="12" height="12" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            {{-- Comment Body --}}
+                            <div style="font-size:12.5px;color:var(--asite-text);line-height:1.55;background:var(--asite-bg);padding:10px 14px;border-radius:6px;border:1px solid var(--asite-border);margin-top:6px;word-break:break-word;">
+                                {!! nl2br(e($comm->comment)) !!}
+                            </div>
+
+                            {{-- Thread Footer / Actions --}}
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;">
+                                <button type="button"
+                                        wire:click="$set('replyToCommentId', {{ $this->replyToCommentId === $comm->id ? 'null' : $comm->id }})"
+                                        style="font-size:11px;font-weight:600;color:var(--asite-blue);background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:4px;">
+                                    <svg viewBox="0 0 20 20" width="11" height="11" fill="currentColor">
+                                        <path fill-rule="evenodd" d="M7.707 3.293a1 1 0 010 1.414L5.414 7H11a7 7 0 017 7v2a1 1 0 11-2 0v-2a5 5 0 00-5-5H5.414l2.293 2.293a1 1 0 11-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span>{{ $this->replyToCommentId === $comm->id ? 'Cancel Reply' : 'Reply' }}</span>
+                                </button>
+
+                                @if($comm->replies->count() > 0)
+                                    <span style="font-size:11px;color:var(--asite-text-muted);">
+                                        {{ $comm->replies->count() }} {{ Str::plural('reply', $comm->replies->count()) }}
+                                    </span>
+                                @endif
+                            </div>
+
+                            {{-- ── THREADED REPLIES ──────────────────────────── --}}
+                            @if($comm->replies->isNotEmpty() || $this->replyToCommentId === $comm->id)
+                                <div class="asite-reply-connector">
+                                    @foreach($comm->replies as $reply)
+                                        @php
+                                            $rName = $reply->user?->name ?? 'Team Member';
+                                            $rParts = explode(' ', trim($rName));
+                                            $rInitials = strtoupper(substr($rParts[0] ?? 'T', 0, 1) . substr($rParts[1] ?? '', 0, 1));
+                                            $rAvatarColor = $colors[abs(crc32($rName)) % count($colors)];
+                                        @endphp
+                                        <div class="asite-reply-card">
+                                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                                <div style="display:flex;align-items:center;gap:6px;">
+                                                    <div class="asite-avatar" style="width:22px;height:22px;font-size:9.5px;background:{{ $rAvatarColor }};">
+                                                        {{ $rInitials }}
+                                                    </div>
+                                                    <span style="font-size:11px;font-weight:700;color:var(--asite-text);">{{ $rName }}</span>
+                                                    <span style="font-size:10px;color:var(--asite-text-muted);">{{ $reply->created_at->diffForHumans() }}</span>
+                                                </div>
+                                                <button type="button"
+                                                        wire:click="deleteComment({{ $reply->id }})"
+                                                        wire:confirm="Delete this reply?"
+                                                        class="asite-icon-btn asite-danger"
+                                                        style="padding:2px;"
+                                                        title="Delete reply">
+                                                    <svg viewBox="0 0 20 20" width="10" height="10" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </button>
                                             </div>
-                                            <span
-                                                class="cde-share-badge cde-share-badge-{{ $share->permission }}">{{ $share->permission }}</span>
-                                            <button wire:click="revokeShare({{ $share->id }})" class="cde-share-revoke">✕</button>
+                                            <div style="font-size:11.5px;color:var(--asite-text);line-height:1.45;word-break:break-word;">
+                                                {!! nl2br(e($reply->comment)) !!}
+                                            </div>
+                                        </div>
+                                    @endforeach
+
+                                    {{-- Inline Reply Composer --}}
+                                    @if($this->replyToCommentId === $comm->id)
+                                        <div style="padding:10px;background:var(--asite-surface);border:1px solid var(--asite-blue);border-radius:6px;">
+                                            <div style="font-size:11px;font-weight:600;color:var(--asite-text);margin-bottom:4px;">
+                                                Replying to {{ $uName }}
+                                            </div>
+                                            <textarea wire:model="replyCommentText"
+                                                      placeholder="Write your reply..."
+                                                      rows="2"
+                                                      class="asite-form-input"
+                                                      style="margin-bottom:6px;"
+                                                      autofocus></textarea>
+                                            <div style="display:flex;justify-content:flex-end;gap:6px;">
+                                                <button type="button" wire:click="$set('replyToCommentId', null)" class="asite-btn-secondary" style="font-size:10.5px;padding:3px 8px;">
+                                                    Cancel
+                                                </button>
+                                                <button type="button" wire:click="replyToComment({{ $comm->id }})" class="asite-btn-primary" style="font-size:10.5px;padding:3px 10px;">
+                                                    Send Reply
+                                                </button>
+                                            </div>
                                         </div>
                                     @endif
-                                    @if($share->share_token)
-                                        <div class="cde-link-row">
-                                            <span class="cde-link-token">{{ config('app.url') }}/share/doc/{{ $share->share_token }}</span>
-                                            <span
-                                                class="cde-share-badge cde-share-badge-{{ $share->permission }}">{{ $share->permission }}</span>
-                                            @if($share->expires_at)
-                                                <span
-                                                    style="font-size:10px;color:var(--cde-subtle);">{{ $share->expires_at->diffForHumans() }}</span>
-                                            @endif
-                                            <button wire:click="revokeShare({{ $share->id }})" class="cde-share-revoke">✕</button>
-                                        </div>
-                                    @endif
-                                @endforeach
-                            @else
-                                <div style="text-align:center;padding:20px;color:var(--cde-subtle);font-size:12px;">🔒 No active shares
                                 </div>
                             @endif
                         </div>
-                    </div>
-                </div>
-            @endif
-        @endif
-
-    @else
-        {{-- ══════════════════════════════════════════════════════════════════
-        REQUIRED SUBMISSIONS TAB
-        ══════════════════════════════════════════════════════════════════ --}}
-
-        {{-- Stage Progress Cards --}}
-        @php $subStats = $this->getSubmissionStats(); @endphp
-        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:8px;margin-bottom:16px;">
-            @foreach($subStats as $s)
-                @if($s['total'] > 0)
-                    <div style="background:white;border:1px solid #e2e8f0;border-radius:8px;padding:12px;text-align:center;">
-                        <div
-                            style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin-bottom:6px;">
-                            {{ $s['label'] }}</div>
-                        <div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden;margin-bottom:6px;">
-                            <div
-                                style="width:{{ $s['completion'] }}%;height:100%;background:{{ $s['completion'] >= 80 ? '#10b981' : ($s['completion'] >= 40 ? '#d97706' : '#ef4444') }};border-radius:3px;transition:width .3s;">
+                    @empty
+                        <div style="padding:48px 24px;text-align:center;background:var(--asite-surface);border-radius:10px;border:1px dashed var(--asite-border);">
+                            <div style="width:48px;height:48px;border-radius:50%;background:#f1f5f9;display:inline-flex;align-items:center;justify-content:center;color:#64748b;margin-bottom:12px;">
+                                <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M4.848 2.771A49.144 49.144 0 0112 2.25c2.43 0 4.817.177 7.152.521 1.978.292 3.348 2.024 3.348 3.97v6.02c0 1.946-1.37 3.678-3.348 3.97a48.901 48.901 0 01-3.476.383.39.39 0 00-.297.17l-2.755 4.133a.75.75 0 01-1.256 0l-2.755-4.133a.39.39 0 00-.297-.17 48.9 48.9 0 01-3.476-.384c-1.978-.29-3.348-2.024-3.348-3.97V6.741c0-1.946 1.37-3.68 3.348-3.97zM6.75 8.25a.75.75 0 01.75-.75h9a.75.75 0 010 1.5h-9a.75.75 0 01-.75-.75zm.75 2.25a.75.75 0 000 1.5H12a.75.75 0 000-1.5H7.5z" clip-rule="evenodd" />
+                                </svg>
                             </div>
+                            <h4 style="font-size:14px;font-weight:700;color:var(--asite-text);margin:0 0 4px 0;">No comments found</h4>
+                            <p style="font-size:12px;color:var(--asite-text-muted);margin:0 0 16px 0;max-width:360px;margin-left:auto;margin-right:auto;">
+                                @if(!empty($this->commentSearch) || $this->commentFilterStatus !== 'all')
+                                    No discussions match your current filter or search criteria.
+                                @else
+                                    Start a discussion thread or leave comments on drawings and folders to collaborate with your project team.
+                                @endif
+                            </p>
+                            <button type="button" wire:click="$set('showNewCommentBox', true)" class="asite-btn-primary" style="font-size:11.5px;">
+                                + Start a Discussion
+                            </button>
                         </div>
-                        <div style="display:flex;justify-content:center;gap:8px;font-size:10px;">
-                            <span style="color:#10b981;font-weight:700;">{{ $s['approved'] }}<span
-                                    style="font-weight:400;color:#94a3b8;"> ✓</span></span>
-                            <span style="color:#475569;font-weight:700;">{{ $s['total'] }}<span
-                                    style="font-weight:400;color:#94a3b8;"> total</span></span>
-                            @if($s['overdue'] > 0)
-                                <span style="color:#ef4444;font-weight:700;">{{ $s['overdue'] }}<span style="font-weight:400;">
-                                        late</span></span>
-                            @endif
+                    @endforelse
+                </div>
+
+            @elseif($this->activeDocTab === 'pipeline')
+                {{-- ── TAB 4: ISO 19650 PIPELINE & HEALTH ────────────────── --}}
+                <div style="padding: 16px;">
+                    <h3 style="font-size:15px;font-weight:700;margin-bottom:12px;">ISO 19650 Status Pipeline</h3>
+                    @php $pipeline = $this->getStatusPipeline(); @endphp
+                    <div style="display:grid;grid-template-columns:repeat(5, 1fr);gap:10px;margin-bottom:20px;">
+                        @foreach($pipeline as $stage)
+                            <div style="background:{{ $stage['bg'] }};color:{{ $stage['color'] }};padding:14px;border-radius:6px;text-align:center;">
+                                <div style="font-size:24px;font-weight:800;line-height:1;">{{ $stage['count'] }}</div>
+                                <div style="font-size:11px;font-weight:700;text-transform:uppercase;margin-top:4px;">{{ $stage['label'] }}</div>
+                            </div>
+                        @endforeach
+                    </div>
+
+                    @php $docHealth = $this->getDocumentHealth(); @endphp
+                    <div style="display:flex;gap:10px;margin-bottom:20px;">
+                        <div style="flex:1;padding:12px;border-radius:6px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:12px;">
+                            <strong>{{ $docHealth['needs_revision'] }}</strong> documents requiring revision
+                        </div>
+                        <div style="flex:1;padding:12px;border-radius:6px;background:#fffbeb;border:1px solid #fde68a;color:#92400e;font-size:12px;">
+                            <strong>{{ $docHealth['review_backlog'] }}</strong> awaiting review
+                        </div>
+                        <div style="flex:1;padding:12px;border-radius:6px;background:#f1f5f9;border:1px solid #e2e8f0;color:#475569;font-size:12px;">
+                            <strong>{{ $docHealth['stale'] }}</strong> stale (30+ days without update)
                         </div>
                     </div>
-                @endif
-            @endforeach
-        </div>
 
-        {{-- Submissions by Stage --}}
-        @foreach(\App\Models\DocumentSubmission::$stages as $stageKey => $stageLabel)
-            @php $stageSubs = $this->getSubmissions($stageKey); @endphp
-            @if($stageSubs->isNotEmpty())
-                <x-filament::section collapsible>
-                    <x-slot name="heading">
-                        <span style="display:flex;align-items:center;gap:6px;">
-                            {{ $stageLabel }}
-                            <span
-                                style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:rgba(99,102,241,0.1);color:#6366f1;">{{ $stageSubs->count() }}</span>
-                            @php
-                                $stageApproved = $stageSubs->where('status', 'approved')->count();
-                                $stagePct = $stageSubs->count() > 0 ? round(($stageApproved / $stageSubs->count()) * 100) : 0;
-                            @endphp
-                            @if($stageSubs->count() > 0)
-                                <span
-                                    style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:{{ $stagePct >= 80 ? '#dcfce7' : ($stagePct >= 40 ? '#fef3c7' : '#f1f5f9') }};color:{{ $stagePct >= 80 ? '#16a34a' : ($stagePct >= 40 ? '#d97706' : '#64748b') }};">
-                                    {{ $stagePct }}%
-                                </span>
-                            @endif
-                        </span>
-                    </x-slot>
-
+                    @php $sm = $this->getSubmissionMatrix(); @endphp
+                    <h4 style="font-size:13px;font-weight:700;margin-bottom:8px;">Deliverable Matrix by Discipline</h4>
                     <div style="overflow-x:auto;">
                         <table style="width:100%;font-size:12px;border-collapse:collapse;">
                             <thead>
                                 <tr style="border-bottom:2px solid #e2e8f0;">
-                                    <th
-                                        style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">
-                                        Document / Report</th>
-                                    <th
-                                        style="text-align:left;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">
-                                        Discipline</th>
-                                    <th
-                                        style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">
-                                        Due Date</th>
-                                    <th
-                                        style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">
-                                        Status</th>
-                                    <th
-                                        style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">
-                                        File</th>
-                                    <th
-                                        style="text-align:center;padding:8px 10px;font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">
-                                        Actions</th>
+                                    <th style="text-align:left;padding:8px;">Discipline</th>
+                                    @foreach($sm['levels'] as $level)
+                                        <th style="text-align:center;padding:8px;color:{{ $level['color'] }};">{{ $level['label'] }}</th>
+                                    @endforeach
+                                    <th style="text-align:center;padding:8px;">Completion</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($stageSubs as $sub)
-                                    @php
-                                        $statusColors = [
-                                            'pending' => ['bg' => '#f1f5f9', 'text' => '#475569'],
-                                            'submitted' => ['bg' => '#dbeafe', 'text' => '#2563eb'],
-                                            'approved' => ['bg' => '#dcfce7', 'text' => '#16a34a'],
-                                            'rejected' => ['bg' => '#fef2f2', 'text' => '#dc2626'],
-                                            'overdue' => ['bg' => '#fef2f2', 'text' => '#dc2626'],
-                                            'waived' => ['bg' => '#f5f3ff', 'text' => '#7c3aed'],
-                                        ];
-                                        $sc = $statusColors[$sub->status] ?? $statusColors['pending'];
-                                        $isOverdue = $sub->isOverdue();
-                                    @endphp
-                                    <tr
-                                        style="border-bottom:1px solid #f1f5f9;{{ $isOverdue ? 'background:rgba(239,68,68,0.02);' : '' }}">
-                                        <td style="padding:8px 10px;font-weight:600;color:#334155;">
-                                            {{ $sub->title }}
-                                            @if($sub->document)
-                                                <div style="font-size:10px;font-weight:500;color:var(--cde-accent);margin-top:1px;">
-                                                    {{ $sub->document->document_number }} — {{ $sub->document->title }}</div>
-                                            @endif
-                                            @if($sub->description)
-                                                <div style="font-size:10px;font-weight:400;color:#94a3b8;margin-top:1px;">
-                                                    {{ \Illuminate\Support\Str::limit($sub->description, 60) }}</div>
-                                            @endif
-                                        </td>
-                                        <td style="padding:8px 10px;color:#64748b;">
-                                            {{ \App\Models\DocumentSubmission::$disciplines[$sub->discipline] ?? $sub->discipline ?? '—' }}
-                                        </td>
-                                        <td style="text-align:center;padding:8px 10px;white-space:nowrap;">
-                                            @if($sub->due_date)
-                                                <span
-                                                    style="color:{{ $isOverdue ? '#ef4444' : '#475569' }};font-weight:{{ $isOverdue ? '700' : '400' }};">
-                                                    {{ $sub->due_date->format('M d, Y') }}
-                                                </span>
-                                                @if($isOverdue)
-                                                    <div style="font-size:9px;color:#ef4444;font-weight:700;">
-                                                        {{ $sub->due_date->diffForHumans() }}</div>
-                                                @endif
-                                            @else
-                                                <span style="color:#e2e8f0;">—</span>
-                                            @endif
-                                        </td>
-                                        <td style="text-align:center;padding:8px 10px;">
-                                            <span
-                                                style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:10px;font-weight:700;background:{{ $sc['bg'] }};color:{{ $sc['text'] }};">
-                                                {{ ucfirst($sub->status) }}
-                                            </span>
-                                            @if($sub->status === 'rejected' && $sub->rejection_reason)
-                                                <div style="font-size:9px;color:#ef4444;margin-top:2px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"
-                                                    title="{{ $sub->rejection_reason }}">
-                                                    {{ $sub->rejection_reason }}
-                                                </div>
-                                            @endif
-                                        </td>
-                                        <td style="text-align:center;padding:8px 10px;">
-                                            @if($sub->file_path)
-                                                <button wire:click="downloadSubmission({{ $sub->id }})"
-                                                    style="background:none;border:none;cursor:pointer;color:#2563eb;font-size:11px;font-weight:600;display:inline-flex;align-items:center;gap:3px;"
-                                                    title="{{ $sub->file_name }}">
-                                                    <svg style="width:14px;height:14px;" fill="none" viewBox="0 0 24 24"
-                                                        stroke="currentColor" stroke-width="2">
-                                                        <path stroke-linecap="round" stroke-linejoin="round"
-                                                            d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                                    </svg>
-                                                    {{ $sub->formattedSize() }}
-                                                </button>
-                                            @else
-                                                <span style="color:#e2e8f0;font-size:11px;">No file</span>
-                                            @endif
-                                        </td>
-                                        <td style="text-align:center;padding:8px 10px;">
-                                            <div style="display:flex;gap:4px;justify-content:center;">
-                                                @if(in_array($sub->status, ['pending', 'rejected']))
-                                                    {{-- Upload / Submit button --}}
-                                                    <button wire:click="mountAction('submitDocumentAction', {submissionId: {{ $sub->id }}})"
-                                                        style="background:#2563eb;color:white;border:none;padding:4px 10px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:3px;"
-                                                        title="Upload & Submit">
-                                                        <svg style="width:12px;height:12px;" fill="none" viewBox="0 0 24 24"
-                                                            stroke="currentColor" stroke-width="2">
-                                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                                d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                                                        </svg>
-                                                        Submit
-                                                    </button>
-                                                @endif
-                                                @if($sub->status === 'submitted')
-                                                    <button wire:click="reviewSubmission({{ $sub->id }}, 'approved')"
-                                                        style="background:#10b981;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;"
-                                                        title="Approve">✓</button>
-                                                    <button wire:click="reviewSubmission({{ $sub->id }}, 'rejected')"
-                                                        style="background:#ef4444;color:white;border:none;padding:4px 8px;border-radius:4px;font-size:10px;font-weight:600;cursor:pointer;"
-                                                        title="Reject">✕</button>
-                                                @endif
-                                                @if($sub->status === 'approved')
-                                                    <span style="color:#10b981;font-size:11px;">✓ Done</span>
-                                                @endif
-                                            </div>
-                                        </td>
+                                @foreach($sm['matrix'] as $row)
+                                    <tr style="border-bottom:1px solid #f1f5f9;">
+                                        <td style="padding:8px;font-weight:600;">{{ $row['discipline'] }} ({{ $row['total'] }})</td>
+                                        @foreach(array_keys($sm['levels']) as $status)
+                                            <td style="text-align:center;padding:8px;">{{ $row[$status] > 0 ? $row[$status] : '—' }}</td>
+                                        @endforeach
+                                        <td style="text-align:center;padding:8px;font-weight:700;">{{ $row['completion_pct'] }}%</td>
                                     </tr>
                                 @endforeach
                             </tbody>
                         </table>
                     </div>
-                </x-filament::section>
+                </div>
             @endif
-        @endforeach
 
-        @php $anySubmissions = \App\Models\DocumentSubmission::where('cde_project_id', $this->record->id)->exists(); @endphp
-        @if(!$anySubmissions)
-            <div style="text-align:center;padding:40px 20px;color:#94a3b8;">
-                <svg style="width:48px;height:48px;margin:0 auto 12px;opacity:0.3;" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M11.35 3.836c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m8.9-4.414c.376.023.75.05 1.124.08 1.131.094 1.976 1.057 1.976 2.192V16.5A2.25 2.25 0 0118 18.75h-2.25m-7.5-10.5H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V18.75m-7.5-10.5h6.375c.621 0 1.125.504 1.125 1.125v9.375m-8.25-3l1.5 1.5 3-3.75" />
-                </svg>
-                <div style="font-size:15px;font-weight:600;color:#64748b;margin-bottom:4px;">No Required Submissions Yet</div>
-                <div style="font-size:12px;max-width:400px;margin:0 auto;">
-                    Use the <strong>"Add Required Submission"</strong> button above to define which reports and documents must
-                    be submitted at each project stage.
+        </div>
+    </div>
+
+    {{-- ══════════════════════════════════════════════════════════════════════
+         4. ASITE SLIDE-OVER DOCUMENT DETAIL DRAWER
+         ══════════════════════════════════════════════════════════════════════ --}}
+    @if($this->drawerOpen && $this->selectedDocId)
+        @php $selectedDoc = $this->getSelectedDocument(); @endphp
+        @if($selectedDoc)
+            <div class="asite-drawer-overlay" wire:click.self="closeDrawer">
+                <div class="asite-drawer-panel">
+                    {{-- Header --}}
+                    <div class="asite-drawer-header">
+                        <div>
+                            <div class="asite-drawer-title">{{ $selectedDoc->document_number }}</div>
+                            <div style="font-size:12px;color:var(--asite-text-muted);margin-top:2px;">{{ $selectedDoc->title }}</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            <button type="button" wire:click="downloadDocument({{ $selectedDoc->id }})" class="asite-btn-primary" style="padding:4px 10px;font-size:11px;">
+                                Download
+                            </button>
+                            <button type="button" wire:click="closeDrawer" class="asite-icon-btn" style="padding:6px;">
+                                ✕
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Drawer Subtabs --}}
+                    <div class="asite-drawer-tabs">
+                        <button type="button" wire:click="$set('drawerTab', 'attributes')" class="asite-drawer-tab-btn {{ $this->drawerTab === 'attributes' ? 'is-active' : '' }}">
+                            Attributes
+                        </button>
+                        <button type="button" wire:click="$set('drawerTab', 'versions')" class="asite-drawer-tab-btn {{ $this->drawerTab === 'versions' ? 'is-active' : '' }}">
+                            Versions ({{ $selectedDoc->versions->count() + 1 }})
+                        </button>
+                        <button type="button" wire:click="$set('drawerTab', 'comments')" class="asite-drawer-tab-btn {{ $this->drawerTab === 'comments' ? 'is-active' : '' }}">
+                            Comments ({{ $selectedDoc->comments->count() }})
+                        </button>
+                    </div>
+
+                    {{-- Drawer Body --}}
+                    <div class="asite-drawer-body">
+                        @if($this->drawerTab === 'attributes')
+                            <div class="asite-meta-grid">
+                                <span class="asite-meta-label">Doc Reference:</span>
+                                <span class="asite-meta-val" style="font-weight:700;color:#1a73e8;">{{ $selectedDoc->document_number }}</span>
+
+                                <span class="asite-meta-label">Title:</span>
+                                <span class="asite-meta-val">{{ $selectedDoc->title }}</span>
+
+                                <span class="asite-meta-label">Revision:</span>
+                                <span class="asite-meta-val"><span class="asite-badge asite-badge-rev">{{ $selectedDoc->revision }}</span></span>
+
+                                <span class="asite-meta-label">Suitability / Status:</span>
+                                <span class="asite-meta-val"><span class="asite-badge asite-badge-status">{{ $selectedDoc->status }}</span></span>
+
+                                <span class="asite-meta-label">Discipline:</span>
+                                <span class="asite-meta-val">{{ ucfirst($selectedDoc->discipline ?? 'Other') }}</span>
+
+                                <span class="asite-meta-label">File Type:</span>
+                                <span class="asite-meta-val" style="text-transform:uppercase;">{{ $selectedDoc->file_type }}</span>
+
+                                <span class="asite-meta-label">File Size:</span>
+                                <span class="asite-meta-val">{{ $selectedDoc->formattedSize() }}</span>
+
+                                <span class="asite-meta-label">Folder:</span>
+                                <span class="asite-meta-val">{{ $selectedDoc->folder?->name ?? 'Root' }}</span>
+
+                                <span class="asite-meta-label">Uploaded By:</span>
+                                <span class="asite-meta-val">{{ $selectedDoc->uploadedBy?->name ?? 'System' }}</span>
+
+                                <span class="asite-meta-label">Upload Date:</span>
+                                <span class="asite-meta-val">{{ $selectedDoc->created_at->format('d-M-Y H:i') }}</span>
+
+                                <span class="asite-meta-label">Task Due Date:</span>
+                                <span class="asite-meta-val">{{ $selectedDoc->due_date ? $selectedDoc->due_date->format('d-M-Y') : 'None' }}</span>
+                            </div>
+
+                            @if($selectedDoc->description)
+                                <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--asite-border);">
+                                    <div style="font-size:12px;font-weight:700;margin-bottom:6px;">Description / Purpose</div>
+                                    <div style="font-size:12px;color:var(--asite-text-muted);line-height:1.5;">{{ $selectedDoc->description }}</div>
+                                </div>
+                            @endif
+
+                        @elseif($this->drawerTab === 'versions')
+                            <div style="margin-bottom:14px;">
+                                <div style="font-weight:700;font-size:13px;margin-bottom:4px;">Current Version: {{ $selectedDoc->revision }}</div>
+                                <div style="font-size:11px;color:var(--asite-text-muted);">Uploaded {{ $selectedDoc->created_at->format('d-M-Y') }} by {{ $selectedDoc->uploadedBy?->name ?? 'User' }}</div>
+                            </div>
+
+                            @if($selectedDoc->versions->isNotEmpty())
+                                <div style="border-top:1px solid var(--asite-border);padding-top:12px;">
+                                    <div style="font-size:12px;font-weight:700;margin-bottom:10px;">Previous Revisions</div>
+                                    @foreach($selectedDoc->versions as $v)
+                                        <div style="padding:10px;border-radius:5px;border:1px solid var(--asite-border);background:var(--asite-surface);margin-bottom:8px;">
+                                            <div style="display:flex;justify-content:space-between;align-items:center;">
+                                                <span style="font-weight:700;font-size:12px;">Rev {{ $v->version_number }}</span>
+                                                <span style="font-size:11px;color:var(--asite-text-muted);">{{ $v->created_at->format('d-M-Y') }}</span>
+                                            </div>
+                                            @if($v->change_description)
+                                                <div style="font-size:11px;color:var(--asite-text-muted);margin-top:4px;">{{ $v->change_description }}</div>
+                                            @endif
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+
+                        @elseif($this->drawerTab === 'comments')
+                            <div style="margin-bottom:16px;">
+                                <div style="font-size:12px;font-weight:700;margin-bottom:6px;color:var(--asite-text);">
+                                    Add Review Note / Comment
+                                </div>
+                                <textarea wire:model="newCommentText"
+                                          placeholder="Type a comment or instruction for this document..."
+                                          rows="3"
+                                          class="asite-form-input"></textarea>
+                                <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+                                    <button type="button" wire:click="postComment" class="asite-btn-primary" style="padding:5px 14px;font-size:11px;">
+                                        Post Note
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style="border-top:1px solid var(--asite-border);padding-top:14px;">
+                                <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--asite-text);">
+                                    Discussion History ({{ $selectedDoc->comments->count() }})
+                                </div>
+                                @forelse($selectedDoc->comments as $c)
+                                    @php
+                                        $cName = $c->user?->name ?? 'User';
+                                        $cParts = explode(' ', trim($cName));
+                                        $cInitials = strtoupper(substr($cParts[0] ?? 'U', 0, 1) . substr($cParts[1] ?? '', 0, 1));
+                                        if (strlen($cInitials) < 2 && strlen($cParts[0]) >= 2) {
+                                            $cInitials = strtoupper(substr($cParts[0], 0, 2));
+                                        }
+                                        $colors = ['#2563eb', '#7c3aed', '#059669', '#d97706', '#dc2626', '#0891b2', '#4f46e5', '#db2777'];
+                                        $cColor = $colors[abs(crc32($cName)) % count($colors)];
+                                    @endphp
+                                    <div class="asite-comment-card {{ $c->is_resolved ? 'is-resolved' : '' }}" style="padding:10px 12px;margin-bottom:8px;">
+                                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                                            <div style="display:flex;align-items:center;gap:6px;">
+                                                <div class="asite-avatar" style="width:22px;height:22px;font-size:9.5px;background:{{ $cColor }};">
+                                                    {{ $cInitials }}
+                                                </div>
+                                                <span style="font-weight:700;font-size:11.5px;color:var(--asite-text);">{{ $cName }}</span>
+                                                <span style="font-size:10px;color:var(--asite-text-muted);">{{ $c->created_at->diffForHumans() }}</span>
+                                            </div>
+                                            <button type="button"
+                                                    wire:click="toggleCommentResolved({{ $c->id }})"
+                                                    class="asite-status-pill {{ $c->is_resolved ? 'asite-status-resolved' : 'asite-status-open' }}"
+                                                    style="font-size:9.5px;padding:2px 7px;">
+                                                {{ $c->is_resolved ? '✓ Resolved' : '● Open' }}
+                                            </button>
+                                        </div>
+                                        <div style="font-size:12px;color:var(--asite-text);line-height:1.45;word-break:break-word;">
+                                            {!! nl2br(e($c->comment)) !!}
+                                        </div>
+                                    </div>
+                                @empty
+                                    <div style="text-align:center;color:var(--asite-text-muted);font-size:11px;padding:20px;background:var(--asite-surface);border-radius:6px;">
+                                        No comments on this document yet. Type above to leave the first note.
+                                    </div>
+                                @endforelse
+                            </div>
+                        @endif
+                    </div>
                 </div>
             </div>
         @endif
-    @endif {{-- end activeDocTab --}}
+    @endif
+
+    {{-- ══════════════════════════════════════════════════════════════════════
+         5. FOLDER MODALS: NEW FOLDER & RENAME (CLEAN DESIGN - NO ISO)
+         ══════════════════════════════════════════════════════════════════════ --}}
+    @if($this->showNewFolderModal)
+        @php
+            $parentFolder = $this->newFolderParentId ? \App\Models\CdeFolder::find($this->newFolderParentId) : null;
+        @endphp
+        <div class="asite-modal-backdrop" wire:click.self="$set('showNewFolderModal', false)">
+            <div class="asite-modal-card">
+                {{-- Header --}}
+                <div class="asite-modal-header">
+                    <div class="asite-modal-title">
+                        <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;background:#fef3c7;color:#d97706;flex-shrink:0;">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                                <path d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15zM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <div>Create New Folder</div>
+                            <div style="font-size:11px;font-weight:400;color:var(--asite-text-muted);">
+                                Location: <span style="font-weight:600;color:var(--asite-text);">{{ $parentFolder ? $parentFolder->name : 'Project Root' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="$set('showNewFolderModal', false)" class="asite-icon-btn" title="Close">
+                        <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="asite-modal-body">
+                    <div style="margin-bottom:16px;">
+                        <label class="asite-form-label">
+                            <span>Folder Name <span style="color:#ef4444;">*</span></span>
+                        </label>
+                        <input type="text"
+                               wire:model="newFolderName"
+                               wire:keydown.enter="submitNewFolder"
+                               placeholder="e.g. 01.1.6 Environmental Management Plan"
+                               class="asite-form-input"
+                               autofocus />
+                    </div>
+
+                    <div>
+                        <label class="asite-form-label">
+                            <span>Comments & Purpose</span>
+                            <span style="font-weight:400;color:var(--asite-text-muted);font-size:10.5px;">Optional</span>
+                        </label>
+                        <textarea wire:model="newFolderDescription"
+                                  placeholder="Add notes, purpose, or guidelines for files and deliverables in this folder..."
+                                  rows="3"
+                                  class="asite-form-input"></textarea>
+                        <p class="asite-form-hint">
+                            Comments added here will be saved as the folder's guidelines and visible to all project collaborators.
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Footer --}}
+                <div class="asite-modal-footer">
+                    <button type="button" wire:click="$set('showNewFolderModal', false)" class="asite-btn-secondary">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="submitNewFolder" class="asite-btn-primary">
+                        <svg viewBox="0 0 20 20" width="13" height="13" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        <span>Create Folder</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @if($this->showRenameFolderModal)
+        <div class="asite-modal-backdrop" wire:click.self="$set('showRenameFolderModal', false)">
+            <div class="asite-modal-card">
+                {{-- Header --}}
+                <div class="asite-modal-header">
+                    <div class="asite-modal-title">
+                        <span style="display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:6px;background:#e0f2fe;color:#0369a1;flex-shrink:0;">
+                            <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor">
+                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                            </svg>
+                        </span>
+                        <div>
+                            <div>Edit Folder & Guidelines</div>
+                            <div style="font-size:11px;font-weight:400;color:var(--asite-text-muted);">
+                                Update name, notes, or purpose guidelines
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" wire:click="$set('showRenameFolderModal', false)" class="asite-icon-btn" title="Close">
+                        <svg viewBox="0 0 20 20" width="14" height="14" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+
+                {{-- Body --}}
+                <div class="asite-modal-body">
+                    <div style="margin-bottom:16px;">
+                        <label class="asite-form-label">
+                            <span>Folder Name <span style="color:#ef4444;">*</span></span>
+                        </label>
+                        <input type="text"
+                               wire:model="renameFolderName"
+                               wire:keydown.enter="submitRenameFolder"
+                               class="asite-form-input" />
+                    </div>
+
+                    <div>
+                        <label class="asite-form-label">
+                            <span>Comments & Purpose Guidelines</span>
+                        </label>
+                        <textarea wire:model="renameFolderDescription"
+                                  placeholder="Update notes, purpose, or instructions for this folder..."
+                                  rows="3"
+                                  class="asite-form-input"></textarea>
+                        <p class="asite-form-hint">
+                            Update instructions or guidelines for files kept in this folder.
+                        </p>
+                    </div>
+                </div>
+
+                {{-- Footer --}}
+                <div class="asite-modal-footer">
+                    <button type="button" wire:click="$set('showRenameFolderModal', false)" class="asite-btn-secondary">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="submitRenameFolder" class="asite-btn-primary">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <x-filament-actions::modals />
 
 </x-filament-panels::page>

@@ -28,6 +28,10 @@ class CdeFolder extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+    public function comments()
+    {
+        return $this->hasMany(CdeDocumentComment::class, 'cde_folder_id')->orderBy('created_at', 'desc');
+    }
     public function canBeModifiedBy(?User $user = null): bool
     {
         $user = $user ?? auth()->user();
