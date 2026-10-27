@@ -180,7 +180,7 @@ class ModuleNotificationService
             str_contains($slug, 'social-record') => 'heroicon-o-user',
             str_contains($slug, 'safety-inspection') => 'heroicon-o-shield-check',
             str_contains($slug, 'tender') => 'heroicon-o-document-text',
-            str_contains($slug, 'contract') => 'heroicon-o-document-signature',
+            str_contains($slug, 'contract') => 'heroicon-o-document-check',
             str_contains($slug, 'project-suggestion') => 'heroicon-o-light-bulb',
             str_contains($slug, 'overdue') || str_contains($slug, 'alert') => 'heroicon-o-exclamation-triangle',
             // ── Inventory ──

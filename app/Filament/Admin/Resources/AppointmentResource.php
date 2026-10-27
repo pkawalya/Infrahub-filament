@@ -17,7 +17,7 @@ class AppointmentResource extends Resource
 {
     protected static ?string $model = Appointment::class;
 
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-phone-call';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-phone';
     protected static string|\UnitEnum|null $navigationGroup = 'Platform Management';
     protected static ?string $navigationLabel = 'Demo Bookings';
     protected static ?string $modelLabel = 'Demo Booking';

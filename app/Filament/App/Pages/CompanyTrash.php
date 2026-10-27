@@ -45,7 +45,7 @@ class CompanyTrash extends Page
             'daily_site_diaries' => ['label' => 'Daily Site Diaries',   'model' => \App\Models\DailySiteDiary::class,      'labelField' => 'diary_date',          'icon' => 'heroicon-o-calendar-days'],
             'drawings' => ['label' => 'Drawings',             'model' => \App\Models\Drawing::class,             'labelField' => 'title',               'icon' => 'heroicon-o-map'],
             'equipment_allocations' => ['label' => 'Equipment Allocations', 'model' => \App\Models\EquipmentAllocation::class, 'labelField' => 'notes',               'icon' => 'heroicon-o-wrench'],
-            'equipment_fuel_logs' => ['label' => 'Equipment Fuel Logs',  'model' => \App\Models\EquipmentFuelLog::class,    'labelField' => 'supplier',            'icon' => 'heroicon-o-fuel'],
+            'equipment_fuel_logs' => ['label' => 'Equipment Fuel Logs',  'model' => \App\Models\EquipmentFuelLog::class,    'labelField' => 'supplier',            'icon' => 'heroicon-o-fire'],
             'grns' => ['label' => 'Goods Received',       'model' => \App\Models\GoodsReceivedNote::class,   'labelField' => 'grn_number',          'icon' => 'heroicon-o-inbox-arrow-down'],
             'invoices' => ['label' => 'Invoices',             'model' => \App\Models\Invoice::class,             'labelField' => 'invoice_number',      'icon' => 'heroicon-o-receipt-percent'],
             'purchase_orders' => ['label' => 'Purchase Orders',      'model' => \App\Models\PurchaseOrder::class,       'labelField' => 'po_number',           'icon' => 'heroicon-o-shopping-cart'],
@@ -54,7 +54,7 @@ class CompanyTrash extends Page
             'stock_transfers' => ['label' => 'Stock Transfers',      'model' => \App\Models\StockTransfer::class,       'labelField' => 'transfer_number',           'icon' => 'heroicon-o-arrows-right-left'],
             'subcontractors' => ['label' => 'Subcontractors',       'model' => \App\Models\Subcontractor::class,       'labelField' => 'name',                'icon' => 'heroicon-o-building-storefront'],
             'suppliers' => ['label' => 'Suppliers',            'model' => \App\Models\Supplier::class,            'labelField' => 'name',                'icon' => 'heroicon-o-truck'],
-            'tasks' => ['label' => 'Tasks',                'model' => \App\Models\Task::class,                'labelField' => 'title',               'icon' => 'heroicon-o-check-square'],
+            'tasks' => ['label' => 'Tasks',                'model' => \App\Models\Task::class,                'labelField' => 'title',               'icon' => 'heroicon-o-clipboard-document-check'],
             'work_orders' => ['label' => 'Work Orders',          'model' => \App\Models\WorkOrder::class,           'labelField' => 'title',               'icon' => 'heroicon-o-wrench-screwdriver'],
         ];
     }
