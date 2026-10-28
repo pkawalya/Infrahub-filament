@@ -4,6 +4,7 @@ namespace App\Filament\App\Resources\CdeProjectResource\Pages\Modules;
 
 use App\Filament\App\Resources\CdeProjectResource;
 use App\Filament\App\Resources\CdeProjectResource\Pages\BaseModulePage;
+use App\Models\CdeActivityLog;
 use App\Models\CdeDocument;
 use App\Models\CdeDocumentComment;
 use App\Models\CdeDocumentVersion;
@@ -537,6 +538,93 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
         $this->drawerOpen = false;
     }
 
+    public function updateDocumentStatus(int $docId, string $newStatus): void
+    {
+        $doc = CdeDocument::where('cde_project_id', $this->record->id)->findOrFail($docId);
+        $oldStatus = $doc->status;
+
+        if ($oldStatus === $newStatus) {
+            return;
+        }
+
+        $doc->status = $newStatus;
+        $doc->save();
+
+        CdeActivityLog::record(
+            $doc,
+            'status_changed',
+            "Status updated from '{$oldStatus}' to '{$newStatus}'",
+            ['from' => $oldStatus, 'to' => $newStatus]
+        );
+
+        Notification::make()
+            ->title('Status updated')
+            ->body("{$doc->document_number} status set to {$newStatus}")
+            ->success()
+            ->send();
+    }
+
+    public function addDocumentRevision(int $docId, string $newRevision, ?string $changeDescription = null): void
+    {
+        $doc = CdeDocument::where('cde_project_id', $this->record->id)->findOrFail($docId);
+        $oldRevision = $doc->revision;
+
+        CdeDocumentVersion::create([
+            'cde_document_id' => $doc->id,
+            'version_number' => $oldRevision ?: 'P01.01',
+            'file_path' => $doc->file_path ?: 'documents/' . ($doc->document_number ?: 'DOC') . '.' . ($doc->file_type ?: 'pdf'),
+            'file_type' => $doc->file_type ?: 'pdf',
+            'file_size' => $doc->file_size ?: 0,
+            'change_description' => $changeDescription ?: "Archived on promotion to revision {$newRevision}",
+            'uploaded_by' => $doc->uploaded_by ?? auth()->id(),
+        ]);
+
+        $doc->revision = $newRevision;
+        if ($changeDescription) {
+            $doc->version_notes = $changeDescription;
+        }
+        $doc->save();
+
+        CdeActivityLog::record(
+            $doc,
+            'updated',
+            "Revision changed from '{$oldRevision}' to '{$newRevision}'"
+        );
+
+        Notification::make()
+            ->title('New revision registered')
+            ->body("{$doc->document_number} updated to Rev {$newRevision}")
+            ->success()
+            ->send();
+    }
+
+    public function getActiveFilterCount(): int
+    {
+        $count = 0;
+        if (!empty($this->filterDiscipline)) {
+            $count++;
+        }
+        if (!empty($this->filterStatus)) {
+            $count++;
+        }
+        if (!empty($this->filterFileType)) {
+            $count++;
+        }
+        if (!empty(trim($this->searchDoc))) {
+            $count++;
+        }
+        return $count;
+    }
+
+    public function clearAllFilters(): void
+    {
+        $this->filterDiscipline = '';
+        $this->filterStatus = '';
+        $this->filterFileType = '';
+        $this->searchDoc = '';
+        $this->currentPage = 1;
+    }
+
     public function postComment(): void
     {
         if (!$this->selectedDocId || empty(trim($this->newCommentText))) {
@@ -937,6 +1025,8 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
             $query->orderBy('created_at', $this->sortDirection);
         } elseif ($this->sortBy === 'title') {
             $query->orderBy('title', $this->sortDirection);
+        } elseif ($this->sortBy === 'flag') {
+            $query->orderBy('is_flagged', $this->sortDirection)->orderBy('created_at', 'desc');
         } else {
             $query->orderBy('created_at', 'desc');
         }

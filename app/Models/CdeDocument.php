@@ -115,6 +115,11 @@ class CdeDocument extends Model
         return $this->hasMany(CdeDocumentVersion::class, 'cde_document_id')->orderBy('created_at', 'desc');
     }
 
+    public function activityLogs()
+    {
+        return $this->morphMany(CdeActivityLog::class, 'loggable')->orderBy('created_at', 'desc');
+    }
+
     public static array $validTransitions = [
         'wip' => ['draft', 'under_review'],
         'draft' => ['under_review'],

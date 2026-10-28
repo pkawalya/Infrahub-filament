@@ -1507,18 +1507,27 @@
 
                         {{-- Filters Dropdown --}}
                         <div x-data="{ openFilters: false }" style="position:relative;">
+                            @php $activeFilterCount = $this->getActiveFilterCount(); @endphp
                             <button type="button"
                                     @click="openFilters = !openFilters"
                                     class="cde-btn-secondary">
                                 Filters
+                                @if($activeFilterCount > 0)
+                                    <span class="cde-badge cde-badge-rev" style="margin-left:4px;">{{ $activeFilterCount }}</span>
+                                @endif
                                 <svg viewBox="0 0 20 20" width="12" height="12" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                             </button>
 
                             <div x-show="openFilters"
-                                 @click.outside="openFilters = false"
-                                 x-cloak
-                                 style="position:absolute;left:0;top:100%;margin-top:4px;width:280px;background:var(--cde-bg);border:1px solid var(--cde-border);border-radius:6px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:14px;z-index:99;">
-                                <div style="font-weight:700;font-size:12px;margin-bottom:10px;">Filter Documents</div>
+                                  @click.outside="openFilters = false"
+                                  x-cloak
+                                  style="position:absolute;left:0;top:100%;margin-top:4px;width:280px;background:var(--cde-bg);border:1px solid var(--cde-border);border-radius:6px;box-shadow:0 10px 25px rgba(0,0,0,0.15);padding:14px;z-index:99;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                                    <div style="font-weight:700;font-size:12px;">Filter Documents</div>
+                                    @if($activeFilterCount > 0)
+                                        <button type="button" wire:click="clearAllFilters" style="background:none;border:none;color:#ef4444;font-size:11px;font-weight:600;cursor:pointer;padding:0;">Clear all</button>
+                                    @endif
+                                </div>
 
                                 <div style="margin-bottom:10px;">
                                     <label style="display:block;font-size:11px;font-weight:600;color:var(--cde-text-muted);margin-bottom:4px;">Discipline</label>
@@ -1560,7 +1569,7 @@
 
                                 <div style="display:flex;justify-content:space-between;">
                                     <button type="button"
-                                            wire:click="$set('filterDiscipline', ''); $set('filterStatus', ''); $set('filterFileType', '');"
+                                            wire:click="clearAllFilters"
                                             style="font-size:11px;color:var(--cde-text-muted);background:none;border:none;cursor:pointer;">
                                         Reset
                                     </button>
@@ -2374,6 +2383,9 @@
                         <button type="button" wire:click="$set('drawerTab', 'comments')" class="cde-drawer-tab-btn {{ $this->drawerTab === 'comments' ? 'is-active' : '' }}">
                             Comments ({{ $selectedDoc->comments->count() }})
                         </button>
+                        <button type="button" wire:click="$set('drawerTab', 'audit')" class="cde-drawer-tab-btn {{ $this->drawerTab === 'audit' ? 'is-active' : '' }}">
+                            Audit Trail
+                        </button>
                     </div>
 
                     {{-- Drawer Body --}}
@@ -2390,7 +2402,16 @@
                                 <span class="cde-meta-val"><span class="cde-badge cde-badge-rev">{{ $selectedDoc->revision }}</span></span>
 
                                 <span class="cde-meta-label">Suitability / Status:</span>
-                                <span class="cde-meta-val"><span class="cde-badge cde-badge-status">{{ $selectedDoc->status }}</span></span>
+                                <span class="cde-meta-val" style="display:flex;align-items:center;gap:8px;">
+                                    <span class="cde-badge cde-badge-status">{{ $selectedDoc->status }}</span>
+                                    <select wire:change="updateDocumentStatus({{ $selectedDoc->id }}, $event.target.value)"
+                                            style="font-size:11px;padding:2px 6px;border-radius:4px;border:1px solid var(--cde-border);background:var(--cde-surface);color:var(--cde-text);cursor:pointer;">
+                                        <option value="" disabled>Change status...</option>
+                                        @foreach(['wip', 'draft', 'under_review', 'approved', 'revision', 'published', 'archived', 'S0', 'S1', 'S2', 'S3', 'S4', 'S7'] as $st)
+                                            <option value="{{ $st }}" {{ $selectedDoc->status === $st ? 'selected' : '' }}>{{ $st }}</option>
+                                        @endforeach
+                                    </select>
+                                </span>
 
                                 <span class="cde-meta-label">Discipline:</span>
                                 <span class="cde-meta-val">{{ ucfirst($selectedDoc->discipline ?? 'Other') }}</span>
@@ -2501,6 +2522,36 @@
                                     </div>
                                 @endforelse
                             </div>
+
+                        @elseif($this->drawerTab === 'audit')
+                            <div style="font-size:12px;font-weight:700;margin-bottom:12px;color:var(--cde-text);">
+                                Activity Logs & Audit History
+                            </div>
+                            @php
+                                $auditLogs = $selectedDoc->activityLogs()->with('user')->take(30)->get();
+                            @endphp
+                            @if($auditLogs->isNotEmpty())
+                                <div style="display:flex;flex-direction:column;gap:8px;">
+                                    @foreach($auditLogs as $log)
+                                        <div style="padding:10px;border-radius:6px;border:1px solid var(--cde-border);background:var(--cde-surface);">
+                                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                                                <span class="cde-badge cde-badge-rev" style="text-transform:uppercase;font-size:9.5px;">{{ $log->action }}</span>
+                                                <span style="font-size:10px;color:var(--cde-text-muted);">{{ $log->created_at->format('d-M-Y H:i') }}</span>
+                                            </div>
+                                            <div style="font-size:11.5px;color:var(--cde-text);line-height:1.4;">
+                                                {{ $log->description ?: 'Activity recorded' }}
+                                            </div>
+                                            <div style="font-size:10px;color:var(--cde-text-muted);margin-top:4px;">
+                                                By: {{ $log->user?->name ?? 'System' }}
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <div style="text-align:center;color:var(--cde-text-muted);font-size:11px;padding:20px;background:var(--cde-surface);border-radius:6px;">
+                                    No audit history recorded for this document yet.
+                                </div>
+                            @endif
                         @endif
                     </div>
                 </div>
