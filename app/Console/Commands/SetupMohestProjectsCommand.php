@@ -16,6 +16,7 @@ class SetupMohestProjectsCommand extends Command
      * The name and signature of the console command.
      */
     protected $signature = 'infrahub:setup-mohest-projects 
+                            {--admin-email=pomick.kawalya457@gmail.com : Company admin email}
                             {--password=InfraHub@2026! : Default password for created users}
                             {--force : Force re-initialization if already exists}';
 
@@ -31,7 +32,7 @@ class SetupMohestProjectsCommand extends Command
     {
         $defaultPassword = $this->option('password') ?: 'InfraHub@2026!';
         $companyName = 'MoHEST / Dr. John Garang Sudan';
-        $adminEmail = 'appcellon@gmail.com';
+        $adminEmail = $this->option('admin-email') ?: 'pomick.kawalya457@gmail.com';
 
         $this->info("=====================================================================");
         $this->info("  Setting up MoHEST / Dr. John Garang University Projects on InfraHub");
