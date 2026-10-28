@@ -15,7 +15,7 @@ use App\Models\Transmittal;
 use App\Models\TransmittalItem;
 use App\Models\Rfi;
 use App\Models\User;
-use App\Services\AsiteStructureService;
+use App\Services\CdeFolderTemplateService;
 use Filament\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Concerns\InteractsWithForms;
@@ -52,16 +52,16 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
     public ?int $sharingDocumentId = null;
     public string $activeDocTab = 'files'; // 'files', 'distribution', 'comments', 'pipeline'
 
-    // ── ASITE Explorer & Tree Navigation ──────────────────────────────
+    // ── CDE Explorer & Tree Navigation ──────────────────────────────
     public string $folderSearch = '';
     public array $expandedFolderIds = [];
     public bool $isTreeCollapsed = false;
 
-    // ── ASITE Quick Task Strip Filter ─────────────────────────────────
+    // ── CDE Quick Filter & Status Strip ─────────────────────────────────
     // 'all', 'incomplete', 'overdue', 'due_today', 'unread_comments'
     public string $quickFilter = 'all';
 
-    // ── ASITE Table Search, Filter & Sort ─────────────────────────────
+    // ── CDE Table Search, Filter & Sort ─────────────────────────────
     public string $searchDoc = '';
     public string $filterDiscipline = '';
     public string $filterStatus = '';
@@ -75,7 +75,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
     public array $selectedDocIds = [];
     public bool $selectAll = false;
 
-    // ── ASITE Slide-over Document Detail Drawer ───────────────────────
+    // ── CDE Slide-over Document Detail Drawer ───────────────────────
     public bool $drawerOpen = false;
     public ?int $selectedDocId = null;
     public string $drawerTab = 'attributes'; // 'attributes', 'versions', 'comments', 'audit'
@@ -106,19 +106,16 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
         parent::mount($record);
         $this->currentFolderId = request()->query('folder') ? (int) request()->query('folder') : null;
 
-        // Auto-initialize standard ASITE ISO structure if project has 0 folders
+        // Auto-initialize standard infrastructure project structure if project has 0 folders
         if ($this->record->folders()->count() === 0) {
-            AsiteStructureService::initialize($this->record, true);
+            CdeFolderTemplateService::initialize($this->record, 'infrastructure', true);
         }
 
         // If no folder specified in query, pick folder with documents or first folder
         if ($this->currentFolderId === null) {
             $folderWithDocs = CdeFolder::where('cde_project_id', $this->record->id)
-                ->where('name', 'like', '%01.1.2%')
+                ->whereHas('documents')
                 ->first()
-                ?? CdeFolder::where('cde_project_id', $this->record->id)
-                    ->whereHas('documents')
-                    ->first()
                 ?? CdeFolder::where('cde_project_id', $this->record->id)->first();
 
             if ($folderWithDocs) {
@@ -183,12 +180,13 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                             'max' => 'The file is too large. Maximum size is 100MB.',
                         ]),
                     Forms\Components\TextInput::make('document_number')
-                        ->label('Doc Ref (ISO 19650 standard)')
+                        ->label('Document Reference / Code')
                         ->default(function () {
-                            $projCode = $this->record->code ?: 'KAATC';
-                            $count = $this->record->documents()->count() + 1;
-                            return "{$projCode}-AFX-PM-ALL-ALL-RPT-{$count}";
+                            $projCode = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $this->record->code ?: 'PRJ'));
+                            $count = str_pad((string) ($this->record->documents()->count() + 1), 3, '0', STR_PAD_LEFT);
+                            return "{$projCode}-GEN-DOC-{$count}";
                         })
+                        ->placeholder('e.g. PRJ-ENG-DWG-001')
                         ->required(),
                     Forms\Components\TextInput::make('title')
                         ->required()->maxLength(255)
@@ -316,15 +314,30 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                     Notification::make()->title('Folder created successfully')->success()->send();
                 }),
 
-            Action::make('initAsiteTemplate')
-                ->label('ASITE ISO Template')
-                ->icon('heroicon-o-sparkles')
-                ->color('warning')
+            Action::make('applyDirectoryTemplate')
+                ->label('Directory Templates')
+                ->icon('heroicon-o-folder-plus')
+                ->color('info')
                 ->size('xs')
-                ->requiresConfirmation()
-                ->modalHeading('Load ASITE ISO 19650 Template')
-                ->modalDescription('This will set up the standard ASITE numbered folder structure (01 Development Management, 02 Design, 03 Planning, 04 Commercial, 05 Contract Management) and populate standard protocol documents.')
-                ->action(fn() => $this->initializeAsiteStructure()),
+                ->modalHeading('Apply Project Directory Template')
+                ->modalDescription('Select a standardized industry structure to initialize or expand your project repository.')
+                ->schema([
+                    Forms\Components\Select::make('template')
+                        ->label('Structure Template')
+                        ->options([
+                            'infrastructure' => 'Infrastructure & EPC Lifecycle (Governance, Design, Commercial, Controls, Operations, QHSE, Handover)',
+                            'iso19650' => 'ISO 19650 Information Containers (00 WIP, 01 Shared, 02 Published, 03 Archived)',
+                            'basic' => 'Core Project Repository (General, Technical Drawings, Commercial)',
+                        ])
+                        ->default('infrastructure')
+                        ->required(),
+                    Forms\Components\Toggle::make('seed_sample_docs')
+                        ->label('Include baseline starter documents & guidance manuals')
+                        ->default(true),
+                ])
+                ->action(function (array $data) {
+                    $this->initializeFolderTemplate($data['template'] ?? 'infrastructure', (bool) ($data['seed_sample_docs'] ?? true));
+                }),
 
             Action::make('createTransmittal')
                 ->label('Create Transmittal')
@@ -431,7 +444,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
         ];
     }
 
-    // ── ASITE Folder Tree Operations ──────────────────────────────────
+    // ── CDE Folder Tree Operations ──────────────────────────────────
     public function selectFolder(?int $folderId): void
     {
         $this->currentFolderId = $folderId;
@@ -720,21 +733,17 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
         Notification::make()->title('Folder deleted')->success()->send();
     }
 
-    public function initializeAsiteStructure(): void
+    public function initializeFolderTemplate(string $template = 'infrastructure', bool $seedDocs = true): void
     {
-        AsiteStructureService::initialize($this->record, true);
+        $folder = CdeFolderTemplateService::initialize($this->record, $template, $seedDocs);
 
-        $targetFolder = CdeFolder::where('cde_project_id', $this->record->id)
-            ->where('name', 'like', '%01.1.2%')
-            ->first();
-
-        if ($targetFolder) {
-            $this->currentFolderId = $targetFolder->id;
+        if ($folder) {
+            $this->currentFolderId = $folder->id;
         }
 
         $this->updateFolderPath();
         $this->expandAncestorsOfCurrentFolder();
-        Notification::make()->title('ASITE ISO 19650 folder structure initialized successfully')->success()->send();
+        Notification::make()->title('Project directory template initialized successfully')->success()->send();
     }
 
     // ── Batch Operations ──────────────────────────────────────────────
@@ -765,7 +774,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
             return $this->downloadDocument($docs->first()->id);
         }
 
-        $zipFileName = 'Asite_' . ($this->record->code ?: 'Project') . '_' . now()->format('Ymd_His') . '.zip';
+        $zipFileName = 'Infrahub_CDE_' . ($this->record->code ?: 'Project') . '_' . now()->format('Ymd_His') . '.zip';
         $tempDir = storage_path('app/temp');
         if (!file_exists($tempDir)) {
             mkdir($tempDir, 0755, true);
@@ -787,7 +796,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
                 $zip->addFromString($entryName, $content);
             } else {
                 // Add metadata sheet for files not stored on local disk
-                $manifest = "=== ASITE CDE Document Manifest ===\n" .
+                $manifest = "=== INFRAHUB CDE DOCUMENT REPOSITORY MANIFEST ===\n" .
                     "Document Reference: {$doc->document_number}\n" .
                     "Title: {$doc->title}\n" .
                     "Revision: {$doc->revision}\n" .
@@ -991,7 +1000,7 @@ class CdePage extends BaseModulePage implements HasTable, HasForms
         }
 
         // If sample file without disk content, generate manifest file
-        $content = "ASITE CDE Document\n" .
+        $content = "InfraHub CDE Document\n" .
             "Doc Ref: {$doc->document_number}\n" .
             "Title: {$doc->title}\n" .
             "Revision: {$doc->revision}\n" .
